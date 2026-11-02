@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173b58"><title>مُشرفي | تسيير الحياة المدرسية</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#173b58;--blue:#2878a8;--bg:#f3f6f9;--ink:#172b3a;--muted:#667987;--line:#dce5eb;--white:#fff;--red:#b74646;--green:#21845f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{background:var(--navy);color:white;padding:18px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+header h1{margin:0;font-size:25px}header p{margin:5px 0 0;color:#d8e5ed;font-size:12px}.mark{font-size:34px}
+.wrap{max-width:1100px;margin:auto;padding:14px}.notice{background:#fff7df;border:1px solid #f0d995;border-radius:12px;padding:11px;font-size:12px;line-height:1.7;margin-bottom:12px}
+nav{display:flex;gap:7px;overflow:auto;padding:5px 0 12px}
+nav button,.btn{border:0;border-radius:10px;padding:10px 13px;background:#e2ebf1;color:var(--navy);font-weight:bold;white-space:nowrap;cursor:pointer}
+nav button.active,.btn.primary{background:var(--navy);color:white}.btn.danger{background:#fae7e7;color:var(--red)}.btn.small{padding:7px 10px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat,.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:14px}
+.stat small{color:var(--muted)}.stat strong{display:block;font-size:26px;margin-top:6px}
+.panel{margin-top:12px}.panel h2{font-size:18px;margin:0 0 12px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.tile{background:#f6f9fb;border:1px solid var(--line);border-radius:12px;padding:15px;text-align:center;cursor:pointer}.tile b{display:block;margin-top:7px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+input,select,textarea{width:100%;padding:11px;border:1px solid #ccd8e0;border-radius:9px;background:#fff;font:inherit;color:var(--ink);margin:5px 0 10px}
+label{font-size:13px;color:#405563}textarea{min-height:75px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 7px;border-bottom:1px solid var(--line);text-align:right}th{background:#f3f7fa}
+.tablewrap{overflow:auto}.hidden{display:none!important}.muted{color:var(--muted);font-size:12px}.pill{background:#edf3f7;border-radius:20px;padding:4px 8px;font-size:11px}
+.actions{display:flex;gap:5px;flex-wrap:wrap}.empty{padding:20px;text-align:center;color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.tiles{grid-template-columns:repeat(2,1fr)}header h1{font-size:22px}}
+@media print{header,nav,.no-print,footer{display:none!important}body{background:white}.wrap{max-width:none;padding:0}.panel,.stat{border:0}.print-title{display:block!important}}
+</style>
+</head>
+<body>
+<header><div><h1>مُشرفي</h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p></div><div class="mark">🎓</div></header>
+<div class="wrap">
+<div class="notice"><b>نسخة أولية قابلة للتجربة:</b> تُحفظ البيانات محلياً على هذا الجهاز. المزامنة السحابية غير مفعّلة بعد، وتحتاج إلى إعداد حساب وقاعدة بيانات Firebase ومفاتيح المشروع. لا تُدخل بيانات حقيقية للتلاميذ قبل اعتماد الحماية وسياسة المؤسسة.</div>
+<nav class="no-print" id="nav">
+<button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings">الإعدادات</button>
+</nav>
+<section id="home" class="page">
+<div class="grid">
+<div class="stat"><small>إجمالي التلاميذ</small><strong id="sStudents">0</strong></div><div class="stat"><small>الغيابات المسجلة</small><strong id="sAbs">0</strong></div><div class="stat"><small>التأخرات المسجلة</small><strong id="sLate">0</strong></div><div class="stat"><small>المخالفات المسجلة</small><strong id="sViol">0</strong></div>
+</div>
+<div class="panel"><h2>الوصول السريع</h2><div class="tiles">
+<div class="tile" data-go="students">👥<b>ملفات التلاميذ</b></div><div class="tile" data-go="attendance">🗓️<b>تسجيل غياب أو تأخر</b></div><div class="tile" data-go="documents">📨<b>إنشاء إشعار أو استدعاء</b></div><div class="tile" data-go="violations">⚠️<b>تسجيل مخالفة</b></div><div class="tile" data-go="reports">📊<b>التقارير</b></div><div class="tile" data-go="settings">☁️<b>النسخ والمزامنة</b></div>
+</div></div>
+<div class="panel"><h2>آخر العمليات</h2><div id="recent" class="empty">لا توجد عمليات مسجلة بعد.</div></div>
+</section>
+<section id="students" class="page hidden">
+<div class="panel"><h2>إضافة تلميذ</h2><form id="studentForm"><div class="row"><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div><div class="row"><div><label>القسم</label><input name="class" required placeholder="مثال: 1 ج م ع 1"></div><div><label>رقم التسجيل</label><input name="code"></div></div><div class="row"><div><label>اسم ولي الأمر (اختياري)</label><input name="guardian"></div><div><label>رقم الهاتف (اختياري)</label><input name="phone" inputmode="tel"></div></div><button class="btn primary">حفظ التلميذ</button></form></div>
+<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table><thead><tr><th>التلميذ</th><th>القسم</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+</section>
+<section id="attendance" class="page hidden">
+<div class="panel"><h2>تسجيل غياب أو تأخر</h2><form id="attForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type"><option value="غياب">غياب</option><option value="تأخر">تأخر</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div><div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="اليوم كاملاً أو 08:15"></div><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>مبرر</option><option>قيد التبرير</option></select></div></div><label>ملاحظات</label><textarea name="notes"></textarea><button class="btn primary">تسجيل الحالة</button></form></div>
+<div class="panel"><h2>سجل الغيابات والتأخرات</h2><div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>التبرير</th><th>ملاحظات</th><th></th></tr></thead><tbody id="attRows"></tbody></table></div></div>
+</section>
+<section id="documents" class="page hidden">
+<div class="panel"><h2>إنشاء إشعار أو استدعاء</h2><form id="docForm"><label>نوع الوثيقة</label><select name="type"><option>إشعار غياب</option><option>استدعاء ولي</option><option>تنبيه</option></select><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>التاريخ</label><input name="date" type="date" required></div><div><label>موعد الحضور (للاستدعاء)</label><input name="appointment" type="datetime-local"></div></div><label>الموضوع / السبب</label><textarea name="reason" required></textarea><button class="btn primary">إنشاء الوثيقة</button></form></div>
+<div class="panel"><h2>الوثائق المحفوظة</h2><div id="docsRows" class="empty">لا توجد وثائق بعد.</div></div></section>
+<section id="violations" class="page hidden">
+<div class="panel"><h2>تسجيل مخالفة أو واقعة</h2><form id="violForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>التاريخ</label><input name="date" type="date" required></div><div><label>نوع الواقعة</label><select name="type"><option>عدم الانضباط</option><option>إتلاف ممتلكات</option><option>مخالفة النظام الداخلي</option><option>سلوك آخر</option></select></div></div><label>وصف الواقعة</label><textarea name="description" required></textarea><label>الإجراء أو المتابعة</label><textarea name="action"></textarea><button class="btn primary">حفظ الواقعة</button></form></div>
+<div class="panel"><h2>سجل المخالفات</h2><div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody id="violRows"></tbody></table></div></div></section>
+<section id="reports" class="page hidden">
+<div class="panel"><h2>التقارير والطباعة</h2><div class="row"><div><label>اختر التلميذ</label><select id="reportStudent" class="studentSelect"><option value="">كل التلاميذ</option></select></div><div><label>من تاريخ</label><input id="fromDate" type="date"></div><div><label>إلى تاريخ</label><input id="toDate" type="date"></div></div><button class="btn primary" id="makeReport">عرض التقرير</button> <button class="btn" onclick="window.print()">طباعة / حفظ PDF</button><div id="reportOutput" class="panel"><p class="muted">حدد نطاق التقرير ثم اضغط عرض التقرير.</p></div></div>
+</section>
+<section id="settings" class="page hidden">
+<div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
+<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
+<div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">الأعمدة المطلوبة: اللقب، الاسم، القسم، رقم التسجيل، ولي الأمر، الهاتف. يمكن حفظ جدول Excel بصيغة CSV UTF-8.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
+<div class="panel"><h2>المزامنة السحابية</h2><p>حالة الخدمة: <span class="pill">غير مهيأة</span></p><p class="muted">يتطلب تفعيل المزامنة إنشاء مشروع Firebase وربط التطبيق بإعداداته، وتحديد قواعد وصول تمنع أي شخص غير مصرح له من الاطلاع على ملفات التلاميذ. لا توجد مزامنة فعلية في هذه النسخة.</p></div>
+</section>
+</div><footer>مُشرفي · نموذج أولي تجريبي · احمِ بيانات التلاميذ ولا تشارك النسخ الاحتياطية</footer>
+<script>
+const DBKEY='mushrifi_v1';
+let db=JSON.parse(localStorage.getItem(DBKEY)||'{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}');
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const save=()=>{localStorage.setItem(DBKEY,JSON.stringify(db));render()};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const student=id=>db.students.find(x=>x.id===id);
+const name=id=>{let s=student(id);return s?s.last+' '+s.first:'تلميذ محذوف'};
+function go(page){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));$$('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
+$$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+function render(){
+$('#sStudents').textContent=db.students.length;$('#sAbs').textContent=db.attendance.filter(x=>x.type==='غياب').length;$('#sLate').textContent=db.attendance.filter(x=>x.type==='تأخر').length;$('#sViol').textContent=db.violations.length;
+let q=($('#studentSearch')?.value||'').trim().toLowerCase();
+$('#studentsRows').innerHTML=db.students.filter(s=>(s.last+s.first+s.class+s.code).toLowerCase().includes(q)).map(s=>`<tr><td>${esc(s.last)} ${esc(s.first)}</td><td>${esc(s.class)}</td><td>${esc(s.code)}</td><td><div class="actions"><button class="btn small" onclick="studentHistory('${s.id}')">الملف</button><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="4" class="empty">لا يوجد تلاميذ.</td></tr>';
+$$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';sel.innerHTML=first+db.students.map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
+$('#attRows').innerHTML=db.attendance.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)} ${esc(x.period)}</td><td>${esc(x.justified)}</td><td>${esc(x.notes)}</td><td><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا توجد سجلات.</td></tr>';
+$('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
+$('#docsRows').innerHTML=db.documents.slice().reverse().map(x=>`<div class="panel"><b>${esc(x.type)} – ${esc(name(x.student))}</b><p>${esc(x.date)} · ${esc(x.reason)}</p><div class="actions"><button class="btn small" onclick="printDoc('${x.id}')">طباعة الوثيقة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></div>`).join('')||'<div class="empty">لا توجد وثائق.</div>';
+let all=[...db.attendance.map(x=>({date:x.date,t:name(x.student),desc:x.type})),...db.violations.map(x=>({date:x.date,t:name(x.student),desc:'مخالفة'}))].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+$('#recent').innerHTML=all.length?all.map(x=>`<p>${esc(x.date)} · ${esc(x.t)} · <span class="pill">${esc(x.desc)}</span></p>`).join(''):'لا توجد عمليات مسجلة بعد.';
+}
+$('#studentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.students.push({id:crypto.randomUUID(),last:f.get('last').trim(),first:f.get('first').trim(),class:f.get('class').trim(),code:f.get('code'),guardian:f.get('guardian'),phone:f.get('phone')});e.target.reset();save();alert('تم حفظ التلميذ')};
+$('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.attendance.push({id:crypto.randomUUID(),student:f.get('student'),type:f.get('type'),date:f.get('date'),period:f.get('period'),justified:f.get('justified'),notes:f.get('notes')});e.target.reset();save();alert('تم تسجيل الحالة')};
+$('#docForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);let d={id:crypto.randomUUID(),type:f.get('type'),student:f.get('student'),date:f.get('date'),appointment:f.get('appointment'),reason:f.get('reason')};db.documents.push(d);e.target.reset();save();printDoc(d.id)};
+$('#violForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.violations.push({id:crypto.randomUUID(),student:f.get('student'),date:f.get('date'),type:f.get('type'),description:f.get('description'),action:f.get('action')});e.target.reset();save();alert('تم حفظ الواقعة')};
+$('#studentSearch').oninput=render;
+window.delStudent=id=>{if(confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.')){db.students=db.students.filter(s=>s.id!==id);save()}};
+window.delRecord=(kind,id)=>{if(confirm('هل تريد حذف هذا السجل؟')){db[kind]=db[kind].filter(x=>x.id!==id);save()}};
+window.studentHistory=id=>{let s=student(id);let a=db.attendance.filter(x=>x.student===id),v=db.violations.filter(x=>x.student===id),d=db.documents.filter(x=>x.student===id);$('#reportOutput').innerHTML=`<h2>الملف الفردي: ${esc(s.last)} ${esc(s.first)}</h2><p>القسم: ${esc(s.class)} · رقم التسجيل: ${esc(s.code)}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.map(x=>`<p>${esc(x.date)} – ${esc(x.type)} – ${esc(x.justified)}</p>`).join('')||'لا توجد'}<h3>المخالفات (${v.length})</h3>${v.map(x=>`<p>${esc(x.date)} – ${esc(x.type)} – ${esc(x.description)}</p>`).join('')||'لا توجد'}<h3>الوثائق (${d.length})</h3>${d.map(x=>`<p>${esc(x.date)} – ${esc(x.type)}</p>`).join('')||'لا توجد'}`;go('reports')};
+window.printDoc=id=>{let d=db.documents.find(x=>x.id===id),s=student(d.student);let w=window.open('','_blank');w.document.write(`<html lang="ar" dir="rtl"><meta charset="utf-8"><title>${esc(d.type)}</title><style>body{font-family:Tahoma,Arial;padding:35px;line-height:2}h2{text-align:center} .sig{display:flex;justify-content:space-between;margin-top:80px}</style><h3>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')}</h3><p>${esc(db.settings.location||'بوسكن – ولاية المدية')}</p><h2>${esc(d.type)}</h2><p>إلى ولي التلميذ: ${esc(s?.guardian||'ولي التلميذ المحترم')}</p><p>التلميذ(ة): <b>${esc(s?.last||'')} ${esc(s?.first||'')}</b></p><p>القسم: ${esc(s?.class||'')}</p><p>التاريخ: ${esc(d.date)}</p><p>الموضوع: ${esc(d.reason)}</p>${d.appointment?`<p>موعد الحضور: ${esc(d.appointment)}</p>`:''}<p>يرجى الاطلاع واتخاذ ما يلزم.</p><div class="sig"><span>إمضاء الولي</span><span>إمضاء وختم الإدارة</span></div><script>window.onload=()=>window.print()<\/script></html>`);w.document.close()};
+$('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!id||x.student===id)&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.map(x=>`<p>${esc(x.date)} – ${esc(name(x.student))} – ${esc(x.type)} – ${esc(x.justified)}</p>`).join('')||'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.map(x=>`<p>${esc(x.date)} – ${esc(name(x.student))} – ${esc(x.type)} – ${esc(x.description)}</p>`).join('')||'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.map(x=>`<p>${esc(x.date)} – ${esc(name(x.student))} – ${esc(x.type)}</p>`).join('')||'لا توجد وثائق'}`};
+$('#saveSettings').onclick=()=>{db.settings.school=$('#schoolName').value;db.settings.location=$('#schoolLocation').value;save();alert('تم حفظ الإعدادات')};
+$('#exportData').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mushrifi-backup.json';a.click();URL.revokeObjectURL(a.href)};
+$('#importData').onchange=async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!obj.students||!obj.attendance)throw Error();if(confirm('سيتم استبدال البيانات الحالية بالنسخة المختارة. متابعة؟')){db=obj;save();alert('تم الاستيراد')}}catch{alert('ملف النسخة الاحتياطية غير صالح')}};
+$('#csvImport').onchange=async e=>{let t=await e.target.files[0].text();let lines=t.replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean);let count=0;for(let line of lines.slice(1)){let c=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(c[0]&&c[1]&&c[2]){db.students.push({id:crypto.randomUUID(),last:c[0],first:c[1],class:c[2],code:c[3]||'',guardian:c[4]||'',phone:c[5]||''});count++}}save();alert('تم استيراد '+count+' تلميذاً')};
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+render();
+</script>
+</body></html>
