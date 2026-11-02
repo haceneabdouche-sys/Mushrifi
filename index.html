@@ -31,7 +31,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <body>
 <header><div><h1>مُشرفي</h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p></div><div class="mark">🎓</div></header>
 <div class="wrap">
-<div class="notice"><b>نسخة أولية قابلة للتجربة:</b> تُحفظ البيانات محلياً على هذا الجهاز. المزامنة السحابية غير مفعّلة بعد، وتحتاج إلى إعداد حساب وقاعدة بيانات Firebase ومفاتيح المشروع. لا تُدخل بيانات حقيقية للتلاميذ قبل اعتماد الحماية وسياسة المؤسسة.</div>
+<div class="notice"><b>نسخة تجريبية مرتبطة بخدمات Firebase:</b> التخزين المحلي هو الافتراضي، ويمكن للمشرف تسجيل الدخول واستخدام الرفع والاستعادة اليدويين من صفحة الإعدادات بعد تفعيل Firebase Authentication وقواعد Firestore. لا تُدخل بيانات حقيقية للتلاميذ قبل اعتماد الحماية وسياسة المؤسسة.</div>
 <nav class="no-print" id="nav">
 <button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings">الإعدادات</button>
 </nav>
@@ -65,7 +65,11 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">الأعمدة المطلوبة: اللقب، الاسم، القسم، رقم التسجيل، ولي الأمر، الهاتف. يمكن حفظ جدول Excel بصيغة CSV UTF-8.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
-<div class="panel"><h2>المزامنة السحابية</h2><p>حالة الخدمة: <span class="pill">غير مهيأة</span></p><p class="muted">يتطلب تفعيل المزامنة إنشاء مشروع Firebase وربط التطبيق بإعداداته، وتحديد قواعد وصول تمنع أي شخص غير مصرح له من الاطلاع على ملفات التلاميذ. لا توجد مزامنة فعلية في هذه النسخة.</p></div>
+<div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
+<p id="cloudStatus" class="pill">جارٍ تهيئة الاتصال...</p>
+<div id="signedOutBox"><label>البريد الإلكتروني لحساب المشرف</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@example.com"><label>كلمة المرور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة مرور Firebase Authentication"><button class="btn primary" id="loginBtn" type="button">تسجيل الدخول</button></div>
+<div id="signedInBox" class="hidden"><p>تم تسجيل الدخول بحساب المشرف.</p><button class="btn" id="syncUploadBtn" type="button">رفع بيانات هذا الجهاز إلى السحابة</button> <button class="btn" id="syncDownloadBtn" type="button">استعادة البيانات من السحابة إلى هذا الجهاز</button> <button class="btn danger" id="logoutBtn" type="button">تسجيل الخروج</button></div>
+<p class="muted">المزامنة يدوية وليست تلقائية: الرفع يستبدل نسخة السحابة ببيانات هذا الجهاز، والاستعادة تستبدل بيانات هذا الجهاز بنسخة السحابة. أنشئ نسخة احتياطية قبل كل عملية. لا تستخدم بيانات تلاميذ حقيقية قبل موافقة المؤسسة والتحقق من صلاحيات الوصول وسياسة حماية البيانات.</p></div>
 </section>
 </div><footer>مُشرفي · نموذج أولي تجريبي · احمِ بيانات التلاميذ ولا تشارك النسخ الاحتياطية</footer>
 <script>
@@ -106,4 +110,75 @@ $('#csvImport').onchange=async e=>{let t=await e.target.files[0].text();let line
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 render();
 </script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC_QREx6d91Uw7dKFkqvC6XWVoAwgEWHh8",
+  authDomain: "mushrifi-school.firebaseapp.com",
+  projectId: "mushrifi-school",
+  storageBucket: "mushrifi-school.firebasestorage.app",
+  messagingSenderId: "768187846624",
+  appId: "1:768187846624:web:f735dc0391f09c3ff6e585"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+const DBKEY = 'mushrifi_v1';
+const statusEl = document.getElementById('cloudStatus');
+const signedOutBox = document.getElementById('signedOutBox');
+const signedInBox = document.getElementById('signedInBox');
+const setStatus = (message, bad=false) => { statusEl.textContent = message; statusEl.style.background = bad ? '#fae7e7' : '#edf3f7'; statusEl.style.color = bad ? '#9b2f2f' : '#173b58'; };
+const getLocalData = () => JSON.parse(localStorage.getItem(DBKEY) || '{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}');
+const cloudDoc = () => doc(firestore, 'users', auth.currentUser.uid, 'workspace', 'main');
+
+onAuthStateChanged(auth, user => {
+  signedOutBox.classList.toggle('hidden', !!user);
+  signedInBox.classList.toggle('hidden', !user);
+  setStatus(user ? 'متصل: تم تسجيل الدخول بحساب المشرف' : 'غير مسجل الدخول — البيانات محلية فقط');
+});
+
+document.getElementById('loginBtn').addEventListener('click', async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if (!email || !password) { setStatus('أدخل البريد الإلكتروني وكلمة المرور.', true); return; }
+  const btn = document.getElementById('loginBtn'); btn.disabled = true;
+  try { await signInWithEmailAndPassword(auth, email, password); document.getElementById('authPassword').value=''; setStatus('تم تسجيل الدخول بنجاح.'); }
+  catch (e) { setStatus('تعذر تسجيل الدخول: ' + (e.code || e.message), true); }
+  finally { btn.disabled = false; }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try { await signOut(auth); setStatus('تم تسجيل الخروج.'); }
+  catch (e) { setStatus('تعذر تسجيل الخروج: ' + (e.code || e.message), true); }
+});
+
+document.getElementById('syncUploadBtn').addEventListener('click', async () => {
+  if (!auth.currentUser) return setStatus('سجّل الدخول أولاً.', true);
+  if (!confirm('سيتم رفع بيانات هذا الجهاز واستبدال النسخة الموجودة في السحابة. هل أنشأت نسخة احتياطية وتريد المتابعة؟')) return;
+  try {
+    const data = getLocalData();
+    await setDoc(cloudDoc(), { data, updatedAt: serverTimestamp(), schemaVersion: 1 });
+    setStatus('نجح رفع بيانات هذا الجهاز إلى السحابة.');
+    alert('تم رفع البيانات بنجاح.');
+  } catch (e) { setStatus('فشل الرفع: ' + (e.code || e.message), true); }
+});
+
+document.getElementById('syncDownloadBtn').addEventListener('click', async () => {
+  if (!auth.currentUser) return setStatus('سجّل الدخول أولاً.', true);
+  if (!confirm('سيتم استبدال بيانات هذا الجهاز بالنسخة الموجودة في السحابة. أنشئ نسخة احتياطية أولاً. متابعة؟')) return;
+  try {
+    const snap = await getDoc(cloudDoc());
+    if (!snap.exists() || !snap.data().data) { setStatus('لا توجد نسخة محفوظة في السحابة بعد.', true); return; }
+    localStorage.setItem(DBKEY, JSON.stringify(snap.data().data));
+    setStatus('تمت استعادة البيانات. سيتم تحديث الصفحة.');
+    location.reload();
+  } catch (e) { setStatus('فشلت الاستعادة: ' + (e.code || e.message), true); }
+});
+</script>
+
 </body></html>
