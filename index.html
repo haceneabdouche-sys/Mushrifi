@@ -64,6 +64,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <section id="settings" class="page hidden">
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
+<div class="panel"><h2>معالجة التلاميذ المكررين</h2><p class="muted">يفحص الأسماء والأقسام المتطابقة. قبل التنظيف ينزّل نسخة احتياطية تلقائياً، وينقل سجلات الغياب والمخالفات والوثائق إلى ملف التلميذ المحتفظ به. لا يدمج السجلات إذا اختلفت أرقام التسجيل.</p><button class="btn danger" id="dedupeStudents" type="button">فحص التكرار وتنظيفه</button><p id="dedupeStatus" class="muted">لم يتم إجراء فحص بعد.</p></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
 <div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
 <p id="cloudStatus" class="pill">جارٍ تهيئة الاتصال...</p>
@@ -137,6 +138,47 @@ function parseCSV(text, delimiter){
 }
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+$('#dedupeStudents').onclick=()=>{
+  const normalize=v=>String(v??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/\s+/g,' ').trim().toLowerCase();
+  const groups=new Map();
+  for(const s of db.students){
+    const key=normalize((s.last||'')+' '+(s.first||''))+'|'+normalize(s.class||'');
+    if(key==='|')continue;
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(s);
+  }
+  const duplicates=[...groups.values()].filter(g=>{
+    if(g.length<2)return false;
+    const codes=[...new Set(g.map(s=>String(s.code||'').trim()).filter(Boolean))];
+    return codes.length<=1;
+  });
+  const count=duplicates.reduce((n,g)=>n+g.length-1,0);
+  const status=$('#dedupeStatus');
+  if(!count){status.textContent='لم يُعثر على تكرار آمن حسب الاسم والقسم ورقم التسجيل.';alert(status.textContent);return;}
+  const sample=duplicates.slice(0,8).map(g=>'• '+(g[0].last||'')+' '+(g[0].first||'')+' — '+(g[0].class||'')).join('\n');
+  if(!confirm('عُثر على '+count+' ملفاً مكرراً ضمن '+duplicates.length+' مجموعة.\nستُنزل نسخة احتياطية أولاً، ثم تُدمج الملفات المتطابقة وتُنقل سجلاتها المرتبطة.\n\n'+sample+'\n\nهل تريد المتابعة؟'))return;
+  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const link=document.createElement('a');link.href=URL.createObjectURL(backup);link.download='mushrifi-before-deduplication-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1500);
+  const redirects=new Map();
+  for(const group of duplicates){
+    const richness=s=>['last','first','class','code','guardian','phone','birthDate','status','attribute'].filter(k=>String(s[k]||'').trim()).length;
+    const keep=group.slice().sort((a,b)=>richness(b)-richness(a))[0];
+    for(const other of group){
+      if(other.id===keep.id)continue;
+      redirects.set(other.id,keep.id);
+      for(const field of ['last','first','class','code','guardian','phone','birthDate','status','attribute']){
+        if(!String(keep[field]||'').trim()&&String(other[field]||'').trim())keep[field]=other[field];
+      }
+    }
+  }
+  for(const collection of ['attendance','documents','violations']){
+    for(const record of db[collection]||[])if(redirects.has(record.student))record.student=redirects.get(record.student);
+  }
+  db.students=db.students.filter(s=>!redirects.has(s.id));
+  save();
+  status.textContent='اكتمل التنظيف: أُزيل '+redirects.size+' ملفاً مكرراً، مع الاحتفاظ بالسجلات المرتبطة. تم تنزيل نسخة احتياطية.';
+  alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية في مكان آمن.');
+};
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
   try{
