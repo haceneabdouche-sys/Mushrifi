@@ -46,7 +46,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 </section>
 <section id="students" class="page hidden">
 <div class="panel"><h2>إضافة تلميذ</h2><form id="studentForm"><div class="row"><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div><div class="row"><div><label>القسم</label><input name="class" required placeholder="مثال: 1 ج م ع 1"></div><div><label>رقم التسجيل</label><input name="code"></div></div><div class="row"><div><label>اسم ولي الأمر (اختياري)</label><input name="guardian"></div><div><label>رقم الهاتف (اختياري)</label><input name="phone" inputmode="tel"></div></div><button class="btn primary">حفظ التلميذ</button></form></div>
-<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table><thead><tr><th>التلميذ</th><th>القسم</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table><thead><tr><th>التلميذ</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
 <section id="attendance" class="page hidden">
 <div class="panel"><h2>تسجيل غياب أو تأخر</h2><form id="attForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type"><option value="غياب">غياب</option><option value="تأخر">تأخر</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div><div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="اليوم كاملاً أو 08:15"></div><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>مبرر</option><option>قيد التبرير</option></select></div></div><label>ملاحظات</label><textarea name="notes"></textarea><button class="btn primary">تسجيل الحالة</button></form></div>
@@ -64,7 +64,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <section id="settings" class="page hidden">
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
-<div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">الأعمدة المطلوبة: اللقب، الاسم، القسم، رقم التسجيل، ولي الأمر، الهاتف. يمكن حفظ جدول Excel بصيغة CSV UTF-8.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
+<div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
 <div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
 <p id="cloudStatus" class="pill">جارٍ تهيئة الاتصال...</p>
 <div id="signedOutBox"><label>البريد الإلكتروني لحساب المشرف</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@example.com"><label>كلمة المرور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة مرور Firebase Authentication"><button class="btn primary" id="loginBtn" type="button">تسجيل الدخول</button></div>
@@ -85,7 +85,7 @@ $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').fo
 function render(){
 $('#sStudents').textContent=db.students.length;$('#sAbs').textContent=db.attendance.filter(x=>x.type==='غياب').length;$('#sLate').textContent=db.attendance.filter(x=>x.type==='تأخر').length;$('#sViol').textContent=db.violations.length;
 let q=($('#studentSearch')?.value||'').trim().toLowerCase();
-$('#studentsRows').innerHTML=db.students.filter(s=>(s.last+s.first+s.class+s.code).toLowerCase().includes(q)).map(s=>`<tr><td>${esc(s.last)} ${esc(s.first)}</td><td>${esc(s.class)}</td><td>${esc(s.code)}</td><td><div class="actions"><button class="btn small" onclick="studentHistory('${s.id}')">الملف</button><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="4" class="empty">لا يوجد تلاميذ.</td></tr>';
+$('#studentsRows').innerHTML=db.students.filter(s=>(s.last+s.first+s.class+s.code).toLowerCase().includes(q)).map(s=>`<tr><td>${esc(s.last)} ${esc(s.first)}</td><td>${esc(s.class)}</td><td>${esc(s.status||s.attribute||'')}</td><td>${esc(s.birthDate||'')}</td><td>${esc(s.code)}</td><td><div class="actions"><button class="btn small" onclick="studentHistory('${s.id}')">الملف</button><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا يوجد تلاميذ.</td></tr>';
 $$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';sel.innerHTML=first+db.students.map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
 $('#attRows').innerHTML=db.attendance.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)} ${esc(x.period)}</td><td>${esc(x.justified)}</td><td>${esc(x.notes)}</td><td><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا توجد سجلات.</td></tr>';
 $('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
@@ -106,7 +106,56 @@ $('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate
 $('#saveSettings').onclick=()=>{db.settings.school=$('#schoolName').value;db.settings.location=$('#schoolLocation').value;save();alert('تم حفظ الإعدادات')};
 $('#exportData').onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mushrifi-backup.json';a.click();URL.revokeObjectURL(a.href)};
 $('#importData').onchange=async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!obj.students||!obj.attendance)throw Error();if(confirm('سيتم استبدال البيانات الحالية بالنسخة المختارة. متابعة؟')){db=obj;save();alert('تم الاستيراد')}}catch{alert('ملف النسخة الاحتياطية غير صالح')}};
-$('#csvImport').onchange=async e=>{let t=await e.target.files[0].text();let lines=t.replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean);let count=0;for(let line of lines.slice(1)){let c=line.split(',').map(x=>x.trim().replace(/^"|"$/g,''));if(c[0]&&c[1]&&c[2]){db.students.push({id:crypto.randomUUID(),last:c[0],first:c[1],class:c[2],code:c[3]||'',guardian:c[4]||'',phone:c[5]||''});count++}}save();alert('تم استيراد '+count+' تلميذاً')};
+function parseCSV(text, delimiter){
+  const rows=[]; let row=[], field='', quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(ch==='"' && quoted && text[i+1]==='"'){field+='"';i++;}
+    else if(ch==='"'){quoted=!quoted;}
+    else if(ch===delimiter && !quoted){row.push(field);field='';}
+    else if((ch==='\\n'||ch==='\\r')&&!quoted){
+      if(ch==='\\r'&&text[i+1]==='\\n')i++;
+      row.push(field);if(row.some(v=>v.trim()!==''))rows.push(row);row=[];field='';
+    }else field+=ch;
+  }
+  if(quoted)throw new Error('يوجد اقتباس غير مغلق في الملف.');
+  row.push(field);if(row.some(v=>v.trim()!==''))rows.push(row);
+  return rows;
+}
+function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\\u0640\\s_\\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
+function normName(v){return String(v||'').normalize('NFKC').replace(/[\\u0640]/g,'').replace(/\\s+/g,' ').trim().toLowerCase();}
+$('#csvImport').onchange=async e=>{
+  const input=e.target,file=input.files?.[0];if(!file)return;
+  try{
+    if(!/\\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
+    const raw=(await file.text()).replace(/^\\uFEFF/,'').replace(/\\u0000/g,'');
+    if(!raw.trim())throw new Error('الملف فارغ.');
+    const sample=raw.split(/\\r?\\n/).find(x=>x.trim())||'';
+    const delimiters=[',',';','\\t'];const delimiter=delimiters.sort((a,b)=>sample.split(b).length-sample.split(a).length)[0];
+    const rows=parseCSV(raw,delimiter);
+    if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
+    const headers=rows[0].map(normHeader),find=names=>headers.findIndex(h=>names.includes(h));
+    const fullIdx=find(['الاسمواللقب','اللقبوالاسم','الاسم','nometprenom','nomprenom','fullname','name']);
+    const dateIdx=find(['تاريخالميلاد','تاريخالازدياد','تاريخالولادة','datenaissance','birthdate']);
+    const guardianIdx=find(['اسمالولي','الولي','اسمالاب','اسموليالامر','guardian']);
+    const attrIdx=find(['الصفة','النظام','نوعالنظام','صفةالتلميذ','regime','status','attribute']);
+    const classIdx=find(['القسم','الفوج','classe','class']);
+    if(fullIdx<0||classIdx<0)throw new Error('تعذر التعرف على عناوين الأعمدة. يجب أن يحتوي الملف على «الاسم واللقب» و«القسم».');
+    const existing=new Set(db.students.map(s=>normName(s.last+' '+(s.first||''))+'|'+normName(s.class)));
+    let added=0,skipped=0;
+    for(const cells of rows.slice(1)){
+      const value=i=>i<0?'':String(cells[i]??'').trim(),fullName=value(fullIdx),cls=value(classIdx);
+      if(!fullName||!cls){skipped++;continue;}
+      const key=normName(fullName)+'|'+normName(cls);
+      if(existing.has(key)){skipped++;continue;}
+      const attr=value(attrIdx);
+      db.students.push({id:crypto.randomUUID(),last:fullName,first:'',class:cls,code:'',guardian:value(guardianIdx),phone:'',birthDate:value(dateIdx),status:attr,attribute:attr});
+      existing.add(key);added++;
+    }
+    save();alert('اكتمل الاستيراد.\\nالتلاميذ المضافون: '+added+'\\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
+  }catch(err){alert('تعذر استيراد الملف:\\n'+(err?.message||'خطأ غير معروف')+'\\n\\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+  finally{input.value='';}
+};
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 render();
 </script>
