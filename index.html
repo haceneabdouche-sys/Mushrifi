@@ -46,7 +46,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 </section>
 <section id="students" class="page hidden">
 <div class="panel"><h2>إضافة تلميذ</h2><form id="studentForm"><div class="row"><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div><div class="row"><div><label>القسم</label><input name="class" required placeholder="مثال: 1 ج م ع 1"></div><div><label>رقم التسجيل</label><input name="code"></div></div><div class="row"><div><label>اسم ولي الأمر (اختياري)</label><input name="guardian"></div><div><label>رقم الهاتف (اختياري)</label><input name="phone" inputmode="tel"></div></div><button class="btn primary">حفظ التلميذ</button></form></div>
-<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table class="students-table"><colgroup><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:14%"><col style="width:23%"></colgroup><thead><tr><th>التلميذ</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table class="students-table"><colgroup><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:14%"><col style="width:23%"></colgroup><thead><tr><th>الاسم واللقب</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
 <section id="attendance" class="page hidden">
 <div class="panel"><h2>تسجيل غياب أو تأخر</h2><form id="attForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type"><option value="غياب">غياب</option><option value="تأخر">تأخر</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div><div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="اليوم كاملاً أو 08:15"></div><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>مبرر</option><option>قيد التبرير</option></select></div></div><label>ملاحظات</label><textarea name="notes"></textarea><button class="btn primary">تسجيل الحالة</button></form></div>
@@ -64,7 +64,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <section id="settings" class="page hidden">
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
-<div class="panel"><h2>معالجة التلاميذ المكررين</h2><p class="muted">يفحص الأسماء والأقسام المتطابقة. قبل التنظيف ينزّل نسخة احتياطية تلقائياً، وينقل سجلات الغياب والمخالفات والوثائق إلى ملف التلميذ المحتفظ به. لا يدمج السجلات إذا اختلفت أرقام التسجيل.</p><button class="btn danger" id="dedupeStudents" type="button">دمج الأسماء المنتهية بأرقام</button><p id="dedupeStatus" class="muted">لم يتم إجراء فحص بعد.</p></div>
+<div class="panel"><h2>تنظيف الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط. لا يدمج التلاميذ ولا يحذف سجلاتهم، ولا يغيّر القسم أو الصفة أو بيانات الغياب والمخالفات والوثائق. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn danger" id="dedupeStudents" type="button">حذف الأرقام من نهاية الأسماء</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
 <div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
 <p id="cloudStatus" class="pill">جارٍ تهيئة الاتصال...</p>
@@ -140,48 +140,31 @@ function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u064
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
 $('#dedupeStudents').onclick=()=>{
   const status=$('#dedupeStatus');
-  const cleanText=v=>String(v??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/\s+/g,' ').trim().toLowerCase();
-  const fullName=s=>String((s.last||'')+' '+(s.first||'')).replace(/\s+/g,' ').trim();
-  const stripEndingNumber=v=>String(v??'').replace(/\s*[0-9٠-٩۰-۹]+\s*$/,'').trim();
-  const numbered=db.students.filter(s=>stripEndingNumber(fullName(s))!==fullName(s));
-  if(!numbered.length){status.textContent='لم يُعثر على أسماء تنتهي بأرقام.';alert(status.textContent);return;}
-  const targets=new Map();
+  const digits=/[0-9٠-٩۰-۹]+$/;
+  const stripEnd=(v)=>String(v??'').replace(/[\\s\\u00A0]*[0-9٠-٩۰-۹]+\\s*$/,'').trim();
+  const affected=[];
   for(const s of db.students){
-    if(stripEndingNumber(fullName(s))!==fullName(s))continue;
-    const key=cleanText(fullName(s))+'|'+cleanText(s.class||'');
-    if(key!=='|'&&!targets.has(key))targets.set(key,s);
-  }
-  const redirects=new Map(),pairs=[];
-  for(const old of numbered){
-    const key=cleanText(stripEndingNumber(fullName(old)))+'|'+cleanText(old.class||'');
-    const target=targets.get(key);
-    if(target&&target.id!==old.id){redirects.set(old.id,target.id);pairs.push({old,target});}
-  }
-  const unmatched=numbered.filter(s=>!redirects.has(s.id));
-  const preview=pairs.slice(0,10).map(p=>'• '+fullName(p.old)+' ← '+fullName(p.target)+' ('+(p.target.class||'دون قسم')+')').join('\n');
-  if(!pairs.length){
-    status.textContent='وُجدت '+numbered.length+' أسماء تنتهي بأرقام، لكن لم يوجد اسم مطابق بلا رقم في القسم نفسه. لم تُحذف أي بيانات.';
-    alert(status.textContent);return;
-  }
-  if(!confirm('سيتم دمج '+pairs.length+' سجلاً مع الاسم المطابق في القسم نفسه، ونقل سجلات الغياب والتأخر والمخالفات والاستدعاءات، ثم حذف السجل المنتهي برقم بعد الدمج.\nالأسماء التي لا يوجد لها تطابق ('+unmatched.length+') ستبقى كما هي.\nسيتم تنزيل نسخة احتياطية قبل التنفيذ.\n\n'+preview+'\n\nهل تريد المتابعة؟'))return;
-  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  const link=document.createElement('a');link.href=URL.createObjectURL(backup);link.download='mushrifi-before-merge-numbered-names-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1500);
-  for(const {old,target} of pairs){
-    for(const key of Object.keys(old)){
-      if(['id','last','first','class'].includes(key))continue;
-      const empty=target[key]===undefined||target[key]===null||String(target[key]).trim()==='';
-      const hasOld=old[key]!==undefined&&old[key]!==null&&String(old[key]).trim()!=='';
-      if(empty&&hasOld)target[key]=old[key];
+    const first=String(s.first??'');
+    const last=String(s.last??'');
+    let field=null, oldValue='';
+    if(first && digits.test(first)) { field='first'; oldValue=first; }
+    else if(!first && digits.test(last)) { field='last'; oldValue=last; }
+    else if(first && !digits.test(first) && digits.test(last)) { field='last'; oldValue=last; }
+    if(field){
+      const newValue=stripEnd(oldValue);
+      if(newValue!==oldValue) affected.push({student:s,field,oldValue,newValue});
     }
   }
-  for(const collection of ['attendance','documents','violations']){
-    for(const record of db[collection]||[])if(redirects.has(record.student))record.student=redirects.get(record.student);
-  }
-  const mergedIds=new Set(redirects.keys());
-  db.students=db.students.filter(s=>!mergedIds.has(s.id));
+  if(!affected.length){status.textContent='لم يُعثر على أسماء تنتهي بأرقام.';alert(status.textContent);return;}
+  const preview=affected.slice(0,15).map(x=>'• '+String(x.student.last||'')+' '+String(x.student.first||'')+' ← '+(x.field==='last'?x.newValue+' '+String(x.student.first||''):String(x.student.last||'')+' '+x.newValue)+' | القسم: '+(x.student.class||'غير محدد')).join('\\n');
+  const more=affected.length>15?'\\n... وهناك '+(affected.length-15)+' أسماء أخرى.':'';
+  if(!confirm('سيتم حذف الأرقام الموجودة في نهاية الاسم فقط لعدد '+affected.length+' تلميذاً.\\nلن يتم دمج أو حذف أي سجل، ولن تتغير الأقسام أو الصفات أو سجلات الغياب والمخالفات والوثائق.\\nسيتم تنزيل نسخة احتياطية قبل التنفيذ.\\n\\n'+preview+more+'\\n\\nهل تريد المتابعة؟'))return;
+  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const link=document.createElement('a');link.href=URL.createObjectURL(backup);link.download='mushrifi-before-name-clean-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1500);
+  for(const item of affected) item.student[item.field]=item.newValue;
   save();
-  status.textContent='اكتمل الدمج: '+pairs.length+' سجل. بقي '+unmatched.length+' اسم منتهٍ برقم لعدم وجود تطابق مطابق في القسم؛ لم تُحذف هذه السجلات.';
-  alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
+  status.textContent='تم تنظيف '+affected.length+' اسماً. لم يُحذف أو يُدمج أي تلميذ، وبقيت الأقسام والصفات والسجلات كما هي.';
+  alert(status.textContent+'\\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
 };
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
