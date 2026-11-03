@@ -139,7 +139,7 @@ function parseCSV(text, delimiter){
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
 $('#dedupeStudents').onclick=()=>{
-  const normalize=v=>String(v??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/\s+/g,' ').trim().toLowerCase();
+  const normalize=v=>String(v??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/[0-9٠-٩۰-۹]+$/g,'').replace(/\s+/g,' ').trim().toLowerCase();
   const groups=new Map();
   for(const s of db.students){
     const key=normalize((s.last||'')+' '+(s.first||''))+'|'+normalize(s.class||'');
