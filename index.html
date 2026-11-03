@@ -8,7 +8,7 @@
 :root{--navy:#173b58;--blue:#2878a8;--bg:#f3f6f9;--ink:#172b3a;--muted:#667987;--line:#dce5eb;--white:#fff;--red:#b74646;--green:#21845f}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
 header{background:var(--navy);color:white;padding:18px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
-header h1{margin:0;font-size:25px}header p{margin:5px 0 0;color:#d8e5ed;font-size:12px}.mark{font-size:34px}
+header h1{margin:0;font-size:25px}header p{margin:5px 0 0;color:#d8e5ed;font-size:12px}header p.credit{margin-top:9px;color:#fff;font-weight:bold;font-size:13px}.mark{font-size:34px}
 .wrap{max-width:1100px;margin:auto;padding:14px}.notice{background:#fff7df;border:1px solid #f0d995;border-radius:12px;padding:11px;font-size:12px;line-height:1.7;margin-bottom:12px}
 nav{display:flex;gap:7px;overflow:auto;padding:5px 0 12px}
 nav button,.btn{border:0;border-radius:10px;padding:10px 13px;background:#e2ebf1;color:var(--navy);font-weight:bold;white-space:nowrap;cursor:pointer}
@@ -29,7 +29,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 </style>
 </head>
 <body>
-<header><div><h1>مُشرفي</h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p></div><div class="mark">🎓</div></header>
+<header><div><h1>مُشرفي</h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p><p class="credit">إعداد وتطوير: Abdouche Hacene</p></div><div class="mark">🎓</div></header>
 <div class="wrap">
 <div class="notice"><b>نسخة تجريبية مرتبطة بخدمات Firebase:</b> التخزين المحلي هو الافتراضي، ويمكن للمشرف تسجيل الدخول واستخدام الرفع والاستعادة اليدويين من صفحة الإعدادات بعد تفعيل Firebase Authentication وقواعد Firestore. لا تُدخل بيانات حقيقية للتلاميذ قبل اعتماد الحماية وسياسة المؤسسة.</div>
 <nav class="no-print" id="nav">
