@@ -140,7 +140,7 @@ function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u064
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
 $('#dedupeStudents').onclick=()=>{
   const status=$('#dedupeStatus');
-  const hasDigit=s=>/[0-9٠-٩۰-۹]/.test(String((s.last||'')+' '+(s.first||'')));
+  const hasDigit=s=>/[0-9٠-٩۰-۹]+\\s*$/.test(String((s.last||'')+' '+(s.first||'')).trim());
   const normalize=v=>String(v??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/[0-9٠-٩۰-۹]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
   const numbered=db.students.filter(hasDigit);
   if(!numbered.length){status.textContent='لم يُعثر على أسماء تحتوي على أرقام.';alert(status.textContent);return;}
