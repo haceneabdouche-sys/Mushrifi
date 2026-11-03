@@ -113,8 +113,8 @@ function parseCSV(text, delimiter){
     if(ch==='"' && quoted && text[i+1]==='"'){field+='"';i++;}
     else if(ch==='"'){quoted=!quoted;}
     else if(ch===delimiter && !quoted){row.push(field);field='';}
-    else if((ch==='\\n'||ch==='\\r')&&!quoted){
-      if(ch==='\\r'&&text[i+1]==='\\n')i++;
+    else if((ch==='\n'||ch==='\r')&&!quoted){
+      if(ch==='\r'&&text[i+1]==='\n')i++;
       row.push(field);if(row.some(v=>v.trim()!==''))rows.push(row);row=[];field='';
     }else field+=ch;
   }
@@ -122,16 +122,16 @@ function parseCSV(text, delimiter){
   row.push(field);if(row.some(v=>v.trim()!==''))rows.push(row);
   return rows;
 }
-function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\\u0640\\s_\\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
-function normName(v){return String(v||'').normalize('NFKC').replace(/[\\u0640]/g,'').replace(/\\s+/g,' ').trim().toLowerCase();}
+function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
+function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
   try{
-    if(!/\\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
-    const raw=(await file.text()).replace(/^\\uFEFF/,'').replace(/\\u0000/g,'');
+    if(!/\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
+    const raw=(await file.text()).replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
-    const sample=raw.split(/\\r?\\n/).find(x=>x.trim())||'';
-    const delimiters=[',',';','\\t'];const delimiter=delimiters.sort((a,b)=>sample.split(b).length-sample.split(a).length)[0];
+    const sample=raw.split(/\r?\n/).find(x=>x.trim())||'';
+    const delimiters=[',',';','\t'];const delimiter=delimiters.sort((a,b)=>sample.split(b).length-sample.split(a).length)[0];
     const rows=parseCSV(raw,delimiter);
     if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
     const headers=rows[0].map(normHeader),find=names=>headers.findIndex(h=>names.includes(h));
@@ -152,8 +152,8 @@ $('#csvImport').onchange=async e=>{
       db.students.push({id:crypto.randomUUID(),last:fullName,first:'',class:cls,code:'',guardian:value(guardianIdx),phone:'',birthDate:value(dateIdx),status:attr,attribute:attr});
       existing.add(key);added++;
     }
-    save();alert('اكتمل الاستيراد.\\nالتلاميذ المضافون: '+added+'\\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
-  }catch(err){alert('تعذر استيراد الملف:\\n'+(err?.message||'خطأ غير معروف')+'\\n\\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+    save();alert('اكتمل الاستيراد.\nالتلاميذ المضافون: '+added+'\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
+  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
