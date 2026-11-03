@@ -139,45 +139,34 @@ function parseCSV(text, delimiter){
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
 $('#dedupeStudents').onclick=()=>{
-  const normalize=v=>String(v??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/[0-9٠-٩۰-۹]+\s*$/g,'').replace(/\s+/g,' ').trim().toLowerCase();
-  const groups=new Map();
-  for(const s of db.students){
-    // إزالة الرقم الملحق من كل حقل اسم على حدة قبل جمع أجزاء الاسم.
-    const fullName=normalize(s.last||'')+' '+normalize(s.first||'');
-    const key=normalize(fullName)+'|'+normalize(s.class||'');
-    if(key==='|')continue;
-    if(!groups.has(key))groups.set(key,[]);
-    groups.get(key).push(s);
-  }
-  // يعتمد كشف التكرار على الاسم والقسم فقط، دون رقم التسجيل أو الصفة أو غيرهما.
-  const duplicates=[...groups.values()].filter(g=>g.length>1);
-  const count=duplicates.reduce((n,g)=>n+g.length-1,0);
   const status=$('#dedupeStatus');
-  if(!count){status.textContent='لم يُعثر على تكرار يطابق الاسم والقسم.';alert(status.textContent);return;}
-  const sample=duplicates.slice(0,8).map(g=>'• '+(g[0].last||'')+' '+(g[0].first||'')+' — '+(g[0].class||'')).join('\n');
-  if(!confirm('عُثر على '+count+' ملفاً مكرراً ضمن '+duplicates.length+' مجموعة.\nستُنزل نسخة احتياطية أولاً، ثم تُدمج الملفات المتطابقة وتُنقل سجلاتها المرتبطة.\n\n'+sample+'\n\nهل تريد المتابعة؟'))return;
-  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  const link=document.createElement('a');link.href=URL.createObjectURL(backup);link.download='mushrifi-before-deduplication-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1500);
-  const redirects=new Map();
-  for(const group of duplicates){
-    const richness=s=>['last','first','class','code','guardian','phone','birthDate','status','attribute'].filter(k=>String(s[k]||'').trim()).length;
-    const hasTrailingNumber=s=>/[0-9٠-٩۰-۹]+\s*$/.test(String((s.last||'')+' '+(s.first||'')));
-    // نفضّل الاحتفاظ بالاسم الأصلي الخالي من رقم ملحق، ثم نفضّل الملف الأكثر اكتمالاً.
-    const keep=group.slice().sort((a,b)=>(Number(hasTrailingNumber(a))-Number(hasTrailingNumber(b)))||(richness(b)-richness(a)))[0];
-    for(const other of group){
-      if(other.id===keep.id)continue;
-      redirects.set(other.id,keep.id);
-      for(const field of ['last','first','class','code','guardian','phone','birthDate','status','attribute']){
-        if(!String(keep[field]||'').trim()&&String(other[field]||'').trim())keep[field]=other[field];
-      }
-    }
+  const hasDigit=s=>/[0-9٠-٩۰-۹]/.test(String((s.last||'')+' '+(s.first||'')));
+  const normalize=v=>String(v??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/[أإآٱ]/g,'ا').replace(/ى/g,'ي').replace(/[0-9٠-٩۰-۹]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+  const numbered=db.students.filter(hasDigit);
+  if(!numbered.length){status.textContent='لم يُعثر على أسماء تحتوي على أرقام.';alert(status.textContent);return;}
+  const cleanByKey=new Map();
+  for(const s of db.students.filter(x=>!hasDigit(x))){
+    const key=normalize((s.last||'')+' '+(s.first||''))+'|'+normalize(s.class||'');
+    if(key!=='|'&&!cleanByKey.has(key))cleanByKey.set(key,s);
   }
+  const redirects=new Map();
+  for(const s of numbered){
+    const key=normalize((s.last||'')+' '+(s.first||''))+'|'+normalize(s.class||'');
+    const match=cleanByKey.get(key);
+    if(match)redirects.set(s.id,match.id);
+  }
+  const sample=numbered.slice(0,12).map(s=>'• '+(s.last||'')+' '+(s.first||'')+' — '+(s.class||'')).join('\n');
+  if(!confirm('عُثر على '+numbered.length+' تلميذ(اً) يحتوي اسمه على رقم.\nسيتم حذف هذه الأسماء فقط، ولن تُحذف الأسماء الخالية من الأرقام. ستُنقل السجلات المرتبطة إلى الاسم المطابق الخالي من الأرقام عند وجوده، وتبقى السجلات الأخرى محفوظة.\n\n'+sample+'\n\nسيتم تنزيل نسخة احتياطية قبل التنفيذ. هل تريد المتابعة؟'))return;
+  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const link=document.createElement('a');link.href=URL.createObjectURL(backup);link.download='mushrifi-before-removing-numbered-names-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1500);
   for(const collection of ['attendance','documents','violations']){
     for(const record of db[collection]||[])if(redirects.has(record.student))record.student=redirects.get(record.student);
   }
-  db.students=db.students.filter(s=>!redirects.has(s.id));
+  const removedIds=new Set(numbered.map(s=>s.id));
+  db.students=db.students.filter(s=>!removedIds.has(s.id));
   save();
-  status.textContent='اكتمل التنظيف: أُزيل '+redirects.size+' ملفاً مكرراً، مع الاحتفاظ بالسجلات المرتبطة. تم تنزيل نسخة احتياطية.';
+  const unmatched=numbered.length-redirects.size;
+  status.textContent='تم حذف '+numbered.length+' اسماً يحتوي على أرقام. نُقلت سجلات '+redirects.size+' منها إلى الاسم المطابق، وبقيت سجلات '+unmatched+' اسماً محفوظة دون حذف.';
   alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية في مكان آمن.');
 };
 $('#csvImport').onchange=async e=>{
