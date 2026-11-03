@@ -159,7 +159,7 @@ $('#dedupeStudents').onclick=()=>{
   const redirects=new Map();
   for(const group of duplicates){
     const richness=s=>['last','first','class','code','guardian','phone','birthDate','status','attribute'].filter(k=>String(s[k]||'').trim()).length;
-    const hasTrailingNumber=s=>/[0-9٠-٩۰-۹]+\\s*$/.test(String((s.last||'')+' '+(s.first||'')));
+    const hasTrailingNumber=s=>/[0-9٠-٩۰-۹]+\s*$/.test(String((s.last||'')+' '+(s.first||'')));
     // نفضّل الاحتفاظ بالاسم الأصلي الخالي من رقم ملحق، ثم نفضّل الملف الأكثر اكتمالاً.
     const keep=group.slice().sort((a,b)=>(Number(hasTrailingNumber(a))-Number(hasTrailingNumber(b)))||(richness(b)-richness(a)))[0];
     for(const other of group){
