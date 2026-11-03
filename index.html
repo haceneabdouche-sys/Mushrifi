@@ -85,7 +85,7 @@ $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').fo
 function render(){
 $('#sStudents').textContent=db.students.length;$('#sAbs').textContent=db.attendance.filter(x=>x.type==='غياب').length;$('#sLate').textContent=db.attendance.filter(x=>x.type==='تأخر').length;$('#sViol').textContent=db.violations.length;
 let q=($('#studentSearch')?.value||'').trim().toLowerCase();
-$('#studentsRows').innerHTML=db.students.filter(s=>(s.last+s.first+s.class+s.code).toLowerCase().includes(q)).map(s=>`<tr><td>${esc(s.last)} ${esc(s.first)}</td><td>${esc(s.class)}</td><td>${esc(s.status||s.attribute||'')}</td><td>${esc(s.birthDate||'')}</td><td>${esc(s.code)}</td><td><div class="actions"><button class="btn small" onclick="studentHistory('${s.id}')">الملف</button><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا يوجد تلاميذ.</td></tr>';
+$('#studentsRows').innerHTML=db.students.filter(s=>(s.last+s.first+s.class+s.code).toLowerCase().includes(q)).map(s=>`<tr><td>${esc(s.last)} ${esc(s.first)}</td><td>${esc(s.class)}</td><td>${esc(s.status||s.attribute||'')}</td><td>${esc(s.birthDate||'')}</td><td>${esc(s.code)}</td><td><div class="actions"><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراء...</option><option value="absence">غياب</option><option value="late">تأخر</option><option value="report">تقرير</option><option value="violation">مخالفة</option><option value="summons">استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا يوجد تلاميذ.</td></tr>';
 $$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';sel.innerHTML=first+db.students.map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
 $('#attRows').innerHTML=db.attendance.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)} ${esc(x.period)}</td><td>${esc(x.justified)}</td><td>${esc(x.notes)}</td><td><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا توجد سجلات.</td></tr>';
 $('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
@@ -98,6 +98,19 @@ $('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.at
 $('#docForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);let d={id:crypto.randomUUID(),type:f.get('type'),student:f.get('student'),date:f.get('date'),appointment:f.get('appointment'),reason:f.get('reason')};db.documents.push(d);e.target.reset();save();printDoc(d.id)};
 $('#violForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.violations.push({id:crypto.randomUUID(),student:f.get('student'),date:f.get('date'),type:f.get('type'),description:f.get('description'),action:f.get('action')});e.target.reset();save();alert('تم حفظ الواقعة')};
 $('#studentSearch').oninput=render;
+window.studentAction=(el,id)=>{
+  const action=el.value;el.value='';if(!action)return;
+  const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  if(action==='absence'||action==='late'){
+    go('attendance');const form=$('#attForm');form.elements.student.value=id;form.elements.type.value=action==='absence'?'غياب':'تأخر';form.elements.date.value=today();form.elements.period.focus();
+  }else if(action==='report'){
+    studentHistory(id);
+  }else if(action==='violation'){
+    go('violations');const form=$('#violForm');form.elements.student.value=id;form.elements.date.value=today();form.elements.description.focus();
+  }else if(action==='summons'){
+    go('documents');const form=$('#docForm');form.elements.type.value='استدعاء ولي';form.elements.student.value=id;form.elements.date.value=today();form.elements.reason.focus();
+  }
+};
 window.delStudent=id=>{if(confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.')){db.students=db.students.filter(s=>s.id!==id);save()}};
 window.delRecord=(kind,id)=>{if(confirm('هل تريد حذف هذا السجل؟')){db[kind]=db[kind].filter(x=>x.id!==id);save()}};
 window.studentHistory=id=>{let s=student(id);let a=db.attendance.filter(x=>x.student===id),v=db.violations.filter(x=>x.student===id),d=db.documents.filter(x=>x.student===id);$('#reportOutput').innerHTML=`<h2>الملف الفردي: ${esc(s.last)} ${esc(s.first)}</h2><p>القسم: ${esc(s.class)} · رقم التسجيل: ${esc(s.code)}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.map(x=>`<p>${esc(x.date)} – ${esc(x.type)} – ${esc(x.justified)}</p>`).join('')||'لا توجد'}<h3>المخالفات (${v.length})</h3>${v.map(x=>`<p>${esc(x.date)} – ${esc(x.type)} – ${esc(x.description)}</p>`).join('')||'لا توجد'}<h3>الوثائق (${d.length})</h3>${d.map(x=>`<p>${esc(x.date)} – ${esc(x.type)}</p>`).join('')||'لا توجد'}`;go('reports')};
