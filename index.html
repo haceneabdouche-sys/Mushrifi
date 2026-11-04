@@ -141,7 +141,7 @@ function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,
 $('#dedupeStudents').onclick=()=>{
   const status=$('#dedupeStatus');
   const digits=/[0-9٠-٩۰-۹]+$/;
-  const stripEnd=(v)=>String(v??'').replace(/[\\s\\u00A0]*[0-9٠-٩۰-۹]+\\s*$/,'').trim();
+  const stripEnd=(v)=>String(v??'').replace(/[\s\u00A0]*[0-9٠-٩۰-۹]+\s*$/,'').trim();
   const affected=[];
   for(const s of db.students){
     const first=String(s.first??'');
