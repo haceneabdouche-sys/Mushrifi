@@ -64,7 +64,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <section id="settings" class="page hidden">
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
-<div class="panel"><h2>تنظيف الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط. لا يدمج التلاميذ ولا يحذف سجلاتهم، ولا يغيّر القسم أو الصفة أو بيانات الغياب والمخالفات والوثائق. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn danger" id="dedupeStudents" type="button">حذف الأرقام من نهاية الأسماء</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
+<div class="panel"><h2>الإجراء الأول: حذف الأرقام من الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط، دون حذف التلميذ أو أي معلومة من سجلاته. تبقى معرّفات التلاميذ والأقسام والصفات وسجلات الغياب والتأخر والمخالفات والوثائق كما هي. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn primary" id="dedupeStudents" type="button">تنفيذ حذف الأرقام فقط</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
 <div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
@@ -155,31 +155,25 @@ $('#clearStudents').onclick=()=>{
 };
 $('#dedupeStudents').onclick=()=>{
   const status=$('#dedupeStatus');
-  const digits=/[0-9٠-٩۰-۹]+\\s*$/;
   const stripEnd=(v)=>String(v??'').replace(/[\s\u00A0]*[0-9٠-٩۰-۹]+\s*$/,'').trim();
   const affected=[];
   for(const s of db.students){
-    const first=String(s.first??'');
-    const last=String(s.last??'');
-    let field=null, oldValue='';
-    if(first && digits.test(first)) { field='first'; oldValue=first; }
-    else if(!first && digits.test(last)) { field='last'; oldValue=last; }
-    else if(first && !digits.test(first) && digits.test(last)) { field='last'; oldValue=last; }
-    if(field){
+    for(const field of ['last','first']){
+      const oldValue=String(s[field]??'');
       const newValue=stripEnd(oldValue);
       if(newValue!==oldValue) affected.push({student:s,field,oldValue,newValue});
     }
   }
   if(!affected.length){status.textContent='لم يُعثر على أسماء تنتهي بأرقام.';alert(status.textContent);return;}
-  const preview=affected.slice(0,15).map(x=>'• '+String(x.student.last||'')+' '+String(x.student.first||'')+' ← '+(x.field==='last'?x.newValue+' '+String(x.student.first||''):String(x.student.last||'')+' '+x.newValue)+' | القسم: '+(x.student.class||'غير محدد')).join('\\n');
-  const more=affected.length>15?'\\n... وهناك '+(affected.length-15)+' أسماء أخرى.':'';
-  if(!confirm('سيتم حذف الأرقام الموجودة في نهاية الاسم فقط لعدد '+affected.length+' تلميذاً.\\nلن يتم دمج أو حذف أي سجل، ولن تتغير الأقسام أو الصفات أو سجلات الغياب والمخالفات والوثائق.\\nسيتم تنزيل نسخة احتياطية قبل التنفيذ.\\n\\n'+preview+more+'\\n\\nهل تريد المتابعة؟'))return;
+  const preview=affected.slice(0,15).map(x=>'• '+String(x.student.last||'')+' '+String(x.student.first||'')+' ← '+(x.field==='last'?x.newValue+' '+String(x.student.first||''):String(x.student.last||'')+' '+x.newValue)+' | القسم: '+(x.student.class||'غير محدد')).join('\n');
+  const more=affected.length>15?'\n... وهناك '+(affected.length-15)+' تعديلات أخرى.':'';
+  if(!confirm('الإجراء الأول: حذف الأرقام الموجودة في نهاية الاسم فقط. عدد التعديلات: '+affected.length+'.\nلن يُحذف أي تلميذ أو سجل، ولن تتغير معرّفات التلاميذ أو الأقسام أو الصفات أو معلومات الغياب والتأخر والمخالفات والوثائق.\nستُنزل نسخة احتياطية قبل التنفيذ.\n\n'+preview+more+'\n\nهل تريد المتابعة؟'))return;
   const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  const link=document.createElement('a');link.href=URL.createObjectURL(backup);link.download='mushrifi-before-name-clean-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1500);
+  const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-before-name-clean-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
   for(const item of affected) item.student[item.field]=item.newValue;
   save();
-  status.textContent='تم تنظيف '+affected.length+' اسماً. لم يُحذف أو يُدمج أي تلميذ، وبقيت الأقسام والصفات والسجلات كما هي.';
-  alert(status.textContent+'\\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
+  status.textContent='تم حذف الأرقام من '+affected.length+' خانة اسم. لم يُحذف أي تلميذ أو سجل، وبقيت جميع المعلومات الأخرى كما هي.';
+  alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
 };
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
