@@ -157,7 +157,7 @@ $('#dedupeStudents').onclick=()=>{
   const status=$('#dedupeStatus');
   // افحص حقول أسماء التلميذ المعروفة، بما فيها صيغ الاستيراد المختلفة.
   const nameKey=/^(last|first|name|fullname|full_name|studentname|student_name|surname|firstname|first_name|lastname|last_name|nom|prenom|nomcomplet|nom_complet)$/i;
-  const stripEnd=v=>String(v??'').replace(/[\\s\\u00A0\\u200e\\u200f\\u202a-\\u202e]*\\p{N}+[\\s\\u00A0\\u200e\\u200f\\u202a-\\u202e]*$/u,'').trim();
+  const stripEnd=v=>String(v??'').replace(/[ \t\u00A0]*[0-9٠-٩۰-۹]+[ \t\u00A0]*$/,'').trim();
   const affected=[];
   let checked=0;
   for(const s of db.students){
