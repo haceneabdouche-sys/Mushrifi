@@ -132,13 +132,19 @@ window.saveAttendanceEdit=id=>{
 };
 window.studentHistory=id=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
-  const a=db.attendance.filter(x=>String(x.student)===sid);
+  const normStudentName=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+  const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''));
+  const belongsToStudent=record=>String(record.student??'')===sid||normStudentName(record.studentName)===fullStudentName||normStudentName(record.student)===fullStudentName;
+  const a=db.attendance.filter(belongsToStudent);
   const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
+  const hoursOf=record=>{let h=parseHours(record.hours);if(h===''||Number.isNaN(h))h=parseHours(record.period);return typeof h==='number'&&Number.isFinite(h)&&h>=0?h:0;};
+  const totalHours=items=>items.reduce((sum,item)=>sum+hoursOf(item),0);
+  const absHours=totalHours(abs),lateHours=totalHours(late),allHours=absHours+lateHours;
   const statusOf=x=>String(x.justified??'غير مبرر').trim();
   const justified=items=>items.filter(x=>statusOf(x)==='مبرر').length;
   const unjustified=items=>items.filter(x=>statusOf(x)==='غير مبرر'||statusOf(x)==='').length;
   const pending=items=>items.filter(x=>statusOf(x)==='قيد التبرير').length;
-  const v=db.violations.filter(x=>String(x.student)===sid),d=db.documents.filter(x=>String(x.student)===sid);
+  const v=db.violations.filter(belongsToStudent),d=db.documents.filter(belongsToStudent);
   const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
   const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));
@@ -148,7 +154,7 @@ window.studentHistory=id=>{
   go('reports');
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.print()">طباعة الملف</button></div>
   <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><p>القسم: ${esc(s.class)} · رقم التسجيل: ${esc(s.code||'—')}</p>
-  <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
+  <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب</small><strong>${absHours}</strong></div><div class="stat"><small>مجموع ساعات التأخر</small><strong>${lateHours}</strong></div><div class="stat"><small>مجموع الساعات الكلي</small><strong>${allHours}</strong></div><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
   <h3>تفصيل الغيابات (${abs.length})</h3>${statusSummary(abs)}${attendanceList(abs)}
   <h3>تفصيل التأخرات (${late.length})</h3>${statusSummary(late)}${attendanceList(late)}
   <h3>المخالفات (${v.length})</h3>${v.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<div class="panel"><b>${esc(x.date)}</b> · ${esc(x.type)}<p>الوصف: ${esc(x.description||'—')}</p><p>الإجراء والمتابعة: ${esc(x.action||'—')}</p></div>`).join('')||'<p class="empty">لا توجد مخالفات.</p>'}
