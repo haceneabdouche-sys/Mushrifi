@@ -130,14 +130,15 @@ window.saveAttendanceEdit=id=>{
   r.hours=hours;r.justified=justified;r.notes=notes;save();alert('تم تحديث عدد الساعات وحالة التبرير والملاحظات.');
 };
 window.studentHistory=id=>{
-  const s=student(id);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
-  const a=db.attendance.filter(x=>x.student===id);
+  const sid=String(id);const s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
+  const a=db.attendance.filter(x=>String(x.student)===sid);
   const abs=a.filter(x=>x.type==='غياب'),late=a.filter(x=>x.type==='تأخر');
   const count=(items,status)=>items.filter(x=>(x.justified||'غير مبرر')===status).length;
-  const v=db.violations.filter(x=>x.student===id),d=db.documents.filter(x=>x.student===id);
+  const v=db.violations.filter(x=>String(x.student)===sid),d=db.documents.filter(x=>String(x.student)===sid);
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
   const statusSummary=items=>`<p>مبرر: <b>${count(items,'مبرر')}</b> · غير مبرر: <b>${count(items,'غير مبرر')}</b> · قيد التبرير: <b>${count(items,'قيد التبرير')}</b></p>`;
   const attendanceList=items=>items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<div class="panel"><b>${esc(x.date)}</b> · ${esc(x.type)} · ${esc(x.justified||'غير مبرر')}<p>الفترة: ${esc(x.period||'—')} · الساعات: ${esc(x.hours??'—')}</p><p>الملاحظات: ${esc(x.notes||'—')}</p></div>`).join('')||'<p class="empty">لا توجد سجلات.</p>';
+  go('reports');
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.print()">طباعة الملف</button></div>
   <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><p>القسم: ${esc(s.class)} · رقم التسجيل: ${esc(s.code||'—')}</p>
   <div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div></div>
@@ -145,7 +146,6 @@ window.studentHistory=id=>{
   <h3>تفصيل التأخرات (${late.length})</h3>${statusSummary(late)}${attendanceList(late)}
   <h3>المخالفات (${v.length})</h3>${v.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<div class="panel"><b>${esc(x.date)}</b> · ${esc(x.type)}<p>الوصف: ${esc(x.description||'—')}</p><p>الإجراء والمتابعة: ${esc(x.action||'—')}</p></div>`).join('')||'<p class="empty">لا توجد مخالفات.</p>'}
   <h3>الاستدعاءات والإشعارات (${d.length})</h3>${d.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<div class="panel"><b>${esc(x.date)}</b> · ${esc(x.type)}<p>السبب: ${esc(x.reason||'—')}</p><p>موعد الحضور: ${esc(x.appointment||'—')}</p></div>`).join('')||'<p class="empty">لا توجد استدعاءات أو إشعارات.</p>'}`;
-  go('reports');
 };
 window.printDoc=id=>{let d=db.documents.find(x=>x.id===id),s=student(d.student);let w=window.open('','_blank');w.document.write(`<html lang="ar" dir="rtl"><meta charset="utf-8"><title>${esc(d.type)}</title><style>body{font-family:Tahoma,Arial;padding:35px;line-height:2}h2{text-align:center} .sig{display:flex;justify-content:space-between;margin-top:80px}</style><h3>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')}</h3><p>${esc(db.settings.location||'بوسكن – ولاية المدية')}</p><h2>${esc(d.type)}</h2><p>إلى ولي التلميذ: ${esc(s?.guardian||'ولي التلميذ المحترم')}</p><p>التلميذ(ة): <b>${esc(s?.last||'')} ${esc(s?.first||'')}</b></p><p>القسم: ${esc(s?.class||'')}</p><p>التاريخ: ${esc(d.date)}</p><p>الموضوع: ${esc(d.reason)}</p>${d.appointment?`<p>موعد الحضور: ${esc(d.appointment)}</p>`:''}<p>يرجى الاطلاع واتخاذ ما يلزم.</p><div class="sig"><span>إمضاء الولي</span><span>إمضاء وختم الإدارة</span></div><script>window.onload=()=>window.print()<\/script></html>`);w.document.close()};
 $('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!id||x.student===id)&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.map(x=>`<p>${esc(x.date)} – ${esc(name(x.student))} – ${esc(x.type)} – ${esc(x.justified)}</p>`).join('')||'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.map(x=>`<p>${esc(x.date)} – ${esc(name(x.student))} – ${esc(x.type)} – ${esc(x.description)}</p>`).join('')||'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.map(x=>`<p>${esc(x.date)} – ${esc(name(x.student))} – ${esc(x.type)}</p>`).join('')||'لا توجد وثائق'}`};
