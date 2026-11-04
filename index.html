@@ -50,7 +50,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table class="students-table"><colgroup><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:14%"><col style="width:23%"></colgroup><thead><tr><th>الاسم واللقب</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
 <section id="attendance" class="page hidden">
-<div class="panel"><h2>تسجيل غياب أو تأخر</h2><form id="attForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type"><option value="غياب">غياب</option><option value="تأخر">تأخر</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div><div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="اليوم كاملاً أو 08:15"></div><div><label>عدد ساعات الغياب</label><input name="hours" type="number" min="0" max="24" step="0.5" placeholder="مثال: 2"></div></div><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>مبرر</option><option>قيد التبرير</option></select></div></div><label>ملاحظات</label><textarea name="notes"></textarea><button class="btn primary">تسجيل الحالة</button></form></div>
+<div class="panel"><h2>تسجيل غياب أو تأخر</h2><form id="attForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type"><option value="غياب">غياب</option><option value="تأخر">تأخر</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div><div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="اليوم كاملاً أو 08:15"></div><div><label>عدد ساعات الغياب</label><input name="hours" type="text" inputmode="decimal" placeholder="مثال: 7 ساعات أو 7.5 ساعة"></div></div><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>مبرر</option><option>قيد التبرير</option></select></div></div><label>ملاحظات</label><textarea name="notes"></textarea><button class="btn primary">تسجيل الحالة</button></form></div>
 <div class="panel"><h2>سجل الغيابات والتأخرات</h2><div class="tablewrap"><table><thead><tr><th>الإجراءات</th><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody id="attRows"></tbody></table></div></div>
 </section>
 <section id="documents" class="page hidden">
@@ -80,6 +80,7 @@ const DBKEY='mushrifi_v1';
 let db=JSON.parse(localStorage.getItem(DBKEY)||'{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}');
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const save=()=>{localStorage.setItem(DBKEY,JSON.stringify(db));render()};
+const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const student=id=>db.students.find(x=>x.id===id);
 const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim();for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>x.student===id&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
@@ -97,7 +98,7 @@ let all=[...db.attendance.map(x=>({date:x.date,t:name(x.student),desc:x.type})),
 $('#recent').innerHTML=all.length?all.map(x=>`<p>${esc(x.date)} · ${esc(x.t)} · <span class="pill">${esc(x.desc)}</span></p>`).join(''):'لا توجد عمليات مسجلة بعد.';
 }
 $('#studentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.students.push({id:crypto.randomUUID(),last:f.get('last').trim(),first:f.get('first').trim(),class:f.get('class').trim(),code:f.get('code'),guardian:f.get('guardian'),phone:f.get('phone')});e.target.reset();save();alert('تم حفظ التلميذ')};
-$('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.attendance.push({id:crypto.randomUUID(),student:f.get('student'),type:f.get('type'),date:f.get('date'),period:f.get('period'),hours:f.get('hours'),justified:f.get('justified'),notes:f.get('notes')});e.target.reset();save();alert('تم تسجيل الحالة')};
+$('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),hours=parseHours(f.get('hours'));if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}db.attendance.push({id:crypto.randomUUID(),student:f.get('student'),type:f.get('type'),date:f.get('date'),period:f.get('period'),hours,justified:f.get('justified'),notes:f.get('notes')});e.target.reset();save();alert('تم تسجيل الحالة')};
 $('#docForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);let d={id:crypto.randomUUID(),type:f.get('type'),student:f.get('student'),date:f.get('date'),appointment:f.get('appointment'),reason:f.get('reason')};db.documents.push(d);e.target.reset();save();printDoc(d.id)};
 $('#violForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.violations.push({id:crypto.randomUUID(),student:f.get('student'),date:f.get('date'),type:f.get('type'),description:f.get('description'),action:f.get('action')});e.target.reset();save();alert('تم حفظ الواقعة')};
 $('#studentSearch').oninput=render;
@@ -119,14 +120,14 @@ window.delRecord=(kind,id)=>{if(confirm('هل تريد حذف هذا السجل�
 window.editAttendance=id=>{
   const r=db.attendance.find(x=>x.id===id);if(!r)return;
   const row=document.querySelector('tr[data-att-id="'+CSS.escape(id)+'"]');if(!row)return;
-  row.innerHTML=`<td><div class="actions"><button class="btn small primary" onclick="saveAttendanceEdit('${id}')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td><td>${esc(r.date)}</td><td>${esc(name(r.student))}</td><td>${esc(r.type)} ${esc(r.period)}<label>عدد الساعات</label><input id="editHours" type="number" min="0" max="24" step="0.5" value="${esc(r.hours??'')}" style="width:85px"></td><td><label>حالة التبرير</label><select id="editJustified"><option value="غير مبرر" ${r.justified==='غير مبرر'?'selected':''}>غير مبرر</option><option value="مبرر" ${r.justified==='مبرر'?'selected':''}>مبرر</option><option value="قيد التبرير" ${r.justified==='قيد التبرير'?'selected':''}>قيد التبرير</option></select></td><td><label>الملاحظات</label><textarea id="editAttendanceNotes" rows="2" style="width:100%;min-width:120px">${esc(r.notes||'')}</textarea></td>`;
+  row.innerHTML=`<td><div class="actions"><button class="btn small primary" onclick="saveAttendanceEdit('${id}')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td><td>${esc(r.date)}</td><td>${esc(name(r.student))}</td><td>${esc(r.type)} ${esc(r.period)}<label>عدد الساعات</label><input id="editHours" type="text" inputmode="decimal" value="${esc(r.hours??'')}" placeholder="مثال: 7 ساعات" style="width:110px"></td><td><label>حالة التبرير</label><select id="editJustified"><option value="غير مبرر" ${r.justified==='غير مبرر'?'selected':''}>غير مبرر</option><option value="مبرر" ${r.justified==='مبرر'?'selected':''}>مبرر</option><option value="قيد التبرير" ${r.justified==='قيد التبرير'?'selected':''}>قيد التبرير</option></select></td><td><label>الملاحظات</label><textarea id="editAttendanceNotes" rows="2" style="width:100%;min-width:120px">${esc(r.notes||'')}</textarea></td>`;
 };
 window.saveAttendanceEdit=id=>{
   const r=db.attendance.find(x=>x.id===id);if(!r)return;
-  const hours=document.getElementById('editHours').value.trim();
+  const hours=parseHours(document.getElementById('editHours').value);
   const justified=document.getElementById('editJustified').value;
   const notes=document.getElementById('editAttendanceNotes').value;
-  if(hours!==''&&(!Number.isFinite(Number(hours))||Number(hours)<0||Number(hours)>24)){alert('أدخل عدد ساعات بين 0 و24.');return;}
+  if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}
   r.hours=hours;r.justified=justified;r.notes=notes;save();alert('تم تحديث عدد الساعات وحالة التبرير والملاحظات.');
 };
 window.studentHistory=id=>{
