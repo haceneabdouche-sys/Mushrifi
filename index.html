@@ -65,6 +65,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
 <div class="panel"><h2>تنظيف الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط. لا يدمج التلاميذ ولا يحذف سجلاتهم، ولا يغيّر القسم أو الصفة أو بيانات الغياب والمخالفات والوثائق. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn danger" id="dedupeStudents" type="button">حذف الأرقام من نهاية الأسماء</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
+<div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
 <div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
 <p id="cloudStatus" class="pill">جارٍ تهيئة الاتصال...</p>
@@ -138,6 +139,18 @@ function parseCSV(text, delimiter){
 }
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+$('#clearStudents').onclick=()=>{
+  const status=$('#clearStudentsStatus');
+  if(!db.students.length){status.textContent='قائمة التلاميذ فارغة بالفعل.';alert(status.textContent);return;}
+  const count=db.students.length;
+  if(!confirm('تحذير: سيتم حذف ملفات '+count+' تلميذاً من القائمة نهائياً على هذا الجهاز. ستبقى سجلات الغياب والتأخر والمخالفات والوثائق كما هي، لكن قد تظهر فيها أسماء غير معروفة لأن ملفات التلاميذ حُذفت. سيتم تنزيل نسخة احتياطية كاملة أولاً. هل تريد المتابعة؟'))return;
+  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-backup-before-clear-students-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  db.students=[];
+  save();
+  status.textContent='تم حذف قائمة التلاميذ ('+count+' تلميذاً). بقيت سجلات الغياب والتأخر والمخالفات والوثائق.';
+  alert(status.textContent+'\\nاحتفظ بالنسخة الاحتياطية لاسترجاع القائمة عند الحاجة.');
+};
 $('#dedupeStudents').onclick=()=>{
   const status=$('#dedupeStatus');
   const digits=/[0-9٠-٩۰-۹]+\\s*$/;
