@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#173b58"><title>مُشرفي | تسيير الحياة المدرسية</title>
-<link rel="manifest" href="manifest.webmanifest">
+
 <style>
 :root{--navy:#173b58;--blue:#2878a8;--bg:#f3f6f9;--ink:#172b3a;--muted:#667987;--line:#dce5eb;--white:#fff;--red:#b74646;--green:#21845f}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
@@ -37,7 +37,7 @@ body.locked .wrap,body.locked header,body.locked footer{display:none!important}#
 <header><div><h1>مُشرفي</h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p><p class="credit">إعداد وتطوير: Abdouche Hacene</p>
 <p style="margin:8px 0 0"><img src="./signature.svg" alt="إمضاء المطوّر" style="display:block;width:112px;height:112px;object-fit:contain;background:#fff;border-radius:8px;margin:auto"></p></div><div class="mark">🎓</div></header>
 <div class="wrap">
-<div class="notice"><b>نسخة تجريبية مرتبطة بخدمات Firebase:</b> التخزين المحلي هو الافتراضي، ويمكن للمشرف تسجيل الدخول واستخدام الرفع والاستعادة اليدويين من صفحة الإعدادات بعد تفعيل Firebase Authentication وقواعد Firestore. لا تُدخل بيانات حقيقية للتلاميذ قبل اعتماد الحماية وسياسة المؤسسة.</div>
+<div class="notice"><b>نسخة مستقلة تعمل محلياً:</b> تُحفظ سجلات التلاميذ على هذا الهاتف فقط، ولا تحتاج إلى حسابات أو مواقع خارجية.</div>
 <nav class="no-print" id="nav">
 <button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
 </nav>
@@ -75,11 +75,6 @@ body.locked .wrap,body.locked header,body.locked footer{display:none!important}#
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
  <div class="panel"><h2>حماية التطبيق</h2><p>يُقفل التطبيق عند مغادرته.</p><button class="btn" type="button" onclick="lockMushrifi()">قفل التطبيق الآن</button></div>
-<div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
-<p id="cloudStatus" class="pill">جارٍ تهيئة الاتصال...</p>
-<div id="signedOutBox"><label>البريد الإلكتروني لحساب المشرف</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@example.com"><label>كلمة المرور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة مرور Firebase Authentication"><button class="btn primary" id="loginBtn" type="button">تسجيل الدخول</button></div>
-<div id="signedInBox" class="hidden"><p>تم تسجيل الدخول بحساب المشرف.</p><button class="btn" id="syncUploadBtn" type="button">رفع بيانات هذا الجهاز إلى السحابة</button> <button class="btn" id="syncDownloadBtn" type="button">استعادة البيانات من السحابة إلى هذا الجهاز</button> <button class="btn danger" id="logoutBtn" type="button">تسجيل الخروج</button></div>
-<p class="muted">المزامنة يدوية وليست تلقائية: الرفع يستبدل نسخة السحابة ببيانات هذا الجهاز، والاستعادة تستبدل بيانات هذا الجهاز بنسخة السحابة. أنشئ نسخة احتياطية قبل كل عملية. لا تستخدم بيانات تلاميذ حقيقية قبل موافقة المؤسسة والتحقق من صلاحيات الوصول وسياسة حماية البيانات.</p></div>
 </section>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
 <script>
