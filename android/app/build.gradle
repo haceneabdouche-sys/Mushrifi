@@ -4,10 +4,10 @@ android {
     namespace 'dz.mushrifi.app'
     compileSdk 35
     defaultConfig {
-        applicationId 'dz.mushrifi.app'
+        applicationId 'dz.mushrifi.app.offline'
         minSdk 23
         targetSdk 35
-        versionCode 2
+        versionCode 1
         versionName '2.0.0'
     }
 }
