@@ -196,7 +196,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    @Override protected void onStop() { if (web != null && !isChangingConfigurations()) web.evaluateJavascript("if(window.lockMushrifi)window.lockMushrifi();", null); super.onStop(); }
+    @Override protected void onStop() { super.onStop(); }
 
     @Override public void onBackPressed() {
         if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
