@@ -10,6 +10,7 @@ import android.os.Build;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.Intent;
+import android.speech.RecognizerIntent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
@@ -53,11 +54,14 @@ public class MainActivity extends Activity {
             @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("application/json");
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                startActivityForResult(intent, PICK_FILE);
+                try {
+                    Intent intent = params.createIntent();
+                    startActivityForResult(intent, PICK_FILE);
+                } catch (Exception e) {
+                    fileCallback = null;
+                    callback.onReceiveValue(null);
+                    Toast.makeText(MainActivity.this, "تعذر فتح الكاميرا أو اختيار الملف", Toast.LENGTH_LONG).show();
+                }
                 return true;
             }
         });
@@ -78,6 +82,23 @@ public class MainActivity extends Activity {
                 intent.setType("application/json");
                 intent.putExtra(Intent.EXTRA_TITLE, "mushrifi-backup.json");
                 startActivityForResult(intent, SAVE_FILE);
+            });
+        }
+        @JavascriptInterface public void startArabicSpeech() {
+            runOnUiThread(() -> {
+                if (speechPending) return;
+                try {
+                    Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ar-DZ");
+                    intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "ar-DZ");
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "تحدث الآن بالعربية");
+                    speechPending = true;
+                    startActivityForResult(intent, SPEECH_REQUEST);
+                } catch (Exception e) {
+                    speechPending = false;
+                    Toast.makeText(MainActivity.this, "خدمة التعرف على الصوت غير متاحة. تحقق من تثبيت خدمة Google للتحدث.", Toast.LENGTH_LONG).show();
+                }
             });
         }
     }
@@ -113,7 +134,7 @@ public class MainActivity extends Activity {
                 } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);
             } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);
         } else if (requestCode == PICK_FILE && fileCallback != null) {
-            Uri[] result = resultCode == RESULT_OK && data != null ? new Uri[]{data.getData()} : null;
+            Uri[] result = resultCode == RESULT_OK ? WebChromeClient.FileChooserParams.parseResult(resultCode, data) : null;
             fileCallback.onReceiveValue(result);
             fileCallback = null;
         } else if (requestCode == SAVE_FILE) {
