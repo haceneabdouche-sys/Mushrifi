@@ -103,21 +103,27 @@ $('#recent').innerHTML=all.length?all.map(x=>`<p>${esc(x.date)} · ${esc(x.t)} �
 const normalizeArabic=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[ًٌٍَُِّْ]/g,'').replace(/[^\p{L}\p{N}\s.:-]/gu,' ').replace(/\s+/g,' ').trim();
 function parseVoiceDate(text){
  const t=normalizeArabic(text);
- const months={'يناير':'01','جانفي':'01','فبراير':'02','فيفري':'02','مارس':'03','أفريل':'04','ابريل':'04','أبريل':'04','ماي':'05','مايو':'05','يونيو':'06','جوان':'06','يوليو':'07','جويلية':'07','اغسطس':'08','أوت':'08','سبتمبر':'09','اكتوبر':'10','أكتوبر':'10','نوفمبر':'11','ديسمبر':'12'};
- const m=t.match(/(?:ليوم\s+)?(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\s*(\d{1,2})\s+([\p{L}]+)\s+(\d{4})/u);
+ const months={'يناير':'01','جانفي':'01','فبراير':'02','فيفري':'02','مارس':'03','افريل':'04','ابريل':'04','ماي':'05','مايو':'05','يونيو':'06','جوان':'06','يوليو':'07','جويلية':'07','اغسطس':'08','اوت':'08','سبتمبر':'09','اكتوبر':'10','نوفمبر':'11','ديسمبر':'12'};
+ const m=t.match(/(?:ليوم\\s+)?(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\\s*(\\d{1,2})\\s+([\\p{L}]+)\\s+(\\d{4})/u);
  if(!m)return '';
  const month=months[m[2]];if(!month)return '';
  return m[3]+'-'+month+'-'+String(m[1]).padStart(2,'0');
 }
 function parseVoiceHours(t){
  const s=normalizeArabic(t);
- let m=s.match(/(\d+(?:[.,٫]\d+)?)\s*(?:ساعه|ساعات|ساعة)?/);
+ const m=s.match(/(\\d+(?:[.,]\\d+)?)\\s*(?:ساعه|ساعات)/);
  if(m){const n=Number(m[1].replace(',','.'));if(n>=0&&n<=24)return n;}
  if(/ساعتين/.test(s))return 2;
- if(/ساعه ونصف|ساعة ونصف/.test(s))return 1.5;
- if(/ساعه واحده|ساعة واحدة|ساعه/.test(s))return 1;
+ if(/ساعه ونصف/.test(s))return 1.5;
  if(/ثلاث ساعات/.test(s))return 3;
  if(/اربع ساعات/.test(s))return 4;
+ if(/خمس ساعات/.test(s))return 5;
+ if(/ست ساعات/.test(s))return 6;
+ if(/سبع ساعات/.test(s))return 7;
+ if(/ثماني ساعات|ثمان ساعات/.test(s))return 8;
+ if(/تسع ساعات/.test(s))return 9;
+ if(/عشر ساعات/.test(s))return 10;
+ if(/ساعه واحده|ساعه/.test(s))return 1;
  return '';
 }
 function voiceStudentMatches(nameText){
