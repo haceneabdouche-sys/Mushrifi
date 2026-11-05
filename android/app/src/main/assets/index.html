@@ -80,8 +80,9 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const save=()=>{try{const json=JSON.stringify(db);localStorage.setItem(DBKEY,json);if(window.AndroidBridge&&typeof AndroidBridge.saveDatabase==='function'&&!AndroidBridge.saveDatabase(json))throw Error('تعذر الحفظ محلياً');render();return true}catch(e){alert('تعذر حفظ البيانات محلياً. صدّر نسخة احتياطية ثم أعد المحاولة.');return false}};
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const student=id=>db.students.find(x=>x.id===id);
-const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim();for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>x.student===id&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
+const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\\s+/g,' ');
+const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
+const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.name||s.fullName||'—';for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>normalizeStudentKey(x.student)===normalizeStudentKey(id)&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
 function go(page){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));$$('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function render(){
