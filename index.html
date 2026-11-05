@@ -37,7 +37,8 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <nav class="no-print" id="nav">
 <button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
 </nav>
-<section id="home" class="page">
+<section id="home" class="page"><section id="voiceAssistant" class="panel no-print"><h2>🎙️ التحدث إلى مُشرفي</h2><p class="muted">أعطِ أمراً صوتياً بالعربية، مثل: سجّل غياب وائل عيسو ليوم الأحد 8 نوفمبر 2026 الفترة الصباحية ساعتين.</p><button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button><p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p><div id="voiceTranscript" class="panel hidden"></div><div id="voiceConfirm" class="panel hidden"></div></section>
+
 <div class="grid">
 <div class="stat"><small>إجمالي التلاميذ</small><strong id="sStudents">0</strong></div><div class="stat"><small>الغيابات المسجلة</small><strong id="sAbs">0</strong></div><div class="stat"><small>التأخرات المسجلة</small><strong id="sLate">0</strong></div><div class="stat"><small>المخالفات المسجلة</small><strong id="sViol">0</strong></div>
 </div>
@@ -98,6 +99,63 @@ $('#docsRows').innerHTML=db.documents.slice().reverse().map(x=>`<div class="pane
 let all=[...db.attendance.map(x=>({date:x.date,t:name(x.student),desc:x.type})),...db.violations.map(x=>({date:x.date,t:name(x.student),desc:'مخالفة'}))].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
 $('#recent').innerHTML=all.length?all.map(x=>`<p>${esc(x.date)} · ${esc(x.t)} · <span class="pill">${esc(x.desc)}</span></p>`).join(''):'لا توجد عمليات مسجلة بعد.';
 }
+
+const normalizeArabic=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[ًٌٍَُِّْ]/g,'').replace(/[^\p{L}\p{N}\s.:-]/gu,' ').replace(/\s+/g,' ').trim();
+function parseVoiceDate(text){
+ const t=normalizeArabic(text);
+ const months={'يناير':'01','جانفي':'01','فبراير':'02','فيفري':'02','مارس':'03','أفريل':'04','ابريل':'04','أبريل':'04','ماي':'05','مايو':'05','يونيو':'06','جوان':'06','يوليو':'07','جويلية':'07','اغسطس':'08','أوت':'08','سبتمبر':'09','اكتوبر':'10','أكتوبر':'10','نوفمبر':'11','ديسمبر':'12'};
+ const m=t.match(/(?:ليوم\s+)?(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\s*(\d{1,2})\s+([\p{L}]+)\s+(\d{4})/u);
+ if(!m)return '';
+ const month=months[m[2]];if(!month)return '';
+ return m[3]+'-'+month+'-'+String(m[1]).padStart(2,'0');
+}
+function parseVoiceHours(t){
+ const s=normalizeArabic(t);
+ let m=s.match(/(\d+(?:[.,٫]\d+)?)\s*(?:ساعه|ساعات|ساعة)?/);
+ if(m){const n=Number(m[1].replace(',','.'));if(n>=0&&n<=24)return n;}
+ if(/ساعتين/.test(s))return 2;
+ if(/ساعه ونصف|ساعة ونصف/.test(s))return 1.5;
+ if(/ساعه واحده|ساعة واحدة|ساعه/.test(s))return 1;
+ if(/ثلاث ساعات/.test(s))return 3;
+ if(/اربع ساعات/.test(s))return 4;
+ return '';
+}
+function voiceStudentMatches(nameText){
+ const q=normalizeArabic(nameText);
+ return db.students.filter(st=>{const full=normalizeArabic((st.last||'')+' '+(st.first||''));return full===q||full.includes(q)||q.includes(full);});
+}
+function onArabicSpeechResult(raw){
+ $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ تحليل الأمر...';
+ $('#voiceTranscript').classList.remove('hidden');$('#voiceTranscript').textContent='سمعت: '+raw;
+ const t=normalizeArabic(raw);
+ if(!/سجل|سجّل|تسجيل/.test(t)||!/غياب/.test(t)){ $('#voiceStatus').textContent='حالياً يدعم المساعد الصوتي أمر تسجيل الغياب. جرّب: سجّل غياب [اسم التلميذ] ليوم [التاريخ] الفترة الصباحية ساعتين.';return;}
+ const nameMatch=String(raw).match(/(?:غياب|غيابا)\s+(.+?)\s+(?:ليوم|يوم)\b/i);
+ if(!nameMatch){$('#voiceStatus').textContent='لم أتمكن من تحديد اسم التلميذ. أعد الأمر واذكر الاسم بعد كلمة غياب.';return;}
+ const matches=voiceStudentMatches(nameMatch[1].replace(/\s+(الفترة|صباحا|صباحية|مساء|مسائية|ساعتين|ساعات?).*$/i,'').trim());
+ if(matches.length!==1){
+   $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أجد هذا الاسم في قائمة التلاميذ. تحقق من النطق أو الاسم المسجل.';
+   if(matches.length)$('#voiceTranscript').textContent+='\nالنتائج: '+matches.map(x=>(x.last+' '+x.first+' – '+x.class)).join(' / ');
+   return;
+ }
+ const st=matches[0],date=parseVoiceDate(raw),hours=parseVoiceHours(raw);
+ const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':'');
+ if(!date||!hours||!period){$('#voiceStatus').textContent='تعذر تحديد التاريخ أو عدد الساعات أو الفترة. أعد الأمر مع ذكرها بوضوح.';return;}
+ const [y,mo,d]=date.split('-').map(Number),check=new Date(y,mo-1,d);
+ if(check.getFullYear()!==y||check.getMonth()!==mo-1||check.getDate()!==d){$('#voiceStatus').textContent='التاريخ المذكور غير صحيح.';return;}
+ const data={student:st.id,date,type:'غياب',period,hours,justified:'غير مبرر',notes:'تم إدخال العملية بالأمر الصوتي'};
+ window.pendingVoiceAttendance=data;
+ $('#voiceConfirm').classList.remove('hidden');
+ $('#voiceConfirm').innerHTML='<h3>تأكيد تسجيل الغياب</h3><p><b>التلميذ:</b> '+esc(st.last+' '+st.first)+'</p><p><b>القسم:</b> '+esc(st.class)+'</p><p><b>التاريخ:</b> '+esc(date)+'</p><p><b>الفترة:</b> '+esc(period)+'</p><p><b>المدة:</b> '+esc(hours)+' ساعة</p><p><b>التبرير:</b> غير مبرر</p><button type="button" class="btn primary" id="confirmVoiceAttendance">تأكيد الحفظ</button> <button type="button" class="btn" id="cancelVoiceAttendance">إلغاء</button>';
+ $('#voiceStatus').textContent='راجع التفاصيل ثم أكد الحفظ. لم تُسجّل العملية بعد.';
+ $('#confirmVoiceAttendance').onclick=()=>{const a=window.pendingVoiceAttendance;if(!a)return;db.attendance.push({id:crypto.randomUUID(),...a});window.pendingVoiceAttendance=null;save();$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم تسجيل الغياب بنجاح.';};
+ $('#cancelVoiceAttendance').onclick=()=>{window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم تُحفظ أي بيانات.';};
+}
+$('#startVoiceBtn').onclick=()=>{
+ $('#voiceStatus').textContent='استمع الآن... تحدث بالعربية بعد ظهور نافذة الميكروفون.';
+ if(window.AndroidBridge&&typeof AndroidBridge.startArabicSpeech==='function'){AndroidBridge.startArabicSpeech();return;}
+ $('#voiceStatus').textContent='ميزة التحدث المباشر متاحة في نسخة Android المُحدّثة من التطبيق.';
+};
+
 $('#studentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.students.push({id:crypto.randomUUID(),last:f.get('last').trim(),first:f.get('first').trim(),class:f.get('class').trim(),code:f.get('code'),guardian:f.get('guardian'),phone:f.get('phone')});e.target.reset();save();alert('تم حفظ التلميذ')};
 $('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),period=String(f.get('period')||'').trim(),hours=parseHours(f.get('hours'));if(hours===''&&period&&parseHours(period)!==''){hours=parseHours(period);period='';}if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}db.attendance.push({id:crypto.randomUUID(),student:f.get('student'),type:f.get('type'),date:f.get('date'),period,hours,justified:f.get('justified'),notes:f.get('notes')});e.target.reset();save();alert('تم تسجيل الحالة')};
 function scheduleSummonsReminder(d){if(d.type!=='استدعاء ولي'||!d.appointment||!window.AndroidBridge||typeof AndroidBridge.scheduleSummonsReminder!=='function')return;const appointmentMs=new Date(d.appointment).getTime();if(Number.isFinite(appointmentMs))AndroidBridge.scheduleSummonsReminder(String(d.id),name(d.student),appointmentMs);}
