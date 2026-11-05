@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#173b58"><title>مُشرفي | تسيير الحياة المدرسية</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--navy:#173b58;--blue:#2878a8;--bg:#f3f6f9;--ink:#172b3a;--muted:#667987;--line:#dce5eb;--white:#fff;--red:#b74646;--green:#21845f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{background:var(--navy);color:white;padding:18px 16px;display:flex;justify-content:center;align-items:center;gap:12px;text-align:center;position:relative}
+header h1{margin:0;font-size:25px}header p{margin:5px 0 0;color:#d8e5ed;font-size:12px}header p.credit{margin:14px 0 0;color:#fff;font-weight:bold;font-size:21px;letter-spacing:.3px}.mark{font-size:34px;position:absolute;left:16px;top:50%;transform:translateY(-50%)}
+.wrap{max-width:1100px;margin:auto;padding:14px}.notice{background:#fff7df;border:1px solid #f0d995;border-radius:12px;padding:11px;font-size:12px;line-height:1.7;margin-bottom:12px}
+nav{display:flex;gap:7px;overflow:auto;padding:5px 0 12px}
+nav button,.btn{border:0;border-radius:10px;padding:10px 13px;background:#e2ebf1;color:var(--navy);font-weight:bold;white-space:nowrap;cursor:pointer}
+nav button.active,.btn.primary{background:var(--navy);color:white}.btn.danger{background:#fae7e7;color:var(--red)}.btn.small{padding:7px 10px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat,.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:14px}
+.stat small{color:var(--muted)}.stat strong{display:block;font-size:26px;margin-top:6px}
+.panel{margin-top:12px}.panel h2{font-size:18px;margin:0 0 12px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.tile{background:#f6f9fb;border:1px solid var(--line);border-radius:12px;padding:15px;text-align:center;cursor:pointer}.tile b{display:block;margin-top:7px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+input,select,textarea{width:100%;padding:11px;border:1px solid #ccd8e0;border-radius:9px;background:#fff;font:inherit;color:var(--ink);margin:5px 0 10px}
+label{font-size:13px;color:#405563}textarea{min-height:75px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{background:#f3f7fa}
+.tablewrap{overflow-x:auto;width:100%;-webkit-overflow-scrolling:touch}.attendance-table{min-width:760px;table-layout:auto}.attendance-table th,.attendance-table td{white-space:normal}.attendance-table td:nth-child(1),.attendance-table th:nth-child(1),.attendance-table td:nth-child(2),.attendance-table th:nth-child(2){white-space:nowrap}.attendance-table .actions{flex-wrap:nowrap}.students-table{min-width:820px;table-layout:fixed}.students-table th:nth-child(1),.students-table td:nth-child(1){width:22%}.students-table th:nth-child(2),.students-table td:nth-child(2){width:13%}.students-table th:nth-child(3),.students-table td:nth-child(3){width:13%}.students-table th:nth-child(4),.students-table td:nth-child(4){width:15%}.students-table th:nth-child(5),.students-table td:nth-child(5){width:14%}.students-table th:nth-child(6),.students-table td:nth-child(6){width:23%}.students-table td{overflow-wrap:anywhere}.students-table .actions{align-items:center;flex-wrap:nowrap}.students-table .studentAction{min-width:130px;width:130px;margin:0}.students-table .btn{flex:0 0 auto}.hidden{display:none!important}.muted{color:var(--muted);font-size:12px}.pill{background:#edf3f7;border-radius:20px;padding:4px 8px;font-size:11px}
+.actions{display:flex;gap:5px;flex-wrap:wrap}.empty{padding:20px;text-align:center;color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+.student-name{border:0;background:transparent;color:var(--primary);font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:2px}.student-name:focus{outline:2px solid var(--primary);border-radius:4px}.record-photo{display:block;max-width:100%;width:auto;max-height:260px;object-fit:contain;border:1px solid var(--line);border-radius:10px;margin:8px 0}.photo-preview{max-width:100%;max-height:220px;display:block;margin:8px 0;border-radius:10px;border:1px solid var(--line)}
+@media(max-width:700px){.grid{grid-template-columns:repeat(2,1fr)}.tiles{grid-template-columns:repeat(2,1fr)}header h1{font-size:22px}.attendance-table,.attendance-table tbody{display:block;width:100%}.attendance-table thead{display:none}.attendance-table tr{display:block;width:100%;margin:10px 0;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}.attendance-table td{display:grid;grid-template-columns:88px minmax(0,1fr);align-items:start;column-gap:10px;box-sizing:border-box;min-width:0;width:100%;padding:9px 2px;white-space:normal;border-bottom:1px solid var(--line);overflow-wrap:anywhere;text-align:right}.attendance-table td:last-child{border-bottom:0}.attendance-table td::before{content:attr(data-label);display:block;min-width:0;font-weight:bold;color:var(--muted);font-size:12px;white-space:normal;overflow-wrap:anywhere}.attendance-table td>*{min-width:0;max-width:100%;overflow-wrap:anywhere}.attendance-table td:first-child{display:block}.attendance-table td:first-child::before{display:none}.attendance-table .actions{flex-wrap:wrap}.attendance-table .actions .btn{flex:0 0 auto}}
+@media print{header,nav,.no-print,footer{display:none!important}body{background:white}.wrap{max-width:none;padding:0}.panel,.stat{border:0}.print-title{display:block!important}}
+
+body.locked .wrap,body.locked header,body.locked footer{display:none!important}#lockScreen{display:none;position:fixed;inset:0;z-index:99999;background:#f2f6f8;align-items:center;justify-content:center;padding:22px}body.locked #lockScreen{display:flex}#lockCard{width:100%;max-width:390px;background:white;border-radius:18px;padding:25px;box-shadow:0 12px 40px #173b5820;text-align:center}#lockCard input{direction:ltr;text-align:center;letter-spacing:3px;font-size:20px}#lockMessage{min-height:24px;color:#a33;font-size:13px}
+</style>
+</head>
+<body>
+<div id="lockScreen"><div id="lockCard"><h2>مُشرفي</h2><p id="lockIntro">أدخل كلمة المرور لفتح التطبيق</p><form id="lockForm"><input id="lockPassword" type="password" minlength="6" autocomplete="current-password" placeholder="كلمة المرور" required><input id="lockConfirm" type="password" minlength="6" autocomplete="new-password" placeholder="تأكيد كلمة المرور" style="display:none" required><button class="btn primary" id="lockSubmit" type="submit">فتح التطبيق</button></form><p id="lockMessage"></p><small>بياناتك محفوظة داخل هذا الهاتف فقط</small></div></div>
+
+<header><div><h1>مُشرفي</h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p><p class="credit">إعداد وتطوير: Abdouche Hacene</p>
+<p style="margin:8px 0 0"><img src="./signature.svg" alt="إمضاء المطوّر" style="display:block;width:112px;height:112px;object-fit:contain;background:#fff;border-radius:8px;margin:auto"></p></div><div class="mark">🎓</div></header>
+<div class="wrap">
+<div class="notice"><b>نسخة تجريبية مرتبطة بخدمات Firebase:</b> التخزين المحلي هو الافتراضي، ويمكن للمشرف تسجيل الدخول واستخدام الرفع والاستعادة اليدويين من صفحة الإعدادات بعد تفعيل Firebase Authentication وقواعد Firestore. لا تُدخل بيانات حقيقية للتلاميذ قبل اعتماد الحماية وسياسة المؤسسة.</div>
+<nav class="no-print" id="nav">
+<button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
+</nav>
+<section id="home" class="page"><section id="voiceAssistant" class="panel no-print"><h2>🎙️ التحدث إلى مُشرفي</h2><p class="muted">أعطِ أمراً صوتياً بالعربية، مثل: سجّل غياب وائل عيسو ليوم الأحد 8 نوفمبر 2026 الفترة الصباحية ساعتين.</p><button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button><p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p><div id="voiceTranscript" class="panel hidden"></div><div id="voiceConfirm" class="panel hidden"></div></section>
+
+<div class="grid">
+<div class="stat"><small>إجمالي التلاميذ</small><strong id="sStudents">0</strong></div><div class="stat"><small>الغيابات المسجلة</small><strong id="sAbs">0</strong></div><div class="stat"><small>التأخرات المسجلة</small><strong id="sLate">0</strong></div><div class="stat"><small>المخالفات المسجلة</small><strong id="sViol">0</strong></div>
+</div>
+<div class="panel"><h2>الوصول السريع</h2><div class="tiles">
+<div class="tile" data-go="students">👥<b>ملفات التلاميذ</b></div><div class="tile" data-go="attendance">🗓️<b>تسجيل غياب أو تأخر</b></div><div class="tile" data-go="documents">📨<b>إنشاء إشعار أو استدعاء</b></div><div class="tile" data-go="violations">⚠️<b>تسجيل مخالفة</b></div><div class="tile" data-go="reports">📊<b>التقارير</b></div><div class="tile" data-go="settings">☁️<b>النسخ والمزامنة</b></div>
+</div></div>
+<div class="panel"><h2>آخر العمليات</h2><div id="recent" class="empty">لا توجد عمليات مسجلة بعد.</div></div>
+</section>
+<section id="students" class="page hidden">
+<div class="panel"><h2>إضافة تلميذ</h2><form id="studentForm"><div class="row"><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div><div class="row"><div><label>القسم</label><input name="class" required placeholder="مثال: 1 ج م ع 1"></div><div><label>رقم التسجيل</label><input name="code"></div></div><div class="row"><div><label>اسم ولي الأمر (اختياري)</label><input name="guardian"></div><div><label>رقم الهاتف (اختياري)</label><input name="phone" inputmode="tel"></div></div><button class="btn primary">حفظ التلميذ</button></form></div>
+<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table class="students-table"><colgroup><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:14%"><col style="width:23%"></colgroup><thead><tr><th>الاسم واللقب</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+</section>
+<section id="attendance" class="page hidden">
+<div class="panel"><h2>تسجيل غياب أو تأخر</h2><form id="attForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type"><option value="غياب">غياب</option><option value="تأخر">تأخر</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div><div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="اليوم كاملاً أو 08:15"></div><div><label>عدد ساعات الغياب</label><input name="hours" type="text" inputmode="decimal" placeholder="مثال: 7 ساعات أو 7.5 ساعة"></div></div><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>مبرر</option><option>قيد التبرير</option></select></div></div><label>ملاحظات</label><textarea name="notes"></textarea><button class="btn primary">تسجيل الحالة</button></form></div>
+<div class="panel"><h2>سجل الغيابات والتأخرات</h2><div class="tablewrap"><table class="attendance-table"><thead><tr><th>الإجراءات</th><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody id="attRows"></tbody></table></div></div>
+</section>
+<section id="documents" class="page hidden">
+<div class="panel"><h2>إنشاء إشعار أو استدعاء</h2><form id="docForm"><label>نوع الوثيقة</label><select name="type"><option>إشعار غياب</option><option>استدعاء ولي</option><option>تنبيه</option></select><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>التاريخ</label><input name="date" type="date" required></div><div><label>موعد الحضور (للاستدعاء)</label><input name="appointment" type="datetime-local"></div></div><label>الموضوع / السبب</label><textarea name="reason" required></textarea><label>صورة الاستدعاء (اختياري)</label><input id="docPhoto" type="file" accept="image/*" capture="environment"><p class="muted">التقط صورة الاستدعاء بالكاميرا أو اختر صورة من الهاتف.</p><div id="docPhotoPreview"></div><button class="btn primary">إنشاء الوثيقة</button></form></div>
+<div class="panel"><h2>الوثائق المحفوظة</h2><div id="docsRows" class="empty">لا توجد وثائق بعد.</div></div></section>
+<section id="violations" class="page hidden">
+<div class="panel"><h2>تسجيل مخالفة أو واقعة</h2><form id="violForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>التاريخ</label><input name="date" type="date" required></div><div><label>نوع الواقعة</label><select name="type"><option>عدم الانضباط</option><option>إتلاف ممتلكات</option><option>مخالفة النظام الداخلي</option><option>سلوك آخر</option></select></div></div><label>وصف الواقعة</label><textarea name="description" required></textarea><label>الإجراء أو المتابعة</label><textarea name="action"></textarea><label>صورة تقرير السلوك (اختياري)</label><input id="violPhoto" type="file" accept="image/*" capture="environment"><p class="muted">التقط صورة التقرير بالكاميرا أو اختر صورة من الهاتف.</p><div id="violPhotoPreview"></div><button class="btn primary">حفظ الواقعة</button></form></div>
+<div class="panel"><h2>سجل المخالفات</h2><div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody id="violRows"></tbody></table></div></div></section>
+<section id="reports" class="page hidden">
+<div class="panel"><h2>التقارير والطباعة</h2><div class="row"><div><label>اختر التلميذ</label><select id="reportStudent" class="studentSelect"><option value="">كل التلاميذ</option></select></div><div><label>من تاريخ</label><input id="fromDate" type="date"></div><div><label>إلى تاريخ</label><input id="toDate" type="date"></div></div><button class="btn primary" id="makeReport">عرض التقرير</button> <button class="btn" onclick="window.print()">طباعة / حفظ PDF</button><div id="reportOutput" class="panel"><p class="muted">حدد نطاق التقرير ثم اضغط عرض التقرير.</p></div></div>
+</section>
+<section id="settings" class="page hidden">
+<div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
+<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
+<div class="panel"><h2>الإجراء الأول: حذف الأرقام من الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط، دون حذف التلميذ أو أي معلومة من سجلاته. تبقى معرّفات التلاميذ والأقسام والصفات وسجلات الغياب والتأخر والمخالفات والوثائق كما هي. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn primary" id="dedupeStudents" type="button">تنفيذ حذف الأرقام فقط</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
+<div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
+<div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
+ <div class="panel"><h2>حماية التطبيق</h2><p>يُقفل التطبيق عند مغادرته.</p><button class="btn" type="button" onclick="lockMushrifi()">قفل التطبيق الآن</button></div>
+<div class="panel"><h2>حساب المشرف والاتصال السحابي</h2>
+<p id="cloudStatus" class="pill">جارٍ تهيئة الاتصال...</p>
+<div id="signedOutBox"><label>البريد الإلكتروني لحساب المشرف</label><input id="authEmail" type="email" autocomplete="username" placeholder="name@example.com"><label>كلمة المرور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة مرور Firebase Authentication"><button class="btn primary" id="loginBtn" type="button">تسجيل الدخول</button></div>
+<div id="signedInBox" class="hidden"><p>تم تسجيل الدخول بحساب المشرف.</p><button class="btn" id="syncUploadBtn" type="button">رفع بيانات هذا الجهاز إلى السحابة</button> <button class="btn" id="syncDownloadBtn" type="button">استعادة البيانات من السحابة إلى هذا الجهاز</button> <button class="btn danger" id="logoutBtn" type="button">تسجيل الخروج</button></div>
+<p class="muted">المزامنة يدوية وليست تلقائية: الرفع يستبدل نسخة السحابة ببيانات هذا الجهاز، والاستعادة تستبدل بيانات هذا الجهاز بنسخة السحابة. أنشئ نسخة احتياطية قبل كل عملية. لا تستخدم بيانات تلاميذ حقيقية قبل موافقة المؤسسة والتحقق من صلاحيات الوصول وسياسة حماية البيانات.</p></div>
+</section>
+</div><footer>مُشرفي · نموذج أولي تجريبي · احمِ بيانات التلاميذ ولا تشارك النسخ الاحتياطية</footer>
+<script>
+const DBKEY='mushrifi_v1';
+const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}';
+let db=JSON.parse((window.AndroidBridge&&AndroidBridge.loadDatabase())||localStorage.getItem(DBKEY)||EMPTY_DB);
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const save=()=>{try{const json=JSON.stringify(db);localStorage.setItem(DBKEY,json);if(window.AndroidBridge&&typeof AndroidBridge.saveDatabase==='function'&&!AndroidBridge.saveDatabase(json))throw Error('تعذر الحفظ محلياً');render();return true}catch(e){alert('تعذر حفظ البيانات محلياً. صدّر نسخة احتياطية ثم أعد المحاولة.');return false}};
+const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const student=id=>db.students.find(x=>x.id===id);
+const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim();for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>x.student===id&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
+function go(page){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));$$('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
+$$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+function render(){
+$('#sStudents').textContent=db.students.length;$('#sAbs').textContent=db.attendance.filter(x=>x.type==='غياب').length;$('#sLate').textContent=db.attendance.filter(x=>x.type==='تأخر').length;$('#sViol').textContent=db.violations.length;
+let q=($('#studentSearch')?.value||'').trim().toLowerCase();
+$('#studentsRows').innerHTML=db.students.filter(s=>(s.last+s.first+s.class+s.code).toLowerCase().includes(q)).map(s=>`<tr><td><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(s.last)} ${esc(s.first)}</button></td><td>${esc(s.class)}</td><td>${esc(s.status||s.attribute||'')}</td><td>${esc(s.birthDate||'')}</td><td>${esc(s.code)}</td><td><div class="actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراء...</option><option value="absence">غياب</option><option value="late">تأخر</option><option value="report">تقرير</option><option value="violation">مخالفة</option><option value="summons">استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا يوجد تلاميذ.</td></tr>';
+$$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';sel.innerHTML=first+db.students.map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
+$('#attRows').innerHTML=db.attendance.slice().reverse().map(x=>`<tr data-att-id="${esc(x.id)}"><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="editAttendance('${x.id}')">تعديل السجل</button><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></div></td><td data-label="التاريخ">${esc(x.date)}</td><td data-label="التلميذ"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="الحالة">${esc(x.type)} ${esc(x.period)}${x.hours!==undefined&&x.hours!==''?' · '+esc(x.hours)+' ساعة':''}</td><td data-label="التبرير">${esc(x.justified)}</td><td data-label="ملاحظات">${esc(x.notes)}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا توجد سجلات.</td></tr>';
+$('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.description)}${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td>${esc(x.action)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
+$('#docsRows').innerHTML=db.documents.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>الموضوع</th><th>موعد الحضور</th><th>الصورة</th><th>الإجراءات</th></tr></thead><tbody>${db.documents.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td><td><div class="actions"><button class="btn small" onclick="printDoc('${x.id}')">طباعة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد وثائق.</div>';
+let all=[...db.attendance.map(x=>({date:x.date,t:name(x.student),desc:x.type})),...db.violations.map(x=>({date:x.date,t:name(x.student),desc:'مخالفة'}))].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+$('#recent').innerHTML=all.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>نوع العملية</th></tr></thead><tbody>${all.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.t)}</td><td><span class="pill">${esc(x.desc)}</span></td></tr>`).join('')}</tbody></table></div>`:'لا توجد عمليات مسجلة بعد.';
+}
+
+async function compressPhoto(file){if(!file||!file.type.startsWith('image/'))throw new Error('اختر ملف صورة صحيحاً.');const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('تعذرت قراءة الصورة.'));reader.readAsDataURL(file)});const img=await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>reject(new Error('تعذر فتح الصورة.'));image.src=data});const max=1100,scale=Math.min(1,max/Math.max(img.width,img.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',0.68)}
+function bindPhotoInput(inputId,previewId,formId){const input=document.getElementById(inputId),preview=document.getElementById(previewId),form=document.getElementById(formId);if(!input||!preview||!form)return;input.addEventListener('change',async()=>{const file=input.files&&input.files[0];if(!file)return;preview.textContent='جارٍ تجهيز الصورة...';try{const data=await compressPhoto(file);form.dataset.photo=data;preview.innerHTML='<img class="photo-preview" src="'+data+'" alt="معاينة الصورة"><p class="muted">تم تجهيز الصورة وإرفاقها بالسجل عند الحفظ.</p><button type="button" class="btn small" id="clear'+inputId+'">إزالة الصورة</button>';document.getElementById('clear'+inputId).onclick=()=>{form.dataset.photo='';input.value='';preview.innerHTML='';}}catch(err){form.dataset.photo='';input.value='';preview.textContent=err.message||'تعذر تجهيز الصورة.';}})}
+bindPhotoInput('docPhoto','docPhotoPreview','docForm');bindPhotoInput('violPhoto','violPhotoPreview','violForm');
+const normalizeArabic=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[ًٌٍَُِّْ]/g,'').replace(/[^\p{L}\p{N}\s.:-]/gu,' ').replace(/\s+/g,' ').trim();
+function parseVoiceDate(text){
+ const t=normalizeArabic(text);
+ const months={'يناير':'01','جانفي':'01','فبراير':'02','فيفري':'02','مارس':'03','افريل':'04','ابريل':'04','ماي':'05','مايو':'05','يونيو':'06','جوان':'06','يوليو':'07','جويلية':'07','اغسطس':'08','اوت':'08','سبتمبر':'09','اكتوبر':'10','نوفمبر':'11','ديسمبر':'12'};
+ const m=t.match(/(?:ليوم\s+)?(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\s*(\d{1,2})\s+([\p{L}]+)\s+(\d{4})/u);
+ if(!m)return '';
+ const month=months[m[2]];if(!month)return '';
+ return m[3]+'-'+month+'-'+String(m[1]).padStart(2,'0');
+}
+function parseVoiceHours(t){
+ const s=normalizeArabic(t);
+ const m=s.match(/(\d+(?:[.,]\d+)?)\s*(?:ساعه|ساعات)/);
+ if(m){const n=Number(m[1].replace(',','.'));if(n>=0&&n<=24)return n;}
+ if(/ساعتين/.test(s))return 2;
+ if(/ساعه ونصف/.test(s))return 1.5;
+ if(/ثلاث ساعات/.test(s))return 3;
+ if(/اربع ساعات/.test(s))return 4;
+ if(/خمس ساعات/.test(s))return 5;
+ if(/ست ساعات/.test(s))return 6;
+ if(/سبع ساعات/.test(s))return 7;
+ if(/ثماني ساعات|ثمان ساعات/.test(s))return 8;
+ if(/تسع ساعات/.test(s))return 9;
+ if(/عشر ساعات/.test(s))return 10;
+ if(/ساعه واحده|ساعه/.test(s))return 1;
+ return '';
+}
+function voiceStudentMatches(nameText){
+ const q=normalizeArabic(nameText);
+ return db.students.filter(st=>{const full=normalizeArabic((st.last||'')+' '+(st.first||''));return full===q||full.includes(q)||q.includes(full);});
+}
+function onArabicSpeechResult(raw){
+ $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ تحليل الأمر...';
+ $('#voiceTranscript').classList.remove('hidden');$('#voiceTranscript').textContent='سمعت: '+raw;
+ const t=normalizeArabic(raw);
+ if(!/سجل|سجّل|تسجيل/.test(t)||!/غياب/.test(t)){ $('#voiceStatus').textContent='حالياً يدعم المساعد الصوتي أمر تسجيل الغياب. جرّب: سجّل غياب [اسم التلميذ] ليوم [التاريخ] الفترة الصباحية ساعتين.';return;}
+ const nameMatch=String(raw).match(/(?:غياب|غيابا)\s+(.+?)\s+(?:ليوم|يوم)\b/i);
+ if(!nameMatch){$('#voiceStatus').textContent='لم أتمكن من تحديد اسم التلميذ. أعد الأمر واذكر الاسم بعد كلمة غياب.';return;}
+ const matches=voiceStudentMatches(nameMatch[1].replace(/\s+(الفترة|صباحا|صباحية|مساء|مسائية|ساعتين|ساعات?).*$/i,'').trim());
+ if(matches.length!==1){
+   $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أجد هذا الاسم في قائمة التلاميذ. تحقق من النطق أو الاسم المسجل.';
+   if(matches.length)$('#voiceTranscript').textContent+='\nالنتائج: '+matches.map(x=>(x.last+' '+x.first+' – '+x.class)).join(' / ');
+   return;
+ }
+ const st=matches[0],date=parseVoiceDate(raw),hours=parseVoiceHours(raw);
+ const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':'');
+ if(!date||!hours||!period){$('#voiceStatus').textContent='تعذر تحديد التاريخ أو عدد الساعات أو الفترة. أعد الأمر مع ذكرها بوضوح.';return;}
+ const [y,mo,d]=date.split('-').map(Number),check=new Date(y,mo-1,d);
+ if(check.getFullYear()!==y||check.getMonth()!==mo-1||check.getDate()!==d){$('#voiceStatus').textContent='التاريخ المذكور غير صحيح.';return;}
+ const data={student:st.id,date,type:'غياب',period,hours,justified:'غير مبرر',notes:'تم إدخال العملية بالأمر الصوتي'};
+ window.pendingVoiceAttendance=data;
+ $('#voiceConfirm').classList.remove('hidden');
+ $('#voiceConfirm').innerHTML='<h3>تأكيد تسجيل الغياب</h3><p><b>التلميذ:</b> '+esc(st.last+' '+st.first)+'</p><p><b>القسم:</b> '+esc(st.class)+'</p><p><b>التاريخ:</b> '+esc(date)+'</p><p><b>الفترة:</b> '+esc(period)+'</p><p><b>المدة:</b> '+esc(hours)+' ساعة</p><p><b>التبرير:</b> غير مبرر</p><button type="button" class="btn primary" id="confirmVoiceAttendance">تأكيد الحفظ</button> <button type="button" class="btn" id="cancelVoiceAttendance">إلغاء</button>';
+ $('#voiceStatus').textContent='راجع التفاصيل ثم أكد الحفظ. لم تُسجّل العملية بعد.';
+ $('#confirmVoiceAttendance').onclick=()=>{const a=window.pendingVoiceAttendance;if(!a)return;db.attendance.push({id:crypto.randomUUID(),...a});window.pendingVoiceAttendance=null;save();$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم تسجيل الغياب بنجاح.';};
+ $('#cancelVoiceAttendance').onclick=()=>{window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم تُحفظ أي بيانات.';};
+}
+$('#startVoiceBtn').onclick=()=>{
+ $('#voiceStatus').textContent='استمع الآن... تحدث بالعربية بعد ظهور نافذة الميكروفون.';
+ if(window.AndroidBridge&&typeof AndroidBridge.startArabicSpeech==='function'){AndroidBridge.startArabicSpeech();return;}
+ $('#voiceStatus').textContent='ميزة التحدث المباشر متاحة في نسخة Android المُحدّثة من التطبيق.';
+};
+
+$('#studentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.students.push({id:crypto.randomUUID(),last:f.get('last').trim(),first:f.get('first').trim(),class:f.get('class').trim(),code:f.get('code'),guardian:f.get('guardian'),phone:f.get('phone')});e.target.reset();save();alert('تم حفظ التلميذ')};
+$('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),period=String(f.get('period')||'').trim(),hours=parseHours(f.get('hours'));if(hours===''&&period&&parseHours(period)!==''){hours=parseHours(period);period='';}if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}db.attendance.push({id:crypto.randomUUID(),student:f.get('student'),type:f.get('type'),date:f.get('date'),period,hours,justified:f.get('justified'),notes:f.get('notes')});e.target.reset();save();alert('تم تسجيل الحالة')};
+function scheduleSummonsReminder(d){if(d.type!=='استدعاء ولي'||!d.appointment||!window.AndroidBridge||typeof AndroidBridge.scheduleSummonsReminder!=='function')return;const appointmentMs=new Date(d.appointment).getTime();if(Number.isFinite(appointmentMs))AndroidBridge.scheduleSummonsReminder(String(d.id),name(d.student),appointmentMs);}
+$('#docForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);let d={id:crypto.randomUUID(),type:f.get('type'),student:f.get('student'),date:f.get('date'),appointment:f.get('appointment'),reason:f.get('reason'),photo:e.target.dataset.photo||''};db.documents.push(d);if(!save()){db.documents.pop();return;}scheduleSummonsReminder(d);e.target.reset();e.target.dataset.photo='';$('#docPhotoPreview').innerHTML='';printDoc(d.id)};
+$('#violForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.violations.push({id:crypto.randomUUID(),student:f.get('student'),date:f.get('date'),type:f.get('type'),description:f.get('description'),action:f.get('action'),photo:e.target.dataset.photo||''});if(!save()){db.violations.pop();return;}e.target.reset();e.target.dataset.photo='';$('#violPhotoPreview').innerHTML='';alert('تم حفظ الواقعة وصورة التقرير إن وُجدت.')};
+$('#studentSearch').oninput=render;
+window.addEventListener('load',()=>{if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function'){db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}});
+window.studentAction=(el,id)=>{
+  const action=el.value;el.value='';if(!action)return;
+  const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  if(action==='absence'||action==='late'){
+    go('attendance');const form=$('#attForm');form.elements.student.value=id;form.elements.type.value=action==='absence'?'غياب':'تأخر';form.elements.date.value=today();form.elements.period.focus();
+  }else if(action==='report'){
+    studentHistory(id);
+  }else if(action==='violation'){
+    go('violations');const form=$('#violForm');form.elements.student.value=id;form.elements.date.value=today();form.elements.description.focus();
+  }else if(action==='summons'){
+    go('documents');const form=$('#docForm');form.elements.type.value='استدعاء ولي';form.elements.student.value=id;form.elements.date.value=today();form.elements.reason.focus();
+  }
+};
+window.delStudent=id=>{if(confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.')){db.students=db.students.filter(s=>s.id!==id);save()}};
+window.delRecord=(kind,id)=>{if(confirm('هل تريد حذف هذا السجل؟')){db[kind]=db[kind].filter(x=>x.id!==id);save()}};
+window.editAttendance=id=>{
+  const r=db.attendance.find(x=>x.id===id);if(!r)return;
+  const row=document.querySelector('tr[data-att-id="'+CSS.escape(id)+'"]');if(!row)return;
+  row.innerHTML=`<td><div class="actions"><button class="btn small primary" onclick="saveAttendanceEdit('${id}')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td><td>${esc(r.date)}</td><td>${esc(name(r.student))}</td><td>${esc(r.type)} ${esc(r.period)}<label>عدد الساعات</label><input id="editHours" type="text" inputmode="decimal" value="${esc(r.hours??(parseHours(r.period)!==''?parseHours(r.period):''))}" placeholder="مثال: 7 ساعات" style="width:110px"></td><td><label>حالة التبرير</label><select id="editJustified"><option value="غير مبرر" ${r.justified==='غير مبرر'?'selected':''}>غير مبرر</option><option value="مبرر" ${r.justified==='مبرر'?'selected':''}>مبرر</option><option value="قيد التبرير" ${r.justified==='قيد التبرير'?'selected':''}>قيد التبرير</option></select></td><td><label>الملاحظات</label><textarea id="editAttendanceNotes" rows="2" style="width:100%;min-width:120px">${esc(r.notes||'')}</textarea></td>`;
+};
+window.saveAttendanceEdit=id=>{
+  const r=db.attendance.find(x=>x.id===id);if(!r)return;
+  const hours=parseHours(document.getElementById('editHours').value);
+  const justified=document.getElementById('editJustified').value;
+  const notes=document.getElementById('editAttendanceNotes').value;
+  if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}
+  r.hours=hours;if(hours!==''&&parseHours(r.period)!=='')r.period='';r.justified=justified;r.notes=notes;save();alert('تم تحديث عدد الساعات وحالة التبرير والملاحظات.');
+};
+window.studentHistory=id=>{
+  const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
+  const normStudentName=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+  const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''));
+  const belongsToStudent=record=>String(record.student??'')===sid||normStudentName(record.studentName)===fullStudentName||normStudentName(record.student)===fullStudentName;
+  const a=db.attendance.filter(belongsToStudent);
+  const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
+  const hoursOf=record=>{let h=parseHours(record.hours);if(h===''||Number.isNaN(h))h=parseHours(record.period);return typeof h==='number'&&Number.isFinite(h)&&h>=0?h:0;};
+  const totalHours=items=>items.reduce((sum,item)=>sum+hoursOf(item),0);
+  const absHours=totalHours(abs),lateHours=totalHours(late),allHours=absHours+lateHours;
+  const statusOf=x=>String(x.justified??'غير مبرر').trim();
+  const justified=items=>items.filter(x=>statusOf(x)==='مبرر').length;
+  const unjustified=items=>items.filter(x=>statusOf(x)==='غير مبرر'||statusOf(x)==='').length;
+  const pending=items=>items.filter(x=>statusOf(x)==='قيد التبرير').length;
+  const v=db.violations.filter(belongsToStudent),d=db.documents.filter(belongsToStudent);
+  const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
+  const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
+  const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));
+  const statusSummary=items=>`<p>مبررة: <b>${justified(items)}</b> · غير مبررة: <b>${unjustified(items)}</b> · قيد التبرير: <b>${pending(items)}</b></p>`;
+  const attendanceList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الفترة</th><th>عدد الساعات</th><th>حالة التبرير</th><th>ملاحظات</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>{const detected=x.hours??(parseHours(x.period)!==''?parseHours(x.period):'—');const periodText=parseHours(x.period)!==''?'—':(x.period||'—');return `<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(periodText)}</td><td>${esc(detected)}</td><td>${esc(statusOf(x))}</td><td>${esc(x.notes||'—')}</td></tr>`;}).join('')}</tbody></table></div>`:'<p class="empty">لا توجد سجلات.</p>';
+  const documentList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.reason||'—')}</td><td>${esc(x.appointment||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد وثائق.</p>';
+  go('reports');
+  $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.print()">طباعة الملف</button></div>
+  <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><p>القسم: ${esc(s.class)} · رقم التسجيل: ${esc(s.code||'—')}</p>
+  <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب</small><strong>${absHours}</strong></div><div class="stat"><small>مجموع ساعات التأخر</small><strong>${lateHours}</strong></div><div class="stat"><small>مجموع الساعات الكلي</small><strong>${allHours}</strong></div><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
+  <h3>تفصيل الغيابات (${abs.length})</h3>${statusSummary(abs)}${attendanceList(abs)}
+  <h3>تفصيل التأخرات (${late.length})</h3>${statusSummary(late)}${attendanceList(late)}
+  <h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع المخالفة</th><th>الوصف</th><th>الإجراء والمتابعة</th><th>الصورة</th></tr></thead><tbody>${v.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.description||'—')}</td><td>${esc(x.action||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد مخالفات.</p>'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${documentList(d)}`;
+};
+window.printDoc=id=>{let d=db.documents.find(x=>x.id===id),s=student(d.student);let w=window.open('','_blank');w.document.write(`<html lang="ar" dir="rtl"><meta charset="utf-8"><title>${esc(d.type)}</title><style>body{font-family:Tahoma,Arial;padding:35px;line-height:2}h2{text-align:center} .sig{display:flex;justify-content:space-between;margin-top:80px}</style><h3>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')}</h3><p>${esc(db.settings.location||'بوسكن – ولاية المدية')}</p><h2>${esc(d.type)}</h2><p>إلى ولي التلميذ: ${esc(s?.guardian||'ولي التلميذ المحترم')}</p><p>التلميذ(ة): <b>${esc(s?.last||'')} ${esc(s?.first||'')}</b></p><p>القسم: ${esc(s?.class||'')}</p><p>التاريخ: ${esc(d.date)}</p><p>الموضوع: ${esc(d.reason)}</p>${d.appointment?`<p>موعد الحضور: ${esc(d.appointment)}</p>`:''}${d.photo?`<h3>صورة الوثيقة المرفقة</h3><img src="${esc(d.photo)}" style="max-width:100%;max-height:420px;object-fit:contain">`:''}<p>يرجى الاطلاع واتخاذ ما يلزم.</p><div class="sig"><span>إمضاء الولي</span><span>إمضاء وختم الإدارة</span></div><script>window.onload=()=>window.print()<\/script></html>`);w.document.close()};
+$('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!id||x.student===id)&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>الفترة</th><th>الساعات</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.period||'—')}</td><td>${esc(x.hours??'—')}</td><td>${esc(x.justified||'—')}</td><td>${esc(x.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody>${v.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>السبب</th><th>موعد الحضور</th></tr></thead><tbody>${d.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد وثائق'}`;};
+$('#saveSettings').onclick=()=>{db.settings.school=$('#schoolName').value;db.settings.location=$('#schoolLocation').value;save();alert('تم حفظ الإعدادات')};
+$('#exportData').onclick=()=>{const json=JSON.stringify(db,null,2);if(window.AndroidBridge&&typeof window.AndroidBridge.saveBackup==='function'){window.AndroidBridge.saveBackup(json);return;}let blob=new Blob([json],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mushrifi-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('#importData').onchange=async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!obj.students||!obj.attendance)throw Error();if(confirm('سيتم استبدال البيانات الحالية بالنسخة المختارة. متابعة؟')){db=obj;save();alert('تم الاستيراد')}}catch{alert('ملف النسخة الاحتياطية غير صالح')}};
+function parseCSV(text, delimiter){
+  const rows=[]; let row=[], field='', quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(ch==='"' && quoted && text[i+1]==='"'){field+='"';i++;}
+    else if(ch==='"'){quoted=!quoted;}
+    else if(ch===delimiter && !quoted){row.push(field);field='';}
+    else if((ch==='\n'||ch==='\r')&&!quoted){
+      if(ch==='\r'&&text[i+1]==='\n')i++;
+      row.push(field);if(row.some(v=>v.trim()!==''))rows.push(row);row=[];field='';
+    }else field+=ch;
+  }
+  if(quoted)throw new Error('يوجد اقتباس غير مغلق في الملف.');
+  row.push(field);if(row.some(v=>v.trim()!==''))rows.push(row);
+  return rows;
+}
+function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
+function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+$('#clearStudents').onclick=()=>{
+  const status=$('#clearStudentsStatus');
+  if(!db.students.length){status.textContent='قائمة التلاميذ فارغة بالفعل.';alert(status.textContent);return;}
+  const count=db.students.length;
+  if(!confirm('تحذير: سيتم حذف ملفات '+count+' تلميذاً من القائمة نهائياً على هذا الجهاز. ستبقى سجلات الغياب والتأخر والمخالفات والوثائق كما هي، لكن قد تظهر فيها أسماء غير معروفة لأن ملفات التلاميذ حُذفت. سيتم تنزيل نسخة احتياطية كاملة أولاً. هل تريد المتابعة؟'))return;
+  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-backup-before-clear-students-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
+  const names=new Map(db.students.map(s=>[s.id,(String(s.last||'')+' '+String(s.first||'')).trim()]));
+  for(const kind of ['attendance','documents','violations'])for(const record of db[kind]){if(!record.studentName&&names.has(record.student))record.studentName=names.get(record.student);}
+  db.students=[];
+  save();
+  status.textContent='تم حذف قائمة التلاميذ ('+count+' تلميذاً). بقيت سجلات الغياب والتأخر والمخالفات والوثائق.';
+  alert(status.textContent+'\\nاحتفظ بالنسخة الاحتياطية لاسترجاع القائمة عند الحاجة.');
+};
+$('#dedupeStudents').onclick=()=>{
+  const status=$('#dedupeStatus');
+  // افحص حقول أسماء التلميذ المعروفة، بما فيها صيغ الاستيراد المختلفة.
+  const nameKey=/^(last|first|name|fullname|full_name|studentname|student_name|surname|firstname|first_name|lastname|last_name|nom|prenom|nomcomplet|nom_complet)$/i;
+  const stripEnd=v=>String(v??'').replace(/[ \t\u00A0]*[0-9٠-٩۰-۹]+[ \t\u00A0]*$/,'').trim();
+  const affected=[];
+  let checked=0;
+  for(const s of db.students){
+    for(const field of Object.keys(s)){
+      if(!nameKey.test(field)) continue;
+      const oldValue=String(s[field]??'');
+      if(!oldValue.trim()) continue;
+      checked++;
+      const newValue=stripEnd(oldValue);
+      if(newValue!==oldValue) affected.push({student:s,field,oldValue,newValue});
+    }
+  }
+  if(!affected.length){
+    status.textContent='فُحص '+db.students.length+' تلميذاً و'+checked+' خانة اسم، ولم يُعثر على رقم في نهاية الاسم. لم تتغير أي معلومة.';
+    alert(status.textContent+'\\nإذا كان الاسم مثل «وائل عيسو1»، فتأكد أن هذه القائمة هي القائمة المحمّلة حالياً في التطبيق.');
+    return;
+  }
+  const preview=affected.slice(0,15).map(x=>'• '+String(x.student.last||x.student.name||x.student.fullName||'')+' '+String(x.student.first||'')+' ← '+x.newValue+' | القسم: '+(x.student.class||'غير محدد')).join('\\n');
+  const more=affected.length>15?'\\n... وهناك '+(affected.length-15)+' تعديلات أخرى.':'';
+  if(!confirm('الإجراء الأول: حذف الأرقام الموجودة في نهاية حقول أسماء التلاميذ فقط. عدد التعديلات: '+affected.length+'.\\nلن يُحذف أي تلميذ أو سجل، ولن تتغير الأقسام أو الصفات أو معرّفات التلاميذ أو معلومات الغياب والتأخر والمخالفات والوثائق.\\nستُنزل نسخة احتياطية قبل التنفيذ.\\n\\n'+preview+more+'\\n\\nهل تريد المتابعة؟'))return;
+  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-before-name-clean-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
+  for(const item of affected) item.student[item.field]=item.newValue;
+  save();
+  status.textContent='تم تنظيف '+affected.length+' خانة اسم. لم يُحذف أي تلميذ أو سجل، وبقيت جميع المعلومات الأخرى كما هي.';
+  alert(status.textContent+'\\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
+};
+$('#csvImport').onchange=async e=>{
+  const input=e.target,file=input.files?.[0];if(!file)return;
+  try{
+    if(!/\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
+    const raw=(await file.text()).replace(/^\uFEFF/,'').replace(/\u0000/g,'');
+    if(!raw.trim())throw new Error('الملف فارغ.');
+    const sample=raw.split(/\r?\n/).find(x=>x.trim())||'';
+    const delimiters=[',',';','\t'];const delimiter=delimiters.sort((a,b)=>sample.split(b).length-sample.split(a).length)[0];
+    const rows=parseCSV(raw,delimiter);
+    if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
+    const headers=rows[0].map(normHeader),find=names=>headers.findIndex(h=>names.includes(h));
+    const fullIdx=find(['الاسمواللقب','اللقبوالاسم','الاسم','nometprenom','nomprenom','fullname','name']);
+    const dateIdx=find(['تاريخالميلاد','تاريخالازدياد','تاريخالولادة','datenaissance','birthdate']);
+    const guardianIdx=find(['اسمالولي','الولي','اسمالاب','اسموليالامر','guardian']);
+    const attrIdx=find(['الصفة','النظام','نوعالنظام','صفةالتلميذ','regime','status','attribute']);
+    const classIdx=find(['القسم','الفوج','classe','class']);
+    if(fullIdx<0||classIdx<0)throw new Error('تعذر التعرف على عناوين الأعمدة. يجب أن يحتوي الملف على «الاسم واللقب» و«القسم».');
+    const existing=new Set(db.students.map(s=>normName(s.last+' '+(s.first||''))+'|'+normName(s.class)));
+    let added=0,skipped=0;
+    for(const cells of rows.slice(1)){
+      const value=i=>i<0?'':String(cells[i]??'').trim(),fullName=value(fullIdx),cls=value(classIdx);
+      if(!fullName||!cls){skipped++;continue;}
+      const key=normName(fullName)+'|'+normName(cls);
+      if(existing.has(key)){skipped++;continue;}
+      const attr=value(attrIdx);
+      db.students.push({id:crypto.randomUUID(),last:fullName,first:'',class:cls,code:'',guardian:value(guardianIdx),phone:'',birthDate:value(dateIdx),status:attr,attribute:attr});
+      existing.add(key);added++;
+    }
+    save();alert('اكتمل الاستيراد.\nالتلاميذ المضافون: '+added+'\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
+  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+  finally{input.value='';}
+};
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+render();
+</script>
+
+
+
+</body></html>
