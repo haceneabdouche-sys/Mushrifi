@@ -104,14 +104,14 @@ const normalizeArabic=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/
 function parseVoiceDate(text){
  const t=normalizeArabic(text);
  const months={'يناير':'01','جانفي':'01','فبراير':'02','فيفري':'02','مارس':'03','افريل':'04','ابريل':'04','ماي':'05','مايو':'05','يونيو':'06','جوان':'06','يوليو':'07','جويلية':'07','اغسطس':'08','اوت':'08','سبتمبر':'09','اكتوبر':'10','نوفمبر':'11','ديسمبر':'12'};
- const m=t.match(/(?:ليوم\\s+)?(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\\s*(\\d{1,2})\\s+([\\p{L}]+)\\s+(\\d{4})/u);
+ const m=t.match(/(?:ليوم\s+)?(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\s*(\d{1,2})\s+([\p{L}]+)\s+(\d{4})/u);
  if(!m)return '';
  const month=months[m[2]];if(!month)return '';
  return m[3]+'-'+month+'-'+String(m[1]).padStart(2,'0');
 }
 function parseVoiceHours(t){
  const s=normalizeArabic(t);
- const m=s.match(/(\\d+(?:[.,]\\d+)?)\\s*(?:ساعه|ساعات)/);
+ const m=s.match(/(\d+(?:[.,]\d+)?)\s*(?:ساعه|ساعات)/);
  if(m){const n=Number(m[1].replace(',','.'));if(n>=0&&n<=24)return n;}
  if(/ساعتين/.test(s))return 2;
  if(/ساعه ونصف/.test(s))return 1.5;
