@@ -28,10 +28,10 @@ import java.io.IOException;
 public class MainActivity extends Activity {
     private static final int PICK_FILE = 4101;
     private static final int SAVE_FILE = 4102;
-    private static final int NOTIFICATION_PERMISSION = 4103;
+    private static final int NOTIFICATION_PERMISSION = 4103;\n    private static final int SPEECH_REQUEST = 4104;
     private static final String CHANNEL_ID = "guardian_summons";
     private ValueCallback<Uri[]> fileCallback;
-    private String pendingBackup;
+    private String pendingBackup;\n    private boolean speechPending;
     private WebView web;
 
     @Override public void onCreate(Bundle state) {
@@ -101,7 +101,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_FILE && fileCallback != null) {
+        if (requestCode == SPEECH_REQUEST) {\n            speechPending = false;\n            if (resultCode == RESULT_OK && data != null) {\n                java.util.ArrayList<String> results = data.getStringArrayListExtra("android.speech.extra.RESULTS");\n                if (results != null && !results.isEmpty()) {\n                    String spoken = results.get(0).replace("\\\\", "\\\\\\\\").replace("'", "\\\\'").replace("\\n", " ");\n                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult('" + spoken + "');", null);\n                } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);\n            } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);\n        } else if (requestCode == PICK_FILE && fileCallback != null) {
             Uri[] result = resultCode == RESULT_OK && data != null ? new Uri[]{data.getData()} : null;
             fileCallback.onReceiveValue(result);
             fileCallback = null;
