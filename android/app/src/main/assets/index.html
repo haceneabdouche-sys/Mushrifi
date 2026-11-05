@@ -81,7 +81,7 @@ body.locked .wrap,body.locked header,body.locked footer{display:none!important}#
 <div id="signedInBox" class="hidden"><p>تم تسجيل الدخول بحساب المشرف.</p><button class="btn" id="syncUploadBtn" type="button">رفع بيانات هذا الجهاز إلى السحابة</button> <button class="btn" id="syncDownloadBtn" type="button">استعادة البيانات من السحابة إلى هذا الجهاز</button> <button class="btn danger" id="logoutBtn" type="button">تسجيل الخروج</button></div>
 <p class="muted">المزامنة يدوية وليست تلقائية: الرفع يستبدل نسخة السحابة ببيانات هذا الجهاز، والاستعادة تستبدل بيانات هذا الجهاز بنسخة السحابة. أنشئ نسخة احتياطية قبل كل عملية. لا تستخدم بيانات تلاميذ حقيقية قبل موافقة المؤسسة والتحقق من صلاحيات الوصول وسياسة حماية البيانات.</p></div>
 </section>
-</div><footer>مُشرفي · نموذج أولي تجريبي · احمِ بيانات التلاميذ ولا تشارك النسخ الاحتياطية</footer>
+</div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
 <script>
 const DBKEY='mushrifi_v1';
 const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}';
@@ -336,7 +336,7 @@ $('#csvImport').onchange=async e=>{
   }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
-if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+
 render();
 </script>
 
