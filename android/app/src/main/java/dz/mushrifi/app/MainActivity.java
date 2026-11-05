@@ -1,6 +1,14 @@
 package dz.mushrifi.app;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Build;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -20,12 +28,16 @@ import java.io.IOException;
 public class MainActivity extends Activity {
     private static final int PICK_FILE = 4101;
     private static final int SAVE_FILE = 4102;
+    private static final int NOTIFICATION_PERMISSION = 4103;
+    private static final String CHANNEL_ID = "guardian_summons";
     private ValueCallback<Uri[]> fileCallback;
     private String pendingBackup;
     private WebView web;
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        createNotificationChannel();
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
         web = new WebView(this);
         setContentView(web);
         WebSettings settings = web.getSettings();
@@ -51,6 +63,11 @@ public class MainActivity extends Activity {
     }
 
     public class AndroidBridge {
+        @JavascriptInterface public void scheduleSummonsReminder(String id, String studentName, long appointmentMillis) {
+            long reminderMillis = appointmentMillis - 24L * 60L * 60L * 1000L;
+            getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + appointmentMillis).apply();
+            scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
+        }
         @JavascriptInterface public void saveBackup(String json) {
             runOnUiThread(() -> {
                 pendingBackup = json;
@@ -61,6 +78,25 @@ public class MainActivity extends Activity {
                 startActivityForResult(intent, SAVE_FILE);
             });
         }
+    }
+
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "تذكير استدعاء ولي", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("تنبيه قبل موعد حضور ولي التلميذ بيوم واحد");
+            getSystemService(NotificationManager.class).createNotificationChannel(channel);
+        }
+    }
+
+    static void scheduleReminder(Context context, String id, String studentName, long reminderMillis) {
+        if (reminderMillis <= System.currentTimeMillis()) return;
+        Intent intent = new Intent(context, SummonsReminderReceiver.class);
+        intent.putExtra("student", studentName);
+        intent.putExtra("id", id);
+        PendingIntent pending = PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarms = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending);
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
