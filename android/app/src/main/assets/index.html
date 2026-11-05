@@ -338,6 +338,8 @@ $('#csvImport').onchange=async e=>{
 };
 
 render();
+function lockMushrifi(){document.body.classList.add('locked');const p=document.getElementById('lockPassword');if(p)p.value='';}
+(function(){if(!window.AndroidBridge||typeof AndroidBridge.hasPassword!=='function')return;const f=document.getElementById('lockForm'),p=document.getElementById('lockPassword'),c=document.getElementById('lockConfirm'),i=document.getElementById('lockIntro'),b=document.getElementById('lockSubmit'),m=document.getElementById('lockMessage');document.body.classList.add('locked');const setup=!AndroidBridge.hasPassword();if(setup){i.textContent='أنشئ كلمة مرور من 6 أحرف أو أرقام على الأقل';c.style.display='block';b.textContent='حفظ كلمة المرور وفتح التطبيق';}f.addEventListener('submit',function(e){e.preventDefault();m.textContent='';if(setup){if(p.value.length<6){m.textContent='كلمة المرور قصيرة.';return;}if(p.value!==c.value){m.textContent='كلمتا المرور غير متطابقتين.';return;}if(!AndroidBridge.setPassword(p.value)){m.textContent='تعذر حفظ كلمة المرور.';return;}document.body.classList.remove('locked');p.value='';c.value='';return;}if(AndroidBridge.verifyPassword(p.value)){document.body.classList.remove('locked');p.value='';}else{m.textContent='كلمة المرور غير صحيحة.';p.value='';p.focus();}});window.lockMushrifi=lockMushrifi;})();
 </script>
 
 
