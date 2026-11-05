@@ -101,7 +101,16 @@ public class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SPEECH_REQUEST) {\n            speechPending = false;\n            if (resultCode == RESULT_OK && data != null) {\n                java.util.ArrayList<String> results = data.getStringArrayListExtra("android.speech.extra.RESULTS");\n                if (results != null && !results.isEmpty()) {\n                    String spoken = results.get(0).replace("\\\\", "\\\\\\\\").replace("'", "\\\\'").replace("\\n", " ");\n                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult('" + spoken + "');", null);\n                } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);\n            } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);\n        } else if (requestCode == PICK_FILE && fileCallback != null) {
+        if (requestCode == SPEECH_REQUEST) {
+            speechPending = false;
+            if (resultCode == RESULT_OK && data != null) {
+                java.util.ArrayList<String> results = data.getStringArrayListExtra("android.speech.extra.RESULTS");
+                if (results != null && !results.isEmpty()) {
+                    String spoken = results.get(0);
+                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult(" + org.json.JSONObject.quote(spoken) + ");", null);
+                } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);
+            } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);
+        } else if (requestCode == PICK_FILE && fileCallback != null) {
             Uri[] result = resultCode == RESULT_OK && data != null ? new Uri[]{data.getData()} : null;
             fileCallback.onReceiveValue(result);
             fileCallback = null;
