@@ -28,10 +28,12 @@ import java.io.IOException;
 public class MainActivity extends Activity {
     private static final int PICK_FILE = 4101;
     private static final int SAVE_FILE = 4102;
-    private static final int NOTIFICATION_PERMISSION = 4103;\n    private static final int SPEECH_REQUEST = 4104;
+    private static final int NOTIFICATION_PERMISSION = 4103;
+    private static final int SPEECH_REQUEST = 4104;
     private static final String CHANNEL_ID = "guardian_summons";
     private ValueCallback<Uri[]> fileCallback;
-    private String pendingBackup;\n    private boolean speechPending;
+    private String pendingBackup;
+    private boolean speechPending;
     private WebView web;
 
     @Override public void onCreate(Bundle state) {
