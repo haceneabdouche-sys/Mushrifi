@@ -6,6 +6,13 @@ import android.app.PendingIntent;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Base64;
+import java.security.SecureRandom;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import android.os.Build;
 import android.Manifest;
 import android.content.pm.PackageManager;
@@ -39,6 +46,8 @@ public class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        localDb = new LocalDb(this);
+        securityPrefs = getSharedPreferences("mushrifi_security", MODE_PRIVATE);
         createNotificationChannel();
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
         web = new WebView(this);
@@ -65,10 +74,25 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
-        web.loadUrl("https://haceneabdouche-sys.github.io/Mushrifi/index.html");
+        web.loadUrl("file:///android_asset/index.html");
     }
 
+    private static class LocalDb extends SQLiteOpenHelper {
+        LocalDb(Context c) { super(c, "mushrifi_local.db", null, 1); }
+        @Override public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE appdata (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL)"); }
+        @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
+        synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? c.getString(0) : null; } }
+        synchronized boolean write(String json) { android.content.ContentValues v = new android.content.ContentValues(); v.put("id", 1); v.put("json", json); return getWritableDatabase().insertWithOnConflict("appdata", null, v, SQLiteDatabase.CONFLICT_REPLACE) != -1; }
+    }
+    private LocalDb localDb;
+    private android.content.SharedPreferences securityPrefs;
+    private static String derive(String password, byte[] salt) throws Exception { PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 150000, 256); try { return Base64.encodeToString(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded(), Base64.NO_WRAP); } finally { spec.clearPassword(); } }
     public class AndroidBridge {
+        @JavascriptInterface public String loadDatabase() { return localDb.read(); }
+        @JavascriptInterface public boolean saveDatabase(String json) { return json != null && localDb.write(json); }
+        @JavascriptInterface public boolean hasPassword() { return securityPrefs.contains("hash") && securityPrefs.contains("salt"); }
+        @JavascriptInterface public boolean setPassword(String password) { if (password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
+        @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
         @JavascriptInterface public void scheduleSummonsReminder(String id, String studentName, long appointmentMillis) {
             long reminderMillis = appointmentMillis - 24L * 60L * 60L * 1000L;
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + appointmentMillis).apply();
@@ -147,6 +171,8 @@ public class MainActivity extends Activity {
             pendingBackup = null;
         }
     }
+
+    @Override protected void onStop() { if (web != null && !isChangingConfigurations()) web.evaluateJavascript("if(window.lockMushrifi)window.lockMushrifi();", null); super.onStop(); }
 
     @Override public void onBackPressed() {
         if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
