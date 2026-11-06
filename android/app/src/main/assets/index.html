@@ -75,9 +75,19 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <script>
 const DBKEY='mushrifi_v1';
 const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}';
-let db=JSON.parse((window.AndroidBridge&&AndroidBridge.loadDatabase())||localStorage.getItem(DBKEY)||EMPTY_DB);
-const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const save=()=>{try{const json=JSON.stringify(db);localStorage.setItem(DBKEY,json);if(window.AndroidBridge&&typeof AndroidBridge.saveDatabase==='function'&&!AndroidBridge.saveDatabase(json))throw Error('تعذر الحفظ محلياً');render();return true}catch(e){alert('تعذر حفظ البيانات محلياً. صدّر نسخة احتياطية ثم أعد المحاولة.');return false}};
+const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase==='function');
+const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
+if(nativeJson==='!MUSHRIFI_DB_ERROR!'){document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2"><h2>تعذر فتح قاعدة بيانات مُشرفي</h2><p>لم يتم عرض قائمة فارغة حتى لا تُستبدل بياناتك. لا تحذف التطبيق. احتفظ بنسخة احتياطية إن كانت لديك، ثم تواصل مع الدعم.</p></main>';throw new Error('Mushrifi encrypted database could not be read');}
+const legacyJson=localStorage.getItem(DBKEY);
+let db=JSON.parse(nativeJson||legacyJson||EMPTY_DB);
+db.students=Array.isArray(db.students)?db.students:[];
+db.attendance=Array.isArray(db.attendance)?db.attendance:[];
+db.documents=Array.isArray(db.documents)?db.documents:[];
+db.violations=Array.isArray(db.violations)?db.violations:[];
+db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
+if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
+const $=s=>document.querySelector(s), $=s=>[...document.querySelectorAll(s)];
+const save=()=>{try{const json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json))throw Error('تعذر الحفظ المشفر محلياً');localStorage.removeItem(DBKEY);}else localStorage.setItem(DBKEY,json);render();return true}catch(e){alert('تعذر حفظ البيانات محلياً. لم يتم تأكيد الحفظ؛ لا تغلق التطبيق قبل تصدير نسخة احتياطية أو إعادة المحاولة.');return false}};
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -183,7 +193,7 @@ window.studentAction=(el,id)=>{
   }
 };
 window.delStudent=id=>{if(confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.')){db.students=db.students.filter(s=>s.id!==id);save()}};
-window.delRecord=(kind,id)=>{if(confirm('هل تريد حذف هذا السجل؟')){db[kind]=db[kind].filter(x=>x.id!==id);save()}};
+window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل؟'))return;const old=db[kind];db[kind]=old.filter(x=>x.id!==id);if(!save()){db[kind]=old;render();return;}if(kind==='documents'&&window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));};
 // مطابقة أسماء التلاميذ مع تجاهل التشكيل واختلافات الهمزة والمسافات
 const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ').toLocaleLowerCase('ar');
 const findStudentForRecord=record=>{
@@ -262,7 +272,7 @@ window.printDoc=id=>{let d=db.documents.find(x=>x.id===id),s=student(d.student);
 $('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!id||x.student===id)&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>الفترة</th><th>الساعات</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.period||'—')}</td><td>${esc(x.hours??'—')}</td><td>${esc(x.justified||'—')}</td><td>${esc(x.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody>${v.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>السبب</th><th>موعد الحضور</th></tr></thead><tbody>${d.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد وثائق'}`;};
 $('#saveSettings').onclick=()=>{db.settings.school=$('#schoolName').value;db.settings.location=$('#schoolLocation').value;save();alert('تم حفظ الإعدادات')};
 $('#exportData').onclick=()=>{const json=JSON.stringify(db,null,2);if(window.AndroidBridge&&typeof window.AndroidBridge.saveBackup==='function'){window.AndroidBridge.saveBackup(json);return;}let blob=new Blob([json],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mushrifi-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
-$('#importData').onchange=async e=>{try{let obj=JSON.parse(await e.target.files[0].text());if(!obj.students||!obj.attendance)throw Error();if(confirm('سيتم استبدال البيانات الحالية بالنسخة المختارة. متابعة؟')){db=obj;save();alert('تم الاستيراد')}}catch{alert('ملف النسخة الاحتياطية غير صالح')}};
+$('#importData').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!obj||typeof obj!=='object'||!Array.isArray(obj.students)||!Array.isArray(obj.attendance)||!Array.isArray(obj.documents)||!Array.isArray(obj.violations)||!obj.settings||typeof obj.settings!=='object')throw new Error('بنية النسخة الاحتياطية غير مكتملة أو غير صالحة.');if(!confirm('سيتم استبدال البيانات الحالية بالنسخة المختارة. يُنصح بتصدير نسخة من بياناتك الحالية أولاً. هل تريد المتابعة؟'))return;const old=db;db={...obj,students:obj.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,settings:obj.settings};if(!save()){db=old;render();throw new Error('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');}if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);alert('تم استرجاع النسخة الاحتياطية وحفظها محلياً.');}catch(err){alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'ملف غير صالح'));}finally{e.target.value='';}};
 function parseCSV(text, delimiter){
   const rows=[]; let row=[], field='', quoted=false;
   for(let i=0;i<text.length;i++){
