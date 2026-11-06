@@ -43,6 +43,7 @@ public class MainActivity extends Activity {
     private static final int SAVE_FILE = 4102;
     private static final int NOTIFICATION_PERMISSION = 4103;
     private static final int SPEECH_REQUEST = 4104;
+    private static final int PICK_BACKUP_NATIVE = 4105;
     private static final String CHANNEL_ID = "guardian_summons";
     private ValueCallback<Uri[]> fileCallback;
     private String pendingBackup;
@@ -133,6 +134,19 @@ public class MainActivity extends Activity {
             for (String id : prefs.getAll().keySet()) cancelReminder(MainActivity.this, id);
             prefs.edit().clear().apply();
         }
+        @JavascriptInterface public void pickBackupFile() {
+            runOnUiThread(() -> {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/plain", "application/octet-stream"});
+                    startActivityForResult(intent, PICK_BACKUP_NATIVE);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "تعذر فتح مدير الملفات", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
         @JavascriptInterface public void saveBackup(String json) {
             runOnUiThread(() -> {
                 pendingBackup = json;
@@ -201,6 +215,21 @@ public class MainActivity extends Activity {
                     web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult(" + org.json.JSONObject.quote(spoken) + ");", null);
                 } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);
             } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);
+        } else if (requestCode == PICK_BACKUP_NATIVE) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                try (java.io.InputStream in = getContentResolver().openInputStream(data.getData());
+                     java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                    if (in == null) throw new IOException("تعذر فتح الملف المحدد");
+                    byte[] buffer = new byte[8192]; int n;
+                    while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+                    byte[] bytes = out.toByteArray();
+                    if (bytes.length == 0) throw new IOException("الملف المحدد فارغ فعلياً");
+                    String json = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+                    web.evaluateJavascript("window.onNativeBackupLoaded && window.onNativeBackupLoaded(" + org.json.JSONObject.quote(json) + ");", null);
+                } catch (Exception e) {
+                    Toast.makeText(this, "تعذرت قراءة النسخة: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+            }
         } else if (requestCode == PICK_FILE && fileCallback != null) {
             Uri[] result = resultCode == RESULT_OK ? WebChromeClient.FileChooserParams.parseResult(resultCode, data) : null;
             fileCallback.onReceiveValue(result);
