@@ -344,9 +344,9 @@ async function importBackupText(raw){
   raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
   if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('محتوى الملف ليس JSON سليماً أو أن الملف ليس نسخة مُشرفي.');}
-  if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students)||!Array.isArray(obj.attendance))throw new Error('بنية النسخة غير متوافقة: قوائم التلاميذ والغيابات غير موجودة.');
-  const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:Array.isArray(obj.documents)?obj.documents:[],violations:Array.isArray(obj.violations)?obj.violations:[],settings:obj.settings&&typeof obj.settings==='object'&&!Array.isArray(obj.settings)?obj.settings:{}};
-  if(!confirm('تمت قراءة محتوى النسخة بنجاح. عدد التلاميذ: '+normalized.students.length+'، وعدد سجلات الغياب والتأخر: '+normalized.attendance.length+'. سيتم استبدال البيانات الحالية. أنشئ نسخة احتياطية من بياناتك الحالية أولاً. هل تريد المتابعة؟'))return;
+  if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students)||!Array.isArray(obj.attendance)||!Array.isArray(obj.documents)||!Array.isArray(obj.violations)||!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw new Error('بنية النسخة غير مكتملة: يجب أن تحتوي على قوائم التلاميذ والغيابات والوثائق والمخالفات والإعدادات. لم تتغير بيانات التطبيق.');
+  const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,settings:obj.settings};
+  if(!confirm('تمت قراءة النسخة والتحقق من بنيتها. التلاميذ: '+normalized.students.length+'، الغياب والتأخر: '+normalized.attendance.length+'، الوثائق والاستدعاءات: '+normalized.documents.length+'، المخالفات: '+normalized.violations.length+'. سيتم استبدال البيانات الحالية. أنشئ نسخة احتياطية من بياناتك الحالية أولاً. هل تريد المتابعة؟'))return;
   const oldDb=db;db=normalized;
   if(!save()){db=oldDb;render();throw new Error('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');}
   if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
