@@ -27,7 +27,7 @@ public class SummonsReminderReceiver extends BroadcastReceiver {
             : new Notification.Builder(context);
         boolean test = "mushrifi-test".equals(id);
         String title = test ? "اختبار إشعارات مُشرِفي" : "تذكير: موعد حضور ولي";
-        String body = test ? "هذا إشعار تجريبي من تطبيق مُشرِفي. نظام الإشعارات يعمل." : "غداً موعد حضور ولي التلميذ: " + student;
+        String body = test ? "هذا إشعار تجريبي من تطبيق مُشرِفي. نظام الإشعارات يعمل." : "تذكير بموعد حضور ولي التلميذ: " + student;
         Notification.Builder configured = builder.setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(body)
