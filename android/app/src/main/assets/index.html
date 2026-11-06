@@ -233,7 +233,7 @@ window.studentAction=(el,id)=>{
     go('documents');const form=$('#docForm');form.elements.type.value='استدعاء ولي';form.elements.student.value=id;form.elements.date.value=today();form.elements.reason.focus();
   }
 };
-window.delStudent=id=>{if(confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.')){db.students=db.students.filter(s=>s.id!==id);save()}};
+window.delStudent=id=>{if(!confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.'))return;const old=db.students;db.students=old.filter(s=>s.id!==id);if(!save()){db.students=old;render();alert('تعذر حفظ الحذف؛ أُعيد ملف التلميذ إلى القائمة.');}};
 window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل؟'))return;const old=db[kind];db[kind]=old.filter(x=>x.id!==id);if(!save()){db[kind]=old;render();return;}if(kind==='documents'&&window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));};
 // مطابقة أسماء التلاميذ مع تجاهل التشكيل واختلافات الهمزة والمسافات
 const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ').toLocaleLowerCase('ar');
@@ -268,6 +268,7 @@ window.saveAttendanceEdit=id=>{
   const r=db.attendance.find(x=>x.id===id);if(!r)return;
   const selectedId=document.getElementById('editStudentMatch').value;
   const linked=selectedId?db.students.find(s=>String(s.id)===String(selectedId)):null;
+  const before={...r};
   const editedName=document.getElementById('editAttendanceName').value.trim();
   const editedClass=document.getElementById('editAttendanceClass').value.trim();
   const hours=parseHours(document.getElementById('editHours').value);
@@ -279,6 +280,7 @@ window.saveAttendanceEdit=id=>{
   else {r.studentName=editedName;r.class=editedClass;r.studentClass=editedClass;}
   r.hours=hours;if(hours!==''&&parseHours(r.period)!=='')r.period='';r.justified=justified;r.notes=notes;
   if(save())alert('تم تحديث السجل وربطه بملف التلميذ ومعلوماته.');
+  else {Object.keys(r).forEach(k=>delete r[k]);Object.assign(r,before);render();alert('تعذر حفظ التعديل؛ أُعيد السجل إلى حالته السابقة.');}
 };
 window.studentHistory=id=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
@@ -362,10 +364,11 @@ $('#clearStudents').onclick=()=>{
   if(!confirm('تحذير: سيتم حذف ملفات '+count+' تلميذاً من القائمة نهائياً على هذا الجهاز. ستبقى سجلات الغياب والتأخر والمخالفات والوثائق كما هي، لكن قد تظهر فيها أسماء غير معروفة لأن ملفات التلاميذ حُذفت. سيتم تنزيل نسخة احتياطية كاملة أولاً. هل تريد المتابعة؟'))return;
   const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-backup-before-clear-students-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
-  const names=new Map(db.students.map(s=>[s.id,(String(s.last||'')+' '+String(s.first||'')).trim()]));
-  for(const kind of ['attendance','documents','violations'])for(const record of db[kind]){if(!record.studentName&&names.has(record.student))record.studentName=names.get(record.student);}
+  const oldStudents=db.students,changedNames=[];
+  const names=new Map(oldStudents.map(s=>[s.id,(String(s.last||'')+' '+String(s.first||'')).trim()]));
+  for(const kind of ['attendance','documents','violations'])for(const record of db[kind]){if(!record.studentName&&names.has(record.student)){changedNames.push([record,record.studentName]);record.studentName=names.get(record.student);}}
   db.students=[];
-  save();
+  if(!save()){db.students=oldStudents;for(const [record,oldName] of changedNames){if(oldName===undefined)delete record.studentName;else record.studentName=oldName;}render();status.textContent='تعذر حفظ العملية؛ لم تُحذف قائمة التلاميذ.';alert(status.textContent);return;}
   status.textContent='تم حذف قائمة التلاميذ ('+count+' تلميذاً). بقيت سجلات الغياب والتأخر والمخالفات والوثائق.';
   alert(status.textContent+'\\nاحتفظ بالنسخة الاحتياطية لاسترجاع القائمة عند الحاجة.');
 };
@@ -397,7 +400,7 @@ $('#dedupeStudents').onclick=()=>{
   const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-before-name-clean-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
   for(const item of affected) item.student[item.field]=item.newValue;
-  save();
+  if(!save()){for(const item of affected)item.student[item.field]=item.oldValue;render();status.textContent='تعذر حفظ التنظيف؛ أُعيدت الأسماء إلى قيمها السابقة.';alert(status.textContent);return;}
   status.textContent='تم تنظيف '+affected.length+' خانة اسم. لم يُحذف أي تلميذ أو سجل، وبقيت جميع المعلومات الأخرى كما هي.';
   alert(status.textContent+'\\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
 };
@@ -418,6 +421,7 @@ $('#csvImport').onchange=async e=>{
     const attrIdx=find(['الصفة','النظام','نوعالنظام','صفةالتلميذ','regime','status','attribute']);
     const classIdx=find(['القسم','الفوج','classe','class']);
     if(fullIdx<0||classIdx<0)throw new Error('تعذر التعرف على عناوين الأعمدة. يجب أن يحتوي الملف على «الاسم واللقب» و«القسم».');
+    const originalStudentCount=db.students.length;
     const existing=new Set(db.students.map(s=>normName(s.last+' '+(s.first||''))+'|'+normName(s.class)));
     let added=0,skipped=0;
     for(const cells of rows.slice(1)){
@@ -429,7 +433,8 @@ $('#csvImport').onchange=async e=>{
       db.students.push({id:crypto.randomUUID(),last:fullName,first:'',class:cls,code:'',guardian:value(guardianIdx),phone:'',birthDate:value(dateIdx),status:attr,attribute:attr});
       existing.add(key);added++;
     }
-    save();alert('اكتمل الاستيراد.\nالتلاميذ المضافون: '+added+'\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
+    if(!save()){db.students.splice(originalStudentCount);render();throw new Error('تعذر حفظ الاستيراد؛ أُلغيت الإضافات الجديدة وبقيت القائمة السابقة كما هي.');}
+    alert('اكتمل الاستيراد.\nالتلاميذ المضافون: '+added+'\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
   }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
