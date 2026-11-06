@@ -51,7 +51,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <details class="panel attendance-log recent-log"><summary><strong>آخر العمليات</strong> <span class="pill" id="recentCount">0 عملية</span> <span class="muted">اضغط لعرض العمليات أو إخفائها</span></summary><div id="recent" class="empty">لا توجد عمليات مسجلة بعد.</div></details>
 </section>
 <section id="students" class="page hidden">
-<div class="panel"><h2>إضافة تلميذ</h2><form id="studentForm"><div class="row"><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div><div class="row"><div><label>القسم</label><input name="class" required placeholder="مثال: 1 ج م ع 1"></div><div><label>رقم التسجيل</label><input name="code"></div></div><div class="row"><div><label>اسم ولي الأمر (اختياري)</label><input name="guardian"></div><div><label>رقم الهاتف (اختياري)</label><input name="phone" inputmode="tel"></div></div><button class="btn primary">حفظ التلميذ</button></form></div>
+<div class="panel"><h2>إضافة تلميذ</h2><form id="studentForm"><div class="row"><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div><div class="row"><div><label>القسم</label><input name="class" required placeholder="مثال: 1 ج م ع 1"></div><div><label>رقم التسجيل</label><input name="code"></div></div><div class="row"><div><label>الصفة / النظام</label><input name="status" placeholder="مثال: داخلي أو نصف داخلي"></div><div><label>تاريخ الميلاد</label><input name="birthDate" type="date"></div></div><div class="row"><div><label>اسم ولي الأمر (اختياري)</label><input name="guardian"></div><div><label>رقم الهاتف (اختياري)</label><input name="phone" inputmode="tel"></div></div><button class="btn primary">حفظ التلميذ</button></form></div>
 <div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table class="students-table"><colgroup><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:14%"><col style="width:23%"></colgroup><thead><tr><th>الاسم واللقب</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
 <section id="attendance" class="page hidden">
@@ -87,7 +87,10 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const save=()=>{try{localStorage.setItem(DBKEY,JSON.stringify(db));render();return true}catch(e){alert('تعذر حفظ البيانات. قد تكون مساحة التخزين ممتلئة بسبب الصور. صدّر نسخة احتياطية واحذف الصور الكبيرة أو جرّب صورة أصغر.');return false}};
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const student=id=>db.students.find(x=>x.id===id);
+const normalizeStudentName = value => String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[ \t\u00A0]*[0-9٠-٩۰-۹]+[ \t\u00A0]*$/,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+const normalizeStudentSection = value => String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+const studentNameKeys = s => [s.last+' '+s.first,s.first+' '+s.last,s.name,s.fullName,s.full_name].map(normalizeStudentName).filter(Boolean);
+const student=id=>{const key=String(id??'').trim();if(!key)return null;let s=db.students.find(x=>String(x.id)===key);if(s)return s;const nameKey=normalizeStudentName(id);const matches=db.students.filter(x=>studentNameKeys(x).includes(nameKey));return matches.length===1?matches[0]:null;};
 const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim();for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>x.student===id&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
 function go(page){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));$$('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
@@ -168,7 +171,7 @@ $('#startVoiceBtn').onclick=()=>{
  $('#voiceStatus').textContent='ميزة التحدث المباشر متاحة في نسخة Android المُحدّثة من التطبيق.';
 };
 
-$('#studentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.students.push({id:crypto.randomUUID(),last:f.get('last').trim(),first:f.get('first').trim(),class:f.get('class').trim(),code:f.get('code'),guardian:f.get('guardian'),phone:f.get('phone')});e.target.reset();save();alert('تم حفظ التلميذ')};
+$('#studentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);const record={id:crypto.randomUUID(),last:f.get('last').trim(),first:f.get('first').trim(),class:f.get('class').trim(),code:f.get('code'),status:f.get('status').trim(),attribute:f.get('status').trim(),birthDate:f.get('birthDate'),guardian:f.get('guardian'),phone:f.get('phone')};db.students.push(record);if(!save()){db.students.pop();return;}e.target.reset();alert('تم حفظ التلميذ')};
 $('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),period=String(f.get('period')||'').trim(),hours=parseHours(f.get('hours'));if(hours===''&&period&&parseHours(period)!==''){hours=parseHours(period);period='';}if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}db.attendance.push({id:crypto.randomUUID(),student:f.get('student'),type:f.get('type'),date:f.get('date'),period,hours,justified:f.get('justified'),notes:f.get('notes')});e.target.reset();save();alert('تم تسجيل الحالة')};
 function scheduleSummonsReminder(d){if(d.type!=='استدعاء ولي'||!d.appointment||!window.AndroidBridge||typeof AndroidBridge.scheduleSummonsReminder!=='function')return;const appointmentMs=new Date(d.appointment).getTime();if(Number.isFinite(appointmentMs))AndroidBridge.scheduleSummonsReminder(String(d.id),name(d.student),appointmentMs);}
 $('#docForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);let d={id:crypto.randomUUID(),type:f.get('type'),student:f.get('student'),date:f.get('date'),appointment:f.get('appointment'),reason:f.get('reason'),photo:e.target.dataset.photo||''};db.documents.push(d);if(!save()){db.documents.pop();return;}scheduleSummonsReminder(d);e.target.reset();e.target.dataset.photo='';$('#docPhotoPreview').innerHTML='';printDoc(d.id)};
@@ -204,10 +207,21 @@ window.saveAttendanceEdit=id=>{
   r.hours=hours;if(hours!==''&&parseHours(r.period)!=='')r.period='';r.justified=justified;r.notes=notes;save();alert('تم تحديث عدد الساعات وحالة التبرير والملاحظات.');
 };
 window.studentHistory=id=>{
-  const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
-  const normStudentName=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
-  const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''));
-  const belongsToStudent=record=>String(record.student??'')===sid||normStudentName(record.studentName)===fullStudentName||normStudentName(record.student)===fullStudentName;
+  const s=db.students.find(x=>String(x.id)===String(id))||student(id);
+  if(!s){alert('لم يتم العثور على ملف التلميذ بالاسم والقسم بصورة مؤكدة. لم يتم ربط أي سجل لتجنب إسناد بياناته إلى تلميذ آخر.');return;}
+  const sid=String(s.id), targetSection=normalizeStudentSection(s.class);
+  const targetNames=new Set(studentNameKeys(s));
+  const sameNameStudents=db.students.filter(x=>studentNameKeys(x).some(k=>targetNames.has(k)));
+  const belongsToStudent=record=>{
+    if(String(record.student??'')===sid)return true;
+    const section=record.class??record.studentClass??record.section??record.className??'';
+    if(section&&normalizeStudentSection(section)!==targetSection)return false;
+    const recordNames=[record.studentName,record.student,record.name,record.fullName,record.full_name].map(normalizeStudentName).filter(Boolean);
+    if(!recordNames.some(k=>targetNames.has(k)))return false;
+    if(section)return true;
+    const knownSections=new Set(sameNameStudents.map(x=>normalizeStudentSection(x.class)).filter(Boolean));
+    return knownSections.size<=1;
+  };
   const a=db.attendance.filter(belongsToStudent);
   const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
   const hoursOf=record=>{let h=parseHours(record.hours);if(h===''||Number.isNaN(h))h=parseHours(record.period);return typeof h==='number'&&Number.isFinite(h)&&h>=0?h:0;};
@@ -273,7 +287,7 @@ function parseCSV(text, delimiter){
   return rows;
 }
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
-function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+function normName(v){return normalizeStudentName(v);}
 $('#clearStudents').onclick=()=>{
   const status=$('#clearStudentsStatus');
   if(!db.students.length){status.textContent='قائمة التلاميذ فارغة بالفعل.';alert(status.textContent);return;}
