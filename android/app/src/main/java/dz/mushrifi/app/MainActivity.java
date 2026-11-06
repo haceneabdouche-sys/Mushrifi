@@ -26,6 +26,7 @@ import android.speech.RecognizerIntent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.DocumentsContract;
+import android.provider.Settings;
 import android.provider.MediaStore;
 import android.content.ContentValues;
 import android.webkit.JavascriptInterface;
@@ -124,6 +125,37 @@ public class MainActivity extends Activity {
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
+        @JavascriptInterface public boolean hasExactAlarmAccess() {
+            if (Build.VERSION.SDK_INT < 31) return true;
+            AlarmManager alarms = (AlarmManager) getSystemService(ALARM_SERVICE);
+            return alarms != null && alarms.canScheduleExactAlarms();
+        }
+        @JavascriptInterface public void requestExactAlarmAccess() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT < 31 || hasExactAlarmAccess()) {
+                    Toast.makeText(MainActivity.this, "التنبيهات الدقيقة متاحة بالفعل.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                try {
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    intent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(intent);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "تعذر فتح إعداد التنبيهات الدقيقة. افتح وصول خاص للتطبيقات يدوياً.", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+        @JavascriptInterface public void testSummonsNotification() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
+                    Toast.makeText(MainActivity.this, "اسمح بالإشعارات ثم اضغط اختبار التنبيه مرة أخرى.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                boolean posted = SummonsReminderReceiver.postNotification(MainActivity.this, "mushrifi-test", "اختبار");
+                Toast.makeText(MainActivity.this, posted ? "أُرسل الإشعار التجريبي. تحقق من شريط الإشعارات." : "تعذر إرسال الإشعار. تحقق من صلاحية الإشعارات.", Toast.LENGTH_LONG).show();
+            });
+        }
         @JavascriptInterface public void cancelSummonsReminder(String id) {
             if (id == null) return;
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().remove(id).apply();
@@ -201,7 +233,41 @@ public class MainActivity extends Activity {
         intent.putExtra("id", id);
         PendingIntent pending = PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarms = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-        if (alarms != null) alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending);
+        if (alarms != null) {
+            if (Build.VERSION.SDK_INT >= 31 && alarms.canScheduleExactAlarms()) {
+                try {
+                    alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending);
+                } catch (SecurityException e) {
+                    alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending);
+                }
+            } else {
+                alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending);
+            }
+        }
+    }
+
+    private void rescheduleStoredReminders() {
+        android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
+        for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) {
+            String value = prefs.getString(id, "");
+            String[] parts = value.split("\\|", 2);
+            if (parts.length != 2) { prefs.edit().remove(id).apply(); continue; }
+            try {
+                long appointment = Long.parseLong(parts[1]);
+                long reminder = appointment - 24L * 60L * 60L * 1000L;
+                if (reminder <= System.currentTimeMillis()) {
+                    cancelReminder(this, id);
+                    prefs.edit().remove(id).apply();
+                } else {
+                    scheduleReminder(this, id, parts[0], reminder);
+                }
+            } catch (NumberFormatException ignored) { prefs.edit().remove(id).apply(); }
+        }
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        rescheduleStoredReminders();
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
