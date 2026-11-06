@@ -105,7 +105,7 @@ public class MainActivity extends Activity {
         LocalDb(Context c) { super(c, "mushrifi_local.db", null, 1); }
         @Override public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE appdata (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL)"); }
         @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
-        synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? decryptData(c.getString(0)) : null; } catch (Exception e) { return null; } }
+        synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? decryptData(c.getString(0)) : null; } catch (Exception e) { return "!MUSHRIFI_DB_ERROR!"; } }
         synchronized boolean write(String json) { try { android.content.ContentValues v = new android.content.ContentValues(); v.put("id", 1); v.put("json", encryptData(json)); return getWritableDatabase().insertWithOnConflict("appdata", null, v, SQLiteDatabase.CONFLICT_REPLACE) != -1; } catch (Exception e) { return false; } }
     }
     private LocalDb localDb;
@@ -119,8 +119,19 @@ public class MainActivity extends Activity {
         @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
         @JavascriptInterface public void scheduleSummonsReminder(String id, String studentName, long appointmentMillis) {
             long reminderMillis = appointmentMillis - 24L * 60L * 60L * 1000L;
+            if (reminderMillis <= System.currentTimeMillis()) { cancelSummonsReminder(id); return; }
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
+        }
+        @JavascriptInterface public void cancelSummonsReminder(String id) {
+            if (id == null) return;
+            getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().remove(id).apply();
+            cancelReminder(MainActivity.this, id);
+        }
+        @JavascriptInterface public void clearSummonsReminders() {
+            android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
+            for (String id : prefs.getAll().keySet()) cancelReminder(MainActivity.this, id);
+            prefs.edit().clear().apply();
         }
         @JavascriptInterface public void saveBackup(String json) {
             runOnUiThread(() -> {
@@ -160,14 +171,23 @@ public class MainActivity extends Activity {
         }
     }
 
+    static void cancelReminder(Context context, String id) {
+        if (id == null) return;
+        Intent intent = new Intent(context, SummonsReminderReceiver.class);
+        PendingIntent pending = PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        AlarmManager alarms = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        if (alarms != null) alarms.cancel(pending);
+        pending.cancel();
+    }
+
     static void scheduleReminder(Context context, String id, String studentName, long reminderMillis) {
-        if (reminderMillis <= System.currentTimeMillis()) return;
+        if (reminderMillis <= System.currentTimeMillis()) { cancelReminder(context, id); return; }
         Intent intent = new Intent(context, SummonsReminderReceiver.class);
         intent.putExtra("student", studentName);
         intent.putExtra("id", id);
         PendingIntent pending = PendingIntent.getBroadcast(context, id.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         AlarmManager alarms = (AlarmManager) context.getSystemService(ALARM_SERVICE);
-        alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending);
+        if (alarms != null) alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending);
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
