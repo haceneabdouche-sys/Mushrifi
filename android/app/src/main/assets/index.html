@@ -117,7 +117,7 @@ function openStatRecords(key){const attendance=db.attendance||[],documents=db.do
  else if(key==='records'){const all=[...attendance.map(x=>({date:x.date,student:x.student,studentName:x.studentName,type:x.type,detail:(x.period||'')+(x.hours!==undefined?' · '+x.hours+' ساعة':'')})),...documents.map(x=>({date:x.date,student:x.student,studentName:x.studentName,type:x.type,detail:x.reason||''})),...violations.map(x=>({date:x.date,student:x.student,studentName:x.studentName,type:'مخالفة: '+(x.type||''),detail:x.description||''}))].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));html=statTable(['التاريخ','التلميذ','نوع السجل','التفاصيل'],all.map(x=>[esc(x.date||'—'),esc(x.studentName||name(x.student)),esc(x.type||'—'),esc(x.detail||'—')]));}
  $('#statDialogTitle').textContent=statLabels[key]||'السجل';$('#statDialogBody').innerHTML=html;$('#statDialog').classList.remove('hidden');document.body.style.overflow='hidden';}
 function closeStatRecords(){$('#statDialog').classList.add('hidden');document.body.style.overflow='';}
-$('.stat-button').forEach(button=>button.addEventListener('click',()=>openStatRecords(button.dataset.stat)));
+$$('.stat-button').forEach(button=>button.addEventListener('click',()=>openStatRecords(button.dataset.stat)));
 $('#closeStatDialog').addEventListener('click',closeStatRecords);$('#statDialog').addEventListener('click',e=>{if(e.target.id==='statDialog')closeStatRecords()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#statDialog').classList.contains('hidden'))closeStatRecords()});
 
 function render(){
