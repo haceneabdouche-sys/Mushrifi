@@ -1,5 +1,5 @@
 name: Build Mushrifi APK
-# Rebuild requested for corrected dashboard counter selector
+# Rebuild requested after fixing remaining render selector crash
 on:
   push:
     paths:
