@@ -133,6 +133,19 @@ public class MainActivity extends Activity {
             AlarmManager alarms = (AlarmManager) getSystemService(ALARM_SERVICE);
             return alarms != null && alarms.canScheduleExactAlarms();
         }
+        @JavascriptInterface public void requestNotificationPermission() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT < 33) {
+                    Toast.makeText(MainActivity.this, "إذن الإشعارات لا يحتاج طلباً منفصلاً على هذا الإصدار.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(MainActivity.this, "إذن الإشعارات ممنوح بالفعل.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
+            });
+        }
         @JavascriptInterface public void requestExactAlarmAccess() {
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT < 31 || hasExactAlarmAccess()) {
