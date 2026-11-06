@@ -207,10 +207,25 @@ public class MainActivity extends Activity {
             fileCallback = null;
         } else if (requestCode == SAVE_FILE) {
             if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingBackup != null) {
-                try (OutputStream out = getContentResolver().openOutputStream(data.getData())) {
-                    out.write(pendingBackup.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                    Toast.makeText(this, "تم حفظ النسخة الاحتياطية", Toast.LENGTH_LONG).show();
-                } catch (Exception e) { Toast.makeText(this, "تعذر حفظ النسخة: " + e.getMessage(), Toast.LENGTH_LONG).show(); }
+                try {
+                    byte[] bytes = pendingBackup.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                    if (bytes.length < 2 || pendingBackup.trim().isEmpty()) throw new IOException("بيانات النسخة فارغة");
+                    try (OutputStream out = getContentResolver().openOutputStream(data.getData(), "wt")) {
+                        if (out == null) throw new IOException("تعذر فتح الملف للكتابة");
+                        out.write(bytes);
+                        out.flush();
+                    }
+                    long written = 0;
+                    try (java.io.InputStream in = getContentResolver().openInputStream(data.getData())) {
+                        if (in == null) throw new IOException("تعذر التحقق من الملف بعد الحفظ");
+                        byte[] buffer = new byte[8192]; int n;
+                        while ((n = in.read(buffer)) != -1) written += n;
+                    }
+                    if (written != bytes.length) throw new IOException("حجم الملف المحفوظ لا يطابق البيانات المصدّرة");
+                    Toast.makeText(this, "تم حفظ النسخة الاحتياطية والتحقق منها (" + written + " بايت)", Toast.LENGTH_LONG).show();
+                } catch (Exception e) { Toast.makeText(this, "فشل حفظ النسخة الاحتياطية: " + e.getMessage(), Toast.LENGTH_LONG).show(); }
+            } else if (resultCode != RESULT_OK) {
+                Toast.makeText(this, "تم إلغاء حفظ النسخة الاحتياطية", Toast.LENGTH_SHORT).show();
             }
             pendingBackup = null;
         }
