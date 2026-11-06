@@ -22,6 +22,17 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Package complete Android project
+        run: |
+          zip -r Mushrifi-Complete-Source.zip . \
+            -x ".git/*" "android/.gradle/*" "android/app/build/*" "android/build/*"
+      - name: Upload complete source project
+        uses: actions/upload-artifact@v4
+        with:
+          name: mushrifi-complete-source
+          path: Mushrifi-Complete-Source.zip
+          if-no-files-found: error
+          retention-days: 30
       - name: Build debug APK
         run: gradle --no-daemon -p android assembleDebug
       - name: Upload APK
