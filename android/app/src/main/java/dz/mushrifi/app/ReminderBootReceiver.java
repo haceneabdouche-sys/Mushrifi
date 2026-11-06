@@ -11,11 +11,10 @@ public class ReminderBootReceiver extends BroadcastReceiver {
         SharedPreferences prefs = context.getSharedPreferences("summons_reminders", Context.MODE_PRIVATE);
         for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) {
             String value = prefs.getString(id, "");
-            String[] parts = value.split("\\|", 2);
-            if (parts.length != 2) { prefs.edit().remove(id).apply(); continue; }
+            String[] parts = value.split("\\|", 3);
+            if (parts.length != 2 && parts.length != 3) { prefs.edit().remove(id).apply(); continue; }
             try {
-                long appointment = Long.parseLong(parts[1]);
-                long reminder = appointment - 24L * 60L * 60L * 1000L;
+                long reminder = parts.length == 2 ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L : Long.parseLong(parts[1]);
                 if (reminder <= System.currentTimeMillis()) {
                     MainActivity.cancelReminder(context, id);
                     prefs.edit().remove(id).apply();
