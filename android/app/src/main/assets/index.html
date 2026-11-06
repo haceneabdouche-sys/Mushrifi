@@ -138,13 +138,25 @@ function parseVoiceHours(t){
 }
 function voiceStudentMatches(nameText){
  const q=normalizeArabic(nameText);
- return db.students.filter(st=>{const full=normalizeArabic((st.last||'')+' '+(st.first||''));return full===q||full.includes(q)||q.includes(full);});
+ if(!q)return [];
+ const qTokens=q.split(' ').filter(Boolean).sort();
+ return db.students.filter(st=>{
+  const last=normalizeArabic(st.last||''),first=normalizeArabic(st.first||'');
+  const full=normalizeArabic(last+' '+first),reverse=normalizeArabic(first+' '+last);
+  const tokens=full.split(' ').filter(Boolean).sort();
+  return full===q||reverse===q||tokens.join(' ' )===qTokens.join(' ')||
+   (q.length>=5&&(full.includes(q)||reverse.includes(q)));
+ });
 }
 function handleVoiceOpenStudent(raw){
- const text=String(raw||'').trim();
- const match=text.match(/(?:افتح|اعرض|أرني|وريني|اذهب\s+الى|انتقل\s+الى|اعرض\s+لي)\s+(?:(?:صفحة|ملف|سجل)\s+)?(?:(?:التلميذ|التلميذة)\s+)?(.+)/i);
- if(!match)return false;
- const requested=match[1].replace(/\s+(?:مباشرة|الان|الآن|من فضلك|لو سمحت)$/i,'').trim();
+ let requested=normalizeArabic(raw);
+ if(!requested)return false;
+ requested=requested
+  .replace(/^(?:من فضلك |لو سمحت )?/,'')
+  .replace(/^(?:افتح|اعرض|ارني|وريني|اذهب الى|انتقل الى|هات|جيب لي)\s+/,'')
+  .replace(/^(?:(?:صفحة|ملف|سجل)\s+)?(?:(?:التلميذ|التلميذة|الطالب|الطالبة)\s+)?/,'')
+  .replace(/\s+(?:مباشرة|الان|من فضلك|لو سمحت)$/,'')
+  .trim();
  if(!requested)return false;
  const matches=voiceStudentMatches(requested);
  if(matches.length===1){
@@ -160,7 +172,7 @@ function handleVoiceOpenStudent(raw){
   $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st){window.studentHistory(st.id);$('#voiceStatus').textContent='تم فتح ملف '+st.last+' '+st.first+'.';$('#voiceConfirm').classList.add('hidden');}});
   return true;
  }
- $('#voiceStatus').textContent='لم أجد التلميذ "'+requested+'" في القائمة. تحقق من الاسم المسجل أو أعد نطقه.';
+ $('#voiceStatus').textContent='لم أجد التلميذ "'+requested+'" في القائمة. تأكد من أن الاسم مسجل، أو أعد نطقه بوضوح.';
  return true;
 }
 function onArabicSpeechResult(raw){
