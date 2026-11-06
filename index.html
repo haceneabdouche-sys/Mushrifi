@@ -7,6 +7,8 @@
 <style>
 :root{--navy:#173b58;--blue:#2878a8;--bg:#f3f6f9;--ink:#172b3a;--muted:#667987;--line:#dce5eb;--white:#fff;--red:#b74646;--green:#21845f}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("./signature.svg");background-repeat:no-repeat;background-position:center 56%;background-size:min(78vw,460px) auto;opacity:.075;mix-blend-mode:multiply}
+body>*{position:relative;z-index:1}
 header{background:var(--navy);color:white;padding:18px 16px;display:flex;justify-content:center;align-items:center;gap:12px;text-align:center;position:relative}
 header h1{margin:0;font-size:25px}header p{margin:5px 0 0;color:#d8e5ed;font-size:12px}header p.credit{margin:14px 0 0;color:#fff;font-weight:bold;font-size:21px;letter-spacing:.3px}.mark{font-size:34px;position:absolute;left:16px;top:50%;transform:translateY(-50%)}
 .wrap{max-width:1100px;margin:auto;padding:14px}.notice{background:#fff7df;border:1px solid #f0d995;border-radius:12px;padding:11px;font-size:12px;line-height:1.7;margin-bottom:12px}
@@ -31,7 +33,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 </head>
 <body>
 <header><div><h1>مُشرفي</h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p><p class="credit">إعداد وتطوير: Abdouche Hacene</p>
-<p style="margin:8px 0 0"><img src="./signature.svg" alt="إمضاء المطوّر" style="display:block;width:112px;height:112px;object-fit:contain;background:#fff;border-radius:8px;margin:auto"></p></div><div class="mark">🎓</div></header>
+</div><div class="mark">🎓</div></header>
 <div class="wrap">
 <div class="notice"><b>نسخة تجريبية مرتبطة بخدمات Firebase:</b> التخزين المحلي هو الافتراضي، ويمكن للمشرف تسجيل الدخول واستخدام الرفع والاستعادة اليدويين من صفحة الإعدادات بعد تفعيل Firebase Authentication وقواعد Firestore. لا تُدخل بيانات حقيقية للتلاميذ قبل اعتماد الحماية وسياسة المؤسسة.</div>
 <nav class="no-print" id="nav">
