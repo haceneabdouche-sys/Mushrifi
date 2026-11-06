@@ -66,7 +66,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 </section>
 <section id="settings" class="page hidden">
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
-<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <label class="btn">استيراد نسخة احتياطية<input id="importData" type="file" accept=".json,application/json" hidden></label></div>
+<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">استيراد نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json" hidden></div>
 <div class="panel"><h2>الإجراء الأول: حذف الأرقام من الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط، دون حذف التلميذ أو أي معلومة من سجلاته. تبقى معرّفات التلاميذ والأقسام والصفات وسجلات الغياب والتأخر والمخالفات والوثائق كما هي. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn primary" id="dedupeStudents" type="button">تنفيذ حذف الأرقام فقط</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
@@ -272,15 +272,10 @@ window.printDoc=id=>{let d=db.documents.find(x=>x.id===id),s=student(d.student);
 $('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!id||x.student===id)&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>الفترة</th><th>الساعات</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.period||'—')}</td><td>${esc(x.hours??'—')}</td><td>${esc(x.justified||'—')}</td><td>${esc(x.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody>${v.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>السبب</th><th>موعد الحضور</th></tr></thead><tbody>${d.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد وثائق'}`;};
 $('#saveSettings').onclick=()=>{db.settings.school=$('#schoolName').value;db.settings.location=$('#schoolLocation').value;save();alert('تم حفظ الإعدادات')};
 $('#exportData').onclick=()=>{if(!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
-$('#importData').onchange=async e=>{
- const file=e.target.files?.[0];if(!file)return;
- const readWithReader=()=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('تعذرت قراءة محتوى الملف من الهاتف.'));reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));reader.readAsText(file,'UTF-8');});
+async function importBackupText(raw){
  try{
-  let raw='';
-  try{if(typeof file.text==='function')raw=String(await file.text()||'');}catch(_){}
-  if(!raw.trim())raw=await readWithReader();
-  raw=String(raw||'').replace(/^\uFEFF/,'').trim();
-  if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته. اختر النسخة الأصلية من مدير الملفات.');
+  raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
+  if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('محتوى الملف ليس JSON سليماً أو أن الملف ليس نسخة مُشرفي.');}
   if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students)||!Array.isArray(obj.attendance))throw new Error('بنية النسخة غير متوافقة: قوائم التلاميذ والغيابات غير موجودة.');
   const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:Array.isArray(obj.documents)?obj.documents:[],violations:Array.isArray(obj.violations)?obj.violations:[],settings:obj.settings&&typeof obj.settings==='object'&&!Array.isArray(obj.settings)?obj.settings:{}};
@@ -290,7 +285,15 @@ $('#importData').onchange=async e=>{
   if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
   if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
   alert('تم استيراد النسخة الاحتياطية بنجاح.');
- }catch(err){alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
+ }catch(err){alert('تعذر استيراد النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
+}
+window.onNativeBackupLoaded=importBackupText;
+$('#importBackupNative').onclick=()=>{if(window.AndroidBridge&&typeof AndroidBridge.pickBackupFile==='function')AndroidBridge.pickBackupFile();else $('#importData').click();};
+$('#importData').onchange=async e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ const readWithReader=()=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('تعذرت قراءة محتوى الملف من الهاتف.'));reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));reader.readAsText(file,'UTF-8');});
+ try{let raw='';try{if(typeof file.text==='function')raw=String(await file.text()||'');}catch(_){}if(!raw.trim())raw=await readWithReader();await importBackupText(raw);}
+ catch(err){alert('تعذر استيراد النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
  finally{e.target.value='';}
 };
 function parseCSV(text, delimiter){
