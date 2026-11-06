@@ -306,10 +306,15 @@ public class MainActivity extends Activity {
                     byte[] bytes = out.toByteArray();
                     if (bytes.length == 0) throw new IOException("الملف المحدد فارغ فعلياً");
                     String json = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-                    web.evaluateJavascript("window.onNativeBackupLoaded && window.onNativeBackupLoaded(" + org.json.JSONObject.quote(json) + ");", null);
+                    String quoted = org.json.JSONObject.quote(json);
+                    web.evaluateJavascript("(function(){if(typeof window.onNativeBackupLoaded!=='function'){if(window.onNativeBackupLoadStatus)window.onNativeBackupLoadStatus('تم اختيار الملف لكن صفحة الاستيراد لم تجهز بعد. أعد فتح التطبيق وحاول مجدداً.');return;}window.onNativeBackupLoaded(" + quoted + ");})()", null);
                 } catch (Exception e) {
-                    Toast.makeText(this, "تعذرت قراءة النسخة: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    String message = "تعذرت قراءة ملف النسخة: " + e.getMessage();
+                    web.evaluateJavascript("if(window.onNativeBackupLoadStatus)window.onNativeBackupLoadStatus(" + org.json.JSONObject.quote(message) + ");", null);
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
                 }
+            } else {
+                web.evaluateJavascript("if(window.onNativeBackupLoadStatus)window.onNativeBackupLoadStatus('لم يتم اختيار ملف؛ لم تتغير البيانات.');", null);
             }
         } else if (requestCode == PICK_FILE && fileCallback != null) {
             Uri[] result = resultCode == RESULT_OK ? WebChromeClient.FileChooserParams.parseResult(resultCode, data) : null;
