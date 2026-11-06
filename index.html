@@ -261,9 +261,9 @@ $('#importData').onchange=async e=>{
   const raw=String(await readFile(file)).replace(/^\\uFEFF/,'').trim();
   if(!raw)throw new Error('لم يتم العثور على محتوى داخل الملف.');
   let obj;try{obj=JSON.parse(raw)}catch(parseError){throw new Error('محتوى الملف ليس JSON سليماً. تأكد من اختيار ملف mushrifi-backup.json.');}
-  if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students)||!Array.isArray(obj.attendance))throw new Error('بنية النسخة غير متوافقة: يجب أن تحتوي على قائمتي التلاميذ والغيابات.');
-  const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:Array.isArray(obj.documents)?obj.documents:[],violations:Array.isArray(obj.violations)?obj.violations:[],settings:obj.settings&&typeof obj.settings==='object'&&!Array.isArray(obj.settings)?obj.settings:{}};
-  if(!confirm('تمت قراءة الملف ('+file.size+' بايت). يحتوي على '+normalized.students.length+' تلميذاً و'+normalized.attendance.length+' سجل غياب/تأخر. سيتم استبدال البيانات الحالية. أنشئ نسخة من بياناتك الحالية أولاً. هل تريد المتابعة؟'))return;
+  if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students)||!Array.isArray(obj.attendance)||!Array.isArray(obj.documents)||!Array.isArray(obj.violations)||!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw new Error('بنية النسخة غير مكتملة: يجب أن تحتوي على قوائم التلاميذ والغيابات والوثائق والمخالفات والإعدادات. لم تتغير بيانات التطبيق.');
+  const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,settings:obj.settings};
+  if(!confirm('تمت قراءة النسخة والتحقق من بنيتها ('+file.size+' بايت). التلاميذ: '+normalized.students.length+'، الغياب والتأخر: '+normalized.attendance.length+'، الوثائق والاستدعاءات: '+normalized.documents.length+'، المخالفات: '+normalized.violations.length+'. سيتم استبدال البيانات الحالية. أنشئ نسخة من بياناتك الحالية أولاً. هل تريد المتابعة؟'))return;
   const previous=db;db=normalized;
   if(!save()){db=previous;render();throw new Error('تعذر حفظ البيانات المستوردة؛ بقيت البيانات السابقة كما هي.');}
   alert('تم استيراد النسخة الاحتياطية بنجاح.');
