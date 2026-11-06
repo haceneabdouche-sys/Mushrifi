@@ -9,14 +9,20 @@ public class ReminderBootReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
         if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
         SharedPreferences prefs = context.getSharedPreferences("summons_reminders", Context.MODE_PRIVATE);
-        for (String id : prefs.getAll().keySet()) {
+        for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) {
             String value = prefs.getString(id, "");
             String[] parts = value.split("\\|", 2);
-            if (parts.length != 2) continue;
+            if (parts.length != 2) { prefs.edit().remove(id).apply(); continue; }
             try {
                 long appointment = Long.parseLong(parts[1]);
-                MainActivity.scheduleReminder(context, id, parts[0], appointment - 24L * 60L * 60L * 1000L);
-            } catch (NumberFormatException ignored) { }
+                long reminder = appointment - 24L * 60L * 60L * 1000L;
+                if (reminder <= System.currentTimeMillis()) {
+                    MainActivity.cancelReminder(context, id);
+                    prefs.edit().remove(id).apply();
+                } else {
+                    MainActivity.scheduleReminder(context, id, parts[0], reminder);
+                }
+            } catch (NumberFormatException ignored) { prefs.edit().remove(id).apply(); }
         }
     }
 }
