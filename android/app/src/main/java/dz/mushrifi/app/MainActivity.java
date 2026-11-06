@@ -121,8 +121,11 @@ public class MainActivity extends Activity {
         @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
         @JavascriptInterface public void scheduleSummonsReminder(String id, String studentName, long appointmentMillis) {
             long reminderMillis = appointmentMillis - 24L * 60L * 60L * 1000L;
-            if (reminderMillis <= System.currentTimeMillis()) { cancelSummonsReminder(id); return; }
-            getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + appointmentMillis).apply();
+            scheduleSummonsReminderAt(id, studentName, reminderMillis, appointmentMillis);
+        }
+        @JavascriptInterface public void scheduleSummonsReminderAt(String id, String studentName, long reminderMillis, long appointmentMillis) {
+            if (id == null || studentName == null || reminderMillis <= System.currentTimeMillis() || appointmentMillis <= reminderMillis) { cancelSummonsReminder(id); return; }
+            getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + reminderMillis + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
         @JavascriptInterface public boolean hasExactAlarmAccess() {
@@ -250,11 +253,10 @@ public class MainActivity extends Activity {
         android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
         for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) {
             String value = prefs.getString(id, "");
-            String[] parts = value.split("\\|", 2);
-            if (parts.length != 2) { prefs.edit().remove(id).apply(); continue; }
+            String[] parts = value.split("\\|", 3);
+            if (parts.length != 2 && parts.length != 3) { prefs.edit().remove(id).apply(); continue; }
             try {
-                long appointment = Long.parseLong(parts[1]);
-                long reminder = appointment - 24L * 60L * 60L * 1000L;
+                long reminder = parts.length == 2 ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L : Long.parseLong(parts[1]);
                 if (reminder <= System.currentTimeMillis()) {
                     cancelReminder(this, id);
                     prefs.edit().remove(id).apply();
