@@ -360,7 +360,7 @@ $('#saveSettings').onclick=()=>{const previous={...db.settings};db.settings.scho
 $('#exportData').onclick=()=>{if(!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
 async function importBackupText(raw){
  try{
-  raw=String(raw??'').replace(/^\\uFEFF/,'').trim();
+  raw=String(raw??'').replace(/^\uFEFF/,'').trim();
   if(!raw)throw new Error('الملف فارغ أو لم يتمكن الهاتف من قراءة محتواه.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('الملف ليس JSON صالحاً. تأكد من اختيار ملف النسخة الاحتياطية الأصلي دون فتحه أو تعديله.');}
   if(!obj||typeof obj!=='object'||Array.isArray(obj))throw new Error('محتوى الملف ليس نسخة احتياطية صالحة.');
@@ -378,7 +378,7 @@ async function importBackupText(raw){
   if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
   if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
   alert('تم استيراد النسخة الاحتياطية بنجاح. '+counts);
- }catch(err){alert('تعذر استيراد النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
+ }catch(err){alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
 }
 window.onNativeBackupLoaded=importBackupText;
 $('#importBackupNative').onclick=()=>{try{if(window.AndroidBridge&&typeof AndroidBridge.pickBackupFile==='function')AndroidBridge.pickBackupFile();else $('#importData').click();}catch(err){alert('تعذر فتح اختيار ملف النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));$('#importData').click();}};
