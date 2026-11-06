@@ -142,24 +142,25 @@ function voiceStudentMatches(nameText){
 }
 function handleVoiceOpenStudent(raw){
  const text=String(raw||'').trim();
- const match=text.match(/(?:افتح|اعرض|أرني|وريني|اذهب\\s+الى|انتقل\\s+الى)\\s+(?:(?:صفحة|ملف|سجل)\\s+)?(?:(?:التلميذ|التلميذة)\\s+)?(.+)/i);
+ const match=text.match(/(?:افتح|اعرض|أرني|وريني|اذهب\s+الى|انتقل\s+الى|اعرض\s+لي)\s+(?:(?:صفحة|ملف|سجل)\s+)?(?:(?:التلميذ|التلميذة)\s+)?(.+)/i);
  if(!match)return false;
- const requested=match[1].replace(/\\s+(?:مباشرة|الان|من فضلك|لو سمحت)$/i,'').trim();
+ const requested=match[1].replace(/\s+(?:مباشرة|الان|الآن|من فضلك|لو سمحت)$/i,'').trim();
  if(!requested)return false;
  const matches=voiceStudentMatches(requested);
  if(matches.length===1){
   const st=matches[0];window.studentHistory(st.id);
-  $('#voiceStatus').textContent='تم العثور على '+st.last+' '+st.first+' – '+st.class+' وفتح ملفه الفردي.';
+  $('#voiceStatus').textContent='تم فتح الملف الفردي للتلميذ '+st.last+' '+st.first+' – '+st.class+'.';
+  $('#voiceConfirm').classList.add('hidden');
   return true;
  }
  if(matches.length>1){
-  $('#voiceStatus').textContent='وجدت أكثر من تلميذ بهذا الاسم. اختر القسم الصحيح لفتح الملف:';
+  $('#voiceStatus').textContent='وجدت أكثر من تلميذ بهذا الاسم. اختر القسم الصحيح:';
   $('#voiceConfirm').classList.remove('hidden');
   $('#voiceConfirm').innerHTML='<h3>اختر التلميذ</h3>'+matches.map(st=>'<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc(st.last+' '+st.first+' – '+st.class)+'</button>').join(' ');
-  $('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st){window.studentHistory(st.id);$('#voiceStatus').textContent='تم فتح ملف '+st.last+' '+st.first+'.';}});
+  $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st){window.studentHistory(st.id);$('#voiceStatus').textContent='تم فتح ملف '+st.last+' '+st.first+'.';$('#voiceConfirm').classList.add('hidden');}});
   return true;
  }
- $('#voiceStatus').textContent='لم أجد التلميذ "'+requested+'" في القائمة. تحقق من الاسم أو أعد نطقه.';
+ $('#voiceStatus').textContent='لم أجد التلميذ "'+requested+'" في القائمة. تحقق من الاسم المسجل أو أعد نطقه.';
  return true;
 }
 function onArabicSpeechResult(raw){
