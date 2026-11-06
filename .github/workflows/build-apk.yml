@@ -1,5 +1,5 @@
 name: Build Mushrifi APK
-# Rebuild requested for interactive dashboard icon shortcuts
+# Rebuild requested for corrected dashboard counter selector
 on:
   push:
     paths:
