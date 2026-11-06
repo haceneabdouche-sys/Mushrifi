@@ -37,7 +37,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <nav class="no-print" id="nav">
 <button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
 </nav>
-<section id="home" class="page"><section id="voiceAssistant" class="panel no-print"><h2>🎙️ التحدث إلى مُشرفي</h2><p class="muted">أعطِ أمراً صوتياً بالعربية، مثل: سجّل غياب وائل عيسو ليوم الأحد 8 نوفمبر 2026 الفترة الصباحية ساعتين.</p><button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button><p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p><div id="voiceTranscript" class="panel hidden"></div><div id="voiceConfirm" class="panel hidden"></div></section>
+<section id="home" class="page"><section id="voiceAssistant" class="panel no-print"><h2>🎙️ التحدث إلى مُشرفي</h2><p class="muted">أعطِ أمراً صوتياً بالعربية، مثل: افتح ملف التلميذ وائل عيسو، أو: سجّل غياب وائل عيسو ليوم الأحد 8 نوفمبر 2026 الفترة الصباحية ساعتين.</p><button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button><p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p><div id="voiceTranscript" class="panel hidden"></div><div id="voiceConfirm" class="panel hidden"></div></section>
 
 <div class="grid">
 <div class="stat"><small>إجمالي التلاميذ</small><strong id="sStudents">0</strong></div><div class="stat"><small>الغيابات المسجلة</small><strong id="sAbs">0</strong></div><div class="stat"><small>التأخرات المسجلة</small><strong id="sLate">0</strong></div><div class="stat"><small>المخالفات المسجلة</small><strong id="sViol">0</strong></div><div class="stat"><small>الوثائق والإشعارات</small><strong id="sDocs">0</strong></div><div class="stat"><small>استدعاءات الأولياء</small><strong id="sSummons">0</strong></div><div class="stat"><small>إشعارات الغياب</small><strong id="sAbsNotices">0</strong></div><div class="stat"><small>مجموع السجلات</small><strong id="sRecords">0</strong></div>
@@ -140,10 +140,33 @@ function voiceStudentMatches(nameText){
  const q=normalizeArabic(nameText);
  return db.students.filter(st=>{const full=normalizeArabic((st.last||'')+' '+(st.first||''));return full===q||full.includes(q)||q.includes(full);});
 }
+function handleVoiceOpenStudent(raw){
+ const text=String(raw||'').trim();
+ const match=text.match(/(?:افتح|اعرض|أرني|وريني|اذهب\\s+الى|انتقل\\s+الى)\\s+(?:(?:صفحة|ملف|سجل)\\s+)?(?:(?:التلميذ|التلميذة)\\s+)?(.+)/i);
+ if(!match)return false;
+ const requested=match[1].replace(/\\s+(?:مباشرة|الان|من فضلك|لو سمحت)$/i,'').trim();
+ if(!requested)return false;
+ const matches=voiceStudentMatches(requested);
+ if(matches.length===1){
+  const st=matches[0];window.studentHistory(st.id);
+  $('#voiceStatus').textContent='تم العثور على '+st.last+' '+st.first+' – '+st.class+' وفتح ملفه الفردي.';
+  return true;
+ }
+ if(matches.length>1){
+  $('#voiceStatus').textContent='وجدت أكثر من تلميذ بهذا الاسم. اختر القسم الصحيح لفتح الملف:';
+  $('#voiceConfirm').classList.remove('hidden');
+  $('#voiceConfirm').innerHTML='<h3>اختر التلميذ</h3>'+matches.map(st=>'<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc(st.last+' '+st.first+' – '+st.class)+'</button>').join(' ');
+  $('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st){window.studentHistory(st.id);$('#voiceStatus').textContent='تم فتح ملف '+st.last+' '+st.first+'.';}});
+  return true;
+ }
+ $('#voiceStatus').textContent='لم أجد التلميذ "'+requested+'" في القائمة. تحقق من الاسم أو أعد نطقه.';
+ return true;
+}
 function onArabicSpeechResult(raw){
  $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ تحليل الأمر...';
  $('#voiceTranscript').classList.remove('hidden');$('#voiceTranscript').textContent='سمعت: '+raw;
  const t=normalizeArabic(raw);
+ if(handleVoiceOpenStudent(raw))return;
  if(!/سجل|سجّل|تسجيل/.test(t)||!/غياب/.test(t)){ $('#voiceStatus').textContent='حالياً يدعم المساعد الصوتي أمر تسجيل الغياب. جرّب: سجّل غياب [اسم التلميذ] ليوم [التاريخ] الفترة الصباحية ساعتين.';return;}
  const nameMatch=String(raw).match(/(?:غياب|غيابا)\s+(.+?)\s+(?:ليوم|يوم)\b/i);
  if(!nameMatch){$('#voiceStatus').textContent='لم أتمكن من تحديد اسم التلميذ. أعد الأمر واذكر الاسم بعد كلمة غياب.';return;}
