@@ -32,6 +32,17 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 
 .stat-button{appearance:none;width:100%;font:inherit;text-align:center;cursor:pointer;color:var(--ink);transition:transform .12s,box-shadow .12s}.stat-button:active{transform:scale(.97)}.stat-button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}.stat-icon{display:block;font-size:30px;line-height:1.25;margin-bottom:5px}.stat-button strong{font-size:25px}.stat-dialog{position:fixed;inset:0;z-index:9999;background:rgba(10,25,36,.58);display:flex;align-items:center;justify-content:center;padding:14px}.stat-dialog.hidden{display:none!important}.stat-dialog-card{background:#fff;border-radius:16px;width:min(100%,760px);max-height:85vh;overflow:auto;padding:16px;box-shadow:0 12px 40px rgba(0,0,0,.24)}.stat-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-16px;background:#fff;padding:4px 0 12px;border-bottom:1px solid var(--line);z-index:1}.stat-dialog-head h2{margin:0;font-size:19px}.stat-dialog-close{border:0;border-radius:9px;background:#edf3f7;color:var(--navy);font-size:20px;padding:6px 12px;cursor:pointer}.stat-dialog-body{padding-top:10px}.stat-dialog-body .tablewrap{max-height:62vh;overflow:auto}.stat-dialog-body table{min-width:540px}.stat-dialog-body .empty{padding:24px 8px}@media(max-width:700px){.stat-icon{font-size:27px}.stat-button small{font-size:12px}.stat-dialog{padding:8px}.stat-dialog-card{max-height:90vh;padding:12px}.stat-dialog-body .tablewrap{max-height:70vh}}
 </style>
+<script>
+/* Register the native receiver before the main application initializes. */
+window.__nativeBackupPendingText = null;
+window.onNativeBackupLoaded = function(raw) {
+  if (typeof window.__processNativeBackupImport === 'function') {
+    return window.__processNativeBackupImport(raw);
+  }
+  window.__nativeBackupPendingText = String(raw == null ? '' : raw);
+  return 'QUEUED';
+};
+</script>
 </head>
 <body>
 <header><div><h1 class="app-title">مُشرفي </h1><p>نظام تسيير الحياة المدرسية · ثانوية الشيخ بوعمامة</p><p>بوسكن – ولاية المدية</p><p class="credit">إعداد وتطوير: Abdouche Hacene</p>
@@ -487,7 +498,12 @@ async function importBackupText(raw){
   alert('تم استيراد النسخة الاحتياطية بنجاح. '+counts);
  }catch(err){window.onNativeBackupLoadStatus('فشل الاستيراد: '+(err?.message||'خطأ غير معروف'));alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
 }
-window.onNativeBackupLoaded=importBackupText;
+window.__processNativeBackupImport=importBackupText;
+if(window.__nativeBackupPendingText!==null){
+ const queuedBackup=window.__nativeBackupPendingText;
+ window.__nativeBackupPendingText=null;
+ Promise.resolve().then(()=>importBackupText(queuedBackup));
+}
 // زر الاستيراد مرتبط مباشرةً من HTML.
 $('#importData').onchange=async e=>{
  const file=e.target.files?.[0];if(!file)return;
