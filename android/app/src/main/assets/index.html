@@ -248,12 +248,12 @@ bindPhotoInput('docPhoto','docPhotoPreview','docForm');bindPhotoInput('violPhoto
 const normalizeArabic=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[ًٌٍَُِّْ]/g,'').replace(/[^\p{L}\p{N}\s.:-]/gu,' ').replace(/\s+/g,' ').trim();
 function parseVoiceDate(text){
  const t=normalizeArabic(text);
- const numeric=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\\s*(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})/);
+ const numeric=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\s*(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
  if(numeric){const y=Number(numeric[1]),m=Number(numeric[2]),d=Number(numeric[3]),dt=new Date(y,m-1,d);return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d?y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'):'';}
- const slash=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\\s*(\\d{1,2})[/.](\\d{1,2})[/.](\\d{4})/);
+ const slash=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\s*(\d{1,2})[/.](\d{1,2})[/.](\d{4})/);
  if(slash){const d=Number(slash[1]),m=Number(slash[2]),y=Number(slash[3]),dt=new Date(y,m-1,d);return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d?y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'):'';}
  const months={'يناير':'01','جانفي':'01','فبراير':'02','فيفري':'02','مارس':'03','افريل':'04','ابريل':'04','ماي':'05','مايو':'05','يونيو':'06','جوان':'06','يوليو':'07','جويلية':'07','اغسطس':'08','اوت':'08','سبتمبر':'09','اكتوبر':'10','نوفمبر':'11','ديسمبر':'12'};
- const m=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\\s*(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\\s*(\\d{1,2})\\s+([\\p{L}]+)\\s+(\\d{4})/u);
+ const m=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\s*(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\s*(\d{1,2})\s+([\p{L}]+)\s+(\d{4})/u);
  if(!m||!months[m[2]])return '';
  const d=Number(m[1]),mo=Number(months[m[2]]),y=Number(m[3]),dt=new Date(y,mo-1,d);
  return dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d?y+'-'+months[m[2]]+'-'+String(d).padStart(2,'0'):'';
