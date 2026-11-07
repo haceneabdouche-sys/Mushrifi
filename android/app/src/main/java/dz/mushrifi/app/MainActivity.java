@@ -148,6 +148,43 @@ public class MainActivity extends Activity {
     public class AndroidBridge {
         @JavascriptInterface public String loadDatabase() { return localDb.read(); }
         @JavascriptInterface public boolean saveDatabase(String json) { return json != null && localDb.write(json); }
+        @JavascriptInterface public String importBackupJson(String raw) {
+            if (raw == null) return "EMPTY";
+            final org.json.JSONObject backup;
+            try {
+                backup = new org.json.JSONObject(raw.replaceFirst("^\\uFEFF", "").trim());
+                if (!(backup.opt("students") instanceof org.json.JSONArray) ||
+                    !(backup.opt("attendance") instanceof org.json.JSONArray)) return "INVALID";
+                if (backup.has("documents") && !(backup.opt("documents") instanceof org.json.JSONArray)) return "INVALID_DOCUMENTS";
+                if (backup.has("violations") && !(backup.opt("violations") instanceof org.json.JSONArray)) return "INVALID_VIOLATIONS";
+                if (backup.has("settings") && !(backup.opt("settings") instanceof org.json.JSONObject)) return "INVALID_SETTINGS";
+                if (!backup.has("documents")) backup.put("documents", new org.json.JSONArray());
+                if (!backup.has("violations")) backup.put("violations", new org.json.JSONArray());
+                if (!backup.has("settings")) backup.put("settings", new org.json.JSONObject());
+            } catch (Exception e) { return "INVALID_JSON"; }
+            final int students = backup.optJSONArray("students").length();
+            final int attendance = backup.optJSONArray("attendance").length();
+            final int documents = backup.optJSONArray("documents").length();
+            final int violations = backup.optJSONArray("violations").length();
+            runOnUiThread(() -> new AlertDialog.Builder(MainActivity.this)
+                .setTitle("تأكيد استيراد النسخة الاحتياطية")
+                .setMessage("تمت قراءة النسخة والتحقق منها.\\nالتلاميذ: " + students +
+                    "، الغياب والتأخر: " + attendance + "، الوثائق: " + documents +
+                    "، المخالفات: " + violations +
+                    "\\n\\nسيتم استبدال بيانات التطبيق الحالية. هل تريد المتابعة؟")
+                .setCancelable(false)
+                .setNegativeButton("إلغاء", (dialog, which) ->
+                    Toast.makeText(MainActivity.this, "أُلغي الاستيراد؛ لم تتغير البيانات.", Toast.LENGTH_LONG).show())
+                .setPositiveButton("استيراد", (dialog, which) -> {
+                    if (localDb.write(backup.toString())) {
+                        Toast.makeText(MainActivity.this, "تم حفظ النسخة الاحتياطية. جارٍ تحديث التطبيق...", Toast.LENGTH_LONG).show();
+                        web.postDelayed(() -> web.reload(), 350);
+                    } else {
+                        Toast.makeText(MainActivity.this, "فشل حفظ النسخة الاحتياطية؛ بقيت البيانات السابقة كما هي.", Toast.LENGTH_LONG).show();
+                    }
+                }).show());
+            return "CONFIRMATION_SHOWN";
+        }
         @JavascriptInterface public boolean hasPassword() { return securityPrefs.contains("hash") && securityPrefs.contains("salt"); }
         @JavascriptInterface public boolean setPassword(String password) { if (password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
         @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
