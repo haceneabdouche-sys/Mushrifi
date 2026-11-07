@@ -96,7 +96,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>تسمية الأقسام</h2><p class="muted">غيّر الاسم الظاهر لكل قسم هنا. يبقى رقم القسم الأصلي محفوظًا لربط سجلات التلاميذ والغياب دون تغيير.</p><div id="classNameEditor"></div><button class="btn primary" id="saveClassNames" type="button">حفظ أسماء الأقسام</button><p id="classNameStatus" class="muted" role="status">الأسماء الافتراضية للأقسام 1 إلى 4 هي ج م ع ت 1 إلى ج م ع ت 4.</p></div>
 <div class="panel"><h2>تنبيهات استدعاء ولي</h2><p class="muted">اسمح أولاً بإشعارات التطبيق، ثم فعّل التنبيهات الدقيقة لتحسين الالتزام بموعد التذكير.</p><button class="btn primary" id="requestNotificationPermission" type="button" onclick="try{if(window.AndroidBridge&&typeof window.AndroidBridge.requestNotificationPermission==='function'){window.AndroidBridge.requestNotificationPermission();document.getElementById('settingsActionStatus').textContent='أُرسل طلب إذن الإشعارات إلى Android.';}else{document.getElementById('settingsActionStatus').textContent='جسر Android غير متاح داخل هذه الصفحة.';alert('تعذر الاتصال بخدمات Android.');}}catch(e){alert('فشل طلب الإذن: '+e.message);}">السماح بإشعارات التطبيق</button> <button class="btn" id="requestExactAlarmAccess" type="button" onclick="try{if(window.AndroidBridge&&typeof window.AndroidBridge.requestExactAlarmAccess==='function'){window.AndroidBridge.requestExactAlarmAccess();document.getElementById('settingsActionStatus').textContent='أُرسل طلب فتح إعداد التنبيهات الدقيقة إلى Android.';}else{document.getElementById('settingsActionStatus').textContent='جسر Android غير متاح داخل هذه الصفحة.';alert('تعذر الاتصال بخدمات Android.');}}catch(e){alert('فشل فتح إعداد التنبيهات: '+e.message);}">تفعيل التنبيهات الدقيقة</button> <button class="btn" id="testSummonsNotification" type="button" onclick="try{if(window.AndroidBridge&&typeof window.AndroidBridge.testSummonsNotification==='function'){window.AndroidBridge.testSummonsNotification();document.getElementById('settingsActionStatus').textContent='أُرسل أمر اختبار الإشعار إلى Android.';}else{document.getElementById('settingsActionStatus').textContent='جسر Android غير متاح داخل هذه الصفحة.';alert('تعذر الاتصال بخدمات Android.');}}catch(e){alert('فشل اختبار الإشعار: '+e.message);}">اختبار وصول الإشعار</button><p id="settingsActionStatus" class="muted" role="status" aria-live="polite">حالة أزرار الإعدادات ستظهر هنا.</p></div>
-<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">استيراد نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json" hidden></div>
+<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button" onclick="window.AndroidBridge && window.AndroidBridge.pickBackupFile ? window.AndroidBridge.pickBackupFile() : document.getElementById('importData').click()">استيراد نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json" hidden></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
 </section>
@@ -488,19 +488,7 @@ async function importBackupText(raw){
  }catch(err){window.onNativeBackupLoadStatus('فشل الاستيراد: '+(err?.message||'خطأ غير معروف'));alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
 }
 window.onNativeBackupLoaded=importBackupText;
-// يفتح الزر منتقي النسخة مباشرةً دون الاعتماد على تهيئة بقية التطبيق.
-$('#importBackupNative').onclick=()=>{
- const st=$('#settingsActionStatus');
- try{
-  if(st)st.textContent='جارٍ فتح مدير الملفات...';
-  if(window.AndroidBridge&&typeof AndroidBridge.pickBackupFile==='function')AndroidBridge.pickBackupFile();
-  else $('#importData').click();
- }catch(err){
-  const message='تعذر فتح مدير الملفات: '+(err?.message||'خطأ غير معروف');
-  if(st)st.textContent=message;
-  alert(message);
- }
-};
+// زر الاستيراد مرتبط مباشرةً من HTML.
 $('#importData').onchange=async e=>{
  const file=e.target.files?.[0];if(!file)return;
  const readWithReader=()=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('تعذرت قراءة محتوى الملف من الهاتف.'));reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));reader.readAsText(file,'UTF-8');});
