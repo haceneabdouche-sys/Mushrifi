@@ -275,89 +275,103 @@ function parseVoiceHours(t){
  if(/ساعه واحده|ساعه/.test(s))return 1;
  return '';
 }
-function voiceStudentMatches(nameText){
- const q=normalizeArabic(nameText);
- if(!q)return [];
- const qTokens=q.split(' ').filter(Boolean).sort();
- return db.students.filter(st=>{
-  const last=normalizeArabic(st.last||''),first=normalizeArabic(st.first||'');
-  const full=normalizeArabic(last+' '+first),reverse=normalizeArabic(first+' '+last);
-  const tokens=full.split(' ').filter(Boolean).sort();
-  return full===q||reverse===q||tokens.join(' ' )===qTokens.join(' ')||
-   (q.length>=5&&(full.includes(q)||reverse.includes(q)));
- });
+function voiceEditDistance(a,b){
+ const x=Array.from(a),y=Array.from(b);if(Math.abs(x.length-y.length)>Math.max(x.length,y.length)*0.75)return Math.max(x.length,y.length);
+ let prev=Array.from({length:y.length+1},(_,i)=>i),curr=new Array(y.length+1);
+ for(let i=1;i<=x.length;i++){curr[0]=i;for(let j=1;j<=y.length;j++)curr[j]=Math.min(curr[j-1]+1,prev[j]+1,prev[j-1]+(x[i-1]===y[j-1]?0:1));[prev,curr]=[curr,prev];}
+ return prev[y.length];
 }
-function handleVoiceOpenStudent(raw){
- let requested=normalizeArabic(raw);
- if(!requested)return false;
- requested=requested
-  .replace(/^(?:من فضلك |لو سمحت )?/,'')
-  .replace(/^(?:افتح|اعرض|ارني|وريني|اذهب الى|انتقل الى|هات|جيب لي)\s+/,'')
-  .replace(/^(?:(?:صفحة|ملف|سجل)\s+)?(?:(?:التلميذ|التلميذة|الطالب|الطالبة)\s+)?/,'')
-  .replace(/\s+(?:مباشرة|الان|من فضلك|لو سمحت)$/,'')
-  .trim();
- if(!requested)return false;
- const matches=voiceStudentMatches(requested);
- if(matches.length===1){
-  const st=matches[0];window.studentHistory(st.id);
-  $('#voiceStatus').textContent='تم فتح الملف الفردي للتلميذ '+st.last+' '+st.first+' – '+st.class+'.';
+function voicePhoneticKey(value){
+ return normalizeArabic(value).replace(/[ثس]/g,'s').replace(/[ذز]/g,'z').replace(/[ظض]/g,'d').replace(/[قڨگ]/g,'q').replace(/[وؤ]/g,'w').replace(/[يئ]/g,'y').replace(/[هح]/g,'h').replace(/[طت]/g,'t').replace(/[ص]/g,'s').replace(/[خ]/g,'k').replace(/\s+/g,' ').trim();
+}
+function voiceNameScore(spoken, candidate){
+ const a=voicePhoneticKey(spoken),b=voicePhoneticKey(candidate);
+ if(!a||!b)return 0;if(a===b)return 1;
+ const compactA=a.replace(/\s/g,''),compactB=b.replace(/\s/g,'');
+ const edit=1-voiceEditDistance(compactA,compactB)/Math.max(compactA.length,compactB.length,1);
+ const at=a.split(' ').filter(Boolean),bt=b.split(' ').filter(Boolean);
+ const common=at.filter(t=>bt.some(u=>t===u||t.includes(u)&&Math.min(t.length,u.length)>=3||u.includes(t)&&Math.min(t.length,u.length)>=3)).length;
+ const token=common/Math.max(at.length,bt.length,1);
+ const containment=(a.includes(b)||b.includes(a))?Math.min(a.length,b.length)/Math.max(a.length,b.length):0;
+ return Math.max(edit*0.72+token*0.28,token*0.72+edit*0.28,containment*0.82);
+}
+function voiceStudentMatches(nameText){
+ const q=normalizeArabic(nameText),phonetic=voicePhoneticKey(nameText);
+ if(!q)return [];
+ const aliases=db.settings.voiceAliases||{};
+ const ranked=db.students.map(st=>{
+  const names=[(st.last||'')+' '+(st.first||''),(st.first||'')+' '+(st.last||''),st.name,st.fullName,st.full_name].filter(Boolean);
+  const keys=names.map(normalizeArabic).filter(Boolean);
+  const saved=(aliases[String(st.id)]||[]).map(normalizeArabic);
+  let score=0,matchedAlias=false;
+  if(saved.includes(q)){score=1.15;matchedAlias=true;}
+  else{
+   for(const n of names)score=Math.max(score,voiceNameScore(nameText,n));
+   if(keys.includes(q))score=1.2;
+   if(keys.some(k=>k===q||k.includes(q)||q.includes(k)))score=Math.max(score,0.94);
+  }
+  return {student:st,score,matchedAlias};
+ }).filter(x=>x.score>=0.43).sort((a,b)=>b.score-a.score);
+ return ranked.slice(0,5);
+}
+function voiceExtractStudentName(raw){
+ const text=String(raw||'').replace(/[،,؛;]/g,' ').replace(/\s+/g,' ').trim();
+ const match=text.match(/(?:غياب(?:ا)?|غياب(?:\s+التلميذ(?:ة)?)?)\s+(.+?)(?=\s+(?:ليوم|يوم|نهار|بتاريخ|تاريخ)\b|$)/i);
+ if(!match)return '';
+ return match[1].replace(/^(?:(?:التلميذ|التلميذة|للتلميذ|للتلميذة|الطالب|الطالبة|يا)\s+)+/i,'').replace(/\s+(?:الغائب|الغائبة)$/,'').trim();
+}
+function prepareVoiceAttendance(studentId, spokenName, raw){
+ const st=db.students.find(x=>String(x.id)===String(studentId));if(!st)return;
+ const t=normalizeArabic(raw),date=parseVoiceDate(raw),hours=parseVoiceHours(raw);
+ const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':'');
+ if(!date||hours===''||!period){$('#voiceStatus').textContent='تعرفت على التلميذ. لكن يلزم ذكر التاريخ وعدد الساعات والفترة الصباحية أو المسائية.';return;}
+ const [y,mo,d]=date.split('-').map(Number),check=new Date(y,mo-1,d);
+ if(check.getFullYear()!==y||check.getMonth()!==mo-1||check.getDate()!==d){$('#voiceStatus').textContent='التاريخ المذكور غير صحيح.';return;}
+ window.pendingVoiceAttendance={student:st.id,date,type:'غياب',period,hours,justified:'غير مبرر',notes:'تم إدخال العملية بالأمر الصوتي'};
+ window.pendingVoiceAlias={studentId:String(st.id),spokenName};
+ $('#voiceConfirm').classList.remove('hidden');
+ $('#voiceConfirm').innerHTML='<h3>تأكيد تسجيل الغياب</h3><p><b>التلميذ:</b> '+esc(st.last+' '+st.first)+'</p><p><b>القسم:</b> '+esc(st.class)+'</p><p><b>التاريخ:</b> '+esc(date)+'</p><p><b>الفترة:</b> '+esc(period)+'</p><p><b>المدة:</b> '+esc(hours)+' ساعة</p><p><b>التبرير:</b> غير مبرر</p><p class="muted">سيُحفظ نطقك لهذا الاسم ليستفيد منه المساعد في المرات القادمة.</p><button type="button" class="btn primary" id="confirmVoiceAttendance">تأكيد الحفظ</button> <button type="button" class="btn" id="cancelVoiceAttendance">إلغاء</button>';
+ $('#voiceStatus').textContent='راجع هوية التلميذ والتفاصيل ثم أكد الحفظ. لم تُسجّل العملية بعد.';
+ $('#confirmVoiceAttendance').onclick=()=>{
+  const a=window.pendingVoiceAttendance,alias=window.pendingVoiceAlias;if(!a)return;
+  db.attendance.push({id:crypto.randomUUID(),...a});
+  if(alias&&alias.spokenName){
+   db.settings.voiceAliases=db.settings.voiceAliases||{};
+   const list=db.settings.voiceAliases[alias.studentId]||[];
+   const key=normalizeArabic(alias.spokenName);
+   if(key&&!list.some(x=>normalizeArabic(x)===key)){list.push(alias.spokenName);db.settings.voiceAliases[alias.studentId]=list.slice(-12);}
+  }
+  window.pendingVoiceAttendance=null;window.pendingVoiceAlias=null;
+  if(save())$('#voiceStatus').textContent='تم تسجيل الغياب وحفظ طريقة نطق الاسم بنجاح.';
+  else $('#voiceStatus').textContent='تعذر حفظ العملية. تحقق من مساحة التخزين.';
   $('#voiceConfirm').classList.add('hidden');
-  return true;
- }
- if(matches.length>1){
-  $('#voiceStatus').textContent='وجدت أكثر من تلميذ بهذا الاسم. اختر القسم الصحيح:';
-  $('#voiceConfirm').classList.remove('hidden');
-  $('#voiceConfirm').innerHTML='<h3>اختر التلميذ</h3>'+matches.map(st=>'<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc(st.last+' '+st.first+' – '+st.class)+'</button>').join(' ');
-  queryAll('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st){window.studentHistory(st.id);$('#voiceStatus').textContent='تم فتح ملف '+st.last+' '+st.first+'.';$('#voiceConfirm').classList.add('hidden');}});
-  return true;
- }
- $('#voiceStatus').textContent='لم أجد التلميذ "'+requested+'" في القائمة. تأكد من أن الاسم مسجل، أو أعد نطقه بوضوح.';
- return true;
+ };
+ $('#cancelVoiceAttendance').onclick=()=>{window.pendingVoiceAttendance=null;window.pendingVoiceAlias=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم تُحفظ أي بيانات.';};
 }
 function onArabicSpeechResult(raw){
- $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ تحليل الأمر...';
+ $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ مطابقة الاسم مع قائمة التلاميذ...';
  $('#voiceTranscript').classList.remove('hidden');$('#voiceTranscript').textContent='سمعت: '+raw;
  const t=normalizeArabic(raw);
- const isAbsenceCommand=/(?:سجل|تسجيل|اثبت|اضف)/.test(t)&&/(?:غياب|غائب)/.test(t);
- if(!isAbsenceCommand){
-  if(handleVoiceOpenStudent(raw))return;
-  $('#voiceStatus').textContent='يمكنك قول: سجّل غياب التلميذ [الاسم] ليوم 8 نوفمبر 2026، ساعتين صباحًا.';
+ if(!/سجل|سجّل|تسجيل|سجللي|سجلي/.test(t)||!/غياب/.test(t)){
+  $('#voiceStatus').textContent='قل مثلاً: سجّل غياب التلميذ [الاسم] نهار الأحد 8 نوفمبر 2026 صباحاً ساعتين.';
   return;
  }
- const date=parseVoiceDate(raw);
- const commandMatch=String(raw).match(/(?:سجل|تسجيل|اثبت|اضف)\\s+(?:غياب(?:ا)?|غائب(?:ا)?)\\s+(?:(?:التلميذ|التلميذة|الطالب|الطالبة)\\s+)?(.+?)\\s+(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/i);
- let namePart=commandMatch?commandMatch[1].trim():'';
- if(!namePart){
-  const normalized=t;
-  const a=normalized.indexOf('غياب');
-  const tail=a>=0?normalized.slice(a+4):'';
-  const cut=tail.search(/(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/);
-  if(cut>=0)namePart=tail.slice(0,cut).trim();
- }
- namePart=namePart.replace(/^(?:(?:التلميذ|التلميذة|للتلميذ|للتلميذة|الطالب|الطالبة)\\s+)+/i,'').replace(/\\s+(?:الغائب|الغائبة)$/,'').trim();
- const matches=voiceStudentMatches(namePart);
- if(matches.length!==1){
-  $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أتمكن من مطابقة اسم التلميذ. قل الاسم المسجل كما يظهر في القائمة، بعد عبارة «غياب التلميذ».';
-  if(matches.length)$('#voiceTranscript').textContent+='\\nالنتائج: '+matches.map(x=>(x.last+' '+x.first+' – '+x.class)).join(' / ');
-  return;
- }
- const st=matches[0],hours=parseVoiceHours(raw);
- const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':(/اليوم كاملا|طوال اليوم|كل اليوم/.test(t)?'اليوم كاملاً':'اليوم كاملاً'));
- if(!date||!hours){$('#voiceStatus').textContent='تعذر تحديد التاريخ أو عدد الساعات. اذكر التاريخ بوضوح (مثال 8 نوفمبر 2026) وعدد الساعات.';return;}
- const data={student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class,date,type:'غياب',period,hours,justified:'غير مبرر',notes:'تم إدخال العملية بالأمر الصوتي'};
- window.pendingVoiceAttendance=data;
+ const spokenName=voiceExtractStudentName(raw);
+ if(!spokenName){$('#voiceStatus').textContent='لم أستطع فصل اسم التلميذ عن الأمر. أعد العبارة واذكر الاسم بعد كلمة غياب.';return;}
+ const matches=voiceStudentMatches(spokenName);
+ if(!matches.length){$('#voiceStatus').textContent='لم أجد اسماً قريباً بما يكفي. جرّب نطق الاسم مرة أخرى أو أضف الاسم المنطوق كاسم بديل من اقتراحات المطابقة.';return;}
  $('#voiceConfirm').classList.remove('hidden');
- $('#voiceConfirm').innerHTML='<h3>تأكيد تسجيل الغياب</h3><p><b>التلميذ:</b> '+esc(st.last+' '+st.first)+'</p><p><b>القسم:</b> '+esc(classLabel(st.class))+'</p><p><b>التاريخ:</b> '+esc(date)+'</p><p><b>الفترة:</b> '+esc(period)+'</p><p><b>المدة:</b> '+esc(hours)+' ساعة</p><p><b>التبرير:</b> غير مبرر</p><button type="button" class="btn primary" id="confirmVoiceAttendance">تأكيد الحفظ</button> <button type="button" class="btn" id="cancelVoiceAttendance">إلغاء</button>';
- $('#voiceStatus').textContent='راجع البيانات ثم اضغط «تأكيد الحفظ». لم يُسجّل الغياب قبل التأكيد.';
- $('#confirmVoiceAttendance').onclick=()=>{
-  const a=window.pendingVoiceAttendance;if(!a)return;
-  const record={id:crypto.randomUUID(),...a};db.attendance.push(record);
-  if(!save()){db.attendance.pop();$('#voiceStatus').textContent='تعذر حفظ الغياب في التخزين. لم يتم تأكيد التسجيل؛ أعد المحاولة.';return;}
-  window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');
-  try{updateAbsenceDashboard();}catch(e){console.warn('absence dashboard refresh failed',e);}
-  $('#voiceStatus').textContent='تم حفظ غياب '+st.last+' '+st.first+' بنجاح في سجل الغيابات.';
- };
- $('#cancelVoiceAttendance').onclick=()=>{window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم يُحفظ أي غياب.';};
+ $('#voiceConfirm').innerHTML='<h3>من هو التلميذ المقصود؟</h3><p>الاسم الذي فهمته: <b>'+esc(spokenName)+'</b></p><p class="muted">اختر الاسم الصحيح. لا يُسجل أي غياب قبل اختيارك والتأكيد النهائي.</p><div id="voiceStudentCandidates"></div><button type="button" class="btn" id="cancelVoiceCandidates">إلغاء</button>';
+ const list=$('#voiceStudentCandidates');
+ matches.forEach((item,index)=>{
+  const st=item.student,button=document.createElement('button');
+  button.type='button';button.className='btn '+(index===0?'primary':'');button.style.cssText='display:block;width:100%;text-align:right;margin:7px 0;white-space:normal';
+  button.textContent=(index+1)+'. '+st.last+' '+st.first+' — القسم '+(st.class||'غير محدد')+(item.matchedAlias?' · نطق محفوظ':'');
+  button.addEventListener('click',()=>prepareVoiceAttendance(st.id,spokenName,raw));
+  list.appendChild(button);
+ });
+ $('#cancelVoiceCandidates').onclick=()=>{$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم تُحفظ أي بيانات.';};
+ $('#voiceStatus').textContent='وجدت '+matches.length+' اقتراحات. اختر التلميذ الصحيح من القائمة.';
 }
 $('#startVoiceBtn').onclick=()=>{
  $('#voiceStatus').textContent='استمع الآن... تحدث بالعربية بعد ظهور نافذة الميكروفون.';
