@@ -190,14 +190,26 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void pickBackupFile() {
             runOnUiThread(() -> {
+                Toast.makeText(MainActivity.this, "جارٍ فتح مدير الملفات لاختيار النسخة الاحتياطية...", Toast.LENGTH_SHORT).show();
+                Intent openDocument = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                openDocument.addCategory(Intent.CATEGORY_OPENABLE);
+                openDocument.setType("*/*");
+                openDocument.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/json", "text/plain", "application/octet-stream"});
+                openDocument.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 try {
-                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                    intent.addCategory(Intent.CATEGORY_OPENABLE);
-                    intent.setType("*/*");
-                    intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/plain", "application/octet-stream"});
-                    startActivityForResult(intent, PICK_BACKUP_NATIVE);
-                } catch (Exception e) {
-                    Toast.makeText(MainActivity.this, "تعذر فتح مدير الملفات", Toast.LENGTH_LONG).show();
+                    startActivityForResult(Intent.createChooser(openDocument, "اختر ملف النسخة الاحتياطية"), PICK_BACKUP_NATIVE);
+                } catch (Exception firstError) {
+                    try {
+                        Intent getContent = new Intent(Intent.ACTION_GET_CONTENT);
+                        getContent.addCategory(Intent.CATEGORY_OPENABLE);
+                        getContent.setType("*/*");
+                        getContent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/json", "text/plain", "application/octet-stream"});
+                        getContent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivityForResult(Intent.createChooser(getContent, "اختر ملف النسخة الاحتياطية"), PICK_BACKUP_NATIVE);
+                    } catch (Exception secondError) {
+                        String reason = secondError.getMessage();
+                        Toast.makeText(MainActivity.this, "تعذر فتح مدير الملفات: " + (reason == null ? "لا يوجد تطبيق لاختيار الملفات" : reason), Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         }
