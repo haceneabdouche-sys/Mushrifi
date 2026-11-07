@@ -311,7 +311,7 @@ public class MainActivity extends Activity {
         if (web == null || pendingBackupImport == null) return;
         final String quoted = org.json.JSONObject.quote(pendingBackupImport);
         web.evaluateJavascript("(function(){try{if(typeof window.onNativeBackupLoaded!=='function')return 'WAIT';Promise.resolve(window.onNativeBackupLoaded(" + quoted + "));return 'DELIVERED';}catch(e){return 'ERROR:'+String(e&&e.message||e);}})()", result -> {
-            if ("\"DELIVERED\"".equals(result)) {
+            if ("\"DELIVERED\"".equals(result) || "\"QUEUED\"".equals(result)) {
                 pendingBackupImport = null;
                 backupDeliveryAttempts = 0;
             } else if ("\"WAIT\"".equals(result) && backupDeliveryAttempts < 30) {
