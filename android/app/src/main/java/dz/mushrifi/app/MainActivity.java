@@ -349,6 +349,9 @@ public class MainActivity extends Activity {
     @Override protected void onStop() { super.onStop(); }
 
     @Override public void onBackPressed() {
-        if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
+        if (web == null) { finish(); return; }
+        web.evaluateJavascript("(function(){return typeof window.handleAndroidBack==='function'?window.handleAndroidBack():false})()", value -> {
+            if (!"true".equals(value)) finish();
+        });
     }
 }
