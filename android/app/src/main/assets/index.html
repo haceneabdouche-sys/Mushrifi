@@ -334,7 +334,7 @@ function onArabicSpeechResult(raw){
   const cut=tail.search(/(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/);
   if(cut>=0)namePart=tail.slice(0,cut).trim();
  }
- namePart=namePart.replace(/\\s+(?:الغائب|الغائبة)$/,'').trim();
+ namePart=namePart.replace(/^(?:(?:التلميذ|التلميذة|للتلميذ|للتلميذة|الطالب|الطالبة)\\s+)+/i,'').replace(/\\s+(?:الغائب|الغائبة)$/,'').trim();
  const matches=voiceStudentMatches(namePart);
  if(matches.length!==1){
   $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أتمكن من مطابقة اسم التلميذ. قل الاسم المسجل كما يظهر في القائمة، بعد عبارة «غياب التلميذ».';
