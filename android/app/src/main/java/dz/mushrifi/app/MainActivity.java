@@ -295,10 +295,13 @@ public class MainActivity extends Activity {
         if (web == null || pendingBackupImport == null) return;
         final String quoted = org.json.JSONObject.quote(pendingBackupImport);
         web.evaluateJavascript("(function(){try{if(typeof window.onNativeBackupLoaded!=='function')return 'WAIT';window.onNativeBackupLoaded(" + quoted + ");return 'DELIVERED';}catch(e){return 'ERROR:'+String(e&&e.message||e);}})()", result -> {
-            if ("'DELIVERED'".equals(result)) {
+            String delivered = "\\\"DELIVERED\\\"";
+            if (delivered.equals(result)) {
                 pendingBackupImport = null;
-            } else if (result != null && result.startsWith("'ERROR:")) {
-                String message = "تعذر بدء استيراد النسخة: " + result;
+            } else if (result != null && result.startsWith("\\\"ERROR:")) {
+                String message;
+                try { message = "تعذر بدء استيراد النسخة: " + String.valueOf(new org.json.JSONTokener(result).nextValue()); }
+                catch (Exception ignored) { message = "تعذر بدء استيراد النسخة داخل صفحة التطبيق."; }
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
             }
         });
