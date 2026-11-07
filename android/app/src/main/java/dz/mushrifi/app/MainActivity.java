@@ -25,6 +25,8 @@ import android.content.Intent;
 import android.speech.RecognizerIntent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.provider.MediaStore;
@@ -49,6 +51,8 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> fileCallback;
     private String pendingBackup;
     private String pendingBackupImport;
+    private int backupDeliveryAttempts = 0;
+    private final Handler backupHandler = new Handler(Looper.getMainLooper());
     private boolean speechPending;
     private WebView web;
 
@@ -306,15 +310,20 @@ public class MainActivity extends Activity {
     private void deliverPendingBackupImport() {
         if (web == null || pendingBackupImport == null) return;
         final String quoted = org.json.JSONObject.quote(pendingBackupImport);
-        web.evaluateJavascript("(function(){try{if(typeof window.onNativeBackupLoaded!=='function')return 'WAIT';window.onNativeBackupLoaded(" + quoted + ");return 'DELIVERED';}catch(e){return 'ERROR:'+String(e&&e.message||e);}})()", result -> {
-            String delivered = "\"DELIVERED\"";
-            if (delivered.equals(result)) {
+        web.evaluateJavascript("(function(){try{if(typeof window.onNativeBackupLoaded!=='function')return 'WAIT';Promise.resolve(window.onNativeBackupLoaded(" + quoted + "));return 'DELIVERED';}catch(e){return 'ERROR:'+String(e&&e.message||e);}})()", result -> {
+            if ("\"DELIVERED\"".equals(result)) {
                 pendingBackupImport = null;
+                backupDeliveryAttempts = 0;
+            } else if ("\"WAIT\"".equals(result) && backupDeliveryAttempts < 30) {
+                backupDeliveryAttempts++;
+                backupHandler.postDelayed(this::deliverPendingBackupImport, 300);
             } else if (result != null && result.startsWith("\"ERROR:")) {
                 String message;
                 try { message = "تعذر بدء استيراد النسخة: " + String.valueOf(new org.json.JSONTokener(result).nextValue()); }
                 catch (Exception ignored) { message = "تعذر بدء استيراد النسخة داخل صفحة التطبيق."; }
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            } else if (backupDeliveryAttempts >= 30) {
+                Toast.makeText(MainActivity.this, "تمت قراءة الملف، لكن صفحة الاستيراد لم تكن جاهزة. أعد المحاولة دون إغلاق التطبيق.", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -340,7 +349,11 @@ public class MainActivity extends Activity {
                     byte[] bytes = out.toByteArray();
                     if (bytes.length == 0) throw new IOException("الملف المحدد فارغ فعلياً");
                     pendingBackupImport = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-                    runOnUiThread(this::deliverPendingBackupImport);
+                    backupDeliveryAttempts = 0;
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, "تمت قراءة الملف (" + bytes.length + " بايت)؛ جارٍ تمريره إلى التطبيق...", Toast.LENGTH_LONG).show();
+                        deliverPendingBackupImport();
+                    });
                 } catch (Exception e) {
                     String message = "تعذرت قراءة ملف النسخة: " + e.getMessage();
                     web.evaluateJavascript("if(window.onNativeBackupLoadStatus)window.onNativeBackupLoadStatus(" + org.json.JSONObject.quote(message) + ");", null);
