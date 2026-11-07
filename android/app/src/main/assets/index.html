@@ -507,18 +507,24 @@ $('#csvImport').onchange=async e=>{
     if(fullIdx<0||classIdx<0)throw new Error('تعذر التعرف على عناوين الأعمدة. يجب أن يحتوي الملف على «الاسم واللقب» و«القسم».');
     const originalStudentCount=db.students.length;
     const existing=new Set(db.students.map(s=>normName(s.last+' '+(s.first||''))+'|'+normName(s.class)));
-    let added=0,skipped=0;
+    const pending=[],duplicateSamples=[];let skippedDuplicate=0,skippedIncomplete=0;
     for(const cells of rows.slice(1)){
       const value=i=>i<0?'':String(cells[i]??'').trim(),fullName=value(fullIdx),cls=value(classIdx);
-      if(!fullName||!cls){skipped++;continue;}
+      if(!fullName||!cls){skippedIncomplete++;continue;}
       const key=normName(fullName)+'|'+normName(cls);
-      if(existing.has(key)){skipped++;continue;}
+      if(existing.has(key)){skippedDuplicate++;if(duplicateSamples.length<8)duplicateSamples.push(fullName+' — '+cls);continue;}
       const attr=value(attrIdx);
-      db.students.push({id:crypto.randomUUID(),last:fullName,first:'',class:cls,code:'',guardian:value(guardianIdx),phone:'',birthDate:value(dateIdx),status:attr,attribute:attr});
-      existing.add(key);added++;
+      pending.push({id:crypto.randomUUID(),last:fullName,first:'',class:cls,code:'',guardian:value(guardianIdx),phone:'',birthDate:value(dateIdx),status:attr,attribute:attr});
+      existing.add(key);
     }
+    const added=pending.length,skipped=skippedDuplicate+skippedIncomplete;
+    if(!added){alert('لم تتم إضافة أي تلميذ.\\nالمكرر: '+skippedDuplicate+'\\nالبيانات الناقصة: '+skippedIncomplete+'\\nلم تتغير القائمة الحالية.');return;}
+    const preview=pending.slice(0,8).map(x=>'• '+x.last+' — '+x.class).join('\\n');
+    const duplicateText=duplicateSamples.length?'\\nأمثلة مكررة تم تجاوزها:\\n'+duplicateSamples.map(x=>'• '+x).join('\\n'):'';
+    if(!confirm('معاينة الاستيراد قبل الحفظ\\nعدد الصفوف المقروءة: '+(rows.length-1)+'\\nسيُضاف: '+added+'\\nسيُتجاوز لتكراره: '+skippedDuplicate+'\\nسيُتجاوز لنقص الاسم أو القسم: '+skippedIncomplete+'\\n\\nأمثلة من التلاميذ الجدد:\\n'+preview+duplicateText+'\\n\\nلن تُحذف أو تُستبدل أي بيانات موجودة. هل تريد إضافة هذه الأسماء؟'))return;
+    db.students.push(...pending);
     if(!save()){db.students.splice(originalStudentCount);render();throw new Error('تعذر حفظ الاستيراد؛ أُلغيت الإضافات الجديدة وبقيت القائمة السابقة كما هي.');}
-    alert('اكتمل الاستيراد.\nالتلاميذ المضافون: '+added+'\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
+    alert('اكتمل الاستيراد بنجاح.\\nالتلاميذ المضافون: '+added+'\\nالمكرر المتجاوز: '+skippedDuplicate+'\\nالبيانات الناقصة المتجاوزة: '+skippedIncomplete);
   }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
