@@ -48,6 +48,7 @@ public class MainActivity extends Activity {
     private static final String CHANNEL_ID = "guardian_summons";
     private ValueCallback<Uri[]> fileCallback;
     private String pendingBackup;
+    private String pendingBackupImport;
     private boolean speechPending;
     private WebView web;
 
@@ -65,7 +66,12 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         web.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                deliverPendingBackupImport();
+            }
+        });
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
@@ -285,6 +291,19 @@ public class MainActivity extends Activity {
         rescheduleStoredReminders();
     }
 
+    private void deliverPendingBackupImport() {
+        if (web == null || pendingBackupImport == null) return;
+        final String quoted = org.json.JSONObject.quote(pendingBackupImport);
+        web.evaluateJavascript("(function(){try{if(typeof window.onNativeBackupLoaded!=='function')return 'WAIT';window.onNativeBackupLoaded(" + quoted + ");return 'DELIVERED';}catch(e){return 'ERROR:'+String(e&&e.message||e);}})()", result -> {
+            if ("'DELIVERED'".equals(result)) {
+                pendingBackupImport = null;
+            } else if (result != null && result.startsWith("'ERROR:")) {
+                String message = "تعذر بدء استيراد النسخة: " + result;
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == SPEECH_REQUEST) {
@@ -305,9 +324,8 @@ public class MainActivity extends Activity {
                     while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
                     byte[] bytes = out.toByteArray();
                     if (bytes.length == 0) throw new IOException("الملف المحدد فارغ فعلياً");
-                    String json = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-                    String quoted = org.json.JSONObject.quote(json);
-                    web.evaluateJavascript("(function(){if(typeof window.onNativeBackupLoaded!=='function'){if(window.onNativeBackupLoadStatus)window.onNativeBackupLoadStatus('تم اختيار الملف لكن صفحة الاستيراد لم تجهز بعد. أعد فتح التطبيق وحاول مجدداً.');return;}window.onNativeBackupLoaded(" + quoted + ");})()", null);
+                    pendingBackupImport = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+                    runOnUiThread(this::deliverPendingBackupImport);
                 } catch (Exception e) {
                     String message = "تعذرت قراءة ملف النسخة: " + e.getMessage();
                     web.evaluateJavascript("if(window.onNativeBackupLoadStatus)window.onNativeBackupLoadStatus(" + org.json.JSONObject.quote(message) + ");", null);
