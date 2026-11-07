@@ -102,6 +102,28 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 </section>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
 <script>
+/* Navigation safety net: keep page navigation usable even if the main app script fails. */
+(function(){
+  function showPage(page, addHistory){
+    var target=document.getElementById(page);
+    if(!target || !target.classList.contains('page')) return;
+    document.querySelectorAll('.page').forEach(function(el){el.classList.toggle('hidden',el.id!==page);});
+    document.querySelectorAll('#nav button[data-page]').forEach(function(el){el.classList.toggle('active',el.getAttribute('data-page')===page);});
+    if(addHistory){try{history.pushState({mushrifiPage:page},'','#'+page);}catch(e){}}
+  }
+  document.addEventListener('click',function(event){
+    var control=event.target && event.target.closest ? event.target.closest('#nav button[data-page], [data-go]') : null;
+    if(!control) return;
+    var page=control.getAttribute('data-page') || control.getAttribute('data-go');
+    if(page) showPage(page,true);
+  });
+  window.addEventListener('popstate',function(event){
+    var page=event.state && event.state.mushrifiPage;
+    showPage(page || 'home',false);
+  });
+})();
+</script>
+<script>
 const DBKEY='mushrifi_v1';
 const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}';
 const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase==='function');
