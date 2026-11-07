@@ -37,12 +37,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 window.onNativeBackupLoaded = function(raw) {
   if (typeof window.__processNativeBackupImport !== 'function') return 'WAIT';
   try {
-    const result = window.__processNativeBackupImport(String(raw == null ? '' : raw));
-    if (result && typeof result.then === 'function') {
-      return result.then(function(){ return 'STARTED'; }, function(error) {
-        return 'ERROR:' + String(error && error.message || error);
-      });
-    }
+    window.__processNativeBackupImport(String(raw == null ? '' : raw));
     return 'STARTED';
   } catch (error) {
     return 'ERROR:' + String(error && error.message || error);
