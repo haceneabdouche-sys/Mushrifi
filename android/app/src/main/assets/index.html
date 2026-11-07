@@ -486,7 +486,44 @@ async function importBackupText(raw){
   for(const key of ['documents','violations'])if(!validArray(obj[key],key))throw new Error('حقل '+key+' موجود لكنه ليس قائمة سليمة. أُوقف الاستيراد لحماية البيانات.');
   if(obj.settings!==undefined&&(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings)))throw new Error('قسم الإعدادات في النسخة غير سليم. لم تتغير البيانات.');
   const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:Array.isArray(obj.documents)?obj.documents:[],violations:Array.isArray(obj.violations)?obj.violations:[],settings:obj.settings||{}};
-  const counts='التلاميذ: '+normalized.students.length+'، الغياب والتأخر: '+normalized.attendance.length+'، الوثائق والاستدعاءات: '+normalized.documents.length+'، المخالفات: '+normalized.violations.length;
+  // Repair record-to-student links from backup files created by older app versions.
+  // Match by normalized full name + section first; use name-only only when globally unique.
+  const studentsById=new Map(normalized.students.map(s=>[normalizeStudentKey(s.id),s]));
+  const byNameSection=new Map(), byName=new Map();
+  normalized.students.forEach(s=>{
+    const names=studentNameKeys(s);
+    const section=normalizeStudentSection(s.class);
+    names.forEach(n=>{
+      const nk=n;
+      if(!byName.has(nk))byName.set(nk,[]);
+      if(!byName.get(nk).includes(s))byName.get(nk).push(s);
+      const sk=nk+'|'+section;
+      if(!byNameSection.has(sk))byNameSection.set(sk,[]);
+      if(!byNameSection.get(sk).includes(s))byNameSection.get(sk).push(s);
+    });
+  });
+  let relinked=0,ambiguous=0,unmatched=0;
+  for(const kind of ['attendance','documents','violations']){
+    for(const record of normalized[kind]){
+      if(!record||!record.student||studentsById.has(normalizeStudentKey(record.student)))continue;
+      const n=normalizeStudentName(record.studentName||record.studentFullName||record.name||'');
+      if(!n){unmatched++;continue;}
+      const rawSection=record.class??record.studentClass??record.section??'';
+      const section=normalizeStudentSection(rawSection);
+      let candidates=section?(byNameSection.get(n+'|'+section)||[]):[];
+      if(candidates.length!==1){
+        const all=byName.get(n)||[];
+        if(all.length===1)candidates=all;
+        else if(candidates.length>1||all.length>1){ambiguous++;continue;}
+      }
+      if(candidates.length===1){
+        record.student=candidates[0].id;
+        record.studentName=(candidates[0].last+' '+(candidates[0].first||'')).trim();
+        relinked++;
+      }else unmatched++;
+    }
+  }
+  const counts='التلاميذ: '+normalized.students.length+'، الغياب والتأخر: '+normalized.attendance.length+'، الوثائق والاستدعاءات: '+normalized.documents.length+'، المخالفات: '+normalized.violations.length+'، السجلات المرتبطة بالتلاميذ: '+relinked+'، الملتبسة: '+ambiguous+'، غير المرتبطة: '+unmatched;
   window.onNativeBackupLoadStatus('تمت قراءة الملف والتحقق منه: '+counts);
   if(window.AndroidBridge&&typeof AndroidBridge.importBackupJson==='function'){
     const nativeResult=AndroidBridge.importBackupJson(JSON.stringify(normalized));
