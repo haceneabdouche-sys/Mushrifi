@@ -369,20 +369,32 @@ public class MainActivity extends Activity {
     private void deliverPendingBackupImport() {
         if (web == null || pendingBackupImport == null) return;
         final String quoted = org.json.JSONObject.quote(pendingBackupImport);
-        web.evaluateJavascript("(function(){try{if(typeof window.onNativeBackupLoaded!=='function')return 'WAIT';Promise.resolve(window.onNativeBackupLoaded(" + quoted + "));return 'DELIVERED';}catch(e){return 'ERROR:'+String(e&&e.message||e);}})()", result -> {
-            if ("\"DELIVERED\"".equals(result) || "\"QUEUED\"".equals(result)) {
+        final String script =
+            "(function(){" +
+            "if(typeof window.onNativeBackupLoaded!=='function')return Promise.resolve('WAIT');" +
+            "try{return Promise.resolve(window.onNativeBackupLoaded(" + quoted + "));}" +
+            "catch(e){return Promise.resolve('ERROR:'+String(e&&e.message||e));}" +
+            "})().then(function(v){return typeof v==='string'?v:'STARTED';})" +
+            ".catch(function(e){return 'ERROR:'+String(e&&e.message||e);})";
+        web.evaluateJavascript(script, result -> {
+            if ("\"STARTED\"".equals(result)) {
                 pendingBackupImport = null;
                 backupDeliveryAttempts = 0;
-            } else if ("\"WAIT\"".equals(result) && backupDeliveryAttempts < 30) {
+                Toast.makeText(MainActivity.this, "بدأ التطبيق معالجة النسخة الاحتياطية. انتظر نافذة التأكيد.", Toast.LENGTH_LONG).show();
+            } else if ("\"WAIT\"".equals(result) && backupDeliveryAttempts < 40) {
                 backupDeliveryAttempts++;
-                backupHandler.postDelayed(this::deliverPendingBackupImport, 300);
+                backupHandler.postDelayed(this::deliverPendingBackupImport, 400);
             } else if (result != null && result.startsWith("\"ERROR:")) {
+                pendingBackupImport = null;
+                backupDeliveryAttempts = 0;
                 String message;
                 try { message = "تعذر بدء استيراد النسخة: " + String.valueOf(new org.json.JSONTokener(result).nextValue()); }
                 catch (Exception ignored) { message = "تعذر بدء استيراد النسخة داخل صفحة التطبيق."; }
                 Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
-            } else if (backupDeliveryAttempts >= 30) {
-                Toast.makeText(MainActivity.this, "تمت قراءة الملف، لكن صفحة الاستيراد لم تكن جاهزة. أعد المحاولة دون إغلاق التطبيق.", Toast.LENGTH_LONG).show();
+            } else if (backupDeliveryAttempts >= 40) {
+                pendingBackupImport = null;
+                backupDeliveryAttempts = 0;
+                Toast.makeText(MainActivity.this, "لم تصل صفحة التطبيق إلى دالة الاستيراد؛ لم تُحذف بياناتك ولم يتم استيراد الملف. أعد فتح الإعدادات وحاول بعد اكتمال تحميل الصفحة.", Toast.LENGTH_LONG).show();
             }
         });
     }
