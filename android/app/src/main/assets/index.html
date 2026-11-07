@@ -96,7 +96,7 @@ db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const save=()=>{try{const json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json))throw Error('رفض مخزن Android تأكيد كتابة قاعدة البيانات');localStorage.removeItem(DBKEY);}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً: '+(e?.message||'خطأ تخزين غير معروف')+'. لم يتم تأكيد الحفظ.');return false;}try{render();}catch(e){console.error('Mushrifi render after save failed',e);alert('تم حفظ البيانات، لكن تعذر تحديث العرض. أعد فتح الصفحة فقط بعد التأكد من وجود نسخة احتياطية.');}return true};
-const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
+const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩۰-۹]/g,d=>'٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'.indexOf(d)%10).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalizeStudentName = value => String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\u200f\u200e]/g,'').replace(/[ \t\u00A0]*[0-9٠-٩۰-۹]+[ \t\u00A0]*$/,'').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
 const normalizeStudentSection = value => String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
@@ -271,7 +271,7 @@ window.studentAction=(el,id)=>{
 window.delStudent=id=>{if(!confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.'))return;const old=db.students;db.students=old.filter(s=>s.id!==id);if(!save()){db.students=old;render();alert('تعذر حفظ الحذف؛ أُعيد ملف التلميذ إلى القائمة.');}};
 window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل؟'))return;const old=db[kind];db[kind]=old.filter(x=>x.id!==id);if(!save()){db[kind]=old;render();return;}if(kind==='documents'&&window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));};
 // مطابقة أسماء التلاميذ مع تجاهل التشكيل واختلافات الهمزة والمسافات
-const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ').toLocaleLowerCase('ar');
+const normalizeStudentIdentity=value=>normalizeStudentName(value);
 const findStudentForRecord=record=>{
   const byId=db.students.find(s=>String(s.id)===String(record.student));
   if(byId)return {student:byId,reason:'المعرّف'};
@@ -334,7 +334,7 @@ window.studentHistory=id=>{
     return knownSections.size<=1;
   };
   const a=db.attendance.filter(belongsToStudent);
-  const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
+  const abs=a.filter(x=>normalizeRecordType(x.type)===normalizeRecordType('غياب')),late=a.filter(x=>normalizeRecordType(x.type)===normalizeRecordType('تأخر'));
   const hoursOf=record=>{let h=parseHours(record.hours);if(h===''||Number.isNaN(h))h=parseHours(record.period);return typeof h==='number'&&Number.isFinite(h)&&h>=0?h:0;};
   const totalHours=items=>items.reduce((sum,item)=>sum+hoursOf(item),0);
   const absHours=totalHours(abs),lateHours=totalHours(late),allHours=absHours+lateHours;
@@ -343,9 +343,9 @@ window.studentHistory=id=>{
   const unjustified=items=>items.filter(x=>statusOf(x)==='غير مبرر'||statusOf(x)==='').length;
   const pending=items=>items.filter(x=>statusOf(x)==='قيد التبرير').length;
   const v=db.violations.filter(belongsToStudent),d=db.documents.filter(belongsToStudent);
-  const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
-  const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
-  const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));
+  const absenceNotices=d.filter(x=>normalizeRecordType(x.type).includes(normalizeRecordType('إشعار غياب')));
+  const summons=d.filter(x=>normalizeRecordType(x.type).includes(normalizeRecordType('استدعاء')));
+  const alerts=d.filter(x=>normalizeRecordType(x.type).includes(normalizeRecordType('تنبيه')));
   const statusSummary=items=>`<p>مبررة: <b>${justified(items)}</b> · غير مبررة: <b>${unjustified(items)}</b> · قيد التبرير: <b>${pending(items)}</b></p>`;
   const attendanceList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الفترة</th><th>عدد الساعات</th><th>حالة التبرير</th><th>ملاحظات</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>{const detected=x.hours??(parseHours(x.period)!==''?parseHours(x.period):'—');const periodText=parseHours(x.period)!==''?'—':(x.period||'—');return `<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(periodText)}</td><td>${esc(detected)}</td><td>${esc(statusOf(x))}</td><td>${esc(x.notes||'—')}</td></tr>`;}).join('')}</tbody></table></div>`:'<p class="empty">لا توجد سجلات.</p>';
   const documentList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.reason||'—')}</td><td>${esc(x.appointment||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد وثائق.</p>';
@@ -468,9 +468,10 @@ $('#csvImport').onchange=async e=>{
     if(!/\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
     const raw=(await file.text()).replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
-    const sample=raw.split(/\r?\n/).find(x=>x.trim())||'';
-    const delimiters=[',',';','\t'];const delimiter=delimiters.sort((a,b)=>sample.split(b).length-sample.split(a).length)[0];
-    const rows=parseCSV(raw,delimiter);
+    const delimiters=[',',';','\t'];
+    const candidates=delimiters.map(delimiter=>({delimiter,rows:parseCSV(raw,delimiter)}));
+    const score=c=>{const width=c.rows[0]?.length||0;return (width>1?1000:0)+c.rows.slice(1).filter(r=>r.length===width).length*10+width;};
+    const rows=candidates.sort((a,b)=>score(b)-score(a))[0].rows;
     if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
     const headers=rows[0].map(normHeader),find=names=>headers.findIndex(h=>names.includes(h));
     const fullIdx=find(['الاسمواللقب','اللقبوالاسم','الاسم','nometprenom','nomprenom','fullname','name']);
