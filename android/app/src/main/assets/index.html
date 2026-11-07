@@ -106,7 +106,7 @@ window.onNativeBackupLoaded = function(raw) {
 <section id="documentPreview" class="page hidden"><div class="panel"><div id="documentPreviewContent"></div><div class="row no-print"><button type="button" class="btn primary" id="printPreviewButton">طباعة / حفظ PDF</button><button type="button" class="btn" id="backFromPreview">العودة إلى السجلات</button><button type="button" class="btn" id="homeFromPreview">الصفحة الرئيسية</button></div></div></section>
 <section id="settings" class="page hidden">
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
-<div class="panel"><h2>تسمية الأقسام</h2><p class="muted">غيّر الاسم الظاهر لكل قسم هنا. يبقى رقم القسم الأصلي محفوظًا لربط سجلات التلاميذ والغياب دون تغيير.</p><div id="classNameEditor"></div><button class="btn primary" id="saveClassNames" type="button">حفظ أسماء الأقسام</button><p id="classNameStatus" class="muted" role="status">الأسماء الافتراضية للأقسام 1 إلى 4 هي ج م ع ت 1 إلى ج م ع ت 4.</p></div>
+<div class="panel"><h2>إضافة الأقسام وإدارتها</h2><p class="muted">يمكنك إضافة أي عدد من الأقسام دون حد ثابت. سيظهر القسم تلقائيًا في قوائم التلاميذ ومتابعة الغياب وجدول التوقيت، وتبقى بيانات الأقسام القديمة كما هي.</p><div class="row"><div><label for="newClassName">اسم أو رمز القسم الجديد</label><input id="newClassName" placeholder="مثال: 2 علوم تجريبية 3"></div><button class="btn primary" id="addClassButton" type="button">إضافة القسم</button></div><p id="addClassStatus" class="muted" role="status">عدد الأقسام المسجلة: 0</p></div><div class="panel"><h2>تسمية الأقسام</h2><p class="muted">غيّر الاسم الظاهر لكل قسم هنا. يبقى رقم القسم الأصلي محفوظًا لربط سجلات التلاميذ والغياب دون تغيير.</p><div id="classNameEditor"></div><button class="btn primary" id="saveClassNames" type="button">حفظ أسماء الأقسام</button><p id="classNameStatus" class="muted" role="status">يمكنك إضافة الأقسام من القسم السابق، ثم تعديل الاسم الظاهر هنا.</p></div>
 <div class="panel"><h2>تنبيهات استدعاء ولي</h2><p class="muted">اسمح أولاً بإشعارات التطبيق، ثم فعّل التنبيهات الدقيقة لتحسين الالتزام بموعد التذكير.</p><button class="btn primary" id="requestNotificationPermission" type="button" onclick="try{if(window.AndroidBridge&&typeof window.AndroidBridge.requestNotificationPermission==='function'){window.AndroidBridge.requestNotificationPermission();document.getElementById('settingsActionStatus').textContent='أُرسل طلب إذن الإشعارات إلى Android.';}else{document.getElementById('settingsActionStatus').textContent='جسر Android غير متاح داخل هذه الصفحة.';alert('تعذر الاتصال بخدمات Android.');}}catch(e){alert('فشل طلب الإذن: '+e.message);}">السماح بإشعارات التطبيق</button> <button class="btn" id="requestExactAlarmAccess" type="button" onclick="try{if(window.AndroidBridge&&typeof window.AndroidBridge.requestExactAlarmAccess==='function'){window.AndroidBridge.requestExactAlarmAccess();document.getElementById('settingsActionStatus').textContent='أُرسل طلب فتح إعداد التنبيهات الدقيقة إلى Android.';}else{document.getElementById('settingsActionStatus').textContent='جسر Android غير متاح داخل هذه الصفحة.';alert('تعذر الاتصال بخدمات Android.');}}catch(e){alert('فشل فتح إعداد التنبيهات: '+e.message);}">تفعيل التنبيهات الدقيقة</button> <button class="btn" id="testSummonsNotification" type="button" onclick="try{if(window.AndroidBridge&&typeof window.AndroidBridge.testSummonsNotification==='function'){window.AndroidBridge.testSummonsNotification();document.getElementById('settingsActionStatus').textContent='أُرسل أمر اختبار الإشعار إلى Android.';}else{document.getElementById('settingsActionStatus').textContent='جسر Android غير متاح داخل هذه الصفحة.';alert('تعذر الاتصال بخدمات Android.');}}catch(e){alert('فشل اختبار الإشعار: '+e.message);}">اختبار وصول الإشعار</button><p id="settingsActionStatus" class="muted" role="status" aria-live="polite">حالة أزرار الإعدادات ستظهر هنا.</p></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button" onclick="window.AndroidBridge && window.AndroidBridge.pickBackupFile ? window.AndroidBridge.pickBackupFile() : document.getElementById('importData').click()">استيراد نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json" hidden></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
@@ -188,7 +188,7 @@ const datePlus=(date,n)=>{const d=new Date(date+'T12:00:00');d.setDate(d.getDate
 const dateDiff=(a,b)=>Math.floor((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);
 const absenceStage=days=>days>=28?4:days>=14?3:days>=7?2:days>=3?1:0;
 const stageName=n=>({0:'أقل من 3 أيام',1:'الإشعار الأول',2:'الإشعار الثاني',3:'الإعذار (مهلة أسبوعين)',4:'مراجعة الإدارة'}[n]||'—');
-const classNames=()=>[...new Set(db.students.map(s=>String(s.class||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
+const classNames=()=>{const cfg=absenceConfig();const names=[...(Array.isArray(db.settings.classes)?db.settings.classes:[]),...db.students.map(s=>String(s.class||'').trim()),...Object.keys(cfg.weeklyHours||{}),...Object.keys(cfg.manualTargets||{}).map(k=>k.split('|')[0])].map(x=>String(x||'').trim()).filter(Boolean);return [...new Set(names)].sort((a,b)=>a.localeCompare(b,'ar'));};
 const classLabel=cls=>{const key=String(cls??'').trim();if(!key)return 'بدون قسم';const labels=db.settings.classLabels&&typeof db.settings.classLabels==='object'?db.settings.classLabels:{};return String(labels[key]||((/^[1-4]$/.test(key))?('ج م ع ت '+key):key));};
 function renderClassNameEditor(){const host=$('#classNameEditor');if(!host)return;const labels=db.settings.classLabels&&typeof db.settings.classLabels==='object'?db.settings.classLabels:{};const names=[...new Set([...classNames(),'1','2','3','4'])].sort((a,b)=>a.localeCompare(b,'ar'));host.innerHTML=names.map(n=>'<div class="row"><div><label>رقم/رمز القسم: '+esc(n)+'</label><input class="class-name-edit" data-class-key="'+esc(n)+'" value="'+esc(labels[n]||((/^[1-4]$/.test(n))?('ج م ع ت '+n):n))+'" aria-label="الاسم الظاهر للقسم '+esc(n)+'"></div></div>').join('');}
 function setClassOptions(){const names=classNames();['absenceClass','scheduleClass','manualTargetClass'].forEach(id=>{const el=$('#'+id);if(!el)return;const old=el.value;el.innerHTML=(id==='absenceClass'?'<option value="">كل الأقسام</option>':'')+names.map(n=>'<option value="'+esc(n)+'">'+esc(classLabel(n))+'</option>').join('');if(names.includes(old))el.value=old;});}
@@ -227,7 +227,7 @@ cfg.finalizedDays[date]=[...absent];if(!save())return false;updateAbsenceDashboa
 window.manualReturnAbsenceCase=id=>{const c=absenceConfig().cases.find(x=>x.id===id&&x.status==='open');if(!c)return;if(!confirm('تسجيل عودة التلميذ وإغلاق المتابعة؟'))return;closeAbsenceCase(c,'returned');if(!save())return;updateAbsenceDashboard();};
 $('#dailyAbsenceDate').value=absenceToday();$('#finalizeAbsenceDay').onclick=()=>{const date=$('#dailyAbsenceDate').value;if(!date){alert('اختر تاريخ قائمة الغياب أولاً.');return;}if(date>absenceToday()){alert('لا يمكن اعتماد غيابات تاريخ مستقبلي.');return;}const count=dailyAllAbsenceIds(date).size;if(!confirm('اعتماد قائمة '+date+'؟ عدد التلاميذ المسجل غيابهم: '+count+'. سيُعتبر كل تلميذ غير وارد في القائمة حاضرًا في هذا اليوم وتُغلق متابعته.'))return;if(syncAbsenceCasesForDay(date))alert('تم تحديث المتابعة الآلية لليوم '+date+'.');};
 $('#printAbsenceReport').onclick=()=>{updateAbsenceDashboard();go('absenceTracking');setTimeout(()=>window.print(),100);};
-function initAbsenceTracking(){renderClassNameEditor();setClassOptions();const cls=$('#scheduleClass').value,v=weekdayHoursFor(cls);ABSENCE_DAYS.forEach(([key])=>{const el=$('#hours_'+key);if(el)el.value=v[key]??'';});const m=monthKey(),holiday=$('#absenceHolidays');if(holiday)holiday.value=(absenceConfig().holidays[m]||[]).join(', ');const selected=$('#manualTargetClass').value;if(selected)selectManualTarget(selected);updateAbsenceDashboard();}
+function initAbsenceTracking(){renderClassNameEditor();setClassOptions();const classStatus=$('#addClassStatus');if(classStatus)classStatus.textContent='عدد الأقسام المسجلة: '+classNames().length;const cls=$('#scheduleClass').value,v=weekdayHoursFor(cls);ABSENCE_DAYS.forEach(([key])=>{const el=$('#hours_'+key);if(el)el.value=v[key]??'';});const m=monthKey(),holiday=$('#absenceHolidays');if(holiday)holiday.value=(absenceConfig().holidays[m]||[]).join(', ');const selected=$('#manualTargetClass').value;if(selected)selectManualTarget(selected);updateAbsenceDashboard();}
 
 function render(){
 const normType=normalizeRecordType;const absCount=db.attendance.filter(x=>normType(x.type).includes('غياب')).length;const lateCount=db.attendance.filter(x=>normType(x.type).includes('تأخر')).length;const summonsCount=db.documents.filter(x=>normType(x.type).includes('استدعاء')).length;const absenceNoticesCount=db.documents.filter(x=>normType(x.type).includes('إشعارغياب')||normType(x.type).includes('اشعارغياب')).length;const setStat=(id,value)=>queryAll('[id="'+id+'"]').forEach(el=>{el.textContent=String(value)});setStat('sStudents',db.students.length);setStat('sAbs',absCount);setStat('sLate',lateCount);setStat('sViol',db.violations.length);setStat('sDocs',db.documents.length);setStat('sSummons',summonsCount);setStat('sAbsNotices',absenceNoticesCount);setStat('sRecords',db.attendance.length+db.documents.length+db.violations.length);
@@ -248,11 +248,15 @@ bindPhotoInput('docPhoto','docPhotoPreview','docForm');bindPhotoInput('violPhoto
 const normalizeArabic=s=>String(s||'').toLowerCase().normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[ًٌٍَُِّْ]/g,'').replace(/[^\p{L}\p{N}\s.:-]/gu,' ').replace(/\s+/g,' ').trim();
 function parseVoiceDate(text){
  const t=normalizeArabic(text);
+ const numeric=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\\s*(\\d{4})[-/.](\\d{1,2})[-/.](\\d{1,2})/);
+ if(numeric){const y=Number(numeric[1]),m=Number(numeric[2]),d=Number(numeric[3]),dt=new Date(y,m-1,d);return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d?y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'):'';}
+ const slash=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\\s*(\\d{1,2})[/.](\\d{1,2})[/.](\\d{4})/);
+ if(slash){const d=Number(slash[1]),m=Number(slash[2]),y=Number(slash[3]),dt=new Date(y,m-1,d);return dt.getFullYear()===y&&dt.getMonth()===m-1&&dt.getDate()===d?y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'):'';}
  const months={'يناير':'01','جانفي':'01','فبراير':'02','فيفري':'02','مارس':'03','افريل':'04','ابريل':'04','ماي':'05','مايو':'05','يونيو':'06','جوان':'06','يوليو':'07','جويلية':'07','اغسطس':'08','اوت':'08','سبتمبر':'09','اكتوبر':'10','نوفمبر':'11','ديسمبر':'12'};
- const m=t.match(/(?:ليوم\s+)?(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\s*(\d{1,2})\s+([\p{L}]+)\s+(\d{4})/u);
- if(!m)return '';
- const month=months[m[2]];if(!month)return '';
- return m[3]+'-'+month+'-'+String(m[1]).padStart(2,'0');
+ const m=t.match(/(?:ليوم|يوم|بتاريخ|تاريخ)?\\s*(?:الاحد|الاثنين|الثلاثاء|الاربعاء|الخميس|الجمعة|السبت)?\\s*(\\d{1,2})\\s+([\\p{L}]+)\\s+(\\d{4})/u);
+ if(!m||!months[m[2]])return '';
+ const d=Number(m[1]),mo=Number(months[m[2]]),y=Number(m[3]),dt=new Date(y,mo-1,d);
+ return dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d?y+'-'+months[m[2]]+'-'+String(d).padStart(2,'0'):'';
 }
 function parseVoiceHours(t){
  const s=normalizeArabic(t);
@@ -314,33 +318,54 @@ function onArabicSpeechResult(raw){
  $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ تحليل الأمر...';
  $('#voiceTranscript').classList.remove('hidden');$('#voiceTranscript').textContent='سمعت: '+raw;
  const t=normalizeArabic(raw);
- const isAbsenceCommand=/(?:سجل|تسجيل)/.test(t)&&/غياب/.test(t);
- // افحص أوامر تسجيل الغياب أولاً؛ وإلا سيُفسَّر الأمر كله على أنه اسم تلميذ.
+ const isAbsenceCommand=/(?:سجل|تسجيل|اثبت|اضف)/.test(t)&&/(?:غياب|غائب)/.test(t);
  if(!isAbsenceCommand){
   if(handleVoiceOpenStudent(raw))return;
-  $('#voiceStatus').textContent='يمكنك قول: افتح ملف [اسم التلميذ]، أو: سجّل غياب [اسم التلميذ] ليوم [التاريخ] الفترة الصباحية ساعتين.';
+  $('#voiceStatus').textContent='يمكنك قول: سجّل غياب التلميذ [الاسم] ليوم 8 نوفمبر 2026، ساعتين صباحًا.';
   return;
  }
- const nameMatch=String(raw).match(/(?:غياب|غيابا)\s+(.+?)\s+(?:ليوم|يوم)\b/i);
- if(!nameMatch){$('#voiceStatus').textContent='لم أتمكن من تحديد اسم التلميذ. أعد الأمر واذكر الاسم بعد كلمة غياب.';return;}
- const matches=voiceStudentMatches(nameMatch[1].replace(/\s+(الفترة|صباحا|صباحية|مساء|مسائية|ساعتين|ساعات?).*$/i,'').trim());
- if(matches.length!==1){
-   $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أجد هذا الاسم في قائمة التلاميذ. تحقق من النطق أو الاسم المسجل.';
-   if(matches.length)$('#voiceTranscript').textContent+='\nالنتائج: '+matches.map(x=>(x.last+' '+x.first+' – '+x.class)).join(' / ');
-   return;
+ const date=parseVoiceDate(raw);
+ const dateMarker=/(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/;
+ const normalizedNameSource=String(raw).replace(/\\s+/g,' ').trim();
+ const markerMatch=normalizedNameSource.match(/(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/i);
+ let namePart='';
+ if(markerMatch){
+  const absenceMatch=normalizedNameSource.match(/غياب(?:ا)?\\s+(.+)$/i);
+  if(absenceMatch)namePart=absenceMatch[1].slice(0,markerMatch.index-absenceMatch.index-("غياب ".length)).trim();
  }
- const st=matches[0],date=parseVoiceDate(raw),hours=parseVoiceHours(raw);
- const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':'');
- if(!date||!hours||!period){$('#voiceStatus').textContent='تعذر تحديد التاريخ أو عدد الساعات أو الفترة. أعد الأمر مع ذكرها بوضوح.';return;}
- const [y,mo,d]=date.split('-').map(Number),check=new Date(y,mo-1,d);
- if(check.getFullYear()!==y||check.getMonth()!==mo-1||check.getDate()!==d){$('#voiceStatus').textContent='التاريخ المذكور غير صحيح.';return;}
- const data={student:st.id,date,type:'غياب',period,hours,justified:'غير مبرر',notes:'تم إدخال العملية بالأمر الصوتي'};
+ if(!namePart){
+  const normalized=t;
+  const a=normalized.indexOf('غياب');
+  const tail=a>=0?normalized.slice(a+4):'';
+  const cut=tail.search(dateMarker);
+  if(cut>=0)namePart=tail.slice(0,cut).trim();
+ }
+ namePart=namePart.replace(/^(?:(?:التلميذ|التلميذة|للتلميذ|للتلميذة|الطالب|الطالبة)\\s+)+/i,'').replace(/\\s+(?:الغائب|الغائبة)$/,'').trim();
+ const matches=voiceStudentMatches(namePart);
+ if(matches.length!==1){
+  $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أتمكن من مطابقة اسم التلميذ. قل الاسم المسجل كما يظهر في القائمة، بعد عبارة «غياب التلميذ».';
+  if(matches.length)$('#voiceTranscript').textContent+='\\nالنتائج: '+matches.map(x=>(x.last+' '+x.first+' – '+x.class)).join(' / ');
+  return;
+ }
+ const st=matches[0],hours=parseVoiceHours(raw);
+ const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':(/اليوم كاملا|طوال اليوم|كل اليوم/.test(t)?'اليوم كاملاً':'اليوم كاملاً'));
+ if(!date||!hours){$('#voiceStatus').textContent='تعذر تحديد التاريخ أو عدد الساعات. اذكر التاريخ بوضوح (مثال 8 نوفمبر 2026) وعدد الساعات.';return;}
+ const duplicate=db.attendance.some(a=>String(a.student)===String(st.id)&&String(a.date)===date&&normalizeRecordType(a.type)===normalizeRecordType('غياب'));
+ if(duplicate){$('#voiceStatus').textContent='يوجد غياب مسجل لهذا التلميذ في التاريخ نفسه. لم أضف سجلًا مكررًا.';return;}
+ const data={student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class,date,type:'غياب',period,hours,justified:'غير مبرر',notes:'تم إدخال العملية بالأمر الصوتي'};
  window.pendingVoiceAttendance=data;
  $('#voiceConfirm').classList.remove('hidden');
- $('#voiceConfirm').innerHTML='<h3>تأكيد تسجيل الغياب</h3><p><b>التلميذ:</b> '+esc(st.last+' '+st.first)+'</p><p><b>القسم:</b> '+esc(st.class)+'</p><p><b>التاريخ:</b> '+esc(date)+'</p><p><b>الفترة:</b> '+esc(period)+'</p><p><b>المدة:</b> '+esc(hours)+' ساعة</p><p><b>التبرير:</b> غير مبرر</p><button type="button" class="btn primary" id="confirmVoiceAttendance">تأكيد الحفظ</button> <button type="button" class="btn" id="cancelVoiceAttendance">إلغاء</button>';
- $('#voiceStatus').textContent='راجع التفاصيل ثم أكد الحفظ. لم تُسجّل العملية بعد.';
- $('#confirmVoiceAttendance').onclick=()=>{const a=window.pendingVoiceAttendance;if(!a)return;const record={id:crypto.randomUUID(),...a};db.attendance.push(record);if(!save()){db.attendance.pop();$('#voiceStatus').textContent='تعذر حفظ الغياب. لم تُحذف البيانات السابقة؛ أعد المحاولة بعد التحقق من مساحة التخزين.';return;}window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم حفظ الغياب بنجاح.';};
- $('#cancelVoiceAttendance').onclick=()=>{window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم تُحفظ أي بيانات.';};
+ $('#voiceConfirm').innerHTML='<h3>تأكيد تسجيل الغياب</h3><p><b>التلميذ:</b> '+esc(st.last+' '+st.first)+'</p><p><b>القسم:</b> '+esc(classLabel(st.class))+'</p><p><b>التاريخ:</b> '+esc(date)+'</p><p><b>الفترة:</b> '+esc(period)+'</p><p><b>المدة:</b> '+esc(hours)+' ساعة</p><p><b>التبرير:</b> غير مبرر</p><button type="button" class="btn primary" id="confirmVoiceAttendance">تأكيد الحفظ</button> <button type="button" class="btn" id="cancelVoiceAttendance">إلغاء</button>';
+ $('#voiceStatus').textContent='راجع البيانات ثم اضغط «تأكيد الحفظ». لم يُسجّل الغياب قبل التأكيد.';
+ $('#confirmVoiceAttendance').onclick=()=>{
+  const a=window.pendingVoiceAttendance;if(!a)return;
+  const record={id:crypto.randomUUID(),...a};db.attendance.push(record);
+  if(!save()){db.attendance.pop();$('#voiceStatus').textContent='تعذر حفظ الغياب في التخزين. لم يتم تأكيد التسجيل؛ أعد المحاولة.';return;}
+  window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');
+  try{updateAbsenceDashboard();}catch(e){console.warn('absence dashboard refresh failed',e);}
+  $('#voiceStatus').textContent='تم حفظ غياب '+st.last+' '+st.first+' بنجاح في سجل الغيابات.';
+ };
+ $('#cancelVoiceAttendance').onclick=()=>{window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم يُحفظ أي غياب.';};
 }
 $('#startVoiceBtn').onclick=()=>{
  $('#voiceStatus').textContent='استمع الآن... تحدث بالعربية بعد ظهور نافذة الميكروفون.';
@@ -470,6 +495,17 @@ window.printDoc=id=>{const d=db.documents.find(x=>x.id===id);if(!d)return;const 
 $('#printPreviewButton').addEventListener('click',()=>window.print());$('#backFromPreview').addEventListener('click',()=>go('documents'));$('#homeFromPreview').addEventListener('click',()=>go('home'));
 $('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!id||x.student===id)&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>الفترة</th><th>الساعات</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.period||'—')}</td><td>${esc(x.hours??'—')}</td><td>${esc(x.justified||'—')}</td><td>${esc(x.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody>${v.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>السبب</th><th>موعد الحضور</th></tr></thead><tbody>${d.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد وثائق'}`;};
 $('#saveSettings').onclick=()=>{const previous={...db.settings};db.settings.school=$('#schoolName').value;db.settings.location=$('#schoolLocation').value;if(!save()){db.settings=previous;render();return;}alert('تم حفظ الإعدادات بنجاح.')};
+$('#addClassButton').onclick=()=>{
+ const input=$('#newClassName'),value=String(input.value||'').trim();
+ if(!value){$('#addClassStatus').textContent='اكتب اسم القسم أولاً.';input.focus();return;}
+ const existing=classNames();
+ if(existing.some(x=>normalizeStudentSection(x)===normalizeStudentSection(value))){$('#addClassStatus').textContent='هذا القسم مسجل بالفعل.';return;}
+ const previous=Array.isArray(db.settings.classes)?db.settings.classes.slice():[];
+ db.settings.classes=[...previous,value];
+ if(!save()){db.settings.classes=previous;return;}
+ input.value='';renderClassNameEditor();setClassOptions();updateAbsenceDashboard();
+ $('#addClassStatus').textContent='تمت إضافة القسم «'+value+'». إجمالي الأقسام: '+classNames().length+'.';
+};
 $('#saveClassNames').onclick=()=>{const previous={...(db.settings.classLabels||{})},next={...previous};queryAll('.class-name-edit').forEach(el=>{const key=el.dataset.classKey,value=el.value.trim();if(value)next[key]=value;else delete next[key];});db.settings.classLabels=next;if(!save()){db.settings.classLabels=previous;renderClassNameEditor();return;}renderClassNameEditor();setClassOptions();updateAbsenceDashboard();$('#classNameStatus').textContent='تم حفظ أسماء الأقسام. أرقام الأقسام الأصلية وسجلات التلاميذ لم تتغير.';};
 $('#exportData').onclick=()=>{if(!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
 window.onNativeBackupLoadStatus=function(message){const el=document.getElementById('settingsActionStatus');if(el)el.textContent=String(message||'');};
