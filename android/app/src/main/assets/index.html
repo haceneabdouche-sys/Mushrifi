@@ -487,13 +487,19 @@ async function importBackupText(raw){
   if(obj.settings!==undefined&&(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings)))throw new Error('قسم الإعدادات في النسخة غير سليم. لم تتغير البيانات.');
   const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:Array.isArray(obj.documents)?obj.documents:[],violations:Array.isArray(obj.violations)?obj.violations:[],settings:obj.settings||{}};
   const counts='التلاميذ: '+normalized.students.length+'، الغياب والتأخر: '+normalized.attendance.length+'، الوثائق والاستدعاءات: '+normalized.documents.length+'، المخالفات: '+normalized.violations.length;
-  window.onNativeBackupLoadStatus('تمت قراءة الملف: '+counts);
+  window.onNativeBackupLoadStatus('تمت قراءة الملف والتحقق منه: '+counts);
+  if(window.AndroidBridge&&typeof AndroidBridge.importBackupJson==='function'){
+    const nativeResult=AndroidBridge.importBackupJson(JSON.stringify(normalized));
+    if(nativeResult==='CONFIRMATION_SHOWN'){
+      window.onNativeBackupLoadStatus('تم التحقق من النسخة. وافق على نافذة Android لإتمام الاستيراد.');
+      return;
+    }
+    throw new Error('تعذر بدء الاستيراد الأصلي على Android: '+nativeResult);
+  }
   if(!confirm('تمت قراءة النسخة والتحقق منها. '+counts+'. سيتم استبدال بيانات التطبيق الحالية. أنشئ نسخة احتياطية من بياناتك الحالية أولاً. هل تريد المتابعة؟')){window.onNativeBackupLoadStatus('ألغيت عملية الاستيراد؛ لم تتغير البيانات.');return;}
   const oldDb=db;db=normalized;
   if(!save()){db=oldDb;render();throw new Error('تعذر حفظ النسخة المستوردة؛ أُعيدت البيانات السابقة ولم يتم اعتماد الاستيراد.');}
   render();
-  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
-  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
   window.onNativeBackupLoadStatus('نجح الاستيراد والحفظ: '+counts);
   alert('تم استيراد النسخة الاحتياطية بنجاح. '+counts);
  }catch(err){window.onNativeBackupLoadStatus('فشل الاستيراد: '+(err?.message||'خطأ غير معروف'));alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
