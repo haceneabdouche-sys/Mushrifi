@@ -370,12 +370,10 @@ public class MainActivity extends Activity {
         if (web == null || pendingBackupImport == null) return;
         final String quoted = org.json.JSONObject.quote(pendingBackupImport);
         final String script =
-            "(function(){" +
-            "if(typeof window.onNativeBackupLoaded!=='function')return Promise.resolve('WAIT');" +
-            "try{return Promise.resolve(window.onNativeBackupLoaded(" + quoted + "));}" +
-            "catch(e){return Promise.resolve('ERROR:'+String(e&&e.message||e));}" +
-            "})().then(function(v){return typeof v==='string'?v:'STARTED';})" +
-            ".catch(function(e){return 'ERROR:'+String(e&&e.message||e);})";
+            "(function(){try{" +
+            "if(typeof window.onNativeBackupLoaded!=='function')return 'WAIT';" +
+            "return window.onNativeBackupLoaded(" + quoted + ");" +
+            "}catch(e){return 'ERROR:'+String(e&&e.message||e);}})()";
         web.evaluateJavascript(script, result -> {
             if ("\"STARTED\"".equals(result)) {
                 pendingBackupImport = null;
