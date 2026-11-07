@@ -140,7 +140,7 @@ if(signatureCanvas){
  $('#downloadSignature').onclick=()=>{if(!hasInk){alert('ارسم توقيعك أولاً قبل حفظ الصورة.');return;}const a=document.createElement('a');a.href=signatureCanvas.toDataURL('image/png');a.download='mushrifi-signature.png';a.click();$('#signatureStatus').textContent='تم تجهيز صورة التوقيع للحفظ على الهاتف.';};
 }
 
-const save=()=>{try{const json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json))throw Error('رفض مخزن Android تأكيد كتابة قاعدة البيانات');localStorage.removeItem(DBKEY);}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً: '+(e?.message||'خطأ تخزين غير معروف')+'. لم يتم تأكيد الحفظ.');return false;}try{initAbsenceTracking();\nrender();}catch(e){console.error('Mushrifi render after save failed',e);alert('تم حفظ البيانات، لكن تعذر تحديث العرض. أعد فتح الصفحة فقط بعد التأكد من وجود نسخة احتياطية.');}return true};
+const save=()=>{try{const json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json))throw Error('رفض مخزن Android تأكيد كتابة قاعدة البيانات');localStorage.removeItem(DBKEY);}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً: '+(e?.message||'خطأ تخزين غير معروف')+'. لم يتم تأكيد الحفظ.');return false;}try{render();}catch(e){console.error('Mushrifi render after save failed',e);alert('تم حفظ البيانات، لكن تعذر تحديث العرض. أعد فتح الصفحة فقط بعد التأكد من وجود نسخة احتياطية.');}return true};
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩۰-۹]/g,d=>'٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹'.indexOf(d)%10).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalizeStudentName = value => String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\u200f\u200e]/g,'').replace(/[ \t\u00A0]*[0-9٠-٩۰-۹]+[ \t\u00A0]*$/,'').replace(/[^\p{L}\p{N}]+/gu,' ').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
@@ -591,7 +591,7 @@ $('#csvImport').onchange=async e=>{
   finally{input.value='';}
 };
 
-render();
+initAbsenceTracking();\nrender();
 </script>
 
 
