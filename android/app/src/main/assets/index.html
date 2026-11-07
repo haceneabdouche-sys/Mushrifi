@@ -526,14 +526,8 @@ async function importBackupText(raw){
   }
   const counts='التلاميذ: '+normalized.students.length+'، الغياب والتأخر: '+normalized.attendance.length+'، الوثائق والاستدعاءات: '+normalized.documents.length+'، المخالفات: '+normalized.violations.length+'، السجلات المرتبطة بالتلاميذ: '+relinked+'، الملتبسة: '+ambiguous+'، غير المرتبطة: '+unmatched;
   window.onNativeBackupLoadStatus('تمت قراءة الملف والتحقق منه: '+counts);
-  if(window.AndroidBridge&&typeof AndroidBridge.importBackupJson==='function'){
-    const nativeResult=AndroidBridge.importBackupJson(JSON.stringify(normalized));
-    if(nativeResult==='CONFIRMATION_SHOWN'){
-      window.onNativeBackupLoadStatus('تم التحقق من النسخة. وافق على نافذة Android لإتمام الاستيراد.');
-      return;
-    }
-    throw new Error('تعذر بدء الاستيراد الأصلي على Android: '+nativeResult);
-  }
+  // Use the WebView's confirmed JavaScript dialog path on Android as well.
+  // The native bridge remains responsible for durable encrypted saving via save().
   if(!confirm('تمت قراءة النسخة والتحقق منها. '+counts+'. سيتم استبدال بيانات التطبيق الحالية. أنشئ نسخة احتياطية من بياناتك الحالية أولاً. هل تريد المتابعة؟')){window.onNativeBackupLoadStatus('ألغيت عملية الاستيراد؛ لم تتغير البيانات.');return;}
   const oldDb=db;db=normalized;
   if(!save()){db=oldDb;render();throw new Error('تعذر حفظ النسخة المستوردة؛ أُعيدت البيانات السابقة ولم يتم اعتماد الاستيراد.');}
