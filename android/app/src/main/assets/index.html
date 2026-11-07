@@ -325,22 +325,16 @@ function onArabicSpeechResult(raw){
   return;
  }
  const date=parseVoiceDate(raw);
- const dateMarker=/(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/;
- const normalizedNameSource=String(raw).replace(/\\s+/g,' ').trim();
- const markerMatch=normalizedNameSource.match(/(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/i);
- let namePart='';
- if(markerMatch){
-  const absenceMatch=normalizedNameSource.match(/غياب(?:ا)?\\s+(.+)$/i);
-  if(absenceMatch)namePart=absenceMatch[1].slice(0,markerMatch.index-absenceMatch.index-("غياب ".length)).trim();
- }
+ const commandMatch=String(raw).match(/(?:سجل|تسجيل|اثبت|اضف)\\s+(?:غياب(?:ا)?|غائب(?:ا)?)\\s+(?:(?:التلميذ|التلميذة|الطالب|الطالبة)\\s+)?(.+?)\\s+(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/i);
+ let namePart=commandMatch?commandMatch[1].trim():'';
  if(!namePart){
   const normalized=t;
   const a=normalized.indexOf('غياب');
   const tail=a>=0?normalized.slice(a+4):'';
-  const cut=tail.search(dateMarker);
+  const cut=tail.search(/(?:ليوم|يوم|بتاريخ|تاريخ)\\s+/);
   if(cut>=0)namePart=tail.slice(0,cut).trim();
  }
- namePart=namePart.replace(/^(?:(?:التلميذ|التلميذة|للتلميذ|للتلميذة|الطالب|الطالبة)\\s+)+/i,'').replace(/\\s+(?:الغائب|الغائبة)$/,'').trim();
+ namePart=namePart.replace(/\\s+(?:الغائب|الغائبة)$/,'').trim();
  const matches=voiceStudentMatches(namePart);
  if(matches.length!==1){
   $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أتمكن من مطابقة اسم التلميذ. قل الاسم المسجل كما يظهر في القائمة، بعد عبارة «غياب التلميذ».';
@@ -350,8 +344,6 @@ function onArabicSpeechResult(raw){
  const st=matches[0],hours=parseVoiceHours(raw);
  const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':(/اليوم كاملا|طوال اليوم|كل اليوم/.test(t)?'اليوم كاملاً':'اليوم كاملاً'));
  if(!date||!hours){$('#voiceStatus').textContent='تعذر تحديد التاريخ أو عدد الساعات. اذكر التاريخ بوضوح (مثال 8 نوفمبر 2026) وعدد الساعات.';return;}
- const duplicate=db.attendance.some(a=>String(a.student)===String(st.id)&&String(a.date)===date&&normalizeRecordType(a.type)===normalizeRecordType('غياب'));
- if(duplicate){$('#voiceStatus').textContent='يوجد غياب مسجل لهذا التلميذ في التاريخ نفسه. لم أضف سجلًا مكررًا.';return;}
  const data={student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class,date,type:'غياب',period,hours,justified:'غير مبرر',notes:'تم إدخال العملية بالأمر الصوتي'};
  window.pendingVoiceAttendance=data;
  $('#voiceConfirm').classList.remove('hidden');
