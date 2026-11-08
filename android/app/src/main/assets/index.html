@@ -518,7 +518,7 @@ $('#csvImport').onchange=async e=>{
     const required=['identityNumber','last','first','class'];
     const missing=required.filter(k=>idx[k]<0);
     if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
-    const original=db.students.map(s=>({...s}));
+    const originalDb=JSON.parse(JSON.stringify(db));
     const existingById=new Map();
     for(const st of db.students){const key=String(st.identityNumber||'').trim();if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}}
     const normalizeKey=v=>String(v||'').normalize('NFKC').replace(/[\\u0640]/g,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
@@ -559,7 +559,7 @@ $('#csvImport').onchange=async e=>{
         added++;
       }
     }
-    if(!save()){db.students=original;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قائمة التلاميذ إلى حالتها السابقة. لم تُمس سجلات المتابعة.');}
+    if(!save()){db=originalDb;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');}
     alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
   }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
