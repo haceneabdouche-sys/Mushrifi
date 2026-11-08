@@ -85,7 +85,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
 <div class="panel"><h2>الإجراء الأول: حذف الأرقام من الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط، دون حذف التلميذ أو أي معلومة من سجلاته. تبقى معرّفات التلاميذ والأقسام والصفات وسجلات الغياب والتأخر والمخالفات والوثائق كما هي. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn primary" id="dedupeStudents" type="button">تنفيذ حذف الأرقام فقط</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
-<div class="panel"><h2>استيراد بطاقة التلميذ الرسمية من CSV</h2><p class="muted">يدعم الأعمدة الستة عشر في الملف المعتمد: رقم التعريف، اللقب، الاسم، الجنس، تاريخ الازدياد، مولود بحكم، عقد الميلاد، سنة التسجيل في سجل الولادات، رقم عقد الميلاد، مكان الازدياد، السنة، الشعبة، القسم، نظام التمدرس، رقم القيد، تاريخ التسجيل. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
+<div class="panel"><h2>استيراد بطاقة التلميذ الرسمية من CSV</h2><p class="muted">يدعم الأعمدة الستة عشر في الملف المعتمد: رقم التعريف، اللقب، الاسم، الجنس، تاريخ الازدياد، مولود بحكم، عقد الميلاد، سنة التسجيل في سجل الولادات، رقم عقد الميلاد، مكان الازدياد، السنة، الشعبة، القسم، نظام التمدرس، رقم القيد، تاريخ التسجيل. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
 </section>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
 <script>
@@ -476,7 +476,7 @@ function makeStudentImportId(){try{if(window.crypto&&typeof window.crypto.random
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
   try{
-    if(!/\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
+    // لا نعتمد على اسم الملف أو MIME الذي يرسله مزود الملفات في Android؛ بعض الهواتف تعرض CSV باسم مشفر أو بنوع عام. نتحقق من محتوى الملف ورؤوس أعمدته أدناه.
     // Android WebView قد لا يدعم File.text()؛ استخدم FileReader كمسار متوافق.
     const readCsvFile=()=>new Promise((resolve,reject)=>{
       const reader=new FileReader();
