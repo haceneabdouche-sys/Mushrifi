@@ -351,38 +351,20 @@ const findStudentForRecord=record=>{
   return matches.length===1?{student:matches[0],reason:'الاسم'}:{student:null,ambiguous:matches};
 };
 window.editAttendance=id=>{
-  const r=db.attendance.find(x=>x.id===id);if(!r)return;
-  const row=document.querySelector('tr[data-att-id="'+CSS.escape(id)+'"]');if(!row)return;
-  const match=findStudentForRecord(r),linked=match.student;
-  const currentName=String(linked?((linked.last+' '+linked.first).trim()||linked.name||linked.fullName):r.studentName||name(r.student)||'');
-  const currentClass=String(linked?.class||r.class||r.studentClass||'');
-  const choices=db.students.map(s=>'<option value="'+esc(s.id)+'" '+(linked&&String(linked.id)===String(s.id)?'selected':'')+'>'+esc((s.last+' '+s.first).trim()||s.name||s.fullName)+' — '+esc(s.class||'قسم غير محدد')+' — '+esc(s.code||'دون رقم')+'</option>').join('');
-  const matchNotice=linked?'تم التعرف على التلميذ من ملفه. ستُحدّث المعلومات تلقائياً عند الحفظ.':match.ambiguous?.length?'يوجد أكثر من تطابق؛ اختر التلميذ الصحيح من القائمة.':'لم يتم التعرف تلقائياً؛ اختر التلميذ أو أدخل المعلومات يدوياً.';
-  row.innerHTML=`<td data-label="التلميذ"><label>اختيار ملف التلميذ</label><select id="editStudentMatch" onchange="fillAttendanceStudent(this.value)"><option value="">— اختيار يدوي / غير معروف —</option>${choices}</select><small class="muted" id="editStudentMatchNotice">${esc(matchNotice)}</small><label>اسم التلميذ</label><input id="editAttendanceName" type="text" value="${esc(currentName)}" style="min-width:150px;width:100%"></td><td data-label="القسم"><label>القسم</label><input id="editAttendanceClass" type="text" value="${esc(currentClass)}" placeholder="يُجلب من ملف التلميذ أو يُدخل يدوياً" style="min-width:110px;width:100%"></td><td data-label="التاريخ">${esc(r.date)}</td><td data-label="الحالة">${esc(r.type)} ${esc(r.period)}<label>عدد الساعات</label><input id="editHours" type="text" inputmode="decimal" value="${esc(r.hours??(parseHours(r.period)!==''?parseHours(r.period):''))}" placeholder="مثال: 7 ساعات" style="width:110px"></td><td data-label="التبرير"><label>حالة التبرير</label><select id="editJustified"><option value="غير مبرر" ${r.justified==='غير مبرر'?'selected':''}>غير مبرر</option><option value="مبرر" ${r.justified==='مبرر'?'selected':''}>مبرر</option><option value="قيد التبرير" ${r.justified==='قيد التبرير'?'selected':''}>قيد التبرير</option></select></td><td data-label="ملاحظات"><label>الملاحظات</label><textarea id="editAttendanceNotes" rows="2" style="width:100%;min-width:120px">${esc(r.notes||'')}</textarea></td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="saveAttendanceEdit('${id}')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td>`;
+ const r=db.attendance.find(x=>x.id===id);if(!r)return;const row=document.querySelector('tr[data-att-id="'+CSS.escape(id)+'"]');if(!row)return;
+ const match=findStudentForRecord(r),linked=match.student,currentName=String(linked?((linked.last+' '+linked.first).trim()||linked.name||linked.fullName):r.studentName||name(r.student)||''),currentClass=String(linked?.class||r.class||r.studentClass||''),isLate=r.type==='تأخر',duration=isLate?(r.minutes??Math.round(Number(r.hours||0)*60)):(r.hours??(parseHours(r.period)!==''?parseHours(r.period):''));
+ const choices=db.students.map(st=>'<option value="'+esc(st.id)+'" '+(linked&&String(linked.id)===String(st.id)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName)+' — '+esc(st.class||'قسم غير محدد')+'</option>').join('');
+ const matchNotice=linked?'تم التعرف على التلميذ من ملفه.':match.ambiguous?.length?'يوجد أكثر من تطابق؛ اختر التلميذ الصحيح.':'لم يتم التعرف تلقائياً؛ اختر التلميذ أو أدخل المعلومات يدوياً.';
+ row.innerHTML=`<td data-label="التلميذ"><label>ملف التلميذ</label><select id="editStudentMatch" onchange="fillAttendanceStudent(this.value)"><option value="">— اختيار يدوي / غير معروف —</option>${choices}</select><small class="muted" id="editStudentMatchNotice">${esc(matchNotice)}</small><label>اسم التلميذ</label><input id="editAttendanceName" type="text" value="${esc(currentName)}" style="min-width:150px;width:100%"></td><td data-label="القسم"><label>القسم</label><input id="editAttendanceClass" type="text" value="${esc(currentClass)}" style="min-width:100px;width:100%"></td><td data-label="التاريخ"><label>التاريخ</label><input id="editAttendanceDate" type="date" value="${esc(r.date||'')}"></td><td data-label="الحالة"><label>النوع</label><select id="editAttendanceType" onchange="toggleAttendanceEditDuration()"><option value="غياب" ${!isLate?'selected':''}>غياب</option><option value="تأخر" ${isLate?'selected':''}>تأخر</option></select><label>الفترة / التوقيت</label><input id="editAttendancePeriod" value="${esc(r.period||'')}" style="width:100%"><label id="editDurationLabel">${isLate?'مدة التأخر بالدقائق':'ساعات الغياب'}</label><input id="editAttendanceDuration" type="number" min="${isLate?'1':'0.25'}" max="${isLate?'600':'24'}" step="${isLate?'1':'0.25'}" value="${esc(duration)}" style="width:100%"></td><td data-label="التبرير"><label>حالة التبرير</label><select id="editJustified"><option value="غير مبرر" ${r.justified==='غير مبرر'?'selected':''}>غير مبرر</option><option value="مبرر" ${r.justified==='مبرر'?'selected':''}>مبرر</option><option value="قيد التبرير" ${r.justified==='قيد التبرير'?'selected':''}>قيد التبرير</option></select></td><td data-label="ملاحظات"><label>الملاحظات</label><textarea id="editAttendanceNotes" rows="2" style="width:100%;min-width:120px">${esc(r.notes||'')}</textarea></td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="saveAttendanceEdit('${id}')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td>`;
 };
-window.fillAttendanceStudent=id=>{
-  const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;
-  document.getElementById('editAttendanceName').value=(s.last+' '+s.first).trim()||s.name||s.fullName||'';
-  document.getElementById('editAttendanceClass').value=s.class||'';
-  document.getElementById('editStudentMatchNotice').textContent='تم جلب الاسم والقسم من ملف التلميذ.';
-};
+window.toggleAttendanceEditDuration=()=>{const late=$('#editAttendanceType')?.value==='تأخر';$('#editDurationLabel').textContent=late?'مدة التأخر بالدقائق':'ساعات الغياب';$('#editAttendanceDuration').min=late?'1':'0.25';$('#editAttendanceDuration').max=late?'600':'24';$('#editAttendanceDuration').step=late?'1':'0.25';};
+window.fillAttendanceStudent=id=>{const st=db.students.find(x=>String(x.id)===String(id));if(!st)return;$('#editAttendanceName').value=(st.last+' '+st.first).trim()||st.name||st.fullName||'';$('#editAttendanceClass').value=st.class||'';$('#editStudentMatchNotice').textContent='تم جلب الاسم والقسم من ملف التلميذ.';};
 window.saveAttendanceEdit=id=>{
-  const r=db.attendance.find(x=>x.id===id);if(!r)return;
-  const selectedId=document.getElementById('editStudentMatch').value;
-  const linked=selectedId?db.students.find(s=>String(s.id)===String(selectedId)):null;
-  const before={...r};
-  const editedName=document.getElementById('editAttendanceName').value.trim();
-  const editedClass=document.getElementById('editAttendanceClass').value.trim();
-  const hours=parseHours(document.getElementById('editHours').value);
-  const justified=document.getElementById('editJustified').value;
-  const notes=document.getElementById('editAttendanceNotes').value;
-  if(!editedName){alert('يرجى اختيار التلميذ أو إدخال اسمه.');return;}
-  if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}
-  if(linked){r.student=linked.id;r.studentName=(linked.last+' '+linked.first).trim()||linked.name||linked.fullName||editedName;r.class=linked.class||editedClass;r.studentClass=linked.class||editedClass;}
-  else {r.studentName=editedName;r.class=editedClass;r.studentClass=editedClass;}
-  r.hours=hours;if(hours!==''&&parseHours(r.period)!=='')r.period='';r.justified=justified;r.notes=notes;
-  if(save())alert('تم تحديث السجل وربطه بملف التلميذ ومعلوماته.');
-  else {Object.keys(r).forEach(k=>delete r[k]);Object.assign(r,before);render();alert('تعذر حفظ التعديل؛ أُعيد السجل إلى حالته السابقة.');}
+ const r=db.attendance.find(x=>x.id===id);if(!r)return;const selectedId=$('#editStudentMatch').value,linked=selectedId?db.students.find(st=>String(st.id)===String(selectedId)):null,before={...r},editedName=$('#editAttendanceName').value.trim(),editedClass=$('#editAttendanceClass').value.trim(),type=$('#editAttendanceType').value,date=$('#editAttendanceDate').value,period=$('#editAttendancePeriod').value.trim(),duration=Number($('#editAttendanceDuration').value),justified=$('#editJustified').value,notes=$('#editAttendanceNotes').value;
+ if(!editedName||!date){alert('يرجى إدخال اسم التلميذ والتاريخ.');return;}if(!Number.isFinite(duration)||(type==='تأخر'?(duration<1||duration>600):(duration<=0||duration>24))){alert(type==='تأخر'?'أدخل مدة التأخر بالدقائق من 1 إلى 600.':'أدخل ساعات الغياب من 0.25 إلى 24.');return;}
+ if(linked){r.student=linked.id;r.studentName=(linked.last+' '+linked.first).trim()||linked.name||linked.fullName||editedName;r.class=linked.class||editedClass;r.studentClass=linked.class||editedClass;}else{r.studentName=editedName;r.class=editedClass;r.studentClass=editedClass;}
+ r.type=type;r.date=date;r.period=period;r.hours=type==='تأخر'?duration/60:duration;r.minutes=type==='تأخر'?duration:null;r.justified=justified;r.notes=notes;
+ if(save())alert('تم تحديث السجل بنجاح، مع الاحتفاظ بارتباطه بملف التلميذ.');else{Object.keys(r).forEach(k=>delete r[k]);Object.assign(r,before);render();alert('تعذر حفظ التعديل؛ أُعيد السجل إلى حالته السابقة.');}
 };
 window.studentHistory=id=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
