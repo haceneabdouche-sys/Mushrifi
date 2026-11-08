@@ -294,8 +294,41 @@ function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);retur
 function calendarDaysBetween(a,b){return Math.round((dateFromISO(b)-dateFromISO(a))/86400000);}
 function weekendOnlyBetween(a,b){const t=dateFromISO(a);t.setDate(t.getDate()+1);for(;t<dateFromISO(b);t.setDate(t.getDate()+1)){const day=t.getDay();if(day!==5&&day!==6)return false;}return true;}
 function getUnjustifiedStreaks(){
- const grouped=new Map();for(const r of db.attendance){if(r.type!=='غياب'||!r.date||String(r.justified||'غير مبرر')==='مبرر')continue;const st=student(r.student);if(!st)continue;const key=String(st.id);if(!grouped.has(key))grouped.set(key,{student:st,dates:[]});grouped.get(key).dates.push(String(r.date));}
- const today=dateISO(),out=[];for(const item of grouped.values()){const dates=[...new Set(item.dates)].sort();let group=[];const flush=()=>{if(!group.length)return;const first=group[0],last=group[group.length-1];let end=last;if(dateFromISO(last).getDay()===4){const sat=new Date(dateFromISO(last));sat.setDate(sat.getDate()+2);const iso=sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');if(iso<=today)end=iso;}const span=Math.max(1,Math.min(calendarDaysBetween(first,end)+1,calendarDaysBetween(first,today)+1));if(span>=3)out.push({student:item.student,start:first,last,days:span});};for(const d of dates){if(!group.length){group=[d];continue;}const prev=group[group.length-1],gap=calendarDaysBetween(prev,d);if(gap===1||(gap>1&&weekendOnlyBetween(prev,d)))group.push(d);else{flush();group=[d];}}flush();}
+ // A day qualifies only when total unjustified absence exceeds four hours.
+ const grouped=new Map();
+ for(const r of db.attendance){
+  if(r.type!=='غياب'||!r.date)continue;
+  const st=student(r.student);if(!st||String(r.justified||'غير مبرر')==='مبرر')continue;
+  const key=String(st.id);if(!grouped.has(key))grouped.set(key,{student:st,byDate:new Map()});
+  const hours=Number(parseHours(r.hours))||0;
+  const date=String(r.date),byDate=grouped.get(key).byDate;
+  byDate.set(date,(byDate.get(date)||0)+hours);
+ }
+ const today=dateISO(),out=[];
+ for(const item of grouped.values()){
+  // Four hours exactly does not qualify; a qualifying day needs more than four.
+  const dates=[...item.byDate.entries()].filter(([date,hours])=>date<=today&&hours>4).map(([date])=>date).sort();
+  let group=[];
+  const flush=()=>{
+   if(!group.length)return;
+   const first=group[0],last=group[group.length-1];let end=last;
+   // Friday and Saturday extend a Thursday-ending sequence without becoming absence days.
+   if(dateFromISO(last).getDay()===4){
+    const sat=new Date(dateFromISO(last));sat.setDate(sat.getDate()+2);
+    const iso=sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
+    if(iso<=today)end=iso;
+   }
+   const span=Math.max(1,Math.min(calendarDaysBetween(first,end)+1,calendarDaysBetween(first,today)+1));
+   if(span>=3)out.push({student:item.student,start:first,last,days:span});
+  };
+  for(const d of dates){
+   if(!group.length){group=[d];continue;}
+   const prev=group[group.length-1],gap=calendarDaysBetween(prev,d);
+   if(gap===1||(gap>1&&weekendOnlyBetween(prev,d)))group.push(d);
+   else{flush();group=[d];}
+  }
+  flush();
+ }
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
 function noticeExists(streak,stage){return db.documents.some(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&d.absenceStage===stage);}
