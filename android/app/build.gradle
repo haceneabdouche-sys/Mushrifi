@@ -16,12 +16,15 @@ android {
 // Generate the launcher image from the checked-in base64 source before Android resources are merged.
 def launcherIconSource = rootProject.file('mushrifi-launcher.jpg.b64')
 def launcherIconOutput = file('src/main/res/drawable-nodpi/ic_launcher_photo.jpg')
+def launcherForegroundSource = rootProject.file('mushrifi-launcher-foreground.png.b64')
+def launcherForegroundOutput = file('src/main/res/drawable-nodpi/ic_launcher_foreground.png')
 tasks.register('generateLauncherIcon') {
     inputs.file(launcherIconSource)
-    outputs.file(launcherIconOutput)
+    outputs.files(launcherIconOutput, launcherForegroundOutput)
     doLast {
         launcherIconOutput.parentFile.mkdirs()
         launcherIconOutput.bytes = java.util.Base64.decoder.decode(launcherIconSource.text.trim())
+        launcherForegroundOutput.bytes = java.util.Base64.decoder.decode(launcherForegroundSource.text.trim())
     }
 }
 tasks.named('preBuild').configure {
