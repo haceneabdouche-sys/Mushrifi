@@ -153,6 +153,17 @@ public class MainActivity extends Activity {
                 }
             });
         }
+        @JavascriptInterface public void notifyAbsenceStage(String studentId, String studentName, int stage, String absenceStart) {
+            if (studentId == null || studentName == null || absenceStart == null || (stage != 3 && stage != 7 && stage != 14 && stage != 28)) return;
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
+                String key = studentId + "|" + absenceStart + "|" + stage;
+                android.content.SharedPreferences prefs = getSharedPreferences("absence_stage_notifications", MODE_PRIVATE);
+                if (prefs.getBoolean(key, false)) return;
+                boolean posted = SummonsReminderReceiver.postAbsenceStageNotification(MainActivity.this, key, studentName, stage);
+                if (posted) prefs.edit().putBoolean(key, true).apply();
+            });
+        }
         @JavascriptInterface public void testSummonsNotification() {
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -219,8 +230,8 @@ public class MainActivity extends Activity {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "تذكير استدعاء ولي", NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("تنبيه قبل موعد حضور ولي التلميذ بيوم واحد");
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "إشعارات مُشرِفي", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("تذكيرات استدعاء الأولياء ومراحل متابعة الغياب");
             getSystemService(NotificationManager.class).createNotificationChannel(channel);
         }
     }
