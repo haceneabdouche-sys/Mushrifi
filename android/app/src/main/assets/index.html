@@ -476,7 +476,18 @@ $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
   try{
     if(!/\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
-    const raw=(await file.text()).replace(/^\uFEFF/,'').replace(/\u0000/g,'');
+    // Android WebView قد لا يدعم File.text()؛ استخدم FileReader كمسار متوافق.
+    const readCsvFile=()=>new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result||''));
+      reader.onerror=()=>reject(new Error('تعذرت قراءة ملف CSV من الهاتف.'));
+      reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));
+      reader.readAsText(file,'UTF-8');
+    });
+    let raw='';
+    try{if(typeof file.text==='function')raw=String(await file.text()||'');}catch(_){}
+    if(!raw.trim())raw=await readCsvFile();
+    raw=raw.replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
     const delimiters=[',',';','\t'];
     const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
