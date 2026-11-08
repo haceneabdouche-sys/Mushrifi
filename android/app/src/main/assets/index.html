@@ -519,22 +519,61 @@ $('#csvImport').onchange=async e=>{
     const missing=required.filter(k=>idx[k]<0);
     if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
     const originalDb=JSON.parse(JSON.stringify(db));
+    // المطابقة: رقم التعريف أولاً، ثم الاسم واللقب والقسم حتى للبطاقات القديمة
+    // التي لا تحمل رقم تعريف أو تحمل رقماً قديماً. لا نغيّر المعرّف الداخلي للبطاقة.
+    const normalizeKey=v=>String(v??'').normalize('NFKC')
+      .replace(/[\u0640\u064B-\u065F\u0670]/g,'')
+      .replace(/[\u200B-\u200D\uFEFF]/g,'')
+      .replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+    const normalizeId=v=>normalizeKey(v).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\s.-]/g,'');
+    const normalizeClass=v=>{
+      const s=normalizeKey(v);
+      const digits=s.match(/[0-9٠-٩۰-۹]+/g);
+      return digits?digits.join(''):s;
+    };
+    const getStudentName=st=>{
+      const last=st.last??st.surname??st.familyName??'';
+      const first=st.first??st.firstname??st.givenName??'';
+      const split=normalizeKey(String(last)+' '+String(first));
+      const legacy=normalizeKey(st.name??st.fullName??st.studentName??'');
+      const reverse=normalizeKey(String(first)+' '+String(last));
+      return new Set([split,reverse,legacy].filter(Boolean));
+    };
     const existingById=new Map();
-    for(const st of db.students){const key=String(st.identityNumber||'').trim();if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}}
-    const normalizeKey=v=>String(v||'').normalize('NFKC').replace(/[\\u0640]/g,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
+    for(const st of db.students){
+      const key=normalizeId(st.identityNumber);
+      if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}
+    }
     const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0;
     const fields=Object.keys(idx);
     for(const cells of rows.slice(1)){
       const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
       const data={};for(const key of fields)data[key]=value(key);
       data.enrollmentNumber=data.enrollmentNumber||'';
+      data.identityNumber=String(data.identityNumber||'').trim();
       if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
-      if(incoming.has(data.identityNumber)){skipped++;continue;}incoming.add(data.identityNumber);
-      const idMatches=existingById.get(data.identityNumber)||[];
+      const incomingId=normalizeId(data.identityNumber);
+      if(incoming.has(incomingId)){skipped++;continue;}incoming.add(incomingId);
+      const idMatches=existingById.get(incomingId)||[];
       if(idMatches.length>1){skipped++;conflicts++;continue;}
       let target=idMatches[0]||null;
       if(!target){
-        const fallback=db.students.filter(st=>!String(st.identityNumber||'').trim()&&normalizeKey(st.last+' '+st.first)===normalizeKey(data.last+' '+data.first)&&normalizeKey(st.class)===normalizeKey(data.class)&&(!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear))&&(!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch)));
+        const incomingNames=new Set([normalizeKey(data.last+' '+data.first),normalizeKey(data.first+' '+data.last)]);
+        let fallback=db.students.filter(st=>{
+          const names=getStudentName(st);
+          const nameMatch=[...incomingNames].some(n=>names.has(n));
+          const cls=st.class??st.section??st.className??st.classe??st.group??'';
+          return nameMatch&&normalizeClass(cls)===normalizeClass(data.class);
+        });
+        // عند تكرار الاسم والقسم، استعمل السنة والشعبة للتفريق ولا تخمّن.
+        if(fallback.length>1&&data.schoolYear){
+          const exact=fallback.filter(st=>!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear));
+          if(exact.length)fallback=exact;
+        }
+        if(fallback.length>1&&data.branch){
+          const exact=fallback.filter(st=>!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch));
+          if(exact.length)fallback=exact;
+        }
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
       }
