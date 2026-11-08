@@ -51,8 +51,20 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <details class="panel attendance-log recent-log"><summary><strong>آخر العمليات</strong> <span class="pill" id="recentCount">0 عملية</span> <span class="muted">اضغط لعرض العمليات أو إخفائها</span></summary><div id="recent" class="empty">لا توجد عمليات مسجلة بعد.</div></details>
 </section>
 <section id="students" class="page hidden">
-<div class="panel"><h2>إضافة تلميذ</h2><form id="studentForm"><div class="row"><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div><div class="row"><div><label>القسم</label><input name="class" required placeholder="مثال: 1 ج م ع 1"></div><div><label>رقم التسجيل</label><input name="code"></div></div><div class="row"><div><label>اسم ولي الأمر (اختياري)</label><input name="guardian"></div><div><label>رقم الهاتف (اختياري)</label><input name="phone" inputmode="tel"></div></div><button class="btn primary">حفظ التلميذ</button></form></div>
-<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث بالاسم أو القسم أو الرقم"></div><div class="tablewrap"><table class="students-table"><colgroup><col style="width:22%"><col style="width:13%"><col style="width:13%"><col style="width:15%"><col style="width:14%"><col style="width:23%"></colgroup><thead><tr><th>الاسم واللقب</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>رقم التسجيل</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+<div class="panel"><h2 id="studentFormTitle">بطاقة التلميذ – إضافة بيانات</h2><p class="muted">النموذج الرسمي المعتمد: 16 حقلاً مطابقاً لملف التلاميذ، مع بقاء بيانات الولي الإضافية اختيارية.</p><form id="studentForm">
+<h3>أولاً: الهوية والمعلومات الشخصية</h3>
+<div class="row"><div><label>رقم التعريف</label><input name="identityNumber" required inputmode="numeric"></div><div><label>اللقب</label><input name="last" required></div><div><label>الاسم</label><input name="first" required></div></div>
+<div class="row"><div><label>الجنس</label><select name="gender"><option value="">— اختر —</option><option>ذكر</option><option>أنثى</option></select></div><div><label>تاريخ الازدياد</label><input name="birthDate" placeholder="YYYY-MM-DD أو كما في الملف"></div><div><label>مكان الازدياد</label><input name="birthPlace"></div></div>
+<h3>ثانياً: الحالة المدنية</h3>
+<div class="row"><div><label>مولود بحكم</label><input name="birthByJudgment"></div><div><label>عقد الميلاد</label><input name="birthCertificate"></div><div><label>سنة التسجيل في سجل الولادات</label><input name="birthRegisterYear"></div></div>
+<div class="row"><div><label>رقم عقد الميلاد</label><input name="birthCertificateNumber"></div></div>
+<h3>ثالثاً: المعلومات الدراسية</h3>
+<div class="row"><div><label>السنة</label><input name="schoolYear" placeholder="أولى / ثانية / ثالثة"></div><div><label>الشعبة</label><input name="branch"></div><div><label>القسم</label><input name="class" required></div></div>
+<div class="row"><div><label>نظام التمدرس</label><input name="schoolingSystem" placeholder="نصف داخلي / خارجي"></div><div><label>رقم القيد</label><input name="enrollmentNumber"></div><div><label>تاريخ التسجيل</label><input name="enrollmentDate" placeholder="YYYY-MM-DD"></div></div>
+<h3>رابعاً: معلومات إضافية اختيارية</h3>
+<div class="row"><div><label>اسم ولي الأمر</label><input name="guardian"></div><div><label>رقم الهاتف</label><input name="phone" inputmode="tel"></div></div>
+<div class="actions"><button class="btn primary" id="studentSubmit" type="submit">حفظ بطاقة التلميذ</button><button class="btn hidden" id="cancelStudentEdit" type="button">إلغاء التعديل</button></div></form></div>
+<div class="panel"><div class="row"><h2>قائمة التلاميذ</h2><input id="studentSearch" placeholder="ابحث برقم التعريف أو الاسم أو السنة أو الشعبة أو القسم"></div><div class="tablewrap"><table class="students-table"><colgroup><col style="width:22%"><col style="width:16%"><col style="width:22%"><col style="width:12%"><col style="width:13%"><col style="width:15%"></colgroup><thead><tr><th>الاسم واللقب</th><th>رقم التعريف</th><th>السنة والشعبة</th><th>القسم</th><th>نظام التمدرس</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
 <section id="attendance" class="page hidden">
 <div class="panel"><h2>تسجيل غياب أو تأخر</h2><form id="attForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type"><option value="غياب">غياب</option><option value="تأخر">تأخر</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div><div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="اليوم كاملاً أو 08:15"></div><div><label>عدد ساعات الغياب</label><input name="hours" type="text" inputmode="decimal" placeholder="مثال: 7 ساعات أو 7.5 ساعة"></div></div><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>مبرر</option><option>قيد التبرير</option></select></div></div><label>ملاحظات</label><textarea name="notes"></textarea><button class="btn primary">تسجيل الحالة</button></form></div>
@@ -73,7 +85,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">صدّر نسخة JSON لحفظ بياناتك أو استعادتها لاحقاً. احتفظ بالملف في مكان آمن.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">استيراد نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json" hidden></div>
 <div class="panel"><h2>الإجراء الأول: حذف الأرقام من الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط، دون حذف التلميذ أو أي معلومة من سجلاته. تبقى معرّفات التلاميذ والأقسام والصفات وسجلات الغياب والتأخر والمخالفات والوثائق كما هي. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn primary" id="dedupeStudents" type="button">تنفيذ حذف الأرقام فقط</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
-<div class="panel"><h2>استيراد التلاميذ من CSV</h2><p class="muted">يدعم أعمدة: الاسم واللقب، تاريخ الميلاد، اسم الولي، الصفة، القسم. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة، مع احترام علامات الاقتباس.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
+<div class="panel"><h2>استيراد بطاقة التلميذ الرسمية من CSV</h2><p class="muted">يدعم الأعمدة الستة عشر في الملف المعتمد: رقم التعريف، اللقب، الاسم، الجنس، تاريخ الازدياد، مولود بحكم، عقد الميلاد، سنة التسجيل في سجل الولادات، رقم عقد الميلاد، مكان الازدياد، السنة، الشعبة، القسم، نظام التمدرس، رقم القيد، تاريخ التسجيل. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv" hidden></label></div>
 </section>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
 <script>
@@ -101,9 +113,10 @@ function go(page){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function render(){
 const normType=v=>String(v??'').trim().replace(/\s+/g,'');const absCount=db.attendance.filter(x=>normType(x.type)==='غياب').length;const lateCount=db.attendance.filter(x=>normType(x.type)==='تأخر').length;const summonsCount=db.documents.filter(x=>normType(x.type).includes('استدعاء')).length;const absenceNoticesCount=db.documents.filter(x=>normType(x.type).includes('إشعارغياب')).length;$('#sStudents').textContent=db.students.length;$('#sAbs').textContent=absCount;$('#sLate').textContent=lateCount;$('#sViol').textContent=db.violations.length;$('#sDocs').textContent=db.documents.length;$('#sSummons').textContent=summonsCount;$('#sAbsNotices').textContent=absenceNoticesCount;$('#sRecords').textContent=db.attendance.length+db.documents.length+db.violations.length;
-let q=($('#studentSearch')?.value||'').trim().toLowerCase();
-$('#studentsRows').innerHTML=db.students.filter(s=>(s.last+s.first+s.class+s.code).toLowerCase().includes(q)).map(s=>`<tr><td><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(s.last)} ${esc(s.first)}</button></td><td>${esc(s.class)}</td><td>${esc(s.status||s.attribute||'')}</td><td>${esc(s.birthDate||'')}</td><td>${esc(s.code)}</td><td><div class="actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراء...</option><option value="absence">غياب</option><option value="late">تأخر</option><option value="report">تقرير</option><option value="violation">مخالفة</option><option value="summons">استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا يوجد تلاميذ.</td></tr>';
-$$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';sel.innerHTML=first+db.students.map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
+let q=($('#studentSearch')?.value||'').trim().toLocaleLowerCase('ar');
+const searchable=s=>[s.identityNumber,s.last,s.first,s.gender,s.birthDate,s.birthPlace,s.birthByJudgment,s.birthCertificate,s.birthRegisterYear,s.birthCertificateNumber,s.schoolYear,s.branch,s.class,s.schoolingSystem,s.enrollmentNumber,s.enrollmentDate,s.guardian,s.phone].join(' ').toLocaleLowerCase('ar');
+$('#studentsRows').innerHTML=db.students.filter(s=>searchable(s).includes(q)).map(s=>`<tr><td><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(s.last)} ${esc(s.first)}</button></td><td>${esc(s.identityNumber||'—')}</td><td>${esc(s.schoolYear||'—')} · ${esc(s.branch||'—')}</td><td>${esc(s.class||'—')}</td><td>${esc(s.schoolingSystem||s.status||s.attribute||'—')}</td><td><div class="actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">إجراء...</option><option value="absence">غياب</option><option value="late">تأخر</option><option value="report">تقرير</option><option value="violation">مخالفة</option><option value="summons">استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="6" class="empty">لا يوجد تلاميذ.</td></tr>';
+$$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';sel.innerHTML=first+db.students.map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.schoolYear||'')} ${esc(s.branch||'')} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
 $('#attLogCount').textContent=db.attendance.length+' سجل';$('#attRows').innerHTML=db.attendance.slice().reverse().map(x=>`<tr data-att-id="${esc(x.id)}"><td data-label="التلميذ"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(x.studentName||name(x.student))}</button></td><td data-label="القسم">${esc(x.class||x.studentClass||student(x.student)?.class||'غير محدد')}</td><td data-label="التاريخ">${esc(x.date)}</td><td data-label="الحالة">${esc(x.type)} ${esc(x.period)}${x.hours!==undefined&&x.hours!==''?' · '+esc(x.hours)+' ساعة':''}</td><td data-label="التبرير">${esc(x.justified)}</td><td data-label="ملاحظات">${esc(x.notes)}</td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="editAttendance('${x.id}')">تعديل السجل</button><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></div></td></tr>`).join('')||'<tr><td colspan="7" class="empty">لا توجد سجلات.</td></tr>';
 $('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.description)}${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td>${esc(x.action)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
 $('#docsRows').innerHTML=db.documents.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>الموضوع</th><th>موعد الحضور</th><th>الصورة</th><th>الإجراءات</th></tr></thead><tbody>${db.documents.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td><td><div class="actions"><button class="btn small" onclick="printDoc('${x.id}')">طباعة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد وثائق.</div>';
@@ -217,7 +230,13 @@ $('#startVoiceBtn').onclick=()=>{
  $('#voiceStatus').textContent='ميزة التحدث المباشر متاحة في نسخة Android المُحدّثة من التطبيق.';
 };
 
-$('#studentForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),record={id:crypto.randomUUID(),last:f.get('last').trim(),first:f.get('first').trim(),class:f.get('class').trim(),code:f.get('code'),guardian:f.get('guardian'),phone:f.get('phone')};db.students.push(record);if(!save()){db.students.pop();return;}e.target.reset();alert('تم حفظ التلميذ بنجاح.')};
+let editingStudentId=null;
+const studentFieldNames=['identityNumber','last','first','gender','birthDate','birthPlace','birthByJudgment','birthCertificate','birthRegisterYear','birthCertificateNumber','schoolYear','branch','class','schoolingSystem','enrollmentNumber','enrollmentDate','guardian','phone'];
+function readStudentForm(form){const f=new FormData(form),v={};for(const key of studentFieldNames)v[key]=String(f.get(key)||'').trim();v.code=v.enrollmentNumber;return v;}
+function resetStudentEditor(){editingStudentId=null;$('#studentForm').reset();$('#studentFormTitle').textContent='بطاقة التلميذ – إضافة بيانات';$('#studentSubmit').textContent='حفظ بطاقة التلميذ';$('#cancelStudentEdit').classList.add('hidden');}
+window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);for(const key of studentFieldNames){const el=$('#studentForm [name="'+key+'"]');if(el)el.value=s[key]??(key==='enrollmentNumber'?s.code||'':'');}$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
+$('#cancelStudentEdit').onclick=resetStudentEditor;
+$('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.identityNumber||!values.last||!values.first||!values.class){alert('رقم التعريف واللقب والاسم والقسم حقول إلزامية.');return;}const duplicate=db.students.find(s=>String(s.identityNumber||'').trim()===values.identityNumber&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('رقم التعريف هذا مسجل مسبقاً للتلميذ: '+(duplicate.last||'')+' '+(duplicate.first||'')+'، القسم '+(duplicate.class||'غير محدد')+'. لم تُضف أي بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ. بقيت سجلات الغياب والتأخر والمخالفات والاستدعاءات مرتبطة بالمعرّف الداخلي نفسه.');}else{const record={id:crypto.randomUUID(),...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
 $('#attForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target),period=String(f.get('period')||'').trim(),hours=parseHours(f.get('hours'));if(hours===''&&period&&parseHours(period)!==''){hours=parseHours(period);period='';}if(Number.isNaN(hours)||hours!==''&&(hours<0||hours>24)){alert('اكتب عدد الساعات بشكل صحيح، مثل: 7 ساعات أو 7.5 ساعة (من 0 إلى 24).');return;}const record={id:crypto.randomUUID(),student:f.get('student'),type:f.get('type'),date:f.get('date'),period,hours,justified:f.get('justified'),notes:f.get('notes')};db.attendance.push(record);if(!save()){db.attendance.pop();return;}e.target.reset();alert('تم حفظ الحالة بنجاح.')};
 function scheduleSummonsReminder(d){if(d.type!=='استدعاء ولي'||!d.appointment||!d.reminderAt||!window.AndroidBridge||typeof AndroidBridge.scheduleSummonsReminderAt!=='function')return;const appointmentMs=new Date(d.appointment).getTime(),reminderMs=new Date(d.reminderAt).getTime();if(Number.isFinite(appointmentMs)&&Number.isFinite(reminderMs))AndroidBridge.scheduleSummonsReminderAt(String(d.id),name(d.student),reminderMs,appointmentMs);}
 const appointmentInput=$('#docForm [name="appointment"]'),reminderDateInput=$('#docForm [name="reminderDate"]'),reminderTimeInput=$('#docForm [name="reminderTime"]'),docTypeInput=$('#docForm [name="type"]'),reminderFields=$('#summonsReminderFields');
@@ -315,7 +334,8 @@ window.studentHistory=id=>{
   const documentList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.reason||'—')}</td><td>${esc(x.appointment||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد وثائق.</p>';
   go('reports');
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.print()">طباعة الملف</button></div>
-  <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><p>القسم: ${esc(s.class)} · رقم التسجيل: ${esc(s.code||'—')}</p>
+  <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>رقم التعريف</small><strong style="font-size:16px">${esc(s.identityNumber||'—')}</strong></div><div class="stat"><small>الجنس</small><strong style="font-size:16px">${esc(s.gender||'—')}</strong></div><div class="stat"><small>تاريخ الازدياد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>مكان الازدياد</small><strong style="font-size:16px">${esc(s.birthPlace||'—')}</strong></div><div class="stat"><small>السنة</small><strong style="font-size:16px">${esc(s.schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(s.branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(s.class||'—')}</strong></div><div class="stat"><small>نظام التمدرس</small><strong style="font-size:16px">${esc(s.schoolingSystem||'—')}</strong></div><div class="stat"><small>رقم القيد</small><strong style="font-size:16px">${esc(s.enrollmentNumber||s.code||'—')}</strong></div><div class="stat"><small>تاريخ التسجيل</small><strong style="font-size:16px">${esc(s.enrollmentDate||'—')}</strong></div><div class="stat"><small>مولود بحكم</small><strong style="font-size:16px">${esc(s.birthByJudgment||'—')}</strong></div><div class="stat"><small>عقد الميلاد</small><strong style="font-size:16px">${esc(s.birthCertificate||'—')}</strong></div><div class="stat"><small>سنة سجل الولادات</small><strong style="font-size:16px">${esc(s.birthRegisterYear||'—')}</strong></div><div class="stat"><small>رقم عقد الميلاد</small><strong style="font-size:16px">${esc(s.birthCertificateNumber||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
+  <div class="no-print"><button class="btn" onclick="editStudent('${s.id}')">تعديل بطاقة التلميذ</button></div>
   <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب</small><strong>${absHours}</strong></div><div class="stat"><small>مجموع ساعات التأخر</small><strong>${lateHours}</strong></div><div class="stat"><small>مجموع الساعات الكلي</small><strong>${allHours}</strong></div><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
   <h3>تفصيل الغيابات (${abs.length})</h3>${statusSummary(abs)}${attendanceList(abs)}
   <h3>تفصيل التأخرات (${late.length})</h3>${statusSummary(late)}${attendanceList(late)}
@@ -417,35 +437,65 @@ $('#dedupeStudents').onclick=()=>{
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
   try{
-    if(!/\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
-    const raw=(await file.text()).replace(/^\uFEFF/,'').replace(/\u0000/g,'');
+    if(!/\\.csv$/i.test(file.name))throw new Error('الملف المحدد ليس بصيغة CSV. احفظ جدول Excel بصيغة CSV UTF-8 ثم أعد المحاولة.');
+    const raw=(await file.text()).replace(/^\\uFEFF/,'').replace(/\\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
-    const sample=raw.split(/\r?\n/).find(x=>x.trim())||'';
-    const delimiters=[',',';','\t'];const delimiter=delimiters.sort((a,b)=>sample.split(b).length-sample.split(a).length)[0];
-    const rows=parseCSV(raw,delimiter);
+    const delimiters=[',',';','\\t'];
+    const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
+    const rows=parsed[0].rows;
     if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
-    const headers=rows[0].map(normHeader),find=names=>headers.findIndex(h=>names.includes(h));
-    const fullIdx=find(['الاسمواللقب','اللقبوالاسم','الاسم','nometprenom','nomprenom','fullname','name']);
-    const dateIdx=find(['تاريخالميلاد','تاريخالازدياد','تاريخالولادة','datenaissance','birthdate']);
-    const guardianIdx=find(['اسمالولي','الولي','اسمالاب','اسموليالامر','guardian']);
-    const attrIdx=find(['الصفة','النظام','نوعالنظام','صفةالتلميذ','regime','status','attribute']);
-    const classIdx=find(['القسم','الفوج','classe','class']);
-    if(fullIdx<0||classIdx<0)throw new Error('تعذر التعرف على عناوين الأعمدة. يجب أن يحتوي الملف على «الاسم واللقب» و«القسم».');
-    const originalStudentCount=db.students.length;
-    const existing=new Set(db.students.map(s=>normName(s.last+' '+(s.first||''))+'|'+normName(s.class)));
-    let added=0,skipped=0;
+    const headers=rows[0].map(normHeader);
+    const find=names=>headers.findIndex(h=>names.includes(h));
+    const idx={
+      identityNumber:find(['رقمالتعريف','رقمالتعريفالوطني','matricule','identifiant']),
+      last:find(['اللقب','الاسم العائلي','nom','lastname','surname']),
+      first:find(['الاسم','الاسم الشخصي','prenom','firstname','givenname']),
+      gender:find(['الجنس','sexe','gender']),
+      birthDate:find(['تاريخالازدياد','تاريخالميلاد','datenaissance','birthdate']),
+      birthByJudgment:find(['مولودبحكم','مولودبموجب حكم','neparjugement']),
+      birthCertificate:find(['عقدالميلاد','نوععقدالميلاد','actenaissance']),
+      birthRegisterYear:find(['سنةالتسجيلفيسجلسجلالولادات','سنةالتسجيلفيسجل الولادات','سنةالتسجيلفيسجلالولادات','anneeregistre']),
+      birthCertificateNumber:find(['رقمعقدالميلاد','numeracte']),
+      birthPlace:find(['مكانالازدياد','مكانالميلاد','lieunaissance','birthplace']),
+      schoolYear:find(['السنة','المستوى','annee','schoolyear']),
+      branch:find(['الشعبة','filiere','branch']),
+      class:find(['القسم','الفوج','classe','class']),
+      schoolingSystem:find(['نظامالتمدرس','النظام','regime','schoolingsystem']),
+      enrollmentNumber:find(['رقمالقيد','رقمالتسجيل','numeroinscription','enrollmentnumber']),
+      enrollmentDate:find(['تاريخالتسجيل','dateinscription','enrollmentdate'])
+    };
+    const required=['identityNumber','last','first','class'];
+    const missing=required.filter(k=>idx[k]<0);
+    if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
+    const original=db.students.map(s=>({...s}));
+    const existingById=new Map(db.students.filter(s=>String(s.identityNumber||'').trim()).map(s=>[String(s.identityNumber).trim(),s]));
+    const normalizeKey=v=>String(v||'').normalize('NFKC').replace(/[\\u0640]/g,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
+    const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0;
+    const fields=Object.keys(idx);
     for(const cells of rows.slice(1)){
-      const value=i=>i<0?'':String(cells[i]??'').trim(),fullName=value(fullIdx),cls=value(classIdx);
-      if(!fullName||!cls){skipped++;continue;}
-      const key=normName(fullName)+'|'+normName(cls);
-      if(existing.has(key)){skipped++;continue;}
-      const attr=value(attrIdx);
-      db.students.push({id:crypto.randomUUID(),last:fullName,first:'',class:cls,code:'',guardian:value(guardianIdx),phone:'',birthDate:value(dateIdx),status:attr,attribute:attr});
-      existing.add(key);added++;
+      const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
+      const data={};for(const key of fields)data[key]=value(key);
+      data.enrollmentNumber=data.enrollmentNumber||'';
+      if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
+      if(incoming.has(data.identityNumber)){skipped++;continue;}incoming.add(data.identityNumber);
+      let target=existingById.get(data.identityNumber);
+      if(!target){
+        const fallback=db.students.filter(st=>!String(st.identityNumber||'').trim()&&normalizeKey(st.last+' '+st.first)===normalizeKey(data.last+' '+data.first)&&normalizeKey(st.class)===normalizeKey(data.class)&&(!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear))&&(!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch)));
+        if(fallback.length===1)target=fallback[0];
+        else if(fallback.length>1){skipped++;conflicts++;continue;}
+      }
+      if(target){
+        Object.assign(target,data,{code:data.enrollmentNumber||target.code||''});
+        if(!target.id)target.id=crypto.randomUUID();
+        updated++;
+      }else{
+        const record={id:crypto.randomUUID(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
+        db.students.push(record);existingById.set(data.identityNumber,record);added++;
+      }
     }
-    if(!save()){db.students.splice(originalStudentCount);render();throw new Error('تعذر حفظ الاستيراد؛ أُلغيت الإضافات الجديدة وبقيت القائمة السابقة كما هي.');}
-    alert('اكتمل الاستيراد.\nالتلاميذ المضافون: '+added+'\nالسجلات المتجاوزة (مكررة أو ناقصة): '+skipped);
-  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+    if(!save()){db.students=original;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قائمة التلاميذ إلى حالتها السابقة. لم تُمس سجلات المتابعة.');}
+    alert('اكتمل استيراد ملف التلاميذ.\\nالبطاقات الجديدة: '+added+'\\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\\nلم تُحذف أي بطاقة أو سجل متابعة.');
+  }catch(err){alert('تعذر استيراد الملف:\\n'+(err?.message||'خطأ غير معروف')+'\\n\\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
 
