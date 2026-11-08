@@ -519,7 +519,8 @@ $('#csvImport').onchange=async e=>{
     const missing=required.filter(k=>idx[k]<0);
     if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
     const original=db.students.map(s=>({...s}));
-    const existingById=new Map(db.students.filter(s=>String(s.identityNumber||'').trim()).map(s=>[String(s.identityNumber).trim(),s]));
+    const existingById=new Map();
+    for(const st of db.students){const key=String(st.identityNumber||'').trim();if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}}
     const normalizeKey=v=>String(v||'').normalize('NFKC').replace(/[\\u0640]/g,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
     const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0;
     const fields=Object.keys(idx);
@@ -529,20 +530,33 @@ $('#csvImport').onchange=async e=>{
       data.enrollmentNumber=data.enrollmentNumber||'';
       if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
       if(incoming.has(data.identityNumber)){skipped++;continue;}incoming.add(data.identityNumber);
-      let target=existingById.get(data.identityNumber);
+      const idMatches=existingById.get(data.identityNumber)||[];
+      if(idMatches.length>1){skipped++;conflicts++;continue;}
+      let target=idMatches[0]||null;
       if(!target){
         const fallback=db.students.filter(st=>!String(st.identityNumber||'').trim()&&normalizeKey(st.last+' '+st.first)===normalizeKey(data.last+' '+data.first)&&normalizeKey(st.class)===normalizeKey(data.class)&&(!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear))&&(!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch)));
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
       }
       if(target){
+        // حدّث حقول البطاقة الرسمية فقط؛ الخانات الفارغة في CSV لا تمحو البيانات السابقة.
         for(const key of fields){if(data[key]!==''||!Object.prototype.hasOwnProperty.call(target,key))target[key]=data[key];}
-        target.code=data.enrollmentNumber||target.code||'';
+        if(data.enrollmentNumber!=='')target.code=data.enrollmentNumber;
         if(!target.id)target.id=makeStudentImportId();
+        // حدّث الاسم المعروض في السجلات المرتبطة بمعرّف التلميذ، مع إبقاء تفاصيل الوقائع كما هي.
+        const currentDisplayName=(target.last+' '+target.first).trim()||target.name||target.fullName||'';
+        for(const kind of ['attendance','documents','violations']){
+          for(const record of db[kind]){
+            if(String(record.student)===String(target.id))record.studentName=currentDisplayName;
+          }
+        }
         updated++;
       }else{
         const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
-        db.students.push(record);existingById.set(data.identityNumber,record);added++;
+        db.students.push(record);
+        if(!existingById.has(data.identityNumber))existingById.set(data.identityNumber,[]);
+        existingById.get(data.identityNumber).push(record);
+        added++;
       }
     }
     if(!save()){db.students=original;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قائمة التلاميذ إلى حالتها السابقة. لم تُمس سجلات المتابعة.');}
