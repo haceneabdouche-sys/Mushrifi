@@ -72,6 +72,11 @@ public class MainActivity extends Activity {
                 fileCallback = callback;
                 try {
                     Intent intent = params.createIntent();
+                    // Android document providers may label Arabic CSV files with a
+                    // generic MIME type. Do not let the WebView accept filter hide them.
+                    intent.setType("*/*");
+                    intent.removeExtra(Intent.EXTRA_MIME_TYPES);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
                     startActivityForResult(intent, PICK_FILE);
                 } catch (Exception e) {
                     fileCallback = null;
