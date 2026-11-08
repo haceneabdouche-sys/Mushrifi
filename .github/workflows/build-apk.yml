@@ -30,11 +30,11 @@ jobs:
           import numpy as np
           src = 'android/app/src/main/assets/signature-real.jpg'
           dst = 'android/app/src/main/assets/signature-color.png'
-          arr = np.asarray(Image.open(src).convert('RGB'), dtype=np.int16)
+          arr = np.asarray(Image.open(src).convert('RGB'), dtype=np.float32)
           alpha = 255 - arr.min(axis=2)
           alpha[alpha < 8] = 0
           denom = np.maximum(alpha[..., None], 1)
-          rgb = np.clip((arr - (255 - alpha[..., None])) * 255 / denom, 0, 255).astype(np.uint8)
+          rgb = np.clip((arr - (255 - alpha[..., None])) * 255.0 / denom, 0, 255).astype(np.uint8)
           rgba = np.dstack((rgb, alpha.astype(np.uint8)))
           logo = Image.fromarray(rgba, 'RGBA')
           bbox = logo.getbbox()
