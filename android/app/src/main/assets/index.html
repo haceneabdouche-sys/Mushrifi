@@ -358,7 +358,7 @@ async function importBackupText(raw){
   if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
   if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
   alert('تم استيراد النسخة الاحتياطية بنجاح.');
- }catch(err){alert('تعذر استيراد النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
+ }catch(err){alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
 }
 window.onNativeBackupLoaded=importBackupText;
 $('#importBackupNative').onclick=()=>{if(window.AndroidBridge&&typeof AndroidBridge.pickBackupFile==='function')AndroidBridge.pickBackupFile();else $('#importData').click();};
@@ -366,7 +366,7 @@ $('#importData').onchange=async e=>{
  const file=e.target.files?.[0];if(!file)return;
  const readWithReader=()=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('تعذرت قراءة محتوى الملف من الهاتف.'));reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));reader.readAsText(file,'UTF-8');});
  try{let raw='';try{if(typeof file.text==='function')raw=String(await file.text()||'');}catch(_){}if(!raw.trim())raw=await readWithReader();await importBackupText(raw);}
- catch(err){alert('تعذر استيراد النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
+ catch(err){alert('تعذر استيراد النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
  finally{e.target.value='';}
 };
 function parseCSV(text, delimiter){
@@ -426,7 +426,7 @@ $('#dedupeStudents').onclick=()=>{
   }
   const preview=affected.slice(0,15).map(x=>'• '+String(x.student.last||x.student.name||x.student.fullName||'')+' '+String(x.student.first||'')+' ← '+x.newValue+' | القسم: '+(x.student.class||'غير محدد')).join('\n');
   const more=affected.length>15?'\n... وهناك '+(affected.length-15)+' تعديلات أخرى.':'';
-  if(!confirm('الإجراء الأول: حذف الأرقام الموجودة في نهاية حقول أسماء التلاميذ فقط. عدد التعديلات: '+affected.length+'.\\nلن يُحذف أي تلميذ أو سجل، ولن تتغير الأقسام أو الصفات أو معرّفات التلاميذ أو معلومات الغياب والتأخر والمخالفات والوثائق.\\nستُنزل نسخة احتياطية قبل التنفيذ.\\n\\n'+preview+more+'\n\\nهل تريد المتابعة؟'))return;
+  if(!confirm('الإجراء الأول: حذف الأرقام الموجودة في نهاية حقول أسماء التلاميذ فقط. عدد التعديلات: '+affected.length+'.\nلن يُحذف أي تلميذ أو سجل، ولن تتغير الأقسام أو الصفات أو معرّفات التلاميذ أو معلومات الغياب والتأخر والمخالفات والوثائق.\nستُنزل نسخة احتياطية قبل التنفيذ.\n\n'+preview+more+'\n\nهل تريد المتابعة؟'))return;
   const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-before-name-clean-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
   for(const item of affected) item.student[item.field]=item.newValue;
@@ -495,8 +495,8 @@ $('#csvImport').onchange=async e=>{
       }
     }
     if(!save()){db.students=original;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قائمة التلاميذ إلى حالتها السابقة. لم تُمس سجلات المتابعة.');}
-    alert('اكتمل استيراد ملف التلاميذ.\\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
-  }catch(err){alert('تعذر استيراد الملف:\\n'+(err?.message||'خطأ غير معروف')+'\n\\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
+  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
 
