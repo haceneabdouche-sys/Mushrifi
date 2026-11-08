@@ -301,30 +301,24 @@ function getUnjustifiedStreaks(){
   const st=student(r.student);if(!st||String(r.justified||'غير مبرر')==='مبرر')continue;
   const key=String(st.id);if(!grouped.has(key))grouped.set(key,{student:st,byDate:new Map()});
   const hours=Number(parseHours(r.hours))||0;
-  const date=String(r.date),byDate=grouped.get(key).byDate;
+  const date=String(r.date),byDate=grouped.get(key);
   byDate.set(date,(byDate.get(date)||0)+hours);
  }
  const today=dateISO(),out=[];
  for(const item of grouped.values()){
-  // Four hours exactly does not qualify; a qualifying day needs more than four.
   const dates=[...item.byDate.entries()].filter(([date,hours])=>date<=today&&hours>4).map(([date])=>date).sort();
   let group=[];
   const flush=()=>{
    if(!group.length)return;
-   const first=group[0],last=group[group.length-1];let end=last;
-   // Friday and Saturday extend a Thursday-ending sequence without becoming absence days.
-   if(dateFromISO(last).getDay()===4){
-    const sat=new Date(dateFromISO(last));sat.setDate(sat.getDate()+2);
-    const iso=sat.getFullYear()+'-'+String(sat.getMonth()+1).padStart(2,'0')+'-'+String(sat.getDate()).padStart(2,'0');
-    if(iso<=today)end=iso;
-   }
-   const span=Math.max(1,Math.min(calendarDaysBetween(first,end)+1,calendarDaysBetween(first,today)+1));
-   if(span>=3)out.push({student:item.student,start:first,last,days:span});
+   const first=group[0],last=group[group.length-1];
+   const span=Math.max(1,Math.min(calendarDaysBetween(first,last)+1,calendarDaysBetween(first,today)+1));
+   if(span>=4)out.push({student:item.student,start:first,last,days:span});
   };
   for(const d of dates){
    if(!group.length){group=[d];continue;}
    const prev=group[group.length-1],gap=calendarDaysBetween(prev,d);
-   if(gap===1||(gap>1&&weekendOnlyBetween(prev,d)))group.push(d);
+   const thuToSun=gap===3&&dateFromISO(prev).getDay()===4&&dateFromISO(d).getDay()===0;
+   if(gap===1||thuToSun)group.push(d);
    else{flush();group=[d];}
   }
   flush();
@@ -333,12 +327,12 @@ function getUnjustifiedStreaks(){
 }
 function noticeExists(streak,stage){return db.documents.some(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&d.absenceStage===stage);}
 window.createAbsenceStageNotice=(id,start,stage)=>{
- const streak=getUnjustifiedStreaks().find(x=>String(x.student.id)===String(id)&&x.start===start);if(!streak){alert('لم تعد سلسلة الغياب المتتالي هذه ضمن الحالات الحالية.');return;}const labels={3:'إشعار غياب - المرحلة الأولى',10:'إشعار غياب - المرحلة الثانية',17:'إعذار معلّل بسبب الغياب'};if(noticeExists(streak,stage)){alert('سبق تسجيل وثيقة هذه المرحلة لهذا التلميذ.');return;}
- const reasons={3:'غياب ثلاثة أيام متتالية. يرجى إشعار الولي كتابياً والاستفسار عن سبب الغياب.',10:'استمرار الغياب أسبوعاً إضافياً بعد الإشعار الأول. يُرسل الإشعار الثاني مع الاحتفاظ بإثبات التبليغ.',17:'استمرار الغياب أسبوعاً إضافياً بعد الإشعار الثاني. يُرسل إعذار مضمون يحدد مهلة أسبوعين لتبرير الغياب أو الالتحاق بالمؤسسة.'};
+ const streak=getUnjustifiedStreaks().find(x=>String(x.student.id)===String(id)&&x.start===start);if(!streak){alert('لم تعد سلسلة الغياب المتتالي هذه ضمن الحالات الحالية.');return;}const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار معلّل بسبب الغياب'};if(noticeExists(streak,stage)){alert('سبق تسجيل وثيقة هذه المرحلة لهذا التلميذ.');return;}
+ const reasons={4:'غياب أربعة أيام متتالية (مع عدم احتساب الجمعة والسبت إلا عند ثبوت الغياب يوم الأحد). يرجى إشعار الولي كتابياً والاستفسار عن سبب الغياب.',11:'استمرار الغياب أسبوعاً إضافياً بعد الإشعار الأول. يُرسل الإشعار الثاني مع الاحتفاظ بإثبات التبليغ.',18:'استمرار الغياب أسبوعاً إضافياً بعد الإشعار الثاني. يُرسل إعذار مضمون يحدد مهلة أسبوعين لتبرير الغياب أو الالتحاق بالمؤسسة.'};
  const d={id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceStage:stage,deliveryProof:''};db.documents.push(d);if(!save()){db.documents.pop();return;}alert('تم إنشاء وثيقة المرحلة المطلوبة. راجعها واطبعها واحتفظ بتاريخ التبليغ وإثباته.');
 };
 function renderAbsenceFollowup(){
- const box=$('#absenceFollowup');if(!box)return;const items=getUnjustifiedStreaks();if(window.AndroidBridge&&typeof AndroidBridge.notifyAbsenceStage==='function'){items.forEach(x=>[3,10,17,31].filter(stage=>x.days>=stage).forEach(stage=>AndroidBridge.notifyAbsenceStage(String(x.student.id),String((x.student.last+' '+x.student.first).trim()),stage,x.start)));}box.innerHTML=items.length?items.map(x=>{const stages=[3,10,17].filter(n=>x.days>=n),next=stages.filter(n=>!noticeExists(x,n));const stage=x.days>=31?'<span class="status-danger">انقضت مهلة الأسبوعين: مراجعة إدارية وقانونية</span>':x.days>=17?'<span class="status-danger">مرحلة الإعذار المعلّل (مهلة أسبوعين)</span>':x.days>=10?'<span class="status-warn">مرحلة الإشعار الثاني</span>':'<span class="status-warn">مرحلة الإشعار الأول</span>';const actions=next.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+(n===3?'الإشعار الأول':n===10?'الإشعار الثاني':'الإعذار')+'</button>').join(' ');return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة المحتسبة: <b>'+x.days+' أيام متتالية (مع احتساب الجمعة والسبت ضمن الاستمرار)</b></p><p>'+stage+'</p><div class="actions">'+(actions||'<span class="status-ok">وثائق هذه المراحل مسجلة</span>')+'</div></div>';}).join(''):'<p class="empty">لا توجد حالياً حالات غياب غير مبرر بلغت ثلاثة أيام متتالية. ستظهر هنا تلقائياً عند تحقق الشرط.</p>';
+ const box=$('#absenceFollowup');if(!box)return;const items=getUnjustifiedStreaks();if(window.AndroidBridge&&typeof AndroidBridge.notifyAbsenceStage==='function'){items.forEach(x=>[4,11,18,32].filter(stage=>x.days>=stage).forEach(stage=>AndroidBridge.notifyAbsenceStage(String(x.student.id),String((x.student.last+' '+x.student.first).trim()),stage,x.start)));}box.innerHTML=items.length?items.map(x=>{const stages=[4,11,18].filter(n=>x.days>=n),next=stages.filter(n=>!noticeExists(x,n));const stage=x.days>=32?'<span class="status-danger">انقضت مهلة الأسبوعين: مراجعة إدارية وقانونية</span>':x.days>=18?'<span class="status-danger">مرحلة الإعذار المعلّل (مهلة أسبوعين)</span>':x.days>=11?'<span class="status-warn">مرحلة الإشعار الثاني</span>':'<span class="status-warn">مرحلة الإشعار الأول</span>';const actions=next.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+(n===4?'الإشعار الأول':n===11?'الإشعار الثاني':'الإعذار')+'</button>').join(' ');return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة المحتسبة: <b>'+x.days+' أيام متتالية (مع احتساب الجمعة والسبت ضمن الاستمرار)</b></p><p>'+stage+'</p><div class="actions">'+(actions||'<span class="status-ok">وثائق هذه المراحل مسجلة</span>')+'</div></div>';}).join(''):'<p class="empty">لا توجد حالياً حالات غياب غير مبرر بلغت ثلاثة أيام متتالية. ستظهر هنا تلقائياً عند تحقق الشرط.</p>';
 }
 function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}
 window.setManualAbsenceRate=(key,cls)=>{
