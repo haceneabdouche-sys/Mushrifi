@@ -472,6 +472,7 @@ $('#dedupeStudents').onclick=()=>{
   status.textContent='تم تنظيف '+affected.length+' خانة اسم. لم يُحذف أي تلميذ أو سجل، وبقيت جميع المعلومات الأخرى كما هي.';
   alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
 };
+function makeStudentImportId(){try{if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();}catch(_){}return 'student_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);}
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
   try{
@@ -485,8 +486,9 @@ $('#csvImport').onchange=async e=>{
       reader.readAsText(file,'UTF-8');
     });
     let raw='';
-    try{if(typeof file.text==='function')raw=String(await file.text()||'');}catch(_){}
-    if(!raw.trim())raw=await readCsvFile();
+    // استخدم FileReader مباشرة لضمان التوافق مع Android WebView.
+    try{raw=await readCsvFile();}catch(err){throw err;}
+    if(!raw.trim())throw new Error('الملف فارغ أو تعذرت قراءة محتواه.');
     raw=raw.replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
     const delimiters=[',',';','\t'];
@@ -494,7 +496,7 @@ $('#csvImport').onchange=async e=>{
     const rows=parsed[0].rows;
     if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
     const headers=rows[0].map(normHeader);
-    const find=names=>headers.findIndex(h=>names.includes(h));
+    const find=names=>headers.findIndex(h=>names.some(name=>h===normHeader(name)));
     const idx={
       identityNumber:find(['رقمالتعريف','رقمالتعريفالوطني','matricule','identifiant']),
       last:find(['اللقب','الاسم العائلي','nom','lastname','surname']),
@@ -536,10 +538,10 @@ $('#csvImport').onchange=async e=>{
       if(target){
         for(const key of fields){if(data[key]!==''||!Object.prototype.hasOwnProperty.call(target,key))target[key]=data[key];}
         target.code=data.enrollmentNumber||target.code||'';
-        if(!target.id)target.id=crypto.randomUUID();
+        if(!target.id)target.id=makeStudentImportId();
         updated++;
       }else{
-        const record={id:crypto.randomUUID(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
+        const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
         db.students.push(record);existingById.set(data.identityNumber,record);added++;
       }
     }
