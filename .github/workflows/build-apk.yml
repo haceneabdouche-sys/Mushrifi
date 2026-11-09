@@ -22,6 +22,29 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Prepare transparent full-color signature logo
+        run: |
+          python -m pip install --quiet pillow numpy
+          python - <<'PY'
+          from PIL import Image
+          import numpy as np
+          src = 'android/app/src/main/assets/signature-real.jpg'
+          dst = 'android/app/src/main/assets/signature-color.png'
+          arr = np.asarray(Image.open(src).convert('RGB'), dtype=np.float32)
+          alpha = 255 - arr.min(axis=2)
+          alpha[alpha < 8] = 0
+          denom = np.maximum(alpha[..., None], 1)
+          rgb = np.clip((arr - (255 - alpha[..., None])) * 255.0 / denom, 0, 255).astype(np.uint8)
+          rgba = np.dstack((rgb, alpha.astype(np.uint8)))
+          logo = Image.fromarray(rgba, 'RGBA')
+          bbox = logo.getbbox()
+          logo = logo.crop(bbox)
+          side = max(logo.size)
+          pad = int(side * 0.08)
+          canvas = Image.new('RGBA', (side + 2 * pad, side + 2 * pad), (0, 0, 0, 0))
+          canvas.alpha_composite(logo, ((side - logo.width) // 2 + pad, (side - logo.height) // 2 + pad))
+          canvas.resize((512, 512), Image.Resampling.LANCZOS).save(dst, optimize=True)
+          PY
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \

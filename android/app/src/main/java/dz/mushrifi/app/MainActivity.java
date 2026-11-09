@@ -71,7 +71,12 @@ public class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
                 try {
-                    Intent intent = params.createIntent();
+                    // Use the Storage Access Framework directly. Some Android file
+                    // providers hide CSV files when WebView's inferred MIME filter is used.
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivityForResult(intent, PICK_FILE);
                 } catch (Exception e) {
                     fileCallback = null;
