@@ -303,7 +303,7 @@ function getUnjustifiedStreaks(){
   const st=student(r.student);if(!st||String(r.justified||'غير مبرر')==='مبرر')continue;
   const key=String(st.id);if(!grouped.has(key))grouped.set(key,{student:st,byDate:new Map()});
   const hours=Number(parseHours(r.hours))||0;
-  const date=String(r.date),byDate=grouped.get(key);
+  const date=String(r.date),byDate=grouped.get(key).byDate;
   byDate.set(date,(byDate.get(date)||0)+hours);
  }
  const today=dateISO(),out=[];
