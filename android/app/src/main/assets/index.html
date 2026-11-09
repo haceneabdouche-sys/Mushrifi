@@ -281,7 +281,7 @@ function loadDailyRoster(){
  $('#dailyRosterTools').classList.remove('hidden');$('#dailyRosterSearch').value='';$('#saveDailyAbsences').disabled=false;$('#dailyRosterCount').textContent=students.length+' تلميذاً · '+already.size+' غياب مسجل مسبقاً';
 }
 $('#loadDailyRoster').onclick=loadDailyRoster;
-$('#dailyRosterSearch').addEventListener('input',()=>{const q=$('#dailyRosterSearch').value.trim().toLocaleLowerCase('ar');$$$('#dailyRoster .daily-student').forEach(card=>card.classList.toggle('is-hidden',!card.textContent.toLocaleLowerCase('ar').includes(q)));});
+$('#dailyRosterSearch').addEventListener('input',()=>{const q=$('#dailyRosterSearch').value.trim().toLocaleLowerCase('ar');$('#dailyRoster .daily-student').forEach(card=>card.classList.toggle('is-hidden',!card.textContent.toLocaleLowerCase('ar').includes(q)));});
 $('#selectAllAbsent').onclick=()=>{$$('#dailyRoster .daily-absent:not(:disabled)').forEach(c=>c.checked=true);};
 $('#clearAllAbsent').onclick=()=>{$$('#dailyRoster .daily-absent:not(:disabled)').forEach(c=>c.checked=false);};
 $('#dailyClass').addEventListener('change',loadDailyRoster);
