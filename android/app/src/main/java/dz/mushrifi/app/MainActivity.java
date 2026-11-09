@@ -157,7 +157,7 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void notifyAbsenceStage(String studentId, String studentName, int stage, String absenceStart) {
-            if (studentId == null || studentName == null || absenceStart == null || (stage != 3 && stage != 7 && stage != 14 && stage != 28)) return;
+            if (studentId == null || studentName == null || absenceStart == null || (stage != 4 && stage != 11 && stage != 18 && stage != 32)) return;
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
                 String key = studentId + "|" + absenceStart + "|" + stage;
