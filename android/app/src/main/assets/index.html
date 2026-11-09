@@ -95,7 +95,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
  
 <div class="panel"><h2>تنبيهات استدعاء ولي</h2><p class="muted">فعّل وصول التنبيهات الدقيقة لتحسين الالتزام بموعد التذكير، ثم أرسل إشعاراً تجريبياً فورياً للتأكد من وصوله.</p><button class="btn primary" id="requestExactAlarmAccess" type="button">تفعيل التنبيهات الدقيقة</button> <button class="btn" id="testSummonsNotification" type="button">اختبار وصول الإشعار</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
-<div class="panel"><h2>الإجراء الأول: حذف الأرقام من الأسماء</h2><p class="muted">يحذف الأرقام الموجودة في نهاية الاسم فقط، دون حذف التلميذ أو أي معلومة من سجلاته. تبقى معرّفات التلاميذ والأقسام والصفات وسجلات الغياب والتأخر والمخالفات والوثائق كما هي. تُنزّل نسخة احتياطية قبل التنفيذ.</p><button class="btn primary" id="dedupeStudents" type="button">تنفيذ حذف الأرقام فقط</button><p id="dedupeStatus" class="muted">لم يتم إجراء تنظيف بعد.</p></div>
+
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد بطاقة التلميذ الرسمية من CSV</h2><p class="muted">يدعم الأعمدة الستة عشر في الملف المعتمد: رقم التعريف، اللقب، الاسم، الجنس، تاريخ الازدياد، مولود بحكم، عقد الميلاد، سنة التسجيل في سجل الولادات، رقم عقد الميلاد، مكان الازدياد، السنة، الشعبة، القسم، نظام التمدرس، رقم القيد، تاريخ التسجيل. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
 </section>
@@ -343,7 +343,7 @@ window.createAbsenceStageNotice=(id,start,stage)=>{
  const d={id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceStage:stage,deliveryProof:''};db.documents.push(d);if(!save()){db.documents.pop();return;}alert('تم إنشاء وثيقة المرحلة المطلوبة. راجعها واطبعها واحتفظ بتاريخ التبليغ وإثباته.');
 };
 function renderAbsenceFollowup(){
- const box=$('#absenceFollowup');if(!box)return;const items=getUnjustifiedStreaks();if(window.AndroidBridge&&typeof AndroidBridge.notifyAbsenceStage==='function'){items.forEach(x=>[4,11,18,32].filter(stage=>x.days>=stage).forEach(stage=>AndroidBridge.notifyAbsenceStage(String(x.student.id),String((x.student.last+' '+x.student.first).trim()),stage,x.start)));}box.innerHTML=items.length?items.map(x=>{const stages=[4,11,18].filter(n=>x.days>=n),next=stages.filter(n=>!noticeExists(x,n));const stage=x.days>=32?'<span class="status-danger">انقضت مهلة الأسبوعين: مراجعة إدارية وقانونية</span>':x.days>=18?'<span class="status-danger">مرحلة الإعذار المعلّل (مهلة أسبوعين)</span>':x.days>=11?'<span class="status-warn">مرحلة الإشعار الثاني</span>':'<span class="status-warn">مرحلة الإشعار الأول</span>';const actions=next.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+(n===4?'الإشعار الأول':n===11?'الإشعار الثاني':'الإعذار')+'</button>').join(' ');return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة المحتسبة: <b>'+x.days+' أيام متتالية (مع احتساب الجمعة والسبت ضمن الاستمرار)</b></p><p>'+stage+'</p><div class="actions">'+(actions||'<span class="status-ok">وثائق هذه المراحل مسجلة</span>')+'</div></div>';}).join(''):'<p class="empty">لا توجد حالياً حالات غياب غير مبرر بلغت أربعة أيام محتسبة. ستظهر هنا تلقائياً عند تحقق الشرط.</p>';
+ const box=$('#absenceFollowup');if(!box)return;const items=getUnjustifiedStreaks();if(window.AndroidBridge&&typeof AndroidBridge.notifyAbsenceStage==='function'){items.forEach(x=>[4,11,18,32].filter(stage=>x.days>=stage).forEach(stage=>AndroidBridge.notifyAbsenceStage(String(x.student.id),String((x.student.last+' '+x.student.first).trim()),stage,x.start)));}box.innerHTML=items.length?items.map(x=>{const stages=[4,11,18].filter(n=>x.days>=n),next=stages.filter(n=>!noticeExists(x,n));const stage=x.days>=32?'<span class="status-danger">انقضت مهلة الأسبوعين: مراجعة إدارية وقانونية</span>':x.days>=18?'<span class="status-danger">مرحلة الإعذار المعلّل (مهلة أسبوعين)</span>':x.days>=11?'<span class="status-warn">مرحلة الإشعار الثاني</span>':'<span class="status-warn">مرحلة الإشعار الأول</span>';const actions=next.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+(n===4?'الإشعار الأول':n===11?'الإشعار الثاني':'الإعذار')+'</button>').join(' ');return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة المحتسبة: <b>'+x.days+' أيام متتالية (لا يُحتسب الجمعة والسبت إلا إذا ثبت الغياب يوم الأحد بعد الخميس)</b></p><p>'+stage+'</p><div class="actions">'+(actions||'<span class="status-ok">وثائق هذه المراحل مسجلة</span>')+'</div></div>';}).join(''):'<p class="empty">لا توجد حالياً حالات غياب غير مبرر بلغت أربعة أيام محتسبة. ستظهر هنا تلقائياً عند تحقق الشرط.</p>';
 }
 function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}
 window.setManualAbsenceRate=(key,cls)=>{
@@ -539,38 +539,6 @@ $('#clearStudents').onclick=()=>{
   if(!save()){db.students=oldStudents;for(const [record,oldName] of changedNames){if(oldName===undefined)delete record.studentName;else record.studentName=oldName;}render();status.textContent='تعذر حفظ العملية؛ لم تُحذف قائمة التلاميذ.';alert(status.textContent);return;}
   status.textContent='تم حذف قائمة التلاميذ ('+count+' تلميذاً). بقيت سجلات الغياب والتأخر والمخالفات والوثائق.';
   alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية لاسترجاع القائمة عند الحاجة.');
-};
-$('#dedupeStudents').onclick=()=>{
-  const status=$('#dedupeStatus');
-  // افحص حقول أسماء التلميذ المعروفة، بما فيها صيغ الاستيراد المختلفة.
-  const nameKey=/^(last|first|name|fullname|full_name|studentname|student_name|surname|firstname|first_name|lastname|last_name|nom|prenom|nomcomplet|nom_complet)$/i;
-  const stripEnd=v=>String(v??'').replace(/[ \t\u00A0]*[0-9٠-٩۰-۹]+[ \t\u00A0]*$/,'').trim();
-  const affected=[];
-  let checked=0;
-  for(const s of db.students){
-    for(const field of Object.keys(s)){
-      if(!nameKey.test(field)) continue;
-      const oldValue=String(s[field]??'');
-      if(!oldValue.trim()) continue;
-      checked++;
-      const newValue=stripEnd(oldValue);
-      if(newValue!==oldValue) affected.push({student:s,field,oldValue,newValue});
-    }
-  }
-  if(!affected.length){
-    status.textContent='فُحص '+db.students.length+' تلميذاً و'+checked+' خانة اسم، ولم يُعثر على رقم في نهاية الاسم. لم تتغير أي معلومة.';
-    alert(status.textContent+'\nإذا كان الاسم مثل «وائل عيسو1»، فتأكد أن هذه القائمة هي القائمة المحمّلة حالياً في التطبيق.');
-    return;
-  }
-  const preview=affected.slice(0,15).map(x=>'• '+String(x.student.last||x.student.name||x.student.fullName||'')+' '+String(x.student.first||'')+' ← '+x.newValue+' | القسم: '+(x.student.class||'غير محدد')).join('\n');
-  const more=affected.length>15?'\n... وهناك '+(affected.length-15)+' تعديلات أخرى.':'';
-  if(!confirm('الإجراء الأول: حذف الأرقام الموجودة في نهاية حقول أسماء التلاميذ فقط. عدد التعديلات: '+affected.length+'.\nلن يُحذف أي تلميذ أو سجل، ولن تتغير الأقسام أو الصفات أو معرّفات التلاميذ أو معلومات الغياب والتأخر والمخالفات والوثائق.\nستُنزل نسخة احتياطية قبل التنفيذ.\n\n'+preview+more+'\n\nهل تريد المتابعة؟'))return;
-  const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-before-name-clean-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
-  for(const item of affected) item.student[item.field]=item.newValue;
-  if(!save()){for(const item of affected)item.student[item.field]=item.oldValue;render();status.textContent='تعذر حفظ التنظيف؛ أُعيدت الأسماء إلى قيمها السابقة.';alert(status.textContent);return;}
-  status.textContent='تم تنظيف '+affected.length+' خانة اسم. لم يُحذف أي تلميذ أو سجل، وبقيت جميع المعلومات الأخرى كما هي.';
-  alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية التي تم تنزيلها.');
 };
 function makeStudentImportId(){try{if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();}catch(_){}return 'student_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);}
 $('#csvImport').onchange=async e=>{
