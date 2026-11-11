@@ -516,20 +516,29 @@ window.saveAttendanceEdit=id=>{
 };
 window.studentHistory=id=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
-  const normStudentName=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
-  const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''));
+  const normStudentName=value=>String(value??'').normalize('NFKC')
+    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
+    .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
+    .replace(/\\s*\\d+$/,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
+  const normStudentSection=value=>String(value??'').normalize('NFKC')
+    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
+    .replace(/[أإآٱ]/g,'ا').replace(/\\s+/g,'').trim().toLocaleLowerCase('ar');
+  const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''))||normStudentName(s.name||s.fullName||'');
   const belongsToStudent=record=>{
-    if(String(record.student??'')===sid)return true;
+    const recordId=String(record.student??'').trim();
+    if(recordId===sid)return true;
+    // المعرّف الداخلي لتلميذ آخر أقوى من تشابه الاسم.
+    if(recordId&&db.students.some(other=>String(other.id)===recordId))return false;
     const recordName=normStudentName(record.studentName||record.student);
     if(!recordName||recordName!==fullStudentName)return false;
-    const recordSection=normStudentName(record.class||record.studentClass||record.sectionLabel||'');
+    const recordSection=normStudentSection(record.class||record.studentClass||record.sectionLabel||record.section||'');
     if(recordSection){
-      const studentSection=normStudentName(s.class||'');
-      const studentGroup=normStudentName(attendanceGroupLabel(s)||'');
-      return recordSection===studentSection||recordSection===studentGroup;
+      const studentSections=[s.class,attendanceGroupLabel(s),s.section,s.className].map(normStudentSection).filter(Boolean);
+      return studentSections.includes(recordSection);
     }
+    // السجل القديم بلا قسم يُربط فقط إذا كان الاسم فريداً.
     const sameNameStudents=db.students.filter(other=>{
-      const otherName=normStudentName(String(other.last||'')+' '+String(other.first||''));
+      const otherName=normStudentName(String(other.last||'')+' '+String(other.first||''))||normStudentName(other.name||other.fullName||'');
       return otherName===fullStudentName;
     });
     return sameNameStudents.length===1;
@@ -554,7 +563,7 @@ window.studentHistory=id=>{
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.print()">طباعة الملف</button></div>
   <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>رقم التعريف</small><strong style="font-size:16px">${esc(s.identityNumber||'—')}</strong></div><div class="stat"><small>الجنس</small><strong style="font-size:16px">${esc(s.gender||'—')}</strong></div><div class="stat"><small>تاريخ الازدياد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>مكان الازدياد</small><strong style="font-size:16px">${esc(s.birthPlace||'—')}</strong></div><div class="stat"><small>السنة</small><strong style="font-size:16px">${esc(s.schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(s.branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(s.class||'—')}</strong></div><div class="stat"><small>نظام التمدرس</small><strong style="font-size:16px">${esc(s.schoolingSystem||'—')}</strong></div><div class="stat"><small>رقم القيد</small><strong style="font-size:16px">${esc(s.enrollmentNumber||s.code||'—')}</strong></div><div class="stat"><small>تاريخ التسجيل</small><strong style="font-size:16px">${esc(s.enrollmentDate||'—')}</strong></div><div class="stat"><small>مولود بحكم</small><strong style="font-size:16px">${esc(s.birthByJudgment||'—')}</strong></div><div class="stat"><small>عقد الميلاد</small><strong style="font-size:16px">${esc(s.birthCertificate||'—')}</strong></div><div class="stat"><small>سنة سجل الولادات</small><strong style="font-size:16px">${esc(s.birthRegisterYear||'—')}</strong></div><div class="stat"><small>رقم عقد الميلاد</small><strong style="font-size:16px">${esc(s.birthCertificateNumber||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
   <div class="no-print"><button class="btn" onclick="editStudent('${s.id}')">تعديل بطاقة التلميذ</button></div>
-  <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب</small><strong>${absHours}</strong></div><div class="stat"><small>مجموع ساعات التأخر</small><strong>${lateHours}</strong></div><div class="stat"><small>مجموع الساعات الكلي</small><strong>${allHours}</strong></div><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
+  <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>غيابات قيد التبرير</small><strong>${pending(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>تأخرات قيد التبرير</small><strong>${pending(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب</small><strong>${absHours}</strong></div><div class="stat"><small>مجموع ساعات التأخر</small><strong>${lateHours}</strong></div><div class="stat"><small>مجموع الساعات الكلي</small><strong>${allHours}</strong></div><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
   <h3>تفصيل الغيابات (${abs.length})</h3>${statusSummary(abs)}${attendanceList(abs)}
   <h3>تفصيل التأخرات (${late.length})</h3>${statusSummary(late)}${attendanceList(late)}
   <h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع المخالفة</th><th>الوصف</th><th>الإجراء والمتابعة</th><th>الصورة</th></tr></thead><tbody>${v.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.description||'—')}</td><td>${esc(x.action||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد مخالفات.</p>'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${documentList(d)}`;
