@@ -219,7 +219,9 @@ public class MainActivity extends Activity {
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ar-DZ");
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "ar-DZ");
-                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "تحدث الآن بالعربية");
+                    intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+                    intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "انطق الاسم واللقب بوضوح، ويمكنك ذكر القسم");
                     speechPending = true;
                     startActivityForResult(intent, SPEECH_REQUEST);
                 } catch (Exception e) {
@@ -296,10 +298,10 @@ public class MainActivity extends Activity {
         if (requestCode == SPEECH_REQUEST) {
             speechPending = false;
             if (resultCode == RESULT_OK && data != null) {
-                java.util.ArrayList<String> results = data.getStringArrayListExtra("android.speech.extra.RESULTS");
+                java.util.ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 if (results != null && !results.isEmpty()) {
-                    String spoken = results.get(0);
-                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult(" + org.json.JSONObject.quote(spoken) + ");", null);
+                    org.json.JSONArray alternatives = new org.json.JSONArray(results);
+                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult(" + alternatives.toString() + ");", null);
                 } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);
             } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);
         } else if (requestCode == PICK_BACKUP_NATIVE) {
