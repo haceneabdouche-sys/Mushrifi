@@ -518,7 +518,22 @@ window.studentHistory=id=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
   const normStudentName=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
   const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''));
-  const belongsToStudent=record=>String(record.student??'')===sid||normStudentName(record.studentName)===fullStudentName||normStudentName(record.student)===fullStudentName;
+  const belongsToStudent=record=>{
+    if(String(record.student??'')===sid)return true;
+    const recordName=normStudentName(record.studentName||record.student);
+    if(!recordName||recordName!==fullStudentName)return false;
+    const recordSection=normStudentName(record.class||record.studentClass||record.sectionLabel||'');
+    if(recordSection){
+      const studentSection=normStudentName(s.class||'');
+      const studentGroup=normStudentName(attendanceGroupLabel(s)||'');
+      return recordSection===studentSection||recordSection===studentGroup;
+    }
+    const sameNameStudents=db.students.filter(other=>{
+      const otherName=normStudentName(String(other.last||'')+' '+String(other.first||''));
+      return otherName===fullStudentName;
+    });
+    return sameNameStudents.length===1;
+  };
   const a=db.attendance.filter(belongsToStudent);
   const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
   const hoursOf=record=>{let h=parseHours(record.hours);if(h===''||Number.isNaN(h))h=parseHours(record.period);return typeof h==='number'&&Number.isFinite(h)&&h>=0?h:0;};
