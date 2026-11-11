@@ -305,11 +305,11 @@ function loadDailyRoster(){
  const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),students=db.students.filter(s=>attendanceGroupKey(s)===cls);
  if(!cls||!group){$('#dailyRoster').className='daily-roster empty';$('#dailyRoster').textContent='اختر القسم لعرض قائمة التلاميذ.';$('#dailyRosterTools').classList.add('hidden');$('#saveDailyAbsences').disabled=true;return;}
  if(!students.length){$('#dailyRoster').innerHTML='<p class="empty">لا يوجد تلاميذ مسجلون في هذا القسم.</p>';$('#dailyRosterTools').classList.remove('hidden');$('#saveDailyAbsences').disabled=true;$('#dailyRosterCount').textContent='0 تلميذ';return;}
- const already=new Set(db.attendance.filter(a=>a.type==='غياب'&&a.date===$('#dailyDate').value&&attendanceRecordGroupKey(a)===cls).map(a=>String(a.student)));
+ const already=new Map(db.attendance.filter(a=>(a.type==='غياب'||a.type==='حضور')&&a.date===$('#dailyDate').value&&attendanceRecordGroupKey(a)===cls).map(a=>[String(a.student),a.type]));
  $('#dailyRoster').className='daily-roster';
  $('#dailyRoster').innerHTML=students.slice().sort((a,b)=>String(a.last||'').localeCompare(String(b.last||''),'ar')).map(st=>{
-  const done=already.has(String(st.id));
-  return '<label class="daily-student"><input type="checkbox" class="daily-absent" data-id="'+esc(st.id)+'" '+(done?'disabled':'')+'><span class="student-meta"><strong>'+esc((st.last||'')+' '+(st.first||''))+'</strong><small>'+esc(attendanceGroupLabel(st))+(done?' · غياب مسجل لهذا اليوم':'')+'</small><input class="daily-hours" type="number" min="0.25" max="24" step="0.25" value="'+esc($('#dailyHours').value||'1')+'" aria-label="ساعات الغياب" '+(done?'disabled':'')+'><input class="daily-note" type="text" placeholder="ملاحظة" aria-label="ملاحظة" '+(done?'disabled':'')+'></span></label>';
+  const existing=already.get(String(st.id)),done=Boolean(existing);
+  return '<label class="daily-student"><input type="checkbox" class="daily-absent" data-id="'+esc(st.id)+'" '+(done?'disabled':'')+'><span class="student-meta"><strong>'+esc((st.last||'')+' '+(st.first||''))+'</strong><small>'+esc(attendanceGroupLabel(st))+(done?' · '+(existing==='حضور'?'حضور مسجل لهذا اليوم':'غياب مسجل لهذا اليوم'):'')+'</small><input class="daily-hours" type="number" min="0.25" max="24" step="0.25" value="'+esc($('#dailyHours').value||'1')+'" aria-label="ساعات الغياب" '+(done?'disabled':'')+'><input class="daily-note" type="text" placeholder="ملاحظة" aria-label="ملاحظة" '+(done?'disabled':'')+'></span></label>';
  }).join('');
  $('#dailyRosterTools').classList.remove('hidden');$('#dailyRosterSearch').value='';$('#saveDailyAbsences').disabled=false;$('#dailyRosterCount').textContent=students.length+' تلميذاً · '+already.size+' غياب مسجل مسبقاً';
 }
