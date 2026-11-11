@@ -64,6 +64,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6d9bb6;box-sh
 table th{color:var(--navy);background:#edf3f7}
 footer{padding:24px 12px;color:#71818d}
 @media(max-width:700px){header{padding:18px 12px 16px}.wrap{padding:11px}.panel{padding:13px}.stat{padding:13px}nav{margin-inline:-2px}}
+
+/* Settings workspace: focused tabs for timetable, follow-up, rates and data */
+.settings-tabs{display:flex;gap:8px;overflow-x:auto;padding:4px 1px 12px;margin:2px 0 8px;scrollbar-width:thin}
+.settings-tab{flex:0 0 auto;border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:#fff;color:var(--navy);font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+.settings-tab.active{background:linear-gradient(135deg,#173b58,#286b91);border-color:#286b91;color:#fff;box-shadow:0 4px 12px rgba(23,59,88,.15)}
+.settings-pane{min-width:0}.settings-heading{margin-bottom:10px}.settings-heading h2{margin-bottom:5px}
+.settings-pane .panel:first-child{margin-top:0}
+@media(max-width:700px){.settings-tabs{margin-inline:-2px;padding-inline:2px}.settings-tab{padding:10px 12px;font-size:13px}}
 </style>
 </head>
 <body>
@@ -120,17 +128,33 @@ footer{padding:24px 12px;color:#71818d}
 <div class="panel"><h2>التقارير والطباعة</h2><div class="row"><div><label>اختر التلميذ</label><select id="reportStudent" class="studentSelect"><option value="">كل التلاميذ</option></select></div><div><label>من تاريخ</label><input id="fromDate" type="date"></div><div><label>إلى تاريخ</label><input id="toDate" type="date"></div></div><button class="btn primary" id="makeReport">عرض التقرير</button> <button class="btn" onclick="window.print()">طباعة / حفظ PDF</button><div id="reportOutput" class="panel"><p class="muted">حدد نطاق التقرير ثم اضغط عرض التقرير.</p></div></div>
 </section>
 <section id="settings" class="page hidden">
-<div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
-<div class="panel"><h2>إعدادات متابعة الغيابات وجداول التوقيت</h2><p class="muted">تُدار جداول الأقسام ومتابعة الإشعارات والنسب الشهرية من هذه الصفحة، بعيداً عن صفحة تسجيل الغياب اليومي.</p></div>
+<div class="panel settings-heading"><h2>مركز الإعدادات والمتابعة</h2><p class="muted">اختر المجال الذي تريد ضبطه. تبقى سجلات التلاميذ والغيابات محفوظة كما هي عند التنقل بين الأقسام.</p></div>
+<div class="settings-tabs no-print" role="tablist" aria-label="أقسام الإعدادات">
+<button type="button" class="settings-tab active" data-settings-tab="schedule" role="tab" aria-selected="true">🗓️ جداول التوقيت</button>
+<button type="button" class="settings-tab" data-settings-tab="followup" role="tab" aria-selected="false">📋 متابعة الغيابات</button>
+<button type="button" class="settings-tab" data-settings-tab="rates" role="tab" aria-selected="false">📊 نسب الغياب</button>
+<button type="button" class="settings-tab" data-settings-tab="alerts" role="tab" aria-selected="false">🔔 التنبيهات</button>
+<button type="button" class="settings-tab" data-settings-tab="data" role="tab" aria-selected="false">⚙️ المؤسسة والبيانات</button>
+</div>
+<div class="settings-pane" id="settings-pane-schedule" role="tabpanel">
 <div class="panel"><h2>جدول التوقيت الأسبوعي للأقسام</h2><p class="muted">أدخل مجموع الساعات المقررة لكل يوم. الجمعة والسبت مستبعدان تلقائياً من حساب الساعات الشهرية.</p><form id="scheduleForm"><label>القسم / الشعبة</label><select name="class" id="scheduleClass" required><option value="">اختر القسم</option></select><div class="grid schedule-grid"><div><label>الأحد</label><input name="sun" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الإثنين</label><input name="mon" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الثلاثاء</label><input name="tue" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الأربعاء</label><input name="wed" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الخميس</label><input name="thu" type="number" min="0" max="12" step="0.5" value="6"></div></div><button class="btn primary" type="submit">حفظ توقيت القسم</button></form><div id="timetableRows"></div></div>
- <div class="panel"><h2>متابعة الغيابات وفق القرار 833</h2><p class="muted">تُحتسب أيام الغياب الفعلية: لا تُحتسب الجمعة والسبت بعد غياب الخميس إلا إذا ثبت غياب التلميذ يوم الأحد أيضاً. يُحرر الإشعار الأول في اليوم الرابع المحتسب. لا يُعتبر الغياب مبرراً تلقائياً ولا يُتخذ قرار فصل آلي.</p><div id="absenceFollowup" class="followup-list">لا توجد حالات تستوجب المتابعة حالياً.</div></div>
- <div class="panel"><div class="row"><div><h2>نسبة الغياب الشهرية حسب القسم</h2><p class="muted">النسبة = مجموع ساعات الغياب ÷ (عدد التلاميذ × الساعات المقررة للقسم خلال الشهر) × 100.</p></div><div><label>الشهر</label><input id="absenceMonth" type="month"></div></div><div id="monthlyAbsenceRates" class="rate-list"></div></div>
- 
+</div>
+<div class="settings-pane hidden" id="settings-pane-followup" role="tabpanel">
+<div class="panel"><h2>متابعة الغيابات وفق القرار 833</h2><p class="muted">تُحتسب أيام الغياب الفعلية: لا تُحتسب الجمعة والسبت بعد غياب الخميس إلا إذا ثبت غياب التلميذ يوم الأحد أيضاً. يُحرر الإشعار الأول في اليوم الرابع المحتسب. لا يُعتبر الغياب مبرراً تلقائياً ولا يُتخذ قرار فصل آلي.</p><div id="absenceFollowup" class="followup-list">لا توجد حالات تستوجب المتابعة حالياً.</div></div>
+</div>
+<div class="settings-pane hidden" id="settings-pane-rates" role="tabpanel">
+<div class="panel"><div class="row"><div><h2>نسبة الغياب الشهرية حسب القسم</h2><p class="muted">النسبة = مجموع ساعات الغياب ÷ (عدد التلاميذ × الساعات المقررة للقسم خلال الشهر) × 100.</p></div><div><label>الشهر</label><input id="absenceMonth" type="month"></div></div><div id="monthlyAbsenceRates" class="rate-list"></div></div>
+</div>
+<div class="settings-pane hidden" id="settings-pane-alerts" role="tabpanel">
 <div class="panel"><h2>تنبيهات استدعاء ولي</h2><p class="muted">فعّل وصول التنبيهات الدقيقة لتحسين الالتزام بموعد التذكير، ثم أرسل إشعاراً تجريبياً فورياً للتأكد من وصوله.</p><button class="btn primary" id="requestExactAlarmAccess" type="button">تفعيل التنبيهات الدقيقة</button> <button class="btn" id="testSummonsNotification" type="button">اختبار وصول الإشعار</button></div>
+</div>
+<div class="settings-pane hidden" id="settings-pane-data" role="tabpanel">
+<div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
-
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد بطاقة التلميذ الرسمية من CSV</h2><p class="muted">يدعم الأعمدة الستة عشر في الملف المعتمد: رقم التعريف، اللقب، الاسم، الجنس، تاريخ الازدياد، مولود بحكم، عقد الميلاد، سنة التسجيل في سجل الولادات، رقم عقد الميلاد، مكان الازدياد، السنة، الشعبة، القسم، نظام التمدرس، رقم القيد، تاريخ التسجيل. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
+</section>
+</div>
 </section>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
 <script>
@@ -154,7 +178,10 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
 const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.name||s.fullName||'—';for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>normalizeStudentKey(x.student)===normalizeStudentKey(id)&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
-function go(page){$$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));$$('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
+function go(page){$('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));$('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
+function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
+window.setSettingsTab=setSettingsTab;
+$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function render(){
 const normType=v=>String(v??'').trim().replace(/\s+/g,'');const absCount=db.attendance.filter(x=>normType(x.type)==='غياب').length;const lateCount=db.attendance.filter(x=>normType(x.type)==='تأخر').length;const summonsCount=db.documents.filter(x=>normType(x.type).includes('استدعاء')).length;const absenceNoticesCount=db.documents.filter(x=>normType(x.type).includes('إشعارغياب')).length;$('#sStudents').textContent=db.students.length;$('#sAbs').textContent=absCount;$('#sLate').textContent=lateCount;$('#sViol').textContent=db.violations.length;$('#sDocs').textContent=db.documents.length;$('#sSummons').textContent=summonsCount;$('#sAbsNotices').textContent=absenceNoticesCount;$('#sRecords').textContent=db.attendance.length+db.documents.length+db.violations.length;
@@ -321,7 +348,7 @@ function renderAttendanceWorkspace(){
  const groups=attendanceGroups();$('#timetableRows').innerHTML=groups.map(g=>{const t=timetableForGroup(g);if(!t)return '<div class="rate-card"><b>'+esc(g.label)+'</b><p class="muted">لم يُحدد التوقيت الأسبوعي بعد.</p><button type="button" class="btn small" onclick="loadTimetableIntoForm(\''+esc(g.key)+'\')">إدخال التوقيت</button></div>';const weekly=attendanceWeekdays.reduce((n,[k])=>n+Number(t[k]||0),0);return '<div class="rate-card"><b>'+esc(g.label)+'</b><p>الساعات الأسبوعية: '+weekly.toLocaleString('ar-DZ')+' ساعة</p><div class="muted">'+attendanceWeekdays.map(([k,label])=>label+': '+Number(t[k]||0)).join(' · ')+'</div><button type="button" class="btn small" onclick="loadTimetableIntoForm(\''+esc(g.key)+'\')">تعديل التوقيت</button></div>';}).join('')||'<p class="empty">لا توجد أقسام مسجلة.</p>';
  renderAbsenceFollowup();renderMonthlyAbsenceRates();
 }
-window.loadTimetableIntoForm=key=>{const group=attendanceGroups().find(g=>g.key===key);if(!group)return;const t=timetableForGroup(group)||{},f=$('#scheduleForm');f.elements.class.value=key;attendanceWeekdays.forEach(([k])=>f.elements[k].value=Number(t[k]||0));f.scrollIntoView({behavior:'smooth',block:'center'});};
+window.loadTimetableIntoForm=key=>{const group=attendanceGroups().find(g=>g.key===key);if(!group)return;go('settings');setSettingsTab('schedule');const t=timetableForGroup(group)||{},f=$('#scheduleForm');f.elements.class.value=key;attendanceWeekdays.forEach(([k])=>f.elements[k].value=Number(t[k]||0));requestAnimationFrame(()=>f.scrollIntoView({behavior:'smooth',block:'center'}));};
 $('#scheduleForm').onsubmit=e=>{e.preventDefault();const f=e.target,key=String(f.elements.class.value||'').trim(),group=attendanceGroups().find(g=>g.key===key);if(!group){alert('اختر قسماً صحيحاً.');return;}const t={};for(const [k] of attendanceWeekdays){const n=Number(f.elements[k].value);if(!Number.isFinite(n)||n<0||n>12){alert('تحقق من ساعات كل يوم؛ يجب أن تكون بين 0 و12.');return;}t[k]=n;}db.settings.timetables=db.settings.timetables||{};const old=db.settings.timetables[key];db.settings.timetables[key]=t;if(!save()){if(old)db.settings.timetables[key]=old;else delete db.settings.timetables[key];return;}alert('تم حفظ توقيت '+group.label+'. سيُستخدم في حساب النسبة الشهرية لهذا القسم وحده.');};
 function loadDailyRoster(){
  const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),students=db.students.filter(s=>attendanceGroupKey(s)===cls);
