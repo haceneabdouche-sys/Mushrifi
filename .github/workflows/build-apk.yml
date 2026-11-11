@@ -45,6 +45,38 @@ jobs:
           canvas.alpha_composite(logo, ((side - logo.width) // 2 + pad, (side - logo.height) // 2 + pad))
           canvas.resize((512, 512), Image.Resampling.LANCZOS).save(dst, optimize=True)
           PY
+      - name: Validate embedded JavaScript syntax
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          class ScriptExtractor(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.in_script = False
+                  self.parts = []
+                  self.current = []
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() == "script":
+                      self.in_script = True
+                      self.current = []
+              def handle_data(self, data):
+                  if self.in_script:
+                      self.current.append(data)
+              def handle_endtag(self, tag):
+                  if tag.lower() == "script" and self.in_script:
+                      self.parts.append("".join(self.current))
+                      self.in_script = False
+
+          parser = ScriptExtractor()
+          parser.feed(Path("android/app/src/main/assets/index.html").read_text(encoding="utf-8"))
+          source = "\\n".join(part for part in parser.parts if part.strip())
+          if not source.strip():
+              raise SystemExit("No inline JavaScript found in Mushrifi index.html")
+          Path("/tmp/mushrifi-inline.js").write_text(source, encoding="utf-8")
+          PY
+          node --check /tmp/mushrifi-inline.js
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
