@@ -199,17 +199,34 @@ function parseVoiceHours(t){
  if(/ساعه واحده|ساعه/.test(s))return 1;
  return '';
 }
-function voiceStudentMatches(nameText){
- const q=normalizeArabic(nameText);
+function voiceEditDistance(a,b){
+ const x=Array.from(a),y=Array.from(b);if(!x.length)return y.length;if(!y.length)return x.length;
+ let prev=Array.from({length:y.length+1},(_,i)=>i),next=[];
+ for(let i=1;i<=x.length;i++){next=[i];for(let k=1;k<=y.length;k++)next[k]=Math.min(next[k-1]+1,prev[k]+1,prev[k-1]+(x[i-1]===y[k-1]?0:1));prev=next;}
+ return prev[y.length];
+}
+function voiceSimilarity(a,b){if(!a||!b)return 0;return Math.max(0,1-voiceEditDistance(a,b)/Math.max(Array.from(a).length,Array.from(b).length));}
+function voiceStudentRanked(nameText){
+ const q=normalizeArabic(nameText).replace(/ة/g,'ه').replace(/[ؤئ]/g,'ء');
  if(!q)return [];
- const qTokens=q.split(' ').filter(Boolean).sort();
- return db.students.filter(st=>{
-  const last=normalizeArabic(st.last||''),first=normalizeArabic(st.first||'');
-  const full=normalizeArabic(last+' '+first),reverse=normalizeArabic(first+' '+last);
-  const tokens=full.split(' ').filter(Boolean).sort();
-  return full===q||reverse===q||tokens.join(' ' )===qTokens.join(' ')||
-   (q.length>=5&&(full.includes(q)||reverse.includes(q)));
- });
+ const qt=q.split(' ').filter(Boolean);
+ return db.students.map(st=>{
+  const last=normalizeArabic(st.last||'').replace(/ة/g,'ه').replace(/[ؤئ]/g,'ء');
+  const first=normalizeArabic(st.first||'').replace(/ة/g,'ه').replace(/[ؤئ]/g,'ء');
+  const variants=[last+' '+first,first+' '+last].filter(Boolean);
+  const whole=Math.max(...variants.map(v=>voiceSimilarity(q,v)));
+  const nt=(last+' '+first).split(' ').filter(Boolean);
+  const tokenScore=qt.length&&nt.length?qt.reduce((sum,t)=>sum+Math.max(...nt.map(n=>voiceSimilarity(t,n))),0)/qt.length:0;
+  const coverage=nt.length?Math.min(qt.length,nt.length)/Math.max(qt.length,nt.length):0;
+  const score=Math.max(whole,tokenScore*(0.82+0.18*coverage));
+  return {student:st,score};
+ }).filter(x=>x.score>=0.54).sort((x,y)=>y.score-x.score).slice(0,8);
+}
+function voiceStudentMatches(nameText){return voiceStudentRanked(nameText).map(x=>x.student);}
+function showVoiceStudentChoices(matches,title,choose){
+ $('#voiceStatus').textContent=title;$('#voiceConfirm').classList.remove('hidden');
+ $('#voiceConfirm').innerHTML='<h3>اختر التلميذ الصحيح</h3>'+matches.map(x=>{const st=x.student||x;return '<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc((st.last+' '+st.first).trim()+' – '+st.class)+'</button>';}).join(' ');
+ $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st)choose(st);});
 }
 function handleVoiceOpenStudent(raw){
  let requested=normalizeArabic(raw);
@@ -221,24 +238,25 @@ function handleVoiceOpenStudent(raw){
   .replace(/\s+(?:مباشرة|الان|من فضلك|لو سمحت)$/,'')
   .trim();
  if(!requested)return false;
- const matches=voiceStudentMatches(requested);
- if(matches.length===1){
+ const ranked=voiceStudentRanked(requested),matches=ranked.map(x=>x.student);
+ if(ranked.length===1&&ranked[0].score>=0.94){
   const st=matches[0];window.studentHistory(st.id);
-  $('#voiceStatus').textContent='تم فتح الملف الفردي للتلميذ '+st.last+' '+st.first+' – '+st.class+'.';
-  $('#voiceConfirm').classList.add('hidden');
-  return true;
+  $('#voiceStatus').textContent='تم التعرف على '+st.last+' '+st.first+' – '+st.class+' وفتح ملفه.';
+  $('#voiceConfirm').classList.add('hidden');return true;
  }
- if(matches.length>1){
-  $('#voiceStatus').textContent='وجدت أكثر من تلميذ بهذا الاسم. اختر القسم الصحيح:';
-  $('#voiceConfirm').classList.remove('hidden');
-  $('#voiceConfirm').innerHTML='<h3>اختر التلميذ</h3>'+matches.map(st=>'<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc(st.last+' '+st.first+' – '+st.class)+'</button>').join(' ');
-  $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st){window.studentHistory(st.id);$('#voiceStatus').textContent='تم فتح ملف '+st.last+' '+st.first+'.';$('#voiceConfirm').classList.add('hidden');}});
+ if(matches.length){
+  showVoiceStudentChoices(ranked,'الاسم قريب من أكثر من احتمال. اختر التلميذ الصحيح لفتح ملفه:',st=>{window.studentHistory(st.id);$('#voiceStatus').textContent='تم فتح ملف '+st.last+' '+st.first+'.';$('#voiceConfirm').classList.add('hidden');});
   return true;
  }
  $('#voiceStatus').textContent='لم أجد التلميذ "'+requested+'" في القائمة. تأكد من أن الاسم مسجل، أو أعد نطقه بوضوح.';
  return true;
 }
 function onArabicSpeechResult(raw){
+ if(Array.isArray(raw)){
+  const alternatives=raw.map(v=>String(v||'').trim()).filter(Boolean);
+  const scored=alternatives.map(text=>{const abs=text.match(/(?:غياب|غيابا)\s+(.+?)\s+(?:ليوم|يوم)\b/i);let q=abs?abs[1]:normalizeArabic(text).replace(/^(?:من فضلك |لو سمحت )?/,'').replace(/^(?:افتح|اعرض|ارني|وريني|اذهب الى|انتقل الى|هات|جيب لي)\s+/,'').replace(/^(?:(?:صفحة|ملف|سجل)\s+)?(?:(?:التلميذ|التلميذة|الطالب|الطالبة)\s+)?/,'');const best=voiceStudentRanked(q)[0];return {text,score:best?best.score:0};}).sort((x,y)=>y.score-x.score);
+  raw=(scored[0]&&scored[0].score>0?scored[0].text:alternatives[0])||'';
+ }
  $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ تحليل الأمر...';
  $('#voiceTranscript').classList.remove('hidden');$('#voiceTranscript').textContent='سمعت: '+raw;
  const t=normalizeArabic(raw);
@@ -251,13 +269,17 @@ function onArabicSpeechResult(raw){
  }
  const nameMatch=String(raw).match(/(?:غياب|غيابا)\s+(.+?)\s+(?:ليوم|يوم)\b/i);
  if(!nameMatch){$('#voiceStatus').textContent='لم أتمكن من تحديد اسم التلميذ. أعد الأمر واذكر الاسم بعد كلمة غياب.';return;}
- const matches=voiceStudentMatches(nameMatch[1].replace(/\s+(الفترة|صباحا|صباحية|مساء|مسائية|ساعتين|ساعات?).*$/i,'').trim());
- if(matches.length!==1){
-   $('#voiceStatus').textContent=matches.length?'وجدت أكثر من تلميذ بهذا الاسم. يرجى تحديد الاسم والقسم يدوياً.':'لم أجد هذا الاسم في قائمة التلاميذ. تحقق من النطق أو الاسم المسجل.';
-   if(matches.length)$('#voiceTranscript').textContent+='\nالنتائج: '+matches.map(x=>(x.last+' '+x.first+' – '+x.class)).join(' / ');
-   return;
+ const requestedName=nameMatch[1].replace(/\s+(الفترة|صباحا|صباحية|مساء|مسائية|ساعتين|ساعات?).*$/i,'').trim();
+ const ranked=voiceStudentRanked(requestedName);
+ let st=null;
+ if(window.voiceChosenStudentId){st=db.students.find(x=>String(x.id)===String(window.voiceChosenStudentId))||null;window.voiceChosenStudentId=null;}
+ if(!st&&ranked.length===1&&ranked[0].score>=0.94)st=ranked[0].student;
+ if(!st){
+  if(ranked.length)showVoiceStudentChoices(ranked,'لم أتأكد من الاسم المنطوق. اختر التلميذ الصحيح قبل متابعة تسجيل الغياب:',chosen=>{window.voiceChosenStudentId=chosen.id;onArabicSpeechResult(raw);});
+  else $('#voiceStatus').textContent='لم أجد اسماً قريباً في القائمة. أعد نطق الاسم أو استعمل البحث الكتابي.';
+  return;
  }
- const st=matches[0],date=parseVoiceDate(raw),hours=parseVoiceHours(raw);
+ const date=parseVoiceDate(raw),hours=parseVoiceHours(raw);
  const period=/صباح/.test(t)?'الفترة الصباحية':(/مساء/.test(t)?'الفترة المسائية':'');
  if(!date||!hours||!period){$('#voiceStatus').textContent='تعذر تحديد التاريخ أو عدد الساعات أو الفترة. أعد الأمر مع ذكرها بوضوح.';return;}
  const [y,mo,d]=date.split('-').map(Number),check=new Date(y,mo-1,d);
