@@ -338,7 +338,7 @@ function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);retur
 function calendarDaysBetween(a,b){return Math.round((dateFromISO(b)-dateFromISO(a))/86400000);}
 function weekendOnlyBetween(a,b){const t=dateFromISO(a);t.setDate(t.getDate()+1);for(;t<dateFromISO(b);t.setDate(t.getDate()+1)){const day=t.getDay();if(day!==5&&day!==6)return false;}return true;}
 function getUnjustifiedStreaks(){
- // A day qualifies only when total unjustified absence exceeds four hours.
+ // Any recorded amount of unjustified absence qualifies the day; no four-hour threshold is imposed.
  const grouped=new Map();
  for(const r of db.attendance){
   if(r.type!=='غياب'||!r.date)continue;
@@ -350,7 +350,7 @@ function getUnjustifiedStreaks(){
  }
  const today=dateISO(),out=[];
  for(const item of grouped.values()){
-  const dates=[...item.byDate.entries()].filter(([date,hours])=>{const day=dateFromISO(date).getDay();return date<=today&&hours>4&&day!==5&&day!==6;}).map(([date])=>date).sort();
+  const dates=[...item.byDate.entries()].filter(([date,hours])=>{const day=dateFromISO(date).getDay();return date<=today&&hours>0&&day!==5&&day!==6;}).map(([date])=>date).sort();
   let group=[];
   const flush=()=>{
    if(!group.length)return;
