@@ -132,7 +132,7 @@ public class MainActivity extends Activity {
             scheduleSummonsReminderAt(id, studentName, reminderMillis, appointmentMillis);
         }
         @JavascriptInterface public void scheduleSummonsReminderAt(String id, String studentName, long reminderMillis, long appointmentMillis) {
-            if (id == null || studentName == null || reminderMillis <= System.currentTimeMillis() || appointmentMillis <= reminderMillis) { cancelSummonsReminder(id); return; }
+            if (id == null || studentName == null || reminderMillis <= System.currentTimeMillis()) { cancelSummonsReminder(id); return; }
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + reminderMillis + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
