@@ -180,7 +180,7 @@ db.violations=Array.isArray(db.violations)?db.violations:[];
 db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
 const $=s=>document.querySelector(s), $=s=>[...document.querySelectorAll(s)];
-const sectionNorm=v=>String(v??"").trim().replace(/\\s+/g," ").toLocaleLowerCase("ar");
+const sectionNorm=v=>String(v??"").trim().replace(/\s+/g," ").toLocaleLowerCase("ar");
 const sectionNames=()=>db.settings.sectionNames&&typeof db.settings.sectionNames==="object"?db.settings.sectionNames:(db.settings.sectionNames={});
 const sectionLabel=code=>{const map=sectionNames(),key=Object.keys(map).find(k=>sectionNorm(k)===sectionNorm(code));return key?String(map[key]):String(code||"—");};
 const sectionDisplay=code=>{const raw=String(code||"").trim();if(!raw)return "—";const full=sectionLabel(raw);return full===raw?raw:raw+" — "+full;};
@@ -357,8 +357,8 @@ function readStudentForm(form){const f=new FormData(form),v={};for(const key of 
 function resetStudentEditor(){editingStudentId=null;$('#studentForm').reset();$('#studentFormTitle').textContent='بطاقة التلميذ – إضافة بيانات';$('#studentSubmit').textContent='حفظ بطاقة التلميذ';$('#cancelStudentEdit').classList.add('hidden');}
 window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);for(const key of studentCardFieldNames){const el=$('#studentForm [name="'+key+'"]');if(el)el.value=s[key]??(key==='attribute'?(s.status||''):'');}$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
 $('#cancelStudentEdit').onclick=resetStudentEditor;
-$('#sectionForm').onsubmit=e=>{e.preventDefault();const f=e.target,code=String(f.elements.code.value||'').trim().replace(/\\s+/g,' '),fullName=String(f.elements.fullName.value||'').trim().replace(/\\s+/g,' ');if(!code||!fullName){alert('أدخل اختصار القسم واسمه الكامل.');return;}const map=sectionNames(),existing=Object.keys(map).find(k=>sectionNorm(k)===sectionNorm(code));if(existing){alert('هذا الاختصار مسجل من قبل. استعمل الاختصار المسجل أو اختر اختصاراً آخر.');return;}map[code]=fullName;if(!save()){delete map[code];return;}f.reset();refreshStudentSectionOptions();alert('تمت إضافة القسم بنجاح.');};
-$('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.last||!values.first||!values.class){alert('الاسم واللقب والقسم حقول إلزامية.');return;}const norm=v=>String(v||'').trim().replace(/\\s+/g,' ').toLocaleLowerCase('ar');const duplicate=db.students.find(s=>norm(s.first)===norm(values.first)&&norm(s.last)===norm(values.last)&&norm(s.class)===norm(values.class)&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('هذا التلميذ مسجل مسبقاً بالاسم واللقب والقسم نفسيهما. لم تُضف بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ مع الحفاظ على بياناته وسجلات متابعته السابقة.');}else{const record={id:crypto.randomUUID(),identityNumber:'',...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
+$('#sectionForm').onsubmit=e=>{e.preventDefault();const f=e.target,code=String(f.elements.code.value||'').trim().replace(/\s+/g,' '),fullName=String(f.elements.fullName.value||'').trim().replace(/\s+/g,' ');if(!code||!fullName){alert('أدخل اختصار القسم واسمه الكامل.');return;}const map=sectionNames(),existing=Object.keys(map).find(k=>sectionNorm(k)===sectionNorm(code));if(existing){alert('هذا الاختصار مسجل من قبل. استعمل الاختصار المسجل أو اختر اختصاراً آخر.');return;}map[code]=fullName;if(!save()){delete map[code];return;}f.reset();refreshStudentSectionOptions();alert('تمت إضافة القسم بنجاح.');};
+$('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.last||!values.first||!values.class){alert('الاسم واللقب والقسم حقول إلزامية.');return;}const norm=v=>String(v||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');const duplicate=db.students.find(s=>norm(s.first)===norm(values.first)&&norm(s.last)===norm(values.last)&&norm(s.class)===norm(values.class)&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('هذا التلميذ مسجل مسبقاً بالاسم واللقب والقسم نفسيهما. لم تُضف بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ مع الحفاظ على بياناته وسجلات متابعته السابقة.');}else{const record={id:crypto.randomUUID(),identityNumber:'',...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
 
 const attendanceWeekdays=[['sun','الأحد'],['mon','الإثنين'],['tue','الثلاثاء'],['wed','الأربعاء'],['thu','الخميس']];
 const dateISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
@@ -505,7 +505,7 @@ window.studentAction=(el,id)=>{
 window.delStudent=id=>{if(!confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.'))return;const old=db.students;db.students=old.filter(s=>s.id!==id);if(!save()){db.students=old;render();alert('تعذر حفظ الحذف؛ أُعيد ملف التلميذ إلى القائمة.');}};
 window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل؟'))return;const old=db[kind];db[kind]=old.filter(x=>x.id!==id);if(!save()){db[kind]=old;render();return;}if(kind==='documents'&&window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));};
 // مطابقة أسماء التلاميذ مع تجاهل التشكيل واختلافات الهمزة والمسافات
-const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\\s+/g,' ').toLocaleLowerCase('ar');
+const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');
 const findStudentForRecord=record=>{
   const byId=db.students.find(s=>String(s.id)===String(record.student));
   if(byId)return {student:byId,reason:'المعرّف'};
@@ -538,10 +538,10 @@ window.studentHistory=id=>{
   const normStudentName=value=>String(value??'').normalize('NFKC')
     .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
     .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
-    .replace(/\\s*\\d+$/,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
+    .replace(/\\s*\\d+$/,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
   const normStudentSection=value=>String(value??'').normalize('NFKC')
     .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
-    .replace(/[أإآٱ]/g,'ا').replace(/\\s+/g,'').trim().toLocaleLowerCase('ar');
+    .replace(/[أإآٱ]/g,'ا').replace(/\s+/g,'').trim().toLocaleLowerCase('ar');
   const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''))||normStudentName(s.name||s.fullName||'');
   const belongsToStudent=record=>{
     const recordId=String(record.student??'').trim();
