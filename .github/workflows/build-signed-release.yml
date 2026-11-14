@@ -2,6 +2,9 @@ name: Build permanently signed Mushrifi release
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - fix/backup-student-roster-recovery
 
 permissions:
   contents: read
