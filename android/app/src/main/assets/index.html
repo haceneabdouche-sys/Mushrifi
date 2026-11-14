@@ -154,6 +154,7 @@ footer{padding:24px 12px;color:#71818d}
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
+<div class="panel"><h2>فحص تشابه أسماء التلاميذ</h2><p class="muted">يعرض التلاميذ الذين تتشابه أسماؤهم في القسم نفسه بعد تجاهل الأرقام الموجودة في نهاية الاسم. هذا فحص للقراءة فقط؛ لا يدمج ولا يحذف ولا يغيّر أي بطاقة أو سجل متابعة.</p><button class="btn" id="auditStudentNames" type="button">فحص الأسماء المتشابهة</button><div id="studentNameAudit" class="hidden" aria-live="polite"></div></div>
 </section>
 </div>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
@@ -867,6 +868,67 @@ $('#csvImport').onchange=async e=>{
     alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
   }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
+};
+
+
+function collectStudentNameAuditGroups(){
+ const normalizeText=value=>String(value??'').normalize('NFKC')
+  .replace(/[ـ\u064B-\u065F\u0670\u200B-\u200F\uFEFF]/g,'')
+  .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+  .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+  .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
+  .replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+ const normalizeNamePart=value=>normalizeText(value).replace(/\s*[0-9]+$/,'').trim();
+ const groups=new Map();
+ db.students.forEach(st=>{
+  const last=String(st.last??st.surname??'').trim();
+  const first=String(st.first??st.firstname??'').trim();
+  const rawName=(last+' '+first).trim()||String(st.name??st.fullName??st.studentName??'').trim();
+  const normalizedName=last||first
+   ? [last,first].filter(Boolean).map(normalizeNamePart).join(' ').trim()
+   : normalizeNamePart(rawName);
+  const classValue=String(st.sectionNumber||st.class||st.section||st.className||st.classe||st.group||'').trim();
+  if(!normalizedName||!classValue)return;
+  const schoolYear=String(st.schoolYear||'').trim();
+  const branch=String(st.branch||'').trim();
+  const sectionKey=[schoolYear,branch,classValue].map(normalizeText).join('¦');
+  const key=sectionKey+'||'+normalizedName;
+  if(!groups.has(key))groups.set(key,{section:[schoolYear,branch,classValue].filter(Boolean).join(' / '),students:[]});
+  const id=String(st.id??'').trim();
+  const count=kind=>id?db[kind].filter(record=>String(record.student??'').trim()===id).length:0;
+  groups.get(key).students.push({
+   id,
+   name:rawName||'اسم غير محدد',
+   attendance:count('attendance'),
+   documents:count('documents'),
+   violations:count('violations')
+  });
+ });
+ return [...groups.values()].filter(group=>group.students.length>1);
+}
+$('#auditStudentNames').onclick=()=>{
+ const output=$('#studentNameAudit');
+ const groups=collectStudentNameAuditGroups();
+ if(!groups.length){
+  output.innerHTML='<p class="empty">لم تظهر مجموعات أسماء متشابهة داخل القسم نفسه وفق معيار الفحص الحالي.</p>';
+ }else{
+  const cards=groups.map((group,index)=>{
+   const distinctNames=new Set(group.students.map(student=>String(student.name||'').normalize('NFKC'))).size;
+   const members=group.students.map(student=>{
+    const linked=student.attendance+student.documents+student.violations;
+    return '<li><b>'+esc(student.name)+'</b> — المعرّف: '+esc(student.id||'غير موجود')+
+     ' — سجلات مرتبطة بالمعرّف: '+linked+
+     ' (حضور/غياب/تأخر: '+student.attendance+'، وثائق: '+student.documents+'، مخالفات: '+student.violations+')</li>';
+   }).join('');
+   return '<div class="panel"><h4>المجموعة '+(index+1)+'</h4><p><b>القسم:</b> '+esc(group.section)+
+    ' — <b>عدد البطاقات:</b> '+group.students.length+
+    (distinctNames>1?' — أسماء مختلفة تتشابه بعد تجاهل الرقم النهائي':' — بطاقات بالاسم نفسه')+
+    '</p><ul>'+members+'</ul></div>';
+  }).join('');
+  output.innerHTML='<p><b>عدد المجموعات المرشحة للمراجعة:</b> '+groups.length+'</p>'+cards;
+ }
+ output.innerHTML+='<p class="notice">هذه النتائج للتدقيق فقط. أعداد السجلات المعروضة تعتمد على ارتباطها بالمعرّف الداخلي؛ السجلات القديمة المرتبطة بالاسم قد لا تظهر ضمن هذه الأعداد. لم تُجرَ أي عملية دمج أو تعديل.</p>';
+ output.classList.remove('hidden');
 };
 
 render();
