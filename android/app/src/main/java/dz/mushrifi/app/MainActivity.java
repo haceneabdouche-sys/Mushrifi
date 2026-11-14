@@ -87,6 +87,12 @@ public class MainActivity extends Activity {
             }
         });
         web.loadUrl("file:///android_asset/index.html");
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                () -> handleAppBack()
+            );
+        }
     }
 
     private static SecretKey dataKey() throws Exception {
@@ -351,15 +357,13 @@ public class MainActivity extends Activity {
 
     @Override protected void onStop() { super.onStop(); }
 
-    @Override public void onBackPressed() {
-        if (web == null) { super.onBackPressed(); return; }
-        // The app uses a single-page WebView: navigate its internal page stack
-        // before allowing Android to close the Activity.
+    private void handleAppBack() {
+        if (web == null) { finish(); return; }
         web.evaluateJavascript(
             "(function(){try{return window.handleMushrifiAndroidBack ? window.handleMushrifiAndroidBack() : false;}catch(e){return false;}})();",
-            value -> {
-                if (!"true".equals(value)) MainActivity.super.onBackPressed();
-            }
+            value -> { if (!"true".equals(value)) finish(); }
         );
     }
+
+    @Override public void onBackPressed() { handleAppBack(); }
 }
