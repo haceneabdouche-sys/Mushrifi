@@ -1,4 +1,5 @@
 name: Build permanently signed Mushrifi release
+# Signed builds for this branch are triggered by the protected default-branch workflow.
 
 on:
   workflow_dispatch:
