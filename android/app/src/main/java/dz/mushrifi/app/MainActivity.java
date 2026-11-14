@@ -1,6 +1,7 @@
 package dz.mushrifi.app;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.NotificationChannel;
@@ -36,6 +37,9 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebSettings;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.text.InputType;
+import android.webkit.JsPromptResult;
 import java.io.OutputStream;
 import java.io.IOException;
 
@@ -67,6 +71,22 @@ public class MainActivity extends Activity {
         web.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
         web.setWebViewClient(new WebViewClient());
         web.setWebChromeClient(new WebChromeClient() {
+            @Override public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
+                EditText input = new EditText(MainActivity.this);
+                input.setSingleLine(true);
+                input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+                if (defaultValue != null) input.setText(defaultValue);
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("تأكيد استعادة النسخة الاحتياطية")
+                    .setMessage(message)
+                    .setView(input)
+                    .setPositiveButton("تأكيد", (dialog, which) -> result.confirm(input.getText().toString()))
+                    .setNegativeButton("إلغاء", (dialog, which) -> result.cancel())
+                    .setOnCancelListener(dialog -> result.cancel())
+                    .show();
+                return true;
+            }
+
             @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
