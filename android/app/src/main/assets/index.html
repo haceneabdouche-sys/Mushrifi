@@ -153,7 +153,7 @@ footer{padding:24px 12px;color:#71818d}
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
-<div class="panel"><h2>استيراد بطاقة التلميذ الرسمية من CSV</h2><p class="muted">يدعم الأعمدة الستة عشر في الملف المعتمد: رقم التعريف، اللقب، الاسم، الجنس، تاريخ الازدياد، مولود بحكم، عقد الميلاد، سنة التسجيل في سجل الولادات، رقم عقد الميلاد، مكان الازدياد، السنة، الشعبة، القسم، نظام التمدرس، رقم القيد، تاريخ التسجيل. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
+<div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
 </section>
 </div>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
@@ -798,6 +798,12 @@ $('#csvImport').onchange=async e=>{
       const data={};for(const key of fields)data[key]=value(key);
       data.enrollmentNumber=data.enrollmentNumber||'';
       data.identityNumber=String(data.identityNumber||'').trim();
+      // ملف التفويج يفصل السنة والشعبة ورقم القسم؛ احتفظ برقم القسم الأصلي
+      // وركّب رمزاً كاملاً يمنع الخلط بين (1) في شعب أو سنوات مختلفة.
+      data.sectionNumber=String(data.class||'').trim();
+      if(data.schoolYear&&data.branch&&data.sectionNumber){
+        data.class=[data.schoolYear,data.branch,data.sectionNumber].join(' / ');
+      }
       if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
       const incomingId=normalizeId(data.identityNumber);
       if(incoming.has(incomingId)){skipped++;continue;}incoming.add(incomingId);
@@ -809,8 +815,11 @@ $('#csvImport').onchange=async e=>{
         let fallback=db.students.filter(st=>{
           const names=getStudentName(st);
           const nameMatch=[...incomingNames].some(n=>names.has(n));
-          const cls=st.class??st.section??st.className??st.classe??st.group??'';
-          return nameMatch&&normalizeClass(cls)===normalizeClass(data.class);
+          const cls=st.sectionNumber??st.class??st.section??st.className??st.classe??st.group??'';
+          const sectionMatch=normalizeClass(cls)===normalizeClass(data.sectionNumber||data.class);
+          const yearMatch=!data.schoolYear||!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear);
+          const branchMatch=!data.branch||!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch);
+          return nameMatch&&sectionMatch&&yearMatch&&branchMatch;
         });
         // عند تكرار الاسم والقسم، استعمل السنة والشعبة للتفريق ولا تخمّن.
         if(fallback.length>1&&data.schoolYear){
@@ -827,6 +836,7 @@ $('#csvImport').onchange=async e=>{
       if(target){
         // حدّث حقول البطاقة الرسمية فقط؛ الخانات الفارغة في CSV لا تمحو البيانات السابقة.
         for(const key of fields){if(data[key]!==''||!Object.prototype.hasOwnProperty.call(target,key))target[key]=data[key];}
+        if(data.sectionNumber)target.sectionNumber=data.sectionNumber;
         if(data.enrollmentNumber!=='')target.code=data.enrollmentNumber;
         if(!target.id)target.id=makeStudentImportId();
         // حدّث الاسم المعروض في السجلات المرتبطة بمعرّف التلميذ، مع إبقاء تفاصيل الوقائع كما هي.
