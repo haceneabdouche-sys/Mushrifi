@@ -666,6 +666,8 @@ async function importBackupText(raw,bytes){
 function restorePendingBackup(){
  if(!pendingBackupData)return;
  if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
+ const approval=prompt('للتأكيد النهائي وحماية بياناتك، اكتب العبارة التالية كما هي: أوافق على استبدال بيانات الهاتف');
+ if(approval!=='أوافق على استبدال بيانات الهاتف'){alert('تم إلغاء الاستعادة؛ لم تتغير بيانات الهاتف.');return;}
  const oldDb=db;db=pendingBackupData;
  if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
  pendingBackupData=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
@@ -705,6 +707,8 @@ $('#clearStudents').onclick=()=>{
   if(!db.students.length){status.textContent='قائمة التلاميذ فارغة بالفعل.';alert(status.textContent);return;}
   const count=db.students.length;
   if(!confirm('تحذير: سيتم حذف ملفات '+count+' تلميذاً من القائمة نهائياً على هذا الجهاز. ستبقى سجلات الغياب والتأخر والمخالفات والوثائق كما هي، لكن قد تظهر فيها أسماء غير معروفة لأن ملفات التلاميذ حُذفت. سيتم تنزيل نسخة احتياطية كاملة أولاً. هل تريد المتابعة؟'))return;
+  const approval=prompt('للتأكيد النهائي، اكتب العبارة التالية كما هي: أوافق على حذف قائمة التلاميذ');
+  if(approval!=='أوافق على حذف قائمة التلاميذ'){status.textContent='تم إلغاء الحذف؛ لم تتغير قائمة التلاميذ.';return;}
   const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-backup-before-clear-students-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
   const oldStudents=db.students,changedNames=[];
