@@ -718,8 +718,7 @@ async function importBackupText(raw,bytes){
 function restorePendingBackup(){
  if(!pendingBackupData)return;
  if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
- const approval=prompt('للتأكيد النهائي وحماية بياناتك، اكتب العبارة التالية كما هي: أوافق على استبدال بيانات الهاتف');
- if(approval!=='أوافق على استبدال بيانات الهاتف'){alert('تم إلغاء الاستعادة؛ لم تتغير بيانات الهاتف.');return;}
+ if(!confirm('تأكيد أخير: هل توافق على استبدال بيانات الهاتف بالنسخة التي تمت معاينتها؟'))return;
  const oldDb=db;db=pendingBackupData;
  if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
