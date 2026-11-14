@@ -7,8 +7,27 @@ android {
         applicationId 'dz.mushrifi.app.offline'
         minSdk 23
         targetSdk 35
-        versionCode 4
-        versionName '2.2.1'
+        versionCode 5
+        versionName '2.2.2'
+    }
+
+    // Release signing is enabled only from protected CI secrets; never commit a keystore.
+    signingConfigs {
+        release {
+            if (System.getenv('MUSHRIFI_KEYSTORE_PATH')) {
+                storeFile file(System.getenv('MUSHRIFI_KEYSTORE_PATH'))
+                storePassword System.getenv('MUSHRIFI_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('MUSHRIFI_KEY_ALIAS')
+                keyPassword System.getenv('MUSHRIFI_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (System.getenv('MUSHRIFI_KEYSTORE_PATH')) {
+                signingConfig signingConfigs.release
+            }
+        }
     }
 }
 
