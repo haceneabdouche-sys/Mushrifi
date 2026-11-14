@@ -10,7 +10,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      MUSHRIFI_KEYSTORE_PATH: ${{ runner.temp }}/mushrifi-upload.jks
       MUSHRIFI_KEYSTORE_BASE64: ${{ secrets.MUSHRIFI_KEYSTORE_BASE64 }}
       MUSHRIFI_KEYSTORE_PASSWORD: ${{ secrets.MUSHRIFI_KEYSTORE_PASSWORD }}
       MUSHRIFI_KEY_ALIAS: ${{ secrets.MUSHRIFI_KEY_ALIAS }}
@@ -22,15 +21,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          KEYSTORE_PATH="$RUNNER_TEMP/mushrifi-upload.jks"
+          echo "MUSHRIFI_KEYSTORE_PATH=$KEYSTORE_PATH" >> "$GITHUB_ENV"
           for name in MUSHRIFI_KEYSTORE_BASE64 MUSHRIFI_KEYSTORE_PASSWORD MUSHRIFI_KEY_ALIAS MUSHRIFI_KEY_PASSWORD; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing required GitHub Actions secret: $name"
               exit 1
             fi
           done
-          printf '%s' "$MUSHRIFI_KEYSTORE_BASE64" | base64 --decode > "$MUSHRIFI_KEYSTORE_PATH"
-          test -s "$MUSHRIFI_KEYSTORE_PATH"
-          chmod 600 "$MUSHRIFI_KEYSTORE_PATH"
+          printf '%s' "$MUSHRIFI_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
