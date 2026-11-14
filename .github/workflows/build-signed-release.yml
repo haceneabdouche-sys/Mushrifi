@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: feature/permanent-signing-setup
       - name: Validate signing secrets and prepare private keystore
         shell: bash
         run: |
