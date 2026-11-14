@@ -71,7 +71,12 @@ public class MainActivity extends Activity {
                 if (fileCallback != null) fileCallback.onReceiveValue(null);
                 fileCallback = callback;
                 try {
-                    Intent intent = params.createIntent();
+                    // Use the Storage Access Framework directly. Some Android file
+                    // providers hide CSV files when WebView's inferred MIME filter is used.
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    intent.setType("*/*");
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivityForResult(intent, PICK_FILE);
                 } catch (Exception e) {
                     fileCallback = null;
@@ -82,6 +87,12 @@ public class MainActivity extends Activity {
             }
         });
         web.loadUrl("file:///android_asset/index.html");
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                () -> handleAppBack()
+            );
+        }
     }
 
     private static SecretKey dataKey() throws Exception {
@@ -108,7 +119,9 @@ public class MainActivity extends Activity {
         @Override public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE appdata (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL)"); }
         @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
         synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? decryptData(c.getString(0)) : null; } catch (Exception e) { return "!MUSHRIFI_DB_ERROR!"; } }
-        synchronized boolean write(String json) { try { android.content.ContentValues v = new android.content.ContentValues(); v.put("id", 1); v.put("json", encryptData(json)); return getWritableDatabase().insertWithOnConflict("appdata", null, v, SQLiteDatabase.CONFLICT_REPLACE) != -1; } catch (Exception e) { return false; } }
+        private String lastError = "";
+        synchronized String getLastError() { return lastError; }
+        synchronized boolean write(String json) { try { android.content.ContentValues v = new android.content.ContentValues(); v.put("id", 1); v.put("json", encryptData(json)); long result = getWritableDatabase().insertWithOnConflict("appdata", null, v, SQLiteDatabase.CONFLICT_REPLACE); if (result == -1) { lastError = "SQLite لم يقبل حفظ السجل (insertWithOnConflict أعاد -1)."; return false; } lastError = ""; return true; } catch (Exception e) { lastError = e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()); android.util.Log.e("MushrifiDB", "Database write failed", e); return false; } }
     }
     private LocalDb localDb;
     private android.content.SharedPreferences securityPrefs;
@@ -116,6 +129,7 @@ public class MainActivity extends Activity {
     public class AndroidBridge {
         @JavascriptInterface public String loadDatabase() { return localDb.read(); }
         @JavascriptInterface public boolean saveDatabase(String json) { return json != null && localDb.write(json); }
+        @JavascriptInterface public String getDatabaseError() { return localDb.getLastError(); }
         @JavascriptInterface public boolean hasPassword() { return securityPrefs.contains("hash") && securityPrefs.contains("salt"); }
         @JavascriptInterface public boolean setPassword(String password) { if (password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
         @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
@@ -124,7 +138,7 @@ public class MainActivity extends Activity {
             scheduleSummonsReminderAt(id, studentName, reminderMillis, appointmentMillis);
         }
         @JavascriptInterface public void scheduleSummonsReminderAt(String id, String studentName, long reminderMillis, long appointmentMillis) {
-            if (id == null || studentName == null || reminderMillis <= System.currentTimeMillis() || appointmentMillis <= reminderMillis) { cancelSummonsReminder(id); return; }
+            if (id == null || studentName == null || reminderMillis <= System.currentTimeMillis()) { cancelSummonsReminder(id); return; }
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + reminderMillis + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
@@ -146,6 +160,17 @@ public class MainActivity extends Activity {
                 } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "تعذر فتح إعداد التنبيهات الدقيقة. افتح وصول خاص للتطبيقات يدوياً.", Toast.LENGTH_LONG).show();
                 }
+            });
+        }
+        @JavascriptInterface public void notifyAbsenceStage(String studentId, String studentName, int stage, String absenceStart) {
+            if (studentId == null || studentName == null || absenceStart == null || (stage != 4 && stage != 11 && stage != 18 && stage != 32)) return;
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
+                String key = studentId + "|" + absenceStart + "|" + stage;
+                android.content.SharedPreferences prefs = getSharedPreferences("absence_stage_notifications", MODE_PRIVATE);
+                if (prefs.getBoolean(key, false)) return;
+                boolean posted = SummonsReminderReceiver.postAbsenceStageNotification(MainActivity.this, key, studentName, stage);
+                if (posted) prefs.edit().putBoolean(key, true).apply();
             });
         }
         @JavascriptInterface public void testSummonsNotification() {
@@ -200,7 +225,9 @@ public class MainActivity extends Activity {
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ar-DZ");
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "ar-DZ");
-                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "تحدث الآن بالعربية");
+                    intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+                    intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "انطق الاسم واللقب بوضوح، ويمكنك ذكر القسم");
                     speechPending = true;
                     startActivityForResult(intent, SPEECH_REQUEST);
                 } catch (Exception e) {
@@ -214,8 +241,8 @@ public class MainActivity extends Activity {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "تذكير استدعاء ولي", NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("تنبيه قبل موعد حضور ولي التلميذ بيوم واحد");
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "إشعارات مُشرِفي", NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("تذكيرات استدعاء الأولياء ومراحل متابعة الغياب");
             getSystemService(NotificationManager.class).createNotificationChannel(channel);
         }
     }
@@ -277,10 +304,10 @@ public class MainActivity extends Activity {
         if (requestCode == SPEECH_REQUEST) {
             speechPending = false;
             if (resultCode == RESULT_OK && data != null) {
-                java.util.ArrayList<String> results = data.getStringArrayListExtra("android.speech.extra.RESULTS");
+                java.util.ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 if (results != null && !results.isEmpty()) {
-                    String spoken = results.get(0);
-                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult(" + org.json.JSONObject.quote(spoken) + ");", null);
+                    org.json.JSONArray alternatives = new org.json.JSONArray(results);
+                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult(" + alternatives.toString() + ");", null);
                 } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);
             } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);
         } else if (requestCode == PICK_BACKUP_NATIVE) {
@@ -330,7 +357,13 @@ public class MainActivity extends Activity {
 
     @Override protected void onStop() { super.onStop(); }
 
-    @Override public void onBackPressed() {
-        if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
+    private void handleAppBack() {
+        if (web == null) { finish(); return; }
+        web.evaluateJavascript(
+            "(function(){try{return window.handleMushrifiAndroidBack ? window.handleMushrifiAndroidBack() : false;}catch(e){return false;}})();",
+            value -> { if (!"true".equals(value)) finish(); }
+        );
     }
+
+    @Override public void onBackPressed() { handleAppBack(); }
 }

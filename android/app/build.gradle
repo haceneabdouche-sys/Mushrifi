@@ -7,7 +7,26 @@ android {
         applicationId 'dz.mushrifi.app.offline'
         minSdk 23
         targetSdk 35
-        versionCode 2
-        versionName '2.1.0'
+        versionCode 4
+        versionName '2.2.1'
     }
+}
+
+
+// Generate the launcher image from the checked-in base64 source before Android resources are merged.
+def launcherIconSource = rootProject.file('mushrifi-launcher.jpg.b64')
+def launcherIconOutput = file('src/main/res/drawable-nodpi/ic_launcher_photo.jpg')
+def launcherForegroundSource = rootProject.file('mushrifi-launcher-foreground.png.b64')
+def launcherForegroundOutput = file('src/main/res/drawable-nodpi/ic_launcher_foreground.png')
+tasks.register('generateLauncherIcon') {
+    inputs.file(launcherIconSource)
+    outputs.files(launcherIconOutput, launcherForegroundOutput)
+    doLast {
+        launcherIconOutput.parentFile.mkdirs()
+        launcherIconOutput.bytes = java.util.Base64.decoder.decode(launcherIconSource.text.trim())
+        launcherForegroundOutput.bytes = java.util.Base64.decoder.decode(launcherForegroundSource.text.trim())
+    }
+}
+tasks.named('preBuild').configure {
+    dependsOn(tasks.named('generateLauncherIcon'))
 }

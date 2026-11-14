@@ -18,6 +18,23 @@ public class SummonsReminderReceiver extends BroadcastReceiver {
         postNotification(context, id == null ? "summons" : id, student);
     }
 
+    public static boolean postAbsenceStageNotification(Context context, String id, String student, int stage) {
+        if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
+        Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        PendingIntent content = launch == null ? null : PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        String title = stage >= 32 ? "مُشرفي: مراجعة إدارية مطلوبة" : stage >= 18 ? "مُشرفي: إعذار بسبب الغياب" : stage >= 11 ? "مُشرفي: إشعار الغياب الثاني" : "مُشرفي: إشعار الغياب الأول";
+        String body = "التلميذ " + student + " بلغ مرحلة متابعة الغياب (" + stage + " يوماً متتالياً). افتح التطبيق لمراجعة الملف والإجراء المناسب.";
+        Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(context, "guardian_summons") : new Notification.Builder(context);
+        Notification.Builder configured = builder.setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle(title).setContentText(body)
+            .setStyle(new Notification.BigTextStyle().bigText(body)).setAutoCancel(true);
+        if (content != null) configured.setContentIntent(content);
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null) return false;
+        manager.notify(id.hashCode(), configured.build());
+        return true;
+    }
+
     public static boolean postNotification(Context context, String id, String student) {
         if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
