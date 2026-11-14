@@ -648,7 +648,7 @@ function showBackupPreview(data,bytes){
 }
 async function importBackupText(raw,bytes){
  try{
-  raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
+  raw=String(raw||'').replace(/^\uFEFF/,'').trim();
   if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('محتوى الملف ليس JSON سليماً. تأكد من اختيار ملف النسخة الاحتياطية الأصلي بصيغة JSON.');}
   if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&!Array.isArray(obj.students)){
@@ -657,7 +657,9 @@ async function importBackupText(raw,bytes){
    else if(nested&&typeof nested==='object')obj=nested;
   }
   if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students))throw new Error('لم أجد قائمة التلاميذ داخل الملف. لا يبدو أنه ملف نسخة احتياطية متوافق مع مُشرفي.');
-  const normalized={...obj,students:obj.students,attendance:Array.isArray(obj.attendance)?obj.attendance:[],documents:Array.isArray(obj.documents)?obj.documents:[],violations:Array.isArray(obj.violations)?obj.violations:[],settings:obj.settings&&typeof obj.settings==='object'&&!Array.isArray(obj.settings)?obj.settings:{}};
+  for(const key of ['students','attendance','documents','violations'])if(!Array.isArray(obj[key]))throw new Error('النسخة غير مكتملة: قائمة '+key+' مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
+  if(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw new Error('النسخة غير مكتملة: إعدادات التطبيق مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
+  const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,settings:obj.settings};
   for(const key of ['students','attendance','documents','violations'])if(!normalized[key].every(x=>x&&typeof x==='object'&&!Array.isArray(x)))throw new Error('تحتوي قائمة '+key+' على سجل غير صالح. لم يتم استيراد أي بيانات.');
   pendingBackupData=normalized;
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
