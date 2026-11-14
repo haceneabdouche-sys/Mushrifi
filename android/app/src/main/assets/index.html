@@ -621,6 +621,7 @@ $('#makeReport').onclick=()=>{let id=$('#reportStudent').value,from=$('#fromDate
 $('#saveSettings').onclick=()=>{const previous={...db.settings};db.settings.school=$('#schoolName').value;db.settings.location=$('#schoolLocation').value;if(!save()){db.settings=previous;render();return;}alert('تم حفظ الإعدادات بنجاح.')};
 $('#exportData').onclick=()=>{if(!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
 let pendingBackupData=null;
+let pendingBackupInfo=null;
 function showBackupPreview(data,bytes){
  const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[];
  const classes={},attributes={};
@@ -633,6 +634,7 @@ function showBackupPreview(data,bytes){
  const reducedKeys=Object.keys(currentCounts).filter(k=>incomingCounts[k]<currentCounts[k]);
  const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations}`;
  const reducedWarning=reducedKeys.length?'<p class="notice"><b>تنبيه مهم:</b> تحتوي النسخة المختارة على سجلات أقل من الموجودة حالياً في الهاتف في بعض الأقسام. راجع الأعداد أدناه وتأكد من أنك اخترت النسخة الصحيحة قبل الاستعادة.</p>':'';
+ const recoveryNote=pendingBackupInfo&&pendingBackupInfo.recoveredCount?'<p class="notice"><b>استعادة الأسماء:</b> لم تكن قائمة التلاميذ موجودة في الملف؛ أُعيد تكوين '+pendingBackupInfo.recoveredCount+' ملفاً من الأسماء المحفوظة داخل سجلات المتابعة. '+(pendingBackupInfo.missingClassCount?'قسم '+pendingBackupInfo.missingClassCount+' تلميذاً غير محفوظ في السجلات، لذلك سيبقى حقل القسم فارغاً. ':'')+'قد لا تشمل هذه الأسماء تلاميذ لم تكن لهم سجلات متابعة.</p>':'';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
  const classText=Object.keys(classes).sort((a,b)=>a.localeCompare(b,'ar',{numeric:true})).map(k=>'القسم '+esc(k)+': '+classes[k]).join('، ');
  const attrText=Object.keys(attributes).map(k=>esc(k)+': '+attributes[k]).join('، ');
@@ -642,7 +644,7 @@ function showBackupPreview(data,bytes){
  '<div class="stat"><small>سجلات الغياب والتأخر</small><strong>'+attendance.length+'</strong></div>'+
  '<div class="stat"><small>الوثائق والاستدعاءات</small><strong>'+documents.length+'</strong></div>'+
  '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div></div>'+
- '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+
+ '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+recoveryNote+
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
@@ -652,9 +654,48 @@ function showBackupPreview(data,bytes){
  $('#restoreBackupNow').onclick=restorePendingBackup;
  $('#cancelBackupPreview').onclick=()=>{pendingBackupData=null;box.classList.add('hidden');box.innerHTML='';};
 }
+function recoverStudentsFromHistory(data){
+ const students=data.students.slice();
+ const knownIds=new Set(students.map(st=>normalizeStudentKey(st.id)).filter(Boolean));
+ const nameToId=new Map();
+ students.forEach(st=>{
+  const fullName=String(st.last||st.name||st.fullName||'').trim();
+  if(fullName){const key=normalizeStudentKey(fullName)+'|'+normalizeStudentKey(st.class||st.section||'');if(!nameToId.has(key))nameToId.set(key,String(st.id||''));}
+ });
+ let recoveredCount=0,missingClassCount=0;
+ for(const kind of ['attendance','documents','violations']){
+  for(const record of data[kind]){
+   if(!record||typeof record!=='object')continue;
+   const fullName=String(record.studentName||record.student_name||record.studentFullName||record.fullName||record.name||'').trim();
+   if(!fullName)continue;
+   const recordId=String(record.student??'').trim();
+   const idKey=normalizeStudentKey(recordId);
+   const recordClass=String(record.studentClass||record.class||record.section||record.className||'').trim();
+   const nameKey=normalizeStudentKey(fullName)+'|'+normalizeStudentKey(recordClass);
+   if(idKey&&knownIds.has(idKey))continue;
+   if(!idKey&&nameToId.has(nameKey)){
+    record.student=nameToId.get(nameKey);
+    continue;
+   }
+   const newId=recordId||makeStudentImportId();
+   const attribute=String(record.attribute||record.status||record.regime||'').trim();
+   students.push({
+    id:newId,last:fullName,first:'',class:recordClass,
+    code:String(record.identityNumber||record.code||''),
+    attribute,status:attribute
+   });
+   knownIds.add(normalizeStudentKey(newId));
+   nameToId.set(nameKey,newId);
+   if(!recordClass)missingClassCount++;
+   if(!recordId)record.student=newId;
+   recoveredCount++;
+  }
+ }
+ return {students,recoveredCount,missingClassCount};
+}
 async function importBackupText(raw,bytes){
  try{
-  raw=String(raw||'').replace(/^\uFEFF/,'').trim();
+  raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
   if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('محتوى الملف ليس JSON سليماً. تأكد من اختيار ملف النسخة الاحتياطية الأصلي بصيغة JSON.');}
   if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&!Array.isArray(obj.students)){
@@ -665,11 +706,14 @@ async function importBackupText(raw,bytes){
   if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students))throw new Error('لم أجد قائمة التلاميذ داخل الملف. لا يبدو أنه ملف نسخة احتياطية متوافق مع مُشرفي.');
   for(const key of ['students','attendance','documents','violations'])if(!Array.isArray(obj[key]))throw new Error('النسخة غير مكتملة: قائمة '+key+' مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
   if(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw new Error('النسخة غير مكتملة: إعدادات التطبيق مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
-  const normalized={...obj,students:obj.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,settings:obj.settings};
-  for(const key of ['students','attendance','documents','violations'])if(!normalized[key].every(x=>x&&typeof x==='object'&&!Array.isArray(x)))throw new Error('تحتوي قائمة '+key+' على سجل غير صالح. لم يتم استيراد أي بيانات.');
+  for(const key of ['students','attendance','documents','violations'])if(!obj[key].every(x=>x&&typeof x==='object'&&!Array.isArray(x)))throw new Error('تحتوي قائمة '+key+' على سجل غير صالح. لم يتم استيراد أي بيانات.');
+  const recovered=recoverStudentsFromHistory(obj);
+  if(!obj.students.length&&!recovered.recoveredCount)throw new Error('قائمة التلاميذ فارغة، ولم أجد أسماء محفوظة داخل سجلات الغياب أو التأخر أو الوثائق أو المخالفات. لم يتم تغيير بيانات الهاتف. احتفظ بالنسخة الأصلية ولا تحذفها.');
+  const normalized={...obj,students:recovered.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,settings:obj.settings};
   pendingBackupData=normalized;
+  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount};
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
- }catch(err){pendingBackupData=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
+ }catch(err){pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
 }
 function restorePendingBackup(){
  if(!pendingBackupData)return;
@@ -678,7 +722,7 @@ function restorePendingBackup(){
  if(approval!=='أوافق على استبدال بيانات الهاتف'){alert('تم إلغاء الاستعادة؛ لم تتغير بيانات الهاتف.');return;}
  const oldDb=db;db=pendingBackupData;
  if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
- pendingBackupData=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
+ pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
  alert('تمت استعادة النسخة الاحتياطية بنجاح. عدد التلاميذ: '+db.students.length+'، وسجلات المتابعة: '+(db.attendance.length+db.documents.length+db.violations.length)+'.');
@@ -689,7 +733,7 @@ $('#importData').onchange=async e=>{
  const file=e.target.files?.[0];if(!file)return;
  const readWithReader=()=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('تعذرت قراءة محتوى الملف من الهاتف.'));reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));reader.readAsText(file,'UTF-8');});
  try{let raw='';try{if(typeof file.text==='function')raw=String(await file.text()||'');}catch(_){}if(!raw.trim())raw=await readWithReader();await importBackupText(raw,file.size);}
- catch(err){alert('تعذرت قراءة النسخة الاحتياطية:\n'+(err?.message||'خطأ غير معروف'));}
+ catch(err){alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
  finally{e.target.value='';}
 };
 function parseCSV(text, delimiter){
