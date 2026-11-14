@@ -179,7 +179,7 @@ db.documents=Array.isArray(db.documents)?db.documents:[];
 db.violations=Array.isArray(db.violations)?db.violations:[];
 db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
-const $=s=>document.querySelector(s), $=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const sectionNorm=v=>String(v??"").trim().replace(/\s+/g," ").toLocaleLowerCase("ar");
 const sectionNames=()=>db.settings.sectionNames&&typeof db.settings.sectionNames==="object"?db.settings.sectionNames:(db.settings.sectionNames={});
 const sectionLabel=code=>{const map=sectionNames(),key=Object.keys(map).find(k=>sectionNorm(k)===sectionNorm(code));return key?String(map[key]):String(code||"—");};
