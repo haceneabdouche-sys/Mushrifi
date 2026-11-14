@@ -352,6 +352,14 @@ public class MainActivity extends Activity {
     @Override protected void onStop() { super.onStop(); }
 
     @Override public void onBackPressed() {
-        if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed();
+        if (web == null) { super.onBackPressed(); return; }
+        // The app uses a single-page WebView: navigate its internal page stack
+        // before allowing Android to close the Activity.
+        web.evaluateJavascript(
+            "(function(){try{return window.handleMushrifiAndroidBack ? window.handleMushrifiAndroidBack() : false;}catch(e){return false;}})();",
+            value -> {
+                if (!"true".equals(value)) MainActivity.super.onBackPressed();
+            }
+        );
     }
 }
