@@ -11,6 +11,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
+      MUSHRIFI_KEYSTORE_PATH: /tmp/mushrifi-upload.jks
       MUSHRIFI_KEYSTORE_BASE64: ${{ secrets.MUSHRIFI_KEYSTORE_BASE64 }}
       MUSHRIFI_KEYSTORE_PASSWORD: ${{ secrets.MUSHRIFI_KEYSTORE_PASSWORD }}
       MUSHRIFI_KEY_ALIAS: ${{ secrets.MUSHRIFI_KEY_ALIAS }}
