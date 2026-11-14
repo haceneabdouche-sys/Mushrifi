@@ -628,6 +628,11 @@ function showBackupPreview(data,bytes){
  const abs=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='غياب').length;
  const late=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='تأخر').length;
  const summons=documents.filter(x=>String(x.type||'').includes('استدعاء')).length;
+ const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length};
+ const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length};
+ const reducedKeys=Object.keys(currentCounts).filter(k=>incomingCounts[k]<currentCounts[k]);
+ const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations}`;
+ const reducedWarning=reducedKeys.length?'<p class="notice"><b>تنبيه مهم:</b> تحتوي النسخة المختارة على سجلات أقل من الموجودة حالياً في الهاتف في بعض الأقسام. راجع الأعداد أدناه وتأكد من أنك اخترت النسخة الصحيحة قبل الاستعادة.</p>':'';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
  const classText=Object.keys(classes).sort((a,b)=>a.localeCompare(b,'ar',{numeric:true})).map(k=>'القسم '+esc(k)+': '+classes[k]).join('، ');
  const attrText=Object.keys(attributes).map(k=>esc(k)+': '+attributes[k]).join('، ');
@@ -637,6 +642,7 @@ function showBackupPreview(data,bytes){
  '<div class="stat"><small>سجلات الغياب والتأخر</small><strong>'+attendance.length+'</strong></div>'+
  '<div class="stat"><small>الوثائق والاستدعاءات</small><strong>'+documents.length+'</strong></div>'+
  '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div></div>'+
+ '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
