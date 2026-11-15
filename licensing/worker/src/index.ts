@@ -54,6 +54,12 @@ function fromB64(value: string): Uint8Array {
   return Uint8Array.from(binary, c => c.charCodeAt(0));
 }
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(copy).set(bytes);
+  return copy;
+}
+
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(digest)].map(x => x.toString(16).padStart(2, "0")).join("");
@@ -79,8 +85,8 @@ async function verifyDeviceProof(jwk: JsonWebKey, nonce: string, signature: stri
     return await crypto.subtle.verify(
       { name: "ECDSA", hash: "SHA-256" },
       key,
-      fromB64(signature),
-      new TextEncoder().encode(nonce)
+      toArrayBuffer(fromB64(signature)),
+      toArrayBuffer(new TextEncoder().encode(nonce))
     );
   } catch {
     return false;
@@ -91,7 +97,7 @@ async function signLicense(env: Env, row: LicenseRow, now: number): Promise<stri
   if (!env.LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64) throw new Error("مفتاح توقيع التراخيص غير مضبوط على الخادم");
   const key = await crypto.subtle.importKey(
     "pkcs8",
-    fromB64(env.LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64),
+    toArrayBuffer(fromB64(env.LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64)),
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
     ["sign"]
@@ -110,7 +116,7 @@ async function signLicense(env: Env, row: LicenseRow, now: number): Promise<stri
     offlineUntil: now + OFFLINE_WINDOW_DAYS * DAY
   };
   const encoded = b64url(new TextEncoder().encode(JSON.stringify(payload)));
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(encoded));
+  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, toArrayBuffer(new TextEncoder().encode(encoded)));
   return encoded + "." + b64url(new Uint8Array(signature));
 }
 
