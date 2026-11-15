@@ -1,8 +1,8 @@
-name = "mushrifi-license-api"
+name = "mushrifi-license-server"
 main = "src/index.ts"
 compatibility_date = "2026-11-15"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "mushrifi-licenses"
-database_id = "REPLACE_WITH_CLOUDFLARE_D1_DATABASE_ID"
+database_id = "bb241e07-ed80-4a29-b10f-7ebe7b104cf8"
