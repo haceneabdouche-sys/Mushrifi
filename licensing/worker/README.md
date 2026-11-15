@@ -52,3 +52,4 @@ This backend scaffold is not yet wired into the Android WebView. The Android sid
 - a real-device integration and abuse-case test suite.
 
 Do not deploy to production or issue customer codes until those client controls and tests exist. Cloudflare rate limiting and an authenticated owner dashboard should also be configured before public use.
+Mushrifi deployment test
