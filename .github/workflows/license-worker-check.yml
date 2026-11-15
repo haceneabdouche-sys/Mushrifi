@@ -1,0 +1,33 @@
+name: Check Mushrifi license API
+on:
+  push:
+    branches:
+      - feature/device-license-foundation
+    paths:
+      - 'licensing/worker/**'
+      - '.github/workflows/license-worker-check.yml'
+  pull_request:
+    paths:
+      - 'licensing/worker/**'
+      - '.github/workflows/license-worker-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: licensing/worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: licensing/worker/package-lock.json
+      - run: npm install --package-lock-only
+      - run: npm ci
+      - run: npm run check
