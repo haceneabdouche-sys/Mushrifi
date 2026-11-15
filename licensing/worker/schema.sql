@@ -17,8 +17,6 @@ CREATE TABLE IF NOT EXISTS licenses (
     (status = 'issued' AND device_thumbprint IS NULL AND device_public_key_json IS NULL)
     OR
     (status <> 'issued' AND device_thumbprint IS NOT NULL AND device_public_key_json IS NOT NULL)
-    OR
-    (status IN ('revoked', 'expired') AND device_thumbprint IS NULL)
   )
 );
 
