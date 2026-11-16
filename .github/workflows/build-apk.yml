@@ -93,6 +93,8 @@ jobs:
           path: Mushrifi-Complete-Source.zip
           if-no-files-found: error
           retention-days: 30
+      - name: Confirm individual student file fix is included
+        run: grep -q 'const attendanceList=items=>' android/app/src/main/assets/index.html
       - name: Build debug APK
         run: gradle --no-daemon -p android assembleDebug
       - name: Upload APK
