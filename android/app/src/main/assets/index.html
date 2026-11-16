@@ -308,26 +308,33 @@ $("#studentBranchSelect")?.addEventListener("change",()=>refreshStudentSectionOp
 $("#studentClassSelect")?.addEventListener("change",updateStudentClassValue);
 let licenseReadOnly=false;
 const save=()=>{if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}try{render();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
+function setLicenseControlDisabled(el,disabled){
+ if(disabled){
+  if(!el.hasAttribute('data-license-was-disabled'))el.setAttribute('data-license-was-disabled',el.disabled?'1':'0');
+  el.disabled=true;
+ }else if(el.hasAttribute('data-license-was-disabled')){
+  el.disabled=el.getAttribute('data-license-was-disabled')==='1';
+  el.removeAttribute('data-license-was-disabled');
+ }
+}
 function applyLicenseAccess(state){
  licenseReadOnly=!!(state&&state.hasLicense&&!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
  const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn']);
- $$('form input,form select,form textarea,form button').forEach(el=>{el.disabled=licenseReadOnly;});
  if(licenseReadOnly){
-  $$('select').forEach(el=>{el.disabled=true;});
-  $$('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>el.disabled=true);
+  $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
+  $$('select').forEach(el=>setLicenseControlDisabled(el,true));
+  $$('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>setLicenseControlDisabled(el,true));
   $$('button').forEach(el=>{
    const action=el.getAttribute('onclick')||'';
    const keep=allowed.has(el.id)||!!el.closest('nav')||el.matches('[data-settings-tab],.student-name')||action.includes('studentHistory')||action.includes('window.print')||action.includes('goPreviousPage');
-   el.disabled=!keep;
+   setLicenseControlDisabled(el,!keep);
   });
-  const importButton=$('#importBackupNative');if(importButton)importButton.disabled=true;
-  const importInput=$('#importData');if(importInput)importInput.disabled=true;
-  const saveSettings=$('#saveSettings');if(saveSettings)saveSettings.disabled=true;
+  const importButton=$('#importBackupNative');if(importButton)setLicenseControlDisabled(importButton,true);
+  const importInput=$('#importData');if(importInput)setLicenseControlDisabled(importInput,true);
+  const saveSettings=$('#saveSettings');if(saveSettings)setLicenseControlDisabled(saveSettings,true);
  }else{
-  $$('button').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
-  $$('form input,form select,form textarea').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
-  $$('select').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
+  $$('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
  }
 }
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
