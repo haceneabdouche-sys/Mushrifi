@@ -137,6 +137,7 @@ footer{padding:24px 12px;color:#71818d}
 <button type="button" class="settings-tab" data-settings-tab="rates" role="tab" aria-selected="false">📊 نسب الغياب</button>
 <button type="button" class="settings-tab" data-settings-tab="alerts" role="tab" aria-selected="false">🔔 التنبيهات</button>
 <button type="button" class="settings-tab" data-settings-tab="data" role="tab" aria-selected="false">⚙️ المؤسسة والبيانات</button>
+<button type="button" class="settings-tab" data-settings-tab="license" role="tab" aria-selected="false">🔐 الترخيص</button>
 </div>
 <div class="settings-pane" id="settings-pane-schedule" role="tabpanel">
 <div class="panel"><h2>جدول التوقيت الأسبوعي للأقسام</h2><p class="muted">أدخل مجموع الساعات المقررة لكل يوم. الجمعة والسبت مستبعدان تلقائياً من حساب الساعات الشهرية.</p><form id="scheduleForm"><label>القسم / الشعبة</label><select name="class" id="scheduleClass" required><option value="">اختر القسم</option></select><div class="grid schedule-grid"><div><label>الأحد</label><input name="sun" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الإثنين</label><input name="mon" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الثلاثاء</label><input name="tue" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الأربعاء</label><input name="wed" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الخميس</label><input name="thu" type="number" min="0" max="12" step="0.5" value="6"></div></div><button class="btn primary" type="submit">حفظ توقيت القسم</button></form><div id="timetableRows"></div></div>
@@ -149,6 +150,9 @@ footer{padding:24px 12px;color:#71818d}
 </div>
 <div class="settings-pane hidden" id="settings-pane-alerts" role="tabpanel">
 <div class="panel"><h2>وقت التنبيه الافتراضي</h2><p class="muted">اختر الساعة التي تريد أن ينبهك فيها مُشرِفي قبل موعد حضور الولي بيوم. سيُستخدم هذا الوقت تلقائياً عند إنشاء استدعاء جديد، ويمكنك تغييره لذلك الاستدعاء وحده.</p><label for="defaultSummonsReminderTime">ساعة التنبيه الافتراضية</label><input id="defaultSummonsReminderTime" type="time" value="18:00"><button class="btn primary" id="saveSummonsReminderTime" type="button">حفظ وقت التنبيه</button><p id="summonsReminderTimeStatus" class="muted" aria-live="polite">الوقت الافتراضي: 18:00</p></div><div class="panel"><h2>صلاحيات الإشعارات</h2><p class="muted">فعّل وصول التنبيهات الدقيقة، ثم أرسل إشعاراً تجريبياً للتأكد من وصوله.</p><button class="btn primary" id="requestExactAlarmAccess" type="button">تفعيل التنبيهات الدقيقة</button> <button class="btn" id="testSummonsNotification" type="button">اختبار وصول الإشعار</button></div>
+</div>
+<div class="settings-pane hidden" id="settings-pane-license" role="tabpanel">
+<div class="panel"><h2>ترخيص تطبيق مُشرِفي</h2><p class="muted">يُربط الترخيص بهذا الهاتف فقط. لا تُدخل أي رمز إلا إذا استلمته من الجهة المرخّصة. لا توجد رموز تفعيل تجريبية أو تجارية منشأة حالياً.</p><p id="licenseStatusText" class="muted" aria-live="polite">جارٍ قراءة حالة الترخيص...</p><label for="licenseActivationCode">رمز التفعيل</label><input id="licenseActivationCode" type="text" autocomplete="off" autocapitalize="characters" placeholder="أدخل رمز التفعيل عند استلامه"><div class="row"><button type="button" class="btn primary" id="activateLicenseBtn">تفعيل هذا الهاتف</button><button type="button" class="btn" id="validateLicenseBtn">التحقق من الترخيص</button></div><p id="licenseActionStatus" class="muted" aria-live="polite">لم يُنفذ أي طلب بعد.</p></div>
 </div>
 <div class="settings-pane hidden" id="settings-pane-data" role="tabpanel">
 <div class="panel"><h2>إعدادات المؤسسة</h2><label>اسم المؤسسة</label><input id="schoolName" value="ثانوية الشيخ بوعمامة"><label>الموقع</label><input id="schoolLocation" value="بوسكن – ولاية المدية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
@@ -205,7 +209,7 @@ const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.nam
 let previousAppPage='home';const appPageStack=['home'];function go(page,addHistory=true){if(!document.getElementById(page)||!document.getElementById(page).classList.contains('page'))return;const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current!==page&&addHistory){previousAppPage=current;appPageStack.push(page);try{history.pushState({mushrifiPage:page},'');}catch(err){console.warn('Mushrifi: browser history unavailable; using in-page navigation',err);}}document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}function goPreviousPage(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;let index=appPageStack.lastIndexOf(current);let target=index>0?appPageStack[index-1]:previousAppPage;if(!target||target===current||!document.getElementById(target)||!document.getElementById(target).classList.contains('page'))target='home';if(index>0)appPageStack.splice(index);if(!appPageStack.length)appPageStack.push('home');go(target,false);previousAppPage=appPageStack.length>1?appPageStack[appPageStack.length-2]:'home';return true;}window.handleMushrifiAndroidBack=function(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;return goPreviousPage();};
 try{history.replaceState({mushrifiPage:document.querySelector('.page:not(.hidden)')?.id||'home'},'');}catch(err){console.warn('Mushrifi: initial browser history unavailable; navigation remains enabled',err);}
 window.addEventListener('popstate',event=>{const page=event.state?.mushrifiPage;go(page&&document.getElementById(page)?page:'home',false);});
-function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
+function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data','license'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
 window.setSettingsTab=setSettingsTab;
 $$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
@@ -925,6 +929,34 @@ $('#csvImport').onchange=async e=>{
 };
 
 render();
+
+function refreshLicenseStatus(){
+ const box=$('#licenseStatusText');if(!box)return;
+ if(!window.AndroidBridge||typeof AndroidBridge.getLicenseStatus!=='function'){box.textContent='إدارة الترخيص متاحة في تطبيق Android فقط.';return;}
+ try{const state=JSON.parse(AndroidBridge.getLicenseStatus());box.textContent=state.message|| (state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');}
+ catch(e){box.textContent='تعذر قراءة حالة الترخيص.';}
+}
+window.onMushrifiLicenseResult=function(callbackId,result){
+ const status=$('#licenseActionStatus');if(!status)return;
+ status.textContent=result&&result.error?result.error:(result&&result.message?result.message:'اكتملت العملية.');
+ refreshLicenseStatus();
+};
+$('#activateLicenseBtn')?.addEventListener('click',()=>{
+ const code=$('#licenseActivationCode')?.value?.trim()||'';
+ const status=$('#licenseActionStatus');
+ if(!code){if(status)status.textContent='أدخل رمز التفعيل أولاً.';return;}
+ if(!window.AndroidBridge||typeof AndroidBridge.activateLicense!=='function'){if(status)status.textContent='هذه العملية متاحة في تطبيق Android فقط.';return;}
+ if(status)status.textContent='جارٍ الاتصال بخادم الترخيص...';
+ AndroidBridge.activateLicense(code,'activate-'+Date.now());
+});
+$('#validateLicenseBtn')?.addEventListener('click',()=>{
+ const status=$('#licenseActionStatus');
+ if(!window.AndroidBridge||typeof AndroidBridge.validateLicense!=='function'){if(status)status.textContent='هذه العملية متاحة في تطبيق Android فقط.';return;}
+ if(status)status.textContent='جارٍ التحقق من الترخيص...';
+ AndroidBridge.validateLicense('validate-'+Date.now());
+});
+refreshLicenseStatus();
+
 </script>
 
 
