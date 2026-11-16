@@ -42,6 +42,8 @@ import android.text.InputType;
 import android.webkit.JsPromptResult;
 import java.io.OutputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
     private static final int PICK_FILE = 4101;
@@ -54,6 +56,7 @@ public class MainActivity extends Activity {
     private String pendingBackup;
     private boolean speechPending;
     private WebView web;
+    private final ExecutorService licenseExecutor = Executors.newSingleThreadExecutor();
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -147,6 +150,33 @@ public class MainActivity extends Activity {
     private android.content.SharedPreferences securityPrefs;
     private static String derive(String password, byte[] salt) throws Exception { PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 150000, 256); try { return Base64.encodeToString(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded(), Base64.NO_WRAP); } finally { spec.clearPassword(); } }
     public class AndroidBridge {
+        @JavascriptInterface public String getLicenseStatus() {
+            try { return LicenseManager.status(MainActivity.this).toString(); }
+            catch (Exception e) { return new org.json.JSONObject().put("activated", false).put("message", e.getMessage() == null ? "تعذر قراءة حالة الترخيص" : e.getMessage()).toString(); }
+        }
+        @JavascriptInterface public void activateLicense(String activationCode, String callbackId) {
+            if (activationCode == null || callbackId == null) return;
+            licenseExecutor.execute(() -> {
+                org.json.JSONObject result;
+                try { result = LicenseManager.activate(MainActivity.this, activationCode); }
+                catch (Exception e) { result = new org.json.JSONObject(); try { result.put("ok", false).put("error", e.getMessage() == null ? "فشل التفعيل" : e.getMessage()); } catch (Exception ignored) {} }
+                deliverLicenseResult(callbackId, result);
+            });
+        }
+        @JavascriptInterface public void validateLicense(String callbackId) {
+            if (callbackId == null) return;
+            licenseExecutor.execute(() -> {
+                org.json.JSONObject result;
+                try { result = LicenseManager.validate(MainActivity.this); }
+                catch (Exception e) { result = new org.json.JSONObject(); try { result.put("ok", false).put("error", e.getMessage() == null ? "فشل التحقق" : e.getMessage()); } catch (Exception ignored) {} }
+                deliverLicenseResult(callbackId, result);
+            });
+        }
+        private void deliverLicenseResult(String callbackId, org.json.JSONObject result) {
+            String script = "window.onMushrifiLicenseResult && window.onMushrifiLicenseResult("
+                + org.json.JSONObject.quote(callbackId) + "," + result.toString() + ");";
+            runOnUiThread(() -> { if (web != null) web.evaluateJavascript(script, null); });
+        }
         @JavascriptInterface public String loadDatabase() { return localDb.read(); }
         @JavascriptInterface public boolean saveDatabase(String json) { return json != null && localDb.write(json); }
         @JavascriptInterface public String getDatabaseError() { return localDb.getLastError(); }
