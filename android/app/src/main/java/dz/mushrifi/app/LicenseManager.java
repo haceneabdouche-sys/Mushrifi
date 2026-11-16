@@ -108,7 +108,9 @@ final class LicenseManager {
         long starts = payload.optLong("startsAt", 0);
         long expiry = payload.optLong("expiresAt", 0);
         long offlineUntil = payload.optLong("offlineUntil", 0);
-        boolean active = "active".equals(payload.optString("status")) &&
+        boolean deviceMatches = deviceThumbprint(publicJwk((ECPublicKey) getOrCreateDeviceKey().getPublic()))
+            .equals(payload.optString("deviceThumbprint"));
+        boolean active = "active".equals(payload.optString("status")) && deviceMatches &&
             starts <= now && (expiry == 0 || expiry > now) && offlineUntil > now;
         return new JSONObject()
             .put("activated", active)
