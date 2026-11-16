@@ -78,7 +78,7 @@ const ctx={
 };
 vm.createContext(ctx);vm.runInContext(source,ctx);
 const dateValidationSource=String.raw`function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
-const isValidISODate=value=>{const v=String(value||'');if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(v))return false;const [y,m,d]=v.split('-').map(Number),date=dateFromISO(v);return Number.isFinite(date.getTime())&&date.getFullYear()===y&&date.getMonth()===m-1&&date.getDate()===d;};`;
+const isValidISODate=value=>{const v=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split('-').map(Number),date=dateFromISO(v);return Number.isFinite(date.getTime())&&date.getFullYear()===y&&date.getMonth()===m-1&&date.getDate()===d;};`;
 vm.runInContext(dateValidationSource,ctx);
 function run(rows,hs=[],sc={}){ctx.db.attendance=rows.map((x,i)=>({id:String(i),student:'student-1',type:'غياب',justified:'غير مبرر',hours:6,...x}));holidays=hs;schedule=sc;return JSON.parse(JSON.stringify(ctx.getUnjustifiedStreaks()));}
 function absence(date,extra={}){return {date,...extra};}
