@@ -26,6 +26,10 @@ import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.Arrays;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
 
 
 /**
@@ -36,6 +40,7 @@ import java.util.Arrays;
 final class LicenseManager {
     private static final String API = "https://mushrifi-license-server.hacene47211.workers.dev";
     private static final String KEY_ALIAS = "mushrifi_device_license_ec";
+    private static final String TOKEN_KEY_ALIAS = "mushrifi_license_token_aes";
     private static final String PREFS = "mushrifi_license";
     private static final String PUBLIC_KEY_PEM =
         "-----BEGIN PUBLIC KEY-----\n" +
@@ -102,8 +107,7 @@ final class LicenseManager {
     private static final long CLOCK_SKEW_TOLERANCE_MS = 5L * 60L * 1000L;
 
     static boolean shouldValidate(Context context) throws Exception {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String token = prefs.getString("license_token", null);
+        String token = loadToken(context);
         if (token == null) return false;
         JSONObject payload = verifyAndReadToken(token);
         long now = System.currentTimeMillis();
@@ -118,8 +122,7 @@ final class LicenseManager {
     }
 
     static JSONObject status(Context context) throws Exception {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String token = prefs.getString("license_token", null);
+        String token = loadToken(context);
         if (token == null) return new JSONObject().put("hasLicense", false).put("activated", false).put("message", "لم يتم تفعيل التطبيق");
         JSONObject payload = verifyAndReadToken(token);
         long now = System.currentTimeMillis();
@@ -162,13 +165,55 @@ final class LicenseManager {
         }
     }
 
+    private static String loadToken(Context context) throws Exception {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String encrypted = prefs.getString("license_token_enc", null);
+        if (encrypted != null) {
+            String ivValue = prefs.getString("license_token_iv", null);
+            if (ivValue == null) throw new Exception("بيانات تخزين الترخيص المشفر غير مكتملة");
+            byte[] iv = Base64.decode(ivValue, Base64.NO_WRAP);
+            byte[] ciphertext = Base64.decode(encrypted, Base64.NO_WRAP);
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            cipher.init(Cipher.DECRYPT_MODE, getOrCreateTokenKey(), new GCMParameterSpec(128, iv));
+            return new String(cipher.doFinal(ciphertext), StandardCharsets.UTF_8);
+        }
+        // Migrate a token written by an earlier test build; never keep a plaintext copy.
+        String legacy = prefs.getString("license_token", null);
+        if (legacy == null) return null;
+        JSONObject payload = verifyAndReadToken(legacy);
+        save(context, legacy, payload);
+        return legacy;
+    }
+
+    private static SecretKey getOrCreateTokenKey() throws Exception {
+        KeyStore store = KeyStore.getInstance("AndroidKeyStore");
+        store.load(null);
+        if (store.containsAlias(TOKEN_KEY_ALIAS)) {
+            return (SecretKey) store.getKey(TOKEN_KEY_ALIAS, null);
+        }
+        KeyGenerator generator = KeyGenerator.getInstance("AES", "AndroidKeyStore");
+        generator.init(new KeyGenParameterSpec.Builder(TOKEN_KEY_ALIAS,
+            KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+            .setKeySize(256)
+            .build());
+        return generator.generateKey();
+    }
+
     private static void save(Context context, String token, JSONObject payload) throws Exception {
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateTokenKey());
+        byte[] encrypted = cipher.doFinal(token.getBytes(StandardCharsets.UTF_8));
+        byte[] iv = cipher.getIV();
         boolean ok = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .putString("license_token", token)
+            .putString("license_token_enc", Base64.encodeToString(encrypted, Base64.NO_WRAP))
+            .putString("license_token_iv", Base64.encodeToString(iv, Base64.NO_WRAP))
+            .remove("license_token")
             .putString("license_id", payload.getString("licenseId"))
             .putLong("last_server_check", System.currentTimeMillis())
             .commit();
-        if (!ok) throw new Exception("تعذر حفظ بيانات الترخيص على الهاتف");
+        if (!ok) throw new Exception("تعذر حفظ بيانات الترخيص المشفر على الهاتف");
     }
 
     private static KeyPair getOrCreateDeviceKey() throws Exception {
