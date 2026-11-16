@@ -154,7 +154,9 @@ public class MainActivity extends Activity {
             try { return LicenseManager.status(MainActivity.this).toString(); }
             catch (Exception e) {
                 org.json.JSONObject failure = new org.json.JSONObject();
-                try { failure.put("activated", false).put("message", e.getMessage() == null ? "تعذر قراءة حالة الترخيص" : e.getMessage()); }
+                try { failure.put("hasLicense", LicenseManager.hasStoredLicense(MainActivity.this))
+                    .put("activated", false)
+                    .put("message", e.getMessage() == null ? "تعذر قراءة حالة الترخيص" : e.getMessage()); }
                 catch (org.json.JSONException ignored) {}
                 return failure.toString();
             }
@@ -372,7 +374,8 @@ public class MainActivity extends Activity {
                 } catch (Exception statusError) {
                     result = new org.json.JSONObject();
                     try {
-                        result.put("activated", false)
+                        result.put("hasLicense", LicenseManager.hasStoredLicense(MainActivity.this))
+                            .put("activated", false)
                             .put("message", statusError.getMessage() == null ? "تعذر قراءة حالة الترخيص" : statusError.getMessage());
                     } catch (Exception ignored) {}
                 }
