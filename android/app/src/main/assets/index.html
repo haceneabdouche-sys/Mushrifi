@@ -566,7 +566,7 @@ function getUnjustifiedStreaks(){
   }
   if(group.length){
    const first=group[0],last=group[group.length-1];
-   const span=Math.max(1,calendarDaysBetween(first,today)+1);
+   const span=Math.max(1,calendarDaysBetween(first,last)+1);
    out.push({student:item.student,start:first,last,days:span,thursdayStart:dateFromISO(first).getDay()===4});
   }
  }
