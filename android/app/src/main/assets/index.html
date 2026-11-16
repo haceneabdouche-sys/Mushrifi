@@ -730,7 +730,7 @@ window.editDocument=id=>{
  const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;
  const row=document.querySelector('tr[data-doc-id="'+CSS.escape(String(id))+'"]');if(!row)return;
  const students=db.students.map(st=>'<option value="'+esc(st.id)+'" '+(String(st.id)===String(d.student)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName||'تلميذ')+' — '+esc(sectionDisplay(st.class))+'</option>').join('');
- const types=['إشعار غياب','استدعاء ولي','تنبيه'];
+ const types=['إشعار غياب','استدعاء ولي','تنبيه'];if(d.type&&!types.includes(d.type))types.push(d.type);
  const typeOptions=types.map(t=>'<option value="'+esc(t)+'" '+(String(d.type)===t?'selected':'')+'>'+esc(t)+'</option>').join('');
  row.innerHTML='<td data-label="التاريخ"><label>التاريخ</label><input id="editDocDate" type="date" value="'+esc(d.date||'')+'"></td>'+
  '<td data-label="التلميذ"><label>التلميذ</label><select id="editDocStudent">'+students+'</select></td>'+
