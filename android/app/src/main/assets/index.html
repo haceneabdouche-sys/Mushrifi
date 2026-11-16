@@ -649,10 +649,10 @@ function createAbsenceStageNoticeRecord(streak,stage){
  if(noticeExists(streak,stage))return false;
  const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار بسبب الغياب',32:'إشعار بالشطب'};
  const reasons={
-  4:'غياب متواصل بلغ أربعة أيام تقويمية، بما فيها أيام العطل الأسبوعية والرسمية. يرجى إشعار الولي كتابياً والاستفسار عن سبب الغياب.',
-  11:'استمرار الغياب المتواصل حتى اليوم الحادي عشر من بداية الغياب، مع احتساب أيام العطل. يرجى تبليغ الولي بالإشعار الثاني والاحتفاظ بإثبات التبليغ.',
-  18:'استمرار الغياب المتواصل حتى اليوم الثامن عشر، مع احتساب أيام العطل. هذا إعذار للولي لتسوية وضعية التلميذ خلال مهلة أربعة عشر يوماً.',
-  32:'استمرار الغياب المتواصل حتى اليوم الثاني والثلاثين، مع احتساب أيام العطل، بعد انقضاء أربعة عشر يوماً على الإعذار. تُعرض الحالة على الإدارة لاتخاذ الإجراء القانوني المناسب.'
+  4:'غياب متواصل بلغ أربعة أيام تقويمية، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. العطل الرسمية لا تُستثنى تلقائياً ما لم تُسجل في توقيت القسم. يرجى إشعار الولي كتابياً والاستفسار عن سبب الغياب.',
+  11:'استمرار الغياب المتواصل حتى اليوم الحادي عشر من بداية الغياب، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. العطل الرسمية تحتاج إلى ضبط مستقل في التوقيت. يرجى تبليغ الولي بالإشعار الثاني والاحتفاظ بإثبات التبليغ.',
+  18:'استمرار الغياب المتواصل حتى اليوم الثامن عشر، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. العطل الرسمية تحتاج إلى ضبط مستقل في التوقيت. هذا إعذار للولي لتسوية وضعية التلميذ خلال مهلة أربعة عشر يوماً.',
+  32:'استمرار الغياب المتواصل حتى اليوم الثاني والثلاثين، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة، وبعد انقضاء أربعة عشر يوماً كاملة من تاريخ تبليغ الإعذار المثبت. تُعرض الحالة على الإدارة لاتخاذ الإجراء القانوني المناسب.'
  };
  db.documents.push({id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceStage:stage,deliveryProof:''});
  return true;
@@ -680,12 +680,12 @@ function renderAbsenceFollowup(){
   const labels={4:'الإشعار الأول',11:'الإشعار الثاني',18:'الإعذار',32:'الإشعار بالشطب'};
   const reached=[4,11,18,32].filter(n=>x.days>=n);
   const pending=reached.filter(n=>!noticeExists(x,n)&&(n!==32||canCreateAbsenceStage32(x)));
-  const stage=x.days>=32?'<span class="status-danger">بلغ اليوم 32: إشعار بالشطب</span>':x.days>=18?'<span class="status-danger">بلغ مرحلة الإعذار — اليوم 18</span>':x.days>=11?'<span class="status-warn">بلغ مرحلة الإشعار الثاني — اليوم 11</span>':x.days>=4?'<span class="status-warn">بلغ مرحلة الإشعار الأول — اليوم 4</span>':'<span class="status-warn">متابعة الغياب المتواصل</span>';
+  const stage=x.days>=32?'<span class="status-danger">بلغت المتابعة 32 يوماً؛ تحقق من شروط الإعذار قبل أي إجراء</span>':x.days>=18?'<span class="status-danger">بلغ مرحلة الإعذار — اليوم 18</span>':x.days>=11?'<span class="status-warn">بلغ مرحلة الإشعار الثاني — اليوم 11</span>':x.days>=4?'<span class="status-warn">بلغ مرحلة الإشعار الأول — اليوم 4</span>':'<span class="status-warn">متابعة الغياب المتواصل</span>';
   const actions=pending.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+labels[n]+'</button>').join(' ');
   const special=x.thursdayStart&&x.days>=4&&!noticeExists(x,4)?'<p class="status-warn">بدأ الغياب يوم الخميس: تنبيه خاص يوم الأحد، والإشعار الأول ينتظر مراجعتك.</p>':'';
   const stage32Blocked=x.days>=32&&!canCreateAbsenceStage32(x)?'<p class="status-warn">بلغت مدة المتابعة 32 يوماً، لكن لا يُتاح إجراء الشطب قبل تسجيل تاريخ تبليغ الإعذار وإثباته وانقضاء 14 يوماً كاملة.</p>':'';
   const status=actions|| (reached.length?'<span class="status-ok">وثائق المراحل المعروضة مسجلة بالفعل.</span>':'<span class="status-warn">لم تبلغ الحالة بعد مرحلة إنشاء الوثائق؛ تستمر المتابعة دون إنشاء وثيقة.</span>');
-  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام متتالية (بما فيها العطل)</b></p><p>'+stage+'</p>'+special+stage32Blocked+'<div class="actions">'+status+'</div></div>';
+  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام تقويمية</b></p><p class="muted">يُحتسب نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. يجب ضبط العطل الرسمية في توقيت القسم حتى لا تُعامل كيوم دراسة.</p><p>'+stage+'</p>'+special+stage32Blocked+'<div class="actions">'+status+'</div></div>';
  }).join(''):'<p class="empty">لا توجد حالياً حالات غياب متواصل تستوجب المتابعة. ستظهر الحالات عند تسجيل الغياب.</p>';
 }
 function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}
