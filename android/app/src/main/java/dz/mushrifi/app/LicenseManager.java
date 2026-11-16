@@ -161,8 +161,7 @@ final class LicenseManager {
     }
 
     static boolean canWrite(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        if (!prefs.contains("license_token")) return true; // Existing installations remain usable until a license is issued.
+        if (!hasStoredLicense(context)) return true; // Existing installations remain usable until a license is issued.
         try {
             return status(context).optBoolean("activated", false);
         } catch (Exception invalidLicense) {
