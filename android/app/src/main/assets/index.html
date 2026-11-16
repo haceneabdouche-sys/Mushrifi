@@ -623,7 +623,7 @@ function getUnjustifiedStreaks(){
   const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
   // افحص البدايات من الأحدث إلى الأقدم؛ حتى لا تخفي فجوة غير مبررة
   // سلسلة جديدة بدأت بعد فجوة سابقة لم تسجل كحضور أو تبرير.
-  const candidates=ordered.filter(([date,event])=>date>lastBreak&&event.fullDayAbsence).reverse();
+  const candidates=ordered.filter(([date,event])=>date>lastBreak&&event.fullDayAbsence);
   let active=null;
   for(const [start] of candidates){
    let last=start,valid=true;
