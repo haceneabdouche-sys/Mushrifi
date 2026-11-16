@@ -183,7 +183,11 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> { if (web != null) web.evaluateJavascript(script, null); });
         }
         @JavascriptInterface public String loadDatabase() { return localDb.read(); }
-        @JavascriptInterface public boolean saveDatabase(String json) { return json != null && localDb.write(json); }
+        @JavascriptInterface public boolean canModifyData() { return LicenseManager.canWrite(MainActivity.this); }
+        @JavascriptInterface public boolean saveDatabase(String json) {
+            if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
+            return localDb.write(json);
+        }
         @JavascriptInterface public String getDatabaseError() { return localDb.getLastError(); }
         @JavascriptInterface public boolean hasPassword() { return securityPrefs.contains("hash") && securityPrefs.contains("salt"); }
         @JavascriptInterface public boolean setPassword(String password) { if (password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
