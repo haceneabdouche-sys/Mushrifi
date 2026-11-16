@@ -621,29 +621,30 @@ function getUnjustifiedStreaks(){
   }
   const ordered=[...events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
-  const candidates=ordered.filter(([date,event])=>date>lastBreak&&event.fullDayAbsence);
-  if(!candidates.length)continue;
-  const start=candidates[0][0];
-  // امتد بالسلسلة حتى اليوم الحالي، لا حتى آخر سجل محفوظ فقط؛
-  // عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص تدخل في المدة التقويمية.
-  let last=start;
-  for(let cursor=dateFromISO(start);;cursor.setDate(cursor.getDate()+1)){
-   const date=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0');
-   if(date>dateISO())break;
-   // العطلة المدرسية المصرح بها لا تتطلب تسجيل غياب، لكنها تبقى ضمن المدة التقويمية.
-   if(isSchoolHolidayDate(date)){last=date;continue;}
-   const weekday=cursor.getDay();
-   if(weekday===5||weekday===6){last=date;continue;}
-   const scheduled=scheduledHoursForStudentDate(item.student,date);
-   if(scheduled===0){last=date;continue;}
-   // غياب التوقيت الأسبوعي يجعل التحقق غير ممكن؛ لا نحتسب يوماً غير مثبت.
-   if(scheduled===null)break;
-   const event=events.get(date);
-   if(!event||event.hasBreak||!event.fullDayAbsence)break;
-   last=date;
+  // افحص البدايات من الأحدث إلى الأقدم؛ حتى لا تخفي فجوة غير مبررة
+  // سلسلة جديدة بدأت بعد فجوة سابقة لم تسجل كحضور أو تبرير.
+  const candidates=ordered.filter(([date,event])=>date>lastBreak&&event.fullDayAbsence).reverse();
+  let active=null;
+  for(const [start] of candidates){
+   let last=start,valid=true;
+   for(let cursor=dateFromISO(start);;cursor.setDate(cursor.getDate()+1)){
+    const date=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0');
+    if(date>dateISO())break;
+    // العطلة المدرسية المصرح بها لا تتطلب تسجيل غياب، لكنها تبقى ضمن المدة التقويمية.
+    if(isSchoolHolidayDate(date)){last=date;continue;}
+    const weekday=cursor.getDay();
+    if(weekday===5||weekday===6){last=date;continue;}
+    const scheduled=scheduledHoursForStudentDate(item.student,date);
+    if(scheduled===0){last=date;continue;}
+    // غياب التوقيت الأسبوعي يجعل التحقق غير ممكن؛ لا نحتسب يوماً غير مثبت.
+    if(scheduled===null){valid=false;break;}
+    const event=events.get(date);
+    if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
+    last=date;
+   }
+   if(valid){active={student:item.student,start,last,days:Math.max(1,calendarDaysBetween(start,last)+1),thursdayStart:dateFromISO(start).getDay()===4};break;}
   }
-  const days=Math.max(1,calendarDaysBetween(start,last)+1);
-  out.push({student:item.student,start,last,days,thursdayStart:dateFromISO(start).getDay()===4});
+  if(active)out.push(active);
  }
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
