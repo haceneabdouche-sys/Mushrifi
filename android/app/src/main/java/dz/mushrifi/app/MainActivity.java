@@ -152,7 +152,12 @@ public class MainActivity extends Activity {
     public class AndroidBridge {
         @JavascriptInterface public String getLicenseStatus() {
             try { return LicenseManager.status(MainActivity.this).toString(); }
-            catch (Exception e) { return new org.json.JSONObject().put("activated", false).put("message", e.getMessage() == null ? "تعذر قراءة حالة الترخيص" : e.getMessage()).toString(); }
+            catch (Exception e) {
+                org.json.JSONObject failure = new org.json.JSONObject();
+                try { failure.put("activated", false).put("message", e.getMessage() == null ? "تعذر قراءة حالة الترخيص" : e.getMessage()); }
+                catch (org.json.JSONException ignored) {}
+                return failure.toString();
+            }
         }
         @JavascriptInterface public void activateLicense(String activationCode, String callbackId) {
             if (activationCode == null || callbackId == null) return;
