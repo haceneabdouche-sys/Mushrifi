@@ -80,6 +80,10 @@ vm.createContext(ctx);vm.runInContext(source,ctx);
 const dateValidationSource=String.raw`function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
 const isValidISODate=value=>{const v=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split('-').map(Number),date=dateFromISO(v);return Number.isFinite(date.getTime())&&date.getFullYear()===y&&date.getMonth()===m-1&&date.getDate()===d;};`;
 vm.runInContext(dateValidationSource,ctx);
+const configuredHolidaySource=String.raw`const schoolHolidayRanges=()=>Array.isArray(db.settings.schoolHolidays)?db.settings.schoolHolidays:[];
+function isConfiguredSchoolHolidayDate(date){return schoolHolidayRanges().some(h=>h&&isValidISODate(h.start)&&isValidISODate(h.end)&&h.start<=date&&date<=h.end);}`;
+vm.runInContext(configuredHolidaySource,ctx);
+ctx.db.settings={schoolHolidays:[]};
 ctx.calendarDaysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);
 const deliveryGateSource=String.raw`function hasVerifiedAbsenceNoticeDelivery(streak,stage,requiredDays){
  const notice=db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===Number(stage));
@@ -114,6 +118,8 @@ test('invalid calendar day is rejected',()=>{assert.equal(vm.runInContext("isVal
 test('invalid month is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('2026-13-01')",ctx),false);});
 test('non-ISO date format is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('18/11/2026')",ctx),false);});
 test('empty holiday date is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('')",ctx),false);});
+test('configured holiday helper matches dates inside a valid range',()=>{ctx.db.settings.schoolHolidays=[{start:'2026-12-20',end:'2026-12-31'}];assert.equal(vm.runInContext("isConfiguredSchoolHolidayDate('2026-12-25')",ctx),true);assert.equal(vm.runInContext("isConfiguredSchoolHolidayDate('2027-01-01')",ctx),false);});
+test('invalid holiday ranges are ignored by the date matcher',()=>{ctx.db.settings.schoolHolidays=[{start:'2026-02-30',end:'2026-03-05'}];assert.equal(vm.runInContext("isConfiguredSchoolHolidayDate('2026-03-02')",ctx),false);});
 function setNotice(stage,deliveryDate,deliveryProof='وصل تبليغ رقم 1'){ctx.db.documents=[{student:'student-1',absenceStart:'2026-11-01',absenceStage:stage,deliveryDate,deliveryProof}];}
 const streak={student:st,start:'2026-11-01',days:18};
 test('second notice waits seven days after verified first delivery',()=>{setNotice(4,'2026-11-11');assert.equal(vm.runInContext("hasVerifiedAbsenceNoticeDelivery(streak,4,7)",Object.assign(ctx,{streak})),true);});
