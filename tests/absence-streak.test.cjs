@@ -95,6 +95,9 @@ ctx.timetableForGroup=()=>({sun:2,mon:2,tue:2,wed:2,thu:2});
 ctx.attendanceWeekdays=[['sun'],['mon'],['tue'],['wed'],['thu']];
 const monthlyHoursSource=String.raw`function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const date=y+'-'+String(m).padStart(2,'0')+'-'+String(day).padStart(2,'0');if(isSchoolHolidayDate(date))continue;const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}`;
 vm.runInContext(monthlyHoursSource,ctx);
+ctx.attendanceRecordGroupKey=a=>a.groupKey;
+const monthlyRecordsSource=String.raw`function monthlyAbsenceRecords(group,month){return db.attendance.filter(a=>a.type==='غياب'&&String(a.date||'').slice(0,7)===month&&!isSchoolHolidayDate(String(a.date||''))&&attendanceRecordGroupKey(a)===group.key);}`;
+vm.runInContext(monthlyRecordsSource,ctx);
 function run(rows,hs=[],sc={}){ctx.db.attendance=rows.map((x,i)=>({id:String(i),student:'student-1',type:'غياب',justified:'غير مبرر',hours:6,...x}));holidays=hs;schedule=sc;return JSON.parse(JSON.stringify(ctx.getUnjustifiedStreaks()));}
 function absence(date,extra={}){return {date,...extra};}
 function test(name,fn){try{fn();console.log('PASS',name)}catch(e){console.error('FAIL',name,e.message);process.exitCode=1;}}
@@ -124,3 +127,4 @@ test('stage 32 is blocked on day 31 even if warning period elapsed',()=>{setNoti
 test('stage 32 is blocked when warning delivery proof is absent',()=>{setNotice(18,'2026-11-04','');assert.equal(vm.runInContext("canCreateAbsenceStage32(streak)",Object.assign(ctx,{streak:{...streak,days:32}})),false);});
 test('monthly scheduled-hours denominator excludes declared school holidays',()=>{holidays=[{start:'2026-11-15',end:'2026-11-19'}];assert.equal(vm.runInContext("monthScheduledHours({},'2026-11')",ctx),34);});
 test('overlapping holiday ranges do not subtract scheduled hours twice',()=>{holidays=[{start:'2026-11-15',end:'2026-11-18'},{start:'2026-11-17',end:'2026-11-19'}];assert.equal(vm.runInContext("monthScheduledHours({},'2026-11')",ctx),34);});
+test('monthly absence numerator ignores records dated in declared holidays',()=>{holidays=[{start:'2026-11-16',end:'2026-11-16'}];ctx.db.attendance=[{id:'holiday',type:'غياب',date:'2026-11-16',groupKey:'g'},{id:'valid',type:'غياب',date:'2026-11-17',groupKey:'g'},{id:'other-month',type:'غياب',date:'2026-10-31',groupKey:'g'},{id:'other-group',type:'غياب',date:'2026-11-17',groupKey:'x'},{id:'present',type:'حضور',date:'2026-11-17',groupKey:'g'}];assert.deepEqual(JSON.parse(JSON.stringify(vm.runInContext("monthlyAbsenceRecords({key:'g'},'2026-11')",ctx))).map(x=>x.id),['valid']);});
