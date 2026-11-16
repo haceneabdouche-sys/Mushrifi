@@ -155,6 +155,11 @@ final class LicenseManager {
             .put("message", message);
     }
 
+    static boolean hasStoredLicense(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return prefs.contains("license_token_enc") || prefs.contains("license_token");
+    }
+
     static boolean canWrite(Context context) {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         if (!prefs.contains("license_token")) return true; // Existing installations remain usable until a license is issued.
