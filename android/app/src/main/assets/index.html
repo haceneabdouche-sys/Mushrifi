@@ -639,7 +639,7 @@ function canCreateAbsenceStage32(streak){
  // لا يُسمح بمرحلة الشطب اعتماداً على عدد أيام الغياب وحده.
  // يلزم وجود إعذار المرحلة الثالثة مع تاريخ تبليغ وإثبات، وانقضاء 14 يوماً كاملة.
  const warning=db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===18);
- if(!warning||!String(warning.deliveryProof||'').trim()||!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(warning.deliveryDate||'')))return false;
+ if(!warning||!String(warning.deliveryProof||'').trim()||!/^\d{4}-\d{2}-\d{2}$/.test(String(warning.deliveryDate||'')))return false;
  return calendarDaysBetween(String(warning.deliveryDate),dateISO())>=14;
 }
 function createAbsenceStageNoticeRecord(streak,stage){
