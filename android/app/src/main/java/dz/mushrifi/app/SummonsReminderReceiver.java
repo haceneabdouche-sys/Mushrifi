@@ -22,8 +22,8 @@ public class SummonsReminderReceiver extends BroadcastReceiver {
         if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         PendingIntent content = launch == null ? null : PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        String title = stage >= 32 ? "مُشرفي: مراجعة إدارية مطلوبة" : stage >= 18 ? "مُشرفي: إعذار بسبب الغياب" : stage >= 11 ? "مُشرفي: إشعار الغياب الثاني" : "مُشرفي: إشعار الغياب الأول";
-        String body = "التلميذ " + student + " بلغ مرحلة متابعة الغياب (" + stage + " يوماً متتالياً). افتح التطبيق لمراجعة الملف والإجراء المناسب.";
+        String title = "مُشرفي: تذكير بمراجعة الغياب";
+        String body = "التلميذ " + student + " — مدة الغياب المسجلة بلغت " + stage + " يوماً وفق حساب التطبيق. هذا تنبيه للمراجعة فقط، وليس إنشاء وثيقة أو قراراً إدارياً. تحقق من السجلات والتبليغات قبل أي إجراء.";
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(context, "guardian_summons") : new Notification.Builder(context);
         Notification.Builder configured = builder.setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title).setContentText(body)
