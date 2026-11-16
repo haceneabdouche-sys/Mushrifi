@@ -209,10 +209,11 @@ final class LicenseManager {
     }
 
     private static String deviceThumbprint(JSONObject jwk) throws Exception {
-        String canonical = "{\\"crv\\":\\""+jwk.getString("crv")+
-            "\\",\\"kty\\":\\""+jwk.getString("kty")+
-            "\\",\\"x\\":\\""+jwk.getString("x")+
-            "\\",\\"y\\":\\""+jwk.getString("y")+"\\"}";
+        String q = String.valueOf((char) 34);
+        String canonical = "{"+q+"crv"+q+":"+q+jwk.getString("crv")+q+
+            ","+q+"kty"+q+":"+q+jwk.getString("kty")+q+
+            ","+q+"x"+q+":"+q+jwk.getString("x")+q+
+            ","+q+"y"+q+":"+q+jwk.getString("y")+q+"}";
         return hex(MessageDigest.getInstance("SHA-256").digest(canonical.getBytes(StandardCharsets.UTF_8)));
     }
 
