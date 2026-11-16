@@ -92,6 +92,21 @@ footer{padding:24px 12px;color:#71818d}
  .students-table .student-actions .btn,.students-table .student-actions .studentAction{min-height:42px;font-size:13px}
 }
 
+
+/* Arabic student names: keep connected words intact in the students list */
+.students-table td:first-child,
+.students-table td:first-child *{
+  overflow-wrap:normal !important;
+  word-break:normal !important;
+}
+.students-table td:first-child .student-name{
+  display:inline-block;
+  max-width:100%;
+  white-space:normal;
+  line-height:1.7;
+  unicode-bidi:plaintext;
+}
+
 </style>
 </head>
 <body>
