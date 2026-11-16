@@ -244,7 +244,8 @@ footer{padding:24px 12px;color:#71818d}
 <div class="panel"><h2>جدول التوقيت الأسبوعي للأقسام</h2><p class="muted">أدخل مجموع الساعات المقررة لكل يوم. الجمعة والسبت مستبعدان تلقائياً من حساب الساعات الشهرية.</p><form id="scheduleForm"><label>القسم / الشعبة</label><select name="class" id="scheduleClass" required><option value="">اختر القسم</option></select><div class="grid schedule-grid"><div><label>الأحد</label><input name="sun" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الإثنين</label><input name="mon" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الثلاثاء</label><input name="tue" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الأربعاء</label><input name="wed" type="number" min="0" max="12" step="0.5" value="6"></div><div><label>الخميس</label><input name="thu" type="number" min="0" max="12" step="0.5" value="6"></div></div><button class="btn primary" type="submit">حفظ توقيت القسم</button></form><div id="timetableRows"></div></div>
 </div>
 <div class="settings-pane hidden" id="settings-pane-followup" role="tabpanel">
-<div class="panel"><h2>متابعة الغيابات وفق القرار 833</h2><p class="muted">تُحتسب المدة بالأيام التقويمية المتتالية ابتداءً من أول يوم غياب، بما فيها الجمعة والسبت والعطل. تُنشأ وثائق المتابعة في الأيام 4 و11 و18 و32، مع تنبيه خاص يوم الأحد إذا بدأ الغياب يوم الخميس، دون إنشاء الإشعار الأول تلقائياً في هذه الحالة. العودة إلى الدراسة أو ثبوت التبرير يقطع سلسلة الغياب. الوثائق الناتجة مسودات للمراجعة والطباعة، ولا يُتخذ قرار شطب آلي.</p><div id="absenceFollowup" class="followup-list">لا توجد حالات تستوجب المتابعة حالياً.</div></div>
+<div class="panel"><h2>متابعة الغيابات وفق القرار 833</h2><p class="muted">تُحتسب المدة بالأيام التقويمية المتتالية ابتداءً من أول يوم غياب. العطل الأسبوعية والعطل المدرسية التي تضيفها أدناه تبقى ضمن المدة التقويمية، ولا يُطلب تسجيل غياب في أيام العطلة المدرسية المصرح بها. العودة إلى الدراسة أو ثبوت التبرير يقطع سلسلة الغياب. المراحل المعروضة أداة متابعة وليست قراراً قانونياً آلياً؛ راجع النصوص والتعليمات الرسمية قبل اعتماد أي إجراء.</p><div id="absenceFollowup" class="followup-list">لا توجد حالات تستوجب المتابعة حالياً.</div></div>
+<div class="panel"><h2>تقويم العطل المدرسية والاستثنائية</h2><p class="muted">أضف العطل المعتمدة للمؤسسة يدوياً. أيام العطلة لا تتطلب تسجيل غياب، لكنها تبقى محسوبة ضمن المدة التقويمية. كما تُستثنى ساعاتها من مقام حساب نسبة الغياب الشهرية.</p><form id="schoolHolidayForm"><div class="row"><div><label for="schoolHolidayName">اسم العطلة</label><input id="schoolHolidayName" name="name" type="text" maxlength="80" placeholder="مثال: عطلة الشتاء" required></div><div><label for="schoolHolidayStart">من تاريخ</label><input id="schoolHolidayStart" name="start" type="date" required></div><div><label for="schoolHolidayEnd">إلى تاريخ</label><input id="schoolHolidayEnd" name="end" type="date" required></div></div><button class="btn primary" type="submit">إضافة العطلة</button></form><div id="schoolHolidayRows" class="followup-list"></div></div>
 </div>
 <div class="settings-pane hidden" id="settings-pane-rates" role="tabpanel">
 <div class="panel"><div class="row"><div><h2>نسبة الغياب الشهرية حسب القسم</h2><p class="muted">النسبة = مجموع ساعات الغياب ÷ (عدد التلاميذ × الساعات المقررة للقسم خلال الشهر) × 100.</p></div><div><label>الشهر</label><input id="absenceMonth" type="month"></div></div><div id="monthlyAbsenceRates" class="rate-list"></div></div>
@@ -581,6 +582,9 @@ $('#attForm').onsubmit=e=>{
 };
 function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
 function calendarDaysBetween(a,b){return Math.round((dateFromISO(b)-dateFromISO(a))/86400000);}
+const schoolHolidayRanges=()=>Array.isArray(db.settings.schoolHolidays)?db.settings.schoolHolidays:[];
+const isValidISODate=value=>{const v=String(value||'');if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(v))return false;const d=dateFromISO(v);return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===v;};
+function isSchoolHolidayDate(date){return schoolHolidayRanges().some(h=>h&&isValidISODate(h.start)&&isValidISODate(h.end)&&h.start<=date&&date<=h.end);}
 function getUnjustifiedStreaks(){
  // لا تبدأ السلسلة إلا بغياب يوم كامل غير مبرر.
  // يجب وجود غياب يوم كامل في كل يوم دراسة تالٍ؛ الجمعة والسبت والأيام
@@ -622,6 +626,8 @@ function getUnjustifiedStreaks(){
   for(let cursor=dateFromISO(start);;cursor.setDate(cursor.getDate()+1)){
    const date=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0');
    if(date>dateISO())break;
+   // العطلة المدرسية المصرح بها لا تتطلب تسجيل غياب، لكنها تبقى ضمن المدة التقويمية.
+   if(isSchoolHolidayDate(date)){last=date;continue;}
    const weekday=cursor.getDay();
    if(weekday===5||weekday===6){last=date;continue;}
    const scheduled=scheduledHoursForStudentDate(item.student,date);
@@ -672,6 +678,7 @@ window.createAbsenceStageNotice=(id,start,stage)=>{
 };
 function renderAbsenceFollowup(){
  const box=$('#absenceFollowup');if(!box)return;
+ renderSchoolHolidays();
  const items=getUnjustifiedStreaks();
  // عرض المتابعة لا ينشئ وثائق ولا يعدّل السجل الإداري تلقائياً.
  // إنشاء أي وثيقة يبقى بقرار يدوي من المشرف بعد مراجعة الحالة وإثباتات التبليغ.
@@ -688,7 +695,28 @@ function renderAbsenceFollowup(){
   return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام تقويمية</b></p><p class="muted">يُحتسب نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. يجب ضبط العطل الرسمية في توقيت القسم حتى لا تُعامل كيوم دراسة.</p><p>'+stage+'</p>'+special+stage32Blocked+'<div class="actions">'+status+'</div></div>';
  }).join(''):'<p class="empty">لا توجد حالياً حالات غياب متواصل تستوجب المتابعة. ستظهر الحالات عند تسجيل الغياب.</p>';
 }
-function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}
+function renderSchoolHolidays(){
+ const box=$('#schoolHolidayRows');if(!box)return;
+ const rows=schoolHolidayRanges().slice().sort((a,b)=>String(a.start||'').localeCompare(String(b.start||'')));
+ box.innerHTML=rows.length?rows.map(h=>'<div class="followup-card"><h3>'+esc(h.name||'عطلة مدرسية')+'</h3><p>'+esc(h.start||'—')+' إلى '+esc(h.end||'—')+'</p><button type="button" class="btn small danger" onclick="deleteSchoolHoliday(\''+esc(h.id)+'\')">حذف هذه العطلة</button></div>').join(''):'<p class="empty">لم تُضف أي عطلة بعد.</p>';
+}
+window.deleteSchoolHoliday=id=>{
+ const list=schoolHolidayRanges(),index=list.findIndex(h=>String(h.id)===String(id));if(index<0)return;
+ if(!confirm('هل تريد حذف فترة العطلة المحددة؟'))return;
+ const old=list.slice();db.settings.schoolHolidays=list.filter(h=>String(h.id)!==String(id));
+ if(!save())db.settings.schoolHolidays=old;
+};
+$('#schoolHolidayForm').onsubmit=e=>{
+ e.preventDefault();const f=e.currentTarget,name=String(f.elements.name.value||'').trim(),start=String(f.elements.start.value||''),end=String(f.elements.end.value||'');
+ if(!name){alert('أدخل اسم العطلة.');return;}
+ if(!isValidISODate(start)||!isValidISODate(end)){alert('تحقق من تاريخ بداية العطلة ونهايتها.');return;}
+ if(start>end){alert('تاريخ نهاية العطلة يجب ألا يسبق تاريخ بدايتها.');return;}
+ const old=schoolHolidayRanges().slice();if(old.some(h=>h&&h.start===start&&h.end===end&&String(h.name||'')===name)){alert('هذه العطلة مسجلة بالفعل.');return;}
+ db.settings.schoolHolidays=old.concat([{id:crypto.randomUUID(),name,start,end}]);
+ if(!save()){db.settings.schoolHolidays=old;return;}
+ f.reset();alert('تم حفظ فترة العطلة.');
+};
+function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const date=y+'-'+String(m).padStart(2,'0')+'-'+String(day).padStart(2,'0');if(isSchoolHolidayDate(date))continue;const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}
 window.setManualAbsenceRate=(key,cls)=>{
  const raw=prompt('أدخل النسبة الشهرية اليدوية للقسم '+cls+' (%). اتركها فارغة للإلغاء.');if(raw===null)return;db.settings.absenceRateOverrides=db.settings.absenceRateOverrides||{};if(!raw.trim()){delete db.settings.absenceRateOverrides[key];save();return;}const value=Number(raw.replace(',','.'));if(!Number.isFinite(value)||value<0||value>100){alert('أدخل نسبة بين 0 و100.');return;}const old=db.settings.absenceRateOverrides[key];db.settings.absenceRateOverrides[key]={value,updatedAt:dateISO()};if(!save()){if(old===undefined)delete db.settings.absenceRateOverrides[key];else db.settings.absenceRateOverrides[key]=old;}
 };
