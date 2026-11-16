@@ -306,7 +306,26 @@ function refreshStudentSectionOptions(preferred={}){const ys=$("#studentYearSele
 $("#studentYearSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:"",sectionNumber:""}));
 $("#studentBranchSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:$("#studentBranchSelect").value,sectionNumber:""}));
 $("#studentClassSelect")?.addEventListener("change",updateStudentClassValue);
-const save=()=>{let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}try{render();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
+let licenseReadOnly=false;
+const save=()=>{if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}try{render();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
+function applyLicenseAccess(state){
+ licenseReadOnly=!!(state&&state.hasLicense&&!state.activated);
+ document.body.classList.toggle('license-readonly',licenseReadOnly);
+ const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn']);
+ $('form input,form select,form textarea,form button').forEach(el=>{el.disabled=licenseReadOnly;});
+ if(licenseReadOnly){
+  $('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>el.disabled=true);
+  $('button').forEach(el=>{
+   const keep=allowed.has(el.id)||!!el.closest('nav')||el.matches('[data-settings-tab]')||el.getAttribute('onclick')?.includes('window.print')||el.textContent.includes('العودة إلى الصفحة السابقة');
+   el.disabled=!keep;
+  });
+  const importButton=$('#importBackupNative');if(importButton)importButton.disabled=true;
+  const importInput=$('#importData');if(importInput)importInput.disabled=true;
+  const saveSettings=$('#saveSettings');if(saveSettings)saveSettings.disabled=true;
+ }else{
+  $('button').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
+ }
+}
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -892,7 +911,7 @@ window.printDoc=id=>{let d=db.documents.find(x=>x.id===id),s=student(d.student);
 const reportStudentMatches=()=>{const q=$('#reportStudentSearch').value.trim().toLocaleLowerCase('ar');return q?db.students.filter(st=>[st.first,st.last,st.class,st.schoolYear,st.branch].join(' ').toLocaleLowerCase('ar').includes(q)):db.students;};
  $('#makeReport').onclick=()=>{const query=$('#reportStudentSearch').value.trim(),matches=reportStudentMatches();if(query&&!matches.length){alert('لم يتم العثور على تلميذ بهذا البحث.');$('#reportStudentSearch').focus();return;}if(query&&matches.length===1){window.studentHistory(matches[0].id);return;}if(query&&matches.length>1){$('#reportOutput').innerHTML='<h3>اختر التلميذ لفتح ملفه الفردي الكامل</h3><div class="student-search-results">'+matches.map(st=>`<button type="button" class="btn student-report-result" data-student-id="${esc(st.id)}">${esc(st.last)} ${esc(st.first)} – ${esc(studentAcademicLabel(st))}</button>`).join(' ')+'</div>';$('#reportOutput').querySelectorAll('.student-report-result').forEach(btn=>btn.addEventListener('click',()=>window.studentHistory(btn.dataset.studentId)));return;}const ids=query?new Set(matches.map(st=>st.id)):null;let from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!ids||ids.has(x.student))&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>الفترة</th><th>الساعات</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.period||'—')}</td><td>${esc(x.hours??'—')}</td><td>${esc(x.justified||'—')}</td><td>${esc(x.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody>${v.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>السبب</th><th>موعد الحضور</th></tr></thead><tbody>${d.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد وثائق'}`;};
 $('#saveSettings').onclick=()=>{const school=$('#schoolName').value.trim(),location=$('#schoolLocation').value.trim();if(!school){alert('أدخل اسم المؤسسة أولاً.');$('#schoolName').focus();return;}const previous={...db.settings};db.settings.school=school;db.settings.location=location;if(!save()){db.settings=previous;render();return;}alert('تم حفظ إعدادات المؤسسة، وظهرت المعلومات أعلى اسمك وإمضائك.')};
-$('#exportData').onclick=()=>{if(!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
+$('#exportData').onclick=()=>{if(!licenseReadOnly&&!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
 let pendingBackupData=null;
 let pendingBackupInfo=null;
 function showBackupPreview(data,bytes){
@@ -1191,11 +1210,12 @@ render();
 function refreshLicenseStatus(){
  const box=$('#licenseStatusText');if(!box)return;
  if(!window.AndroidBridge||typeof AndroidBridge.getLicenseStatus!=='function'){box.textContent='إدارة الترخيص متاحة في تطبيق Android فقط.';return;}
- try{const state=JSON.parse(AndroidBridge.getLicenseStatus());box.textContent=state.message|| (state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');}
+ try{const state=JSON.parse(AndroidBridge.getLicenseStatus());box.textContent=state.message|| (state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');applyLicenseAccess(state);}
  catch(e){box.textContent='تعذر قراءة حالة الترخيص.';}
 }
 window.onMushrifiLicenseAutoCheck=function(result){
  refreshLicenseStatus();
+ if(result)applyLicenseAccess(result);
  const status=$('#licenseActionStatus');
  if(!status||!result)return;
  if(result.validationError&&!result.activated){
@@ -1208,6 +1228,7 @@ window.onMushrifiLicenseResult=function(callbackId,result){
  const status=$('#licenseActionStatus');if(!status)return;
  status.textContent=result&&result.error?result.error:(result&&result.message?result.message:'اكتملت العملية.');
  refreshLicenseStatus();
+ try{if(window.AndroidBridge&&typeof AndroidBridge.getLicenseStatus==='function')applyLicenseAccess(JSON.parse(AndroidBridge.getLicenseStatus()));}catch(_){}
 };
 $('#activateLicenseBtn')?.addEventListener('click',()=>{
  const code=$('#licenseActivationCode')?.value?.trim()||'';
