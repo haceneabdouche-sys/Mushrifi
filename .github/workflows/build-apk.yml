@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'android/**'
+      - 'tests/**'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 permissions:
