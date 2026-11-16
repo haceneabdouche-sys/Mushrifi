@@ -97,6 +97,26 @@ final class LicenseManager {
         return status(context);
     }
 
+    private static final long DAY_MS = 24L * 60L * 60L * 1000L;
+    private static final long VALIDATION_INTERVAL_MS = 30L * DAY_MS;
+    private static final long CLOCK_SKEW_TOLERANCE_MS = 5L * 60L * 1000L;
+
+    static boolean shouldValidate(Context context) throws Exception {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        String token = prefs.getString("license_token", null);
+        if (token == null) return false;
+        JSONObject payload = verifyAndReadToken(token);
+        long now = System.currentTimeMillis();
+        long lastValidatedAt = payload.optLong("lastValidatedAt", 0);
+        long offlineUntil = payload.optLong("offlineUntil", 0);
+        long expiry = payload.optLong("expiresAt", 0);
+        // Force an online check after a clock rollback or when the signed offline window
+        // has elapsed. This never deletes or modifies the student's local database.
+        if (lastValidatedAt <= 0 || now + CLOCK_SKEW_TOLERANCE_MS < lastValidatedAt) return true;
+        if (offlineUntil <= now || (expiry > 0 && expiry <= now)) return true;
+        return now - lastValidatedAt >= VALIDATION_INTERVAL_MS;
+    }
+
     static JSONObject status(Context context) throws Exception {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String token = prefs.getString("license_token", null);
@@ -106,17 +126,29 @@ final class LicenseManager {
         long starts = payload.optLong("startsAt", 0);
         long expiry = payload.optLong("expiresAt", 0);
         long offlineUntil = payload.optLong("offlineUntil", 0);
+        long lastValidatedAt = payload.optLong("lastValidatedAt", 0);
+        boolean clockRollback = lastValidatedAt > 0 && now + CLOCK_SKEW_TOLERANCE_MS < lastValidatedAt;
         boolean deviceMatches = deviceThumbprint(publicJwk((ECPublicKey) getOrCreateDeviceKey().getPublic()))
             .equals(payload.optString("deviceThumbprint"));
-        boolean active = "active".equals(payload.optString("status")) && deviceMatches &&
+        boolean serverActive = "active".equals(payload.optString("status"));
+        boolean active = serverActive && deviceMatches && !clockRollback &&
             starts <= now && (expiry == 0 || expiry > now) && offlineUntil > now;
+        String message;
+        if (!deviceMatches) message = "مفتاح هذا الهاتف لا يطابق الجهاز المسجل للترخيص.";
+        else if (!serverActive) message = "الترخيص غير نشط. يرجى مراجعة المسؤول.";
+        else if (clockRollback) message = "تاريخ الهاتف أقدم من آخر تحقق آمن. اضبط التاريخ والوقت ثم اتصل بالإنترنت.";
+        else if (starts > now) message = "لم يبدأ سريان الترخيص بعد.";
+        else if (expiry > 0 && expiry <= now) message = "انتهت مدة الترخيص. بياناتك محفوظة ويمكنك تصديرها.";
+        else if (offlineUntil <= now) message = "انتهت مهلة العمل دون اتصال. اتصل بالإنترنت للتحقق من الترخيص.";
+        else message = "الترخيص صالح";
         return new JSONObject()
             .put("activated", active)
             .put("licenseId", payload.optString("licenseId"))
             .put("licenseType", payload.optString("licenseType"))
             .put("expiresAt", expiry)
             .put("offlineUntil", offlineUntil)
-            .put("message", active ? "الترخيص صالح" : "يلزم الاتصال بالخادم للتحقق من الترخيص");
+            .put("lastValidatedAt", lastValidatedAt)
+            .put("message", message);
     }
 
     private static void save(Context context, String token, JSONObject payload) throws Exception {
