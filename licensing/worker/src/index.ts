@@ -173,6 +173,8 @@ async function createChallenge(env: Env, body: Record<string, unknown>): Promise
       licenseId = license.id;
       thumbprint = license.device_thumbprint;
     }
+    // Remove expired one-time challenges opportunistically to keep the D1 table bounded.
+    await env.DB.prepare("DELETE FROM challenges WHERE expires_at <= ?").bind(now).run();
     await env.DB.prepare(
       "INSERT INTO challenges (nonce, purpose, license_id, activation_code_hash, device_thumbprint, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
     ).bind(nonce, purpose, licenseId, codeHash, thumbprint, expires, now).run();
