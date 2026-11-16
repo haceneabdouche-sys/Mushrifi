@@ -120,7 +120,7 @@ final class LicenseManager {
     static JSONObject status(Context context) throws Exception {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String token = prefs.getString("license_token", null);
-        if (token == null) return new JSONObject().put("activated", false).put("message", "لم يتم تفعيل التطبيق");
+        if (token == null) return new JSONObject().put("hasLicense", false).put("activated", false).put("message", "لم يتم تفعيل التطبيق");
         JSONObject payload = verifyAndReadToken(token);
         long now = System.currentTimeMillis();
         long starts = payload.optLong("startsAt", 0);
@@ -142,6 +142,7 @@ final class LicenseManager {
         else if (offlineUntil <= now) message = "انتهت مهلة العمل دون اتصال. اتصل بالإنترنت للتحقق من الترخيص.";
         else message = "الترخيص صالح";
         return new JSONObject()
+            .put("hasLicense", true)
             .put("activated", active)
             .put("licenseId", payload.optString("licenseId"))
             .put("licenseType", payload.optString("licenseType"))
@@ -149,6 +150,16 @@ final class LicenseManager {
             .put("offlineUntil", offlineUntil)
             .put("lastValidatedAt", lastValidatedAt)
             .put("message", message);
+    }
+
+    static boolean canWrite(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (!prefs.contains("license_token")) return true; // Existing installations remain usable until a license is issued.
+        try {
+            return status(context).optBoolean("activated", false);
+        } catch (Exception invalidLicense) {
+            return false; // Fail closed for writes, never delete or overwrite the stored database.
+        }
     }
 
     private static void save(Context context, String token, JSONObject payload) throws Exception {
