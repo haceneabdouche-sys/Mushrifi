@@ -312,18 +312,22 @@ function applyLicenseAccess(state){
  licenseReadOnly=!!(state&&state.hasLicense&&!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
  const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn']);
- $('form input,form select,form textarea,form button').forEach(el=>{el.disabled=licenseReadOnly;});
+ $$('form input,form select,form textarea,form button').forEach(el=>{el.disabled=licenseReadOnly;});
  if(licenseReadOnly){
-  $('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>el.disabled=true);
-  $('button').forEach(el=>{
-   const keep=allowed.has(el.id)||!!el.closest('nav')||el.matches('[data-settings-tab]')||el.getAttribute('onclick')?.includes('window.print')||el.textContent.includes('العودة إلى الصفحة السابقة');
+  $$('select').forEach(el=>{el.disabled=true;});
+  $$('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>el.disabled=true);
+  $$('button').forEach(el=>{
+   const action=el.getAttribute('onclick')||'';
+   const keep=allowed.has(el.id)||!!el.closest('nav')||el.matches('[data-settings-tab],.student-name')||action.includes('studentHistory')||action.includes('window.print')||action.includes('goPreviousPage');
    el.disabled=!keep;
   });
   const importButton=$('#importBackupNative');if(importButton)importButton.disabled=true;
   const importInput=$('#importData');if(importInput)importInput.disabled=true;
   const saveSettings=$('#saveSettings');if(saveSettings)saveSettings.disabled=true;
  }else{
-  $('button').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
+  $$('button').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
+  $$('form input,form select,form textarea').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
+  $$('select').forEach(el=>{if(el.disabled&&!el.hasAttribute('data-native-disabled'))el.disabled=false;});
  }
 }
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
