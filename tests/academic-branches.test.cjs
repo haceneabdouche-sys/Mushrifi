@@ -27,4 +27,11 @@ for(const [full,short] of cases){
 }
 assert.equal(context.canonicalBranch('  ج   م   ع   ت  '),'جذع مشترك علوم وتكنولوجيا','normalize extra spaces in alias');
 assert.equal(context.shortBranch('شعبة غير معروفة'),'شعبة غير معروفة','preserve unknown branch names');
-console.log('Academic branch aliases: '+cases.length+' mappings passed.');
+const labelStart=html.indexOf('function studentAcademicLabel(');
+const labelEnd=html.indexOf('function resetStudentEditor(',labelStart);
+assert.notEqual(labelStart,-1,'student academic label must exist');
+assert.notEqual(labelEnd,-1,'student editor follows academic label');
+vm.runInContext(html.slice(labelStart,labelEnd),context);
+const sample={schoolYear:'أولى',branch:'جذع مشترك علوم وتكنولوجيا',sectionNumber:'1'};
+assert.equal(context.studentAcademicLabel(sample),'أولى — ج م ع ت 1','compact student section code');
+console.log('Academic branch aliases: '+cases.length+' mappings and compact section label passed.');
