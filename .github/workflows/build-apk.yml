@@ -82,6 +82,8 @@ jobs:
         run: node tests/absence-streak.test.cjs
       - name: Run academic branch alias regression tests
         run: node tests/academic-branches.test.cjs
+      - name: Run license read-only and backup safety regression tests
+        run: node tests/license-readonly.test.cjs
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
