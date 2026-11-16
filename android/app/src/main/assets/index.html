@@ -616,15 +616,18 @@ function getUnjustifiedStreaks(){
   const candidates=ordered.filter(([date,event])=>date>lastBreak&&event.fullDayAbsence);
   if(!candidates.length)continue;
   const start=candidates[0][0];
-  const lastRecorded=ordered[ordered.length-1][0];
+  // امتد بالسلسلة حتى اليوم الحالي، لا حتى آخر سجل محفوظ فقط؛
+  // عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص تدخل في المدة التقويمية.
   let last=start;
   for(let cursor=dateFromISO(start);;cursor.setDate(cursor.getDate()+1)){
    const date=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0');
-   if(date>lastRecorded||date>dateISO())break;
+   if(date>dateISO())break;
    const weekday=cursor.getDay();
-   if(weekday===5||weekday===6)continue;
+   if(weekday===5||weekday===6){last=date;continue;}
    const scheduled=scheduledHoursForStudentDate(item.student,date);
-   if(scheduled===0)continue;
+   if(scheduled===0){last=date;continue;}
+   // غياب التوقيت الأسبوعي يجعل التحقق غير ممكن؛ لا نحتسب يوماً غير مثبت.
+   if(scheduled===null)break;
    const event=events.get(date);
    if(!event||event.hasBreak||!event.fullDayAbsence)break;
    last=date;
