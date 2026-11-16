@@ -27,6 +27,11 @@ for(const [full,short] of cases){
 }
 assert.equal(context.canonicalBranch('  ج   م   ع   ت  '),'جذع مشترك علوم وتكنولوجيا','normalize extra spaces in alias');
 assert.equal(context.shortBranch('شعبة غير معروفة'),'شعبة غير معروفة','preserve unknown branch names');
+const partsStart=html.indexOf('function studentAcademicParts(');
+const partsEnd=html.indexOf('function academicStructure(',partsStart);
+assert.notEqual(partsStart,-1,'student academic parser must exist');
+assert.notEqual(partsEnd,-1,'academic structure follows student parser');
+vm.runInContext(html.slice(partsStart,partsEnd),context);
 const labelStart=html.indexOf('function studentAcademicLabel(');
 const labelEnd=html.indexOf('function resetStudentEditor(',labelStart);
 assert.notEqual(labelStart,-1,'student academic label must exist');
