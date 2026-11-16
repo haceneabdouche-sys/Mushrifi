@@ -80,6 +80,8 @@ jobs:
           node --check /tmp/mushrifi-inline.js
       - name: Run absence streak regression tests
         run: node tests/absence-streak.test.cjs
+      - name: Run academic branch alias regression tests
+        run: node tests/academic-branches.test.cjs
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
