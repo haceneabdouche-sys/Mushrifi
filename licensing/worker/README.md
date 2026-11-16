@@ -1,6 +1,17 @@
 # Mushrifi License API (Cloudflare Worker + D1)
 
-This is an isolated backend scaffold. It is not deployed and does not affect the Android application yet.
+## Current development status
+
+The Android client implementation is now present on the isolated `feature/device-license-foundation` branch. It includes:
+
+- A per-installation EC P-256 private key held in Android Keystore.
+- One-time server challenges and device-proof signatures.
+- RSA-SHA256 verification of signed license tokens.
+- AES-256-GCM encryption of the cached signed token using a separate Android Keystore key; legacy plaintext token storage is migrated and removed.
+- A 30-day online validation interval and a signed 37-day offline deadline.
+- Non-destructive read-only behavior after an invalid/expired license or elapsed offline deadline. Student records remain viewable and backup export remains available; restore and write actions are blocked.
+
+**This does not mean the licensing service or release is ready.** The Worker deployment, D1 binding, signing/admin secrets, end-to-end activation, real-device behavior, and Android CI build still require verification. Do not issue customer activation codes or distribute a production APK until these checks pass.
 
 ## Security model
 
@@ -8,18 +19,20 @@ This is an isolated backend scaffold. It is not deployed and does not affect the
 - The app proves possession of the private key by signing a one-time server nonce.
 - Activation codes are stored as SHA-256 hashes and can be used once.
 - License responses are signed by an RSA-SHA256 private key held only as a Worker secret.
-- The Android app will embed only the matching public key and verify signed offline licenses.
+- The APK embeds only the matching RSA public key.
+- Cached signed tokens are encrypted with AES-256-GCM; the AES key is held by Android Keystore.
 - Revalidation is expected every 30 days. Signed licenses carry a 37-day offline deadline (30 + 7 grace).
 - The API never accesses the Mushrifi student database. Expiry/suspension must not delete local app data.
 
 ## Important before deployment
 
-1. Create a Cloudflare account and a D1 database named `mushrifi-licenses`.
-2. Replace the placeholder `database_id` in `wrangler.toml`.
+1. Confirm the Cloudflare account and D1 database named `mushrifi-licenses`.
+2. Verify the D1 database ID in `wrangler.toml` and apply `schema.sql`.
 3. Generate an RSA 2048-bit key pair. Put the base64-encoded PKCS#8 DER private key in the Worker secret `LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64`. Keep the private key outside Git and outside the APK.
 4. Configure `ADMIN_API_TOKEN` as a long random secret using Worker secrets. Never commit either secret.
-5. Keep the matching RSA public key for later embedding in Android. Do not publish the private key.
-6. Apply `schema.sql` to D1, then test locally and in a separate staging Worker before production.
+5. Verify that the public key embedded in `LicenseManager.java` matches the private key configured on the Worker.
+6. Deploy first to a separate staging Worker and verify `GET /health`, activation, validation, suspension, renewal, and expired-license behavior.
+7. Complete Android CI and real-device tests, including offline mode, clock rollback, app restart, reinstall behavior, and backup export before production use.
 
 Example secret commands (run locally in a trusted terminal; do not paste secrets into chat):
 
@@ -41,15 +54,12 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
   - `POST /v1/admin/licenses/{id}/suspend`
   - `POST /v1/admin/licenses/{id}/renew` with `{ "durationDays":365 }`
 
-## Known implementation boundary
+## Remaining validation and hardening
 
-This backend scaffold is not yet wired into the Android WebView. The Android side still needs:
-- Android Keystore P-256 key creation and signing,
-- ECDSA signature format conversion between Android DER and WebCrypto raw format,
-- RSA-SHA256 license-token verification using the pinned public key,
-- secure local storage of the signed token and last trusted server time,
-- a non-destructive read-only/export mode after expiry or the offline grace deadline,
-- a real-device integration and abuse-case test suite.
+- Run the Android build and regression suite; verify the resulting test APK before installation.
+- Complete end-to-end tests on a real Android device with a staging Worker and D1 database.
+- Configure Cloudflare rate limiting and an authenticated owner/admin workflow before public use.
+- Review clock-change behavior and Android Keystore key invalidation/recovery.
+- Confirm the backup export path remains usable in every read-only failure state.
 
-Do not deploy to production or issue customer codes until those client controls and tests exist. Cloudflare rate limiting and an authenticated owner dashboard should also be configured before public use.
-Mushrifi deployment test
+Never deploy to production or issue customer codes until the above checks pass.
