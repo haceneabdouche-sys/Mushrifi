@@ -72,6 +72,26 @@ footer{padding:24px 12px;color:#71818d}
 .settings-pane{min-width:0}.settings-heading{margin-bottom:10px}.settings-heading h2{margin-bottom:5px}
 .settings-pane .panel:first-child{margin-top:0}
 @media(max-width:700px){.settings-tabs{margin-inline:-2px;padding-inline:2px}.settings-tab{padding:10px 12px;font-size:13px}}
+
+/* Students list: readable action controls and responsive student cards */
+.students-table .student-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:7px;align-items:stretch;width:100%;min-width:0}
+.students-table .student-actions .btn,.students-table .student-actions .studentAction{width:100%;min-width:0;max-width:100%;margin:0;white-space:normal;line-height:1.45;text-align:center}
+.students-table .student-actions .studentAction{padding:9px 7px;font-size:12px}
+.students-table .student-actions-cell{min-width:145px}
+@media(max-width:700px){
+ .students-table,.students-table tbody{display:block;width:100%;min-width:0}
+ .students-table thead{display:none}
+ .students-table tr{display:block;width:100%;margin:11px 0;padding:8px 11px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 3px 12px rgba(20,47,73,.05)}
+ .students-table td{display:grid;grid-template-columns:105px minmax(0,1fr);align-items:start;gap:9px;width:100%;min-width:0;padding:9px 2px;border-bottom:1px solid var(--line);white-space:normal;overflow-wrap:anywhere;text-align:right}
+ .students-table td::before{content:attr(data-label);font-weight:700;color:var(--muted);font-size:12px;line-height:1.6}
+ .students-table td:first-child{display:grid}
+ .students-table td:last-child{border-bottom:0}
+ .students-table td.student-actions-cell{display:block;padding-top:11px}
+ .students-table td.student-actions-cell::before{display:block;margin-bottom:8px}
+ .students-table .student-actions{grid-template-columns:1fr;gap:8px}
+ .students-table .student-actions .btn,.students-table .student-actions .studentAction{min-height:42px;font-size:13px}
+}
+
 </style>
 </head>
 <body>
@@ -620,7 +640,7 @@ window.studentHistory=id=>{
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
   const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));
   const statusSummary=items=>`<p>مبررة: <b>${justified(items)}</b> · غير مبررة: <b>${unjustified(items)}</b> · قيد التبرير: <b>${pending(items)}</b></p>`;
-  const attendanceList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الفترة</th><th>عدد الساعات</th><th>حالة التبرير</th><th>ملاحظات</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>{const detected=x.type==='حضور'?'—':x.hours??(parseHours(x.period)!==''?parseHours(x.period):'—');const periodText=parseHours(x.period)!==''?'—':(x.period||'—');return `<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(periodText)}</td><td>${esc(detected)}</td><td>${esc(statusOf(x))}</td><td>${esc(x.notes||'—')}</td></tr>`;}).join('')}</tbody></table></div>`:'<p class="empty">لا توجد سجلات.</p>';
+  const attendanceList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الفترة</th><th>عدد الساعات</th><th>حالة التبرير</th><th>ملاحظات</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>{const detected=x.type==='حضور'?'—':x.hours??(parseHours(x.period)!==''?parseHours(x.period):'—');const periodText=parseHours(x.period)!==''?'—':(x.period||'—');return `<tr><td data-label="الاسم"><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(s.first||'—')}</button></td><td data-label="اللقب">${esc(s.last||'—')}</td><td data-label="المستوى">${esc(p.schoolYear||'—')}</td><td data-label="الشعبة">${esc(p.branch||'—')}</td><td data-label="القسم">${esc(p.sectionNumber||s.class||'—')}</td><td data-label="الصفة">${esc(s.attribute||s.status||'—')}</td><td data-label="تاريخ الميلاد">${esc(s.birthDate||'—')}</td><td data-label="اسم الولي">${esc(s.guardian||'—')}</td><td data-label="رقم الهاتف">${esc(s.phone||'—')}</td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">عرض الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button type="button" class="btn small danger" onclick="delStudent('${s.id}')">حذف البطاقة</button></div></td></tr>`;}).join('')}</tbody></table></div>`:'<p class="empty">لا توجد سجلات.</p>';
   const documentList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.reason||'—')}</td><td>${esc(x.appointment||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد وثائق.</p>';
   go('reports');
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.print()">طباعة الملف</button></div>
