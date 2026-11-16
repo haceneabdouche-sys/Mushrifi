@@ -614,8 +614,10 @@ function getUnjustifiedStreaks(){
   const events=item.events;
   for(const [date,event] of events){
    const scheduled=scheduledHoursForStudentDate(item.student,date);
-   event.fullDayAbsence=!event.hasBreak&&(event.explicitFullDay||
-    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled));
+   // لا نثبت الغياب الكامل إلا في يوم توجد فيه ساعات دراسة فعلية ومعلومة.
+   // حتى اختيار «اليوم كاملاً» لا يكفي إذا كان توقيت القسم غير مضبوط أو اليوم عطلة.
+   event.fullDayAbsence=!event.hasBreak&&scheduled!==null&&scheduled>0&&
+    (event.explicitFullDay||event.unjustifiedHours>=scheduled);
   }
   const ordered=[...events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
@@ -694,7 +696,7 @@ function renderAbsenceFollowup(){
   const special=x.thursdayStart&&x.days>=4&&!noticeExists(x,4)?'<p class="status-warn">بدأ الغياب يوم الخميس: تنبيه خاص يوم الأحد، والإشعار الأول ينتظر مراجعتك.</p>':'';
   const stage32Blocked=x.days>=32&&!canCreateAbsenceStage32(x)?'<p class="status-warn">بلغت مدة المتابعة 32 يوماً، لكن لا يُتاح إجراء الشطب قبل تسجيل تاريخ تبليغ الإعذار وإثباته وانقضاء 14 يوماً كاملة.</p>':'';
   const status=actions|| (reached.length?'<span class="status-ok">وثائق المراحل المعروضة مسجلة بالفعل.</span>':'<span class="status-warn">لم تبلغ الحالة بعد مرحلة إنشاء الوثائق؛ تستمر المتابعة دون إنشاء وثيقة.</span>');
-  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام تقويمية</b></p><p class="muted">يُحتسب نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. يجب ضبط العطل الرسمية في توقيت القسم حتى لا تُعامل كيوم دراسة.</p><p>'+stage+'</p>'+special+stage32Blocked+'<div class="actions">'+status+'</div></div>';
+  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام تقويمية</b></p><p class="muted">المدة المعروضة عدّ تقويمي شامل يبدأ من أول يوم غياب. لا يُثبت يوم الدراسة ضمن السلسلة إلا إذا كان توقيت القسم معروفاً وكانت ساعات اليوم أكبر من صفر. العطل المدرسية التي تسجلها في هذا التقويم لا تتطلب تسجيل غياب.</p><p>'+stage+'</p>'+special+stage32Blocked+'<div class="actions">'+status+'</div></div>';
  }).join(''):'<p class="empty">لا توجد حالياً حالات غياب متواصل تستوجب المتابعة. ستظهر الحالات عند تسجيل الغياب.</p>';
 }
 function renderSchoolHolidays(){
