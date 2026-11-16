@@ -591,17 +591,24 @@ function getUnjustifiedStreaks(){
   const key=String(st.id);
   if(!grouped.has(key))grouped.set(key,{student:st,events:new Map()});
   const item=grouped.get(key),date=String(r.date);
-  if(!item.events.has(date))item.events.set(date,{hasBreak:false,hasUnjustifiedAbsence:false});
+  if(!item.events.has(date))item.events.set(date,{hasBreak:false,hasUnjustifiedAbsence:false,unjustifiedHours:0,explicitFullDay:false});
   const day=item.events.get(date);
   if(r.type==='حضور'||r.type==='تأخر'){day.hasBreak=true;continue;}
   if(r.type!=='غياب')continue;
   if(String(r.justified||'غير مبرر')==='مبرر'){day.hasBreak=true;continue;}
   const hours=Number(parseHours(r.hours))||0;
-  if(hours>0)day.hasUnjustifiedAbsence=true;
+  const period=String(r.period||'').replace(/[\u0640\s]/g,'');
+  if(r.fullDay===true||['اليومكاملاً','اليومكاملا','يومكامل'].includes(period))day.explicitFullDay=true;
+  if(hours>0)day.unjustifiedHours+=hours;
  }
  const today=dateISO(),out=[];
  for(const item of grouped.values()){
   const events=[...item.events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+  for(const [date,event] of events){
+   const scheduled=scheduledHoursForStudentDate(item.student,date);
+   event.hasUnjustifiedAbsence=event.explicitFullDay||
+    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled);
+  }
   let lastBreak='';
   for(const [date,event] of events)if(event.hasBreak)lastBreak=date;
   const activeAbsences=events.filter(([date,event])=>date>lastBreak&&event.hasUnjustifiedAbsence);
