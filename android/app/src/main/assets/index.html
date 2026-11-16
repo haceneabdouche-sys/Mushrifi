@@ -649,13 +649,15 @@ function getUnjustifiedStreaks(){
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
 function noticeExists(streak,stage){return db.documents.some(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===stage);}
+function hasVerifiedAbsenceNoticeDelivery(streak,stage,requiredDays){
+ const notice=db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===Number(stage));
+ const delivered=String(notice?.deliveryDate||'');
+ if(!notice||!String(notice.deliveryProof||'').trim()||!isValidISODate(delivered)||delivered>dateISO())return false;
+ return calendarDaysBetween(delivered,dateISO())>=Number(requiredDays);
+}
 function canCreateAbsenceStage32(streak){
- // مرحلة ما بعد الإعذار لا تظهر قبل اليوم 32 ولا قبل إثبات التبليغ وانقضاء 14 يوماً كاملة.
- if(!streak||Number(streak.days)<32)return false;
- const warning=db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===18);
- const delivered=String(warning?.deliveryDate||'');
- if(!warning||!String(warning.deliveryProof||'').trim()||!isValidISODate(delivered)||delivered>dateISO())return false;
- return calendarDaysBetween(delivered,dateISO())>=14;
+ // لا تتم الإحالة قبل اليوم 32 وانقضاء أسبوعين كاملين من تبليغ الإعذار المثبت.
+ return !!streak&&Number(streak.days)>=32&&hasVerifiedAbsenceNoticeDelivery(streak,18,14);
 }
 function createAbsenceStageNoticeRecord(streak,stage){
  if(noticeExists(streak,stage))return false;
@@ -666,7 +668,7 @@ function createAbsenceStageNoticeRecord(streak,stage){
   18:'بلغت متابعة الغياب اليوم الثامن عشر عند العد الشامل ابتداءً من أول يوم غياب. مسودة إعذار بعد تسجيل الإشعارين السابقين؛ مهلة الأسبوعين تبدأ من تاريخ التبليغ الفعلي المثبت.',
   32:'بلغت المتابعة اليوم الثاني والثلاثين عند العد الشامل، وبعد انقضاء 14 يوماً كاملة من تاريخ تبليغ الإعذار المثبت. هذه إحالة للمراجعة الإدارية وليست قرار شطب آلياً.'
  };
- db.documents.push({id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceStage:stage,deliveryProof:''});
+ db.documents.push({id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceStage:stage,deliveryDate:'',deliveryProof:''});
  return true;
 }
 window.createAbsenceStageNotice=(id,start,stage)=>{
@@ -676,9 +678,9 @@ window.createAbsenceStageNotice=(id,start,stage)=>{
  const requiredDays={4:4,11:11,18:18,32:32}[Number(stage)];
  if(Number(streak.days)<requiredDays){alert('لم تبلغ سلسلة الغياب بعد المدة المطلوبة لهذه المرحلة.');return;}
  if(noticeExists(streak,stage)){alert('سبق تسجيل وثيقة هذه المرحلة لهذا التلميذ.');return;}
- if(stage===11&&!noticeExists(streak,4)){alert('يجب تسجيل الإشعار الأول قبل إنشاء الإشعار الثاني.');return;}
- if(stage===18&&!noticeExists(streak,11)){alert('يجب تسجيل الإشعار الثاني قبل إنشاء الإعذار.');return;}
- if(stage===32&&!canCreateAbsenceStage32(streak)){alert('لا يمكن الانتقال إلى المرحلة التالية قبل بلوغ اليوم 32، وتسجيل تاريخ تبليغ الإعذار وإثباته، وانقضاء 14 يوماً كاملة.');return;}
+ if(stage===11&&(!noticeExists(streak,4)||!hasVerifiedAbsenceNoticeDelivery(streak,4,7))){alert('يجب تسجيل تبليغ الإشعار الأول وإثباته، ثم انقضاء سبعة أيام كاملة قبل الإشعار الثاني.');return;}
+ if(stage===18&&(!noticeExists(streak,11)||!hasVerifiedAbsenceNoticeDelivery(streak,11,7))){alert('يجب تسجيل تبليغ الإشعار الثاني وإثباته، ثم انقضاء سبعة أيام كاملة قبل الإعذار.');return;}
+ if(stage===32&&!canCreateAbsenceStage32(streak)){alert('لا يمكن الإحالة قبل بلوغ اليوم 32، وتسجيل تبليغ الإعذار وإثباته، وانقضاء 14 يوماً كاملة.');return;}
  if(stage===4&&streak.thursdayStart&&streak.days>=4&&dateFromISO(streak.start).getDay()===4){
   alert('هذه حالة غياب بدأت يوم الخميس. تم تنبيهك يوم الأحد، ويمكنك إنشاء الإشعار بعد مراجعة الحالة.');
  }
@@ -697,7 +699,7 @@ function renderAbsenceFollowup(){
  box.innerHTML=items.length?items.map(x=>{
   const labels={4:'الإشعار الأول',11:'الإشعار الثاني',18:'الإعذار',32:'إحالة للمراجعة الإدارية'};
   const reached=[4,11,18,32].filter(n=>x.days>=n);
-  const pending=reached.filter(n=>!noticeExists(x,n)&&(n===4||(n===11&&noticeExists(x,4))||(n===18&&noticeExists(x,11))||(n===32&&noticeExists(x,18)&&canCreateAbsenceStage32(x))));
+  const pending=reached.filter(n=>!noticeExists(x,n)&&(n===4||(n===11&&hasVerifiedAbsenceNoticeDelivery(x,4,7))||(n===18&&hasVerifiedAbsenceNoticeDelivery(x,11,7))||(n===32&&canCreateAbsenceStage32(x))));
   const stage=x.days>=32?'<span class="status-danger">بلغت المتابعة 32 يوماً؛ يلزم التحقق من شروط الإعذار والتبليغ قبل الإحالة للمراجعة الإدارية</span>':x.days>=18?'<span class="status-danger">بلغ مرحلة الإعذار — اليوم 18</span>':x.days>=11?'<span class="status-warn">بلغ مرحلة الإشعار الثاني — اليوم 11</span>':x.days>=4?'<span class="status-warn">بلغ مرحلة الإشعار الأول — اليوم 4</span>':'<span class="status-warn">متابعة الغياب المتواصل</span>';
   const actions=pending.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+labels[n]+'</button>').join(' ');
   const special=x.thursdayStart&&x.days>=4&&!noticeExists(x,4)?'<p class="status-warn">بدأ الغياب يوم الخميس: تنبيه خاص يوم الأحد، والإشعار الأول ينتظر مراجعتك.</p>':'';
@@ -777,16 +779,16 @@ window.editDocument=id=>{
  '<td data-label="الموضوع"><label>الموضوع / السبب</label><textarea id="editDocReason" rows="3">'+esc(d.reason||'')+'</textarea></td>'+
  '<td data-label="موعد الحضور"><label>موعد حضور الولي</label><input id="editDocAppointment" type="datetime-local" value="'+esc(d.appointment||'')+'"></td>'+
  '<td data-label="موعد التنبيه"><label>تاريخ وساعة التنبيه</label><input id="editDocReminder" type="datetime-local" value="'+esc(String(d.reminderAt||'').slice(0,16))+'"><small class="muted">يُستخدم للاستدعاء فقط؛ اتركه فارغاً للوثائق الأخرى.</small></td>'+
- (Number(d.absenceStage)===18?'<td data-label="إثبات تبليغ الإعذار"><label>تاريخ تبليغ الإعذار</label><input id="editDeliveryDate" type="date" value="'+esc(d.deliveryDate||'')+'"><label>إثبات التبليغ</label><textarea id="editDeliveryProof" rows="2" placeholder="رقم وصل البريد أو مرجع محضر التبليغ">'+esc(d.deliveryProof||'')+'</textarea></td>':'')+
+ ([4,11,18].includes(Number(d.absenceStage))?'<td data-label="إثبات التبليغ"><label>تاريخ التبليغ الفعلي</label><input id="editDeliveryDate" type="date" value="'+esc(d.deliveryDate||'')+'"><label>إثبات التبليغ</label><textarea id="editDeliveryProof" rows="2" placeholder="رقم وصل البريد أو مرجع محضر التبليغ">'+esc(d.deliveryProof||'')+'</textarea><small class="muted">يلزم إدخال التاريخ والإثبات معاً لفتح المرحلة التالية.</small></td>':'')+
  '<td data-label="الصورة">'+(d.photo?'<span class="muted">الصورة الحالية محفوظة</span>':'—')+'</td>'+
  '<td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="saveDocumentEdit(\''+id+'\')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td>';
 };
 window.saveDocumentEdit=id=>{
  const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;
- const before={...d},date=$('#editDocDate').value,studentId=$('#editDocStudent').value,type=$('#editDocType').value,reason=$('#editDocReason').value.trim(),appointment=$('#editDocAppointment').value,reminderAt=$('#editDocReminder').value,deliveryDate=Number(d.absenceStage)===18?$('#editDeliveryDate').value:d.deliveryDate,deliveryProof=Number(d.absenceStage)===18?$('#editDeliveryProof').value.trim():d.deliveryProof;
- if(!date||!studentId||!reason){alert('يرجى تحديد التاريخ والتلميذ وكتابة الموضوع أو السبب.');return;}
+ const before={...d},date=$('#editDocDate').value,studentId=$('#editDocStudent').value,type=$('#editDocType').value,reason=$('#editDocReason').value.trim(),appointment=$('#editDocAppointment').value,reminderAt=$('#editDocReminder').value,hasDeliveryFields=[4,11,18].includes(Number(d.absenceStage)),deliveryDate=hasDeliveryFields?$('#editDeliveryDate').value:d.deliveryDate,deliveryProof=hasDeliveryFields?$('#editDeliveryProof').value.trim():d.deliveryProof;
+ if(!date||!studentId||!reason){alert('يرجى تحديد التاريخ والتلميذ وكتابة الموضوع أو السبب.');return;}if(hasDeliveryFields&&(deliveryDate||deliveryProof)&&(!deliveryDate||!deliveryProof||!isValidISODate(deliveryDate)||deliveryDate>dateISO())){alert('أدخل تاريخ التبليغ الصحيح وإثباته معاً، ولا يمكن أن يكون التاريخ مستقبلياً.');return;}
  if(type==='استدعاء ولي'){if(!appointment||!reminderAt){alert('يرجى تحديد موعد حضور الولي وتاريخ وساعة التنبيه للاستدعاء.');return;}const appointmentMs=new Date(appointment).getTime(),reminderMs=new Date(reminderAt).getTime();if(!Number.isFinite(appointmentMs)||!Number.isFinite(reminderMs)){alert('تحقق من موعد الحضور والتنبيه.');return;}}
- d.date=date;d.student=studentId;d.type=type;d.reason=reason;d.appointment=type==='استدعاء ولي'?appointment:'';d.reminderAt=type==='استدعاء ولي'?reminderAt:'';if(Number(d.absenceStage)===18){d.deliveryDate=deliveryDate;d.deliveryProof=deliveryProof;}
+ d.date=date;d.student=studentId;d.type=type;d.reason=reason;d.appointment=type==='استدعاء ولي'?appointment:'';d.reminderAt=type==='استدعاء ولي'?reminderAt:'';if(hasDeliveryFields){d.deliveryDate=deliveryDate;d.deliveryProof=deliveryProof;}
  if(!save()){Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,before);render();return;}
  if(window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));
  if(d.type==='استدعاء ولي'&&d.reminderAt&&new Date(d.reminderAt).getTime()>Date.now())scheduleSummonsReminder(d);
