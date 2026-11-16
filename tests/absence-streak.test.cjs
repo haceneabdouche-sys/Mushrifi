@@ -80,6 +80,17 @@ vm.createContext(ctx);vm.runInContext(source,ctx);
 const dateValidationSource=String.raw`function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
 const isValidISODate=value=>{const v=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split('-').map(Number),date=dateFromISO(v);return Number.isFinite(date.getTime())&&date.getFullYear()===y&&date.getMonth()===m-1&&date.getDate()===d;};`;
 vm.runInContext(dateValidationSource,ctx);
+ctx.calendarDaysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000);
+const deliveryGateSource=String.raw`function hasVerifiedAbsenceNoticeDelivery(streak,stage,requiredDays){
+ const notice=db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===Number(stage));
+ const delivered=String(notice?.deliveryDate||'');
+ if(!notice||!String(notice.deliveryProof||'').trim()||!isValidISODate(delivered)||delivered>dateISO())return false;
+ return calendarDaysBetween(delivered,dateISO())>=Number(requiredDays);
+}
+function canCreateAbsenceStage32(streak){
+ return !!streak&&Number(streak.days)>=32&&hasVerifiedAbsenceNoticeDelivery(streak,18,14);
+}`;
+vm.runInContext(deliveryGateSource,ctx);
 function run(rows,hs=[],sc={}){ctx.db.attendance=rows.map((x,i)=>({id:String(i),student:'student-1',type:'غياب',justified:'غير مبرر',hours:6,...x}));holidays=hs;schedule=sc;return JSON.parse(JSON.stringify(ctx.getUnjustifiedStreaks()));}
 function absence(date,extra={}){return {date,...extra};}
 function test(name,fn){try{fn();console.log('PASS',name)}catch(e){console.error('FAIL',name,e.message);process.exitCode=1;}}
@@ -96,3 +107,11 @@ test('invalid calendar day is rejected',()=>{assert.equal(vm.runInContext("isVal
 test('invalid month is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('2026-13-01')",ctx),false);});
 test('non-ISO date format is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('18/11/2026')",ctx),false);});
 test('empty holiday date is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('')",ctx),false);});
+function setNotice(stage,deliveryDate,deliveryProof='وصل تبليغ رقم 1'){ctx.db.documents=[{student:'student-1',absenceStart:'2026-11-01',absenceStage:stage,deliveryDate,deliveryProof}];}
+const streak={student:st,start:'2026-11-01',days:18};
+test('second notice waits seven days after verified first delivery',()=>{setNotice(4,'2026-11-11');assert.equal(vm.runInContext("hasVerifiedAbsenceNoticeDelivery(streak,4,7)",Object.assign(ctx,{streak})),true);});
+test('second notice is blocked before seven full days',()=>{setNotice(4,'2026-11-12');assert.equal(vm.runInContext("hasVerifiedAbsenceNoticeDelivery(streak,4,7)",Object.assign(ctx,{streak})),false);});
+test('delivery without proof is rejected',()=>{setNotice(4,'2026-11-11','');assert.equal(vm.runInContext("hasVerifiedAbsenceNoticeDelivery(streak,4,7)",Object.assign(ctx,{streak})),false);});
+test('future delivery date is rejected',()=>{setNotice(4,'2026-11-19');assert.equal(vm.runInContext("hasVerifiedAbsenceNoticeDelivery(streak,4,7)",Object.assign(ctx,{streak})),false);});
+test('stage 32 requires day 32 and fourteen full days after warning delivery',()=>{setNotice(18,'2026-11-04');assert.equal(vm.runInContext("canCreateAbsenceStage32(streak)",Object.assign(ctx,{streak:{...streak,days:32}})),true);});
+test('stage 32 is blocked on day 31 even if warning period elapsed',()=>{setNotice(18,'2026-11-04');assert.equal(vm.runInContext("canCreateAbsenceStage32(streak)",Object.assign(ctx,{streak:{...streak,days:31}})),false);});
