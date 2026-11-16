@@ -352,6 +352,30 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         rescheduleStoredReminders();
+        checkLicenseWhenDue();
+    }
+
+    private void checkLicenseWhenDue() {
+        licenseExecutor.execute(() -> {
+            org.json.JSONObject result;
+            try {
+                if (!LicenseManager.shouldValidate(MainActivity.this)) return;
+                result = LicenseManager.validate(MainActivity.this);
+            } catch (Exception error) {
+                try {
+                    result = LicenseManager.status(MainActivity.this);
+                    result.put("validationError", error.getMessage() == null ? "تعذر التحقق من الترخيص" : error.getMessage());
+                } catch (Exception statusError) {
+                    result = new org.json.JSONObject();
+                    try {
+                        result.put("activated", false)
+                            .put("message", statusError.getMessage() == null ? "تعذر قراءة حالة الترخيص" : statusError.getMessage());
+                    } catch (Exception ignored) {}
+                }
+            }
+            String script = "window.onMushrifiLicenseAutoCheck && window.onMushrifiLicenseAutoCheck(" + result.toString() + ");";
+            runOnUiThread(() -> { if (web != null) web.evaluateJavascript(script, null); });
+        });
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
