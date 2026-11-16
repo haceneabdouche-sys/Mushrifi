@@ -735,15 +735,16 @@ window.editDocument=id=>{
  '<td data-label="الموضوع"><label>الموضوع / السبب</label><textarea id="editDocReason" rows="3">'+esc(d.reason||'')+'</textarea></td>'+
  '<td data-label="موعد الحضور"><label>موعد حضور الولي</label><input id="editDocAppointment" type="datetime-local" value="'+esc(d.appointment||'')+'"></td>'+
  '<td data-label="موعد التنبيه"><label>تاريخ وساعة التنبيه</label><input id="editDocReminder" type="datetime-local" value="'+esc(String(d.reminderAt||'').slice(0,16))+'"><small class="muted">يُستخدم للاستدعاء فقط؛ اتركه فارغاً للوثائق الأخرى.</small></td>'+
+ (Number(d.absenceStage)===18?'<td data-label="إثبات تبليغ الإعذار"><label>تاريخ تبليغ الإعذار</label><input id="editDeliveryDate" type="date" value="'+esc(d.deliveryDate||'')+'"><label>إثبات التبليغ</label><textarea id="editDeliveryProof" rows="2" placeholder="رقم وصل البريد أو مرجع محضر التبليغ">'+esc(d.deliveryProof||'')+'</textarea></td>':'')+
  '<td data-label="الصورة">'+(d.photo?'<span class="muted">الصورة الحالية محفوظة</span>':'—')+'</td>'+
  '<td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="saveDocumentEdit(\''+id+'\')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td>';
 };
 window.saveDocumentEdit=id=>{
  const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;
- const before={...d},date=$('#editDocDate').value,studentId=$('#editDocStudent').value,type=$('#editDocType').value,reason=$('#editDocReason').value.trim(),appointment=$('#editDocAppointment').value,reminderAt=$('#editDocReminder').value;
+ const before={...d},date=$('#editDocDate').value,studentId=$('#editDocStudent').value,type=$('#editDocType').value,reason=$('#editDocReason').value.trim(),appointment=$('#editDocAppointment').value,reminderAt=$('#editDocReminder').value,deliveryDate=Number(d.absenceStage)===18?$('#editDeliveryDate').value:d.deliveryDate,deliveryProof=Number(d.absenceStage)===18?$('#editDeliveryProof').value.trim():d.deliveryProof;
  if(!date||!studentId||!reason){alert('يرجى تحديد التاريخ والتلميذ وكتابة الموضوع أو السبب.');return;}
  if(type==='استدعاء ولي'){if(!appointment||!reminderAt){alert('يرجى تحديد موعد حضور الولي وتاريخ وساعة التنبيه للاستدعاء.');return;}const appointmentMs=new Date(appointment).getTime(),reminderMs=new Date(reminderAt).getTime();if(!Number.isFinite(appointmentMs)||!Number.isFinite(reminderMs)){alert('تحقق من موعد الحضور والتنبيه.');return;}}
- d.date=date;d.student=studentId;d.type=type;d.reason=reason;d.appointment=type==='استدعاء ولي'?appointment:'';d.reminderAt=type==='استدعاء ولي'?reminderAt:'';
+ d.date=date;d.student=studentId;d.type=type;d.reason=reason;d.appointment=type==='استدعاء ولي'?appointment:'';d.reminderAt=type==='استدعاء ولي'?reminderAt:'';if(Number(d.absenceStage)===18){d.deliveryDate=deliveryDate;d.deliveryProof=deliveryProof;}
  if(!save()){Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,before);render();return;}
  if(window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));
  if(d.type==='استدعاء ولي'&&d.reminderAt&&new Date(d.reminderAt).getTime()>Date.now())scheduleSummonsReminder(d);
