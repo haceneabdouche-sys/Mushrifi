@@ -1194,6 +1194,16 @@ function refreshLicenseStatus(){
  try{const state=JSON.parse(AndroidBridge.getLicenseStatus());box.textContent=state.message|| (state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');}
  catch(e){box.textContent='تعذر قراءة حالة الترخيص.';}
 }
+window.onMushrifiLicenseAutoCheck=function(result){
+ refreshLicenseStatus();
+ const status=$('#licenseActionStatus');
+ if(!status||!result)return;
+ if(result.validationError&&!result.activated){
+  status.textContent=result.message||'تعذر الاتصال للتحقق من الترخيص. ستبقى بياناتك محفوظة.';
+ }else if(result.activated){
+  status.textContent='تم التحقق من الترخيص بنجاح.';
+ }
+};
 window.onMushrifiLicenseResult=function(callbackId,result){
  const status=$('#licenseActionStatus');if(!status)return;
  status.textContent=result&&result.error?result.error:(result&&result.message?result.message:'اكتملت العملية.');
