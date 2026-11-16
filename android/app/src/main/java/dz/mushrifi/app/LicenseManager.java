@@ -93,8 +93,10 @@ final class LicenseManager {
             .put("signature", signNonce(pair, nonce)));
         String token = response.getString("license");
         JSONObject payload = verifyAndReadToken(token);
-        if (!"active".equals(payload.optString("status")))
-            throw new Exception("الترخيص غير نشط");
+        String currentThumbprint = deviceThumbprint(publicJwk((ECPublicKey) pair.getPublic()));
+        if (!"active".equals(payload.optString("status")) ||
+            !currentThumbprint.equals(payload.optString("deviceThumbprint")))
+            throw new Exception("الترخيص غير نشط أو لا يخص هذا الهاتف");
         save(context, token, payload);
         return status(context);
     }
