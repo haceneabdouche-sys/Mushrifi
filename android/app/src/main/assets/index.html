@@ -582,8 +582,10 @@ $('#attForm').onsubmit=e=>{
 function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
 function calendarDaysBetween(a,b){return Math.round((dateFromISO(b)-dateFromISO(a))/86400000);}
 function getUnjustifiedStreaks(){
- // الغياب المستمر: آخر واقعة غير مبررة تظل مفتوحة حتى تسجيل حضور/تأخر أو تبرير.
- // لا نشترط وجود سجل في الجمعة والسبت أو العطل؛ تُحسب كلها ضمن الأيام التقويمية.
+ // لا تبدأ السلسلة إلا بغياب يوم كامل غير مبرر.
+ // يجب وجود غياب يوم كامل في كل يوم دراسة تالٍ؛ الجمعة والسبت والأيام
+ // التي لا توجد فيها ساعات مبرمجة لا تتطلب سجلاً، لكنها تدخل في المدة التقويمية.
+ // الحضور أو التأخر أو التبرير يقطع السلسلة، وله الأولوية داخل اليوم نفسه.
  const grouped=new Map();
  for(const r of db.attendance){
   if(!r.date||String(r.date)>dateISO())continue;
@@ -591,7 +593,7 @@ function getUnjustifiedStreaks(){
   const key=String(st.id);
   if(!grouped.has(key))grouped.set(key,{student:st,events:new Map()});
   const item=grouped.get(key),date=String(r.date);
-  if(!item.events.has(date))item.events.set(date,{hasBreak:false,hasUnjustifiedAbsence:false,unjustifiedHours:0,explicitFullDay:false});
+  if(!item.events.has(date))item.events.set(date,{hasBreak:false,unjustifiedHours:0,explicitFullDay:false});
   const day=item.events.get(date);
   if(r.type==='حضور'||r.type==='تأخر'){day.hasBreak=true;continue;}
   if(r.type!=='غياب')continue;
@@ -601,22 +603,34 @@ function getUnjustifiedStreaks(){
   if(r.fullDay===true||['اليومكاملاً','اليومكاملا','يومكامل'].includes(period))day.explicitFullDay=true;
   if(hours>0)day.unjustifiedHours+=hours;
  }
- const today=dateISO(),out=[];
+ const out=[];
  for(const item of grouped.values()){
-  const events=[...item.events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+  const events=item.events;
   for(const [date,event] of events){
    const scheduled=scheduledHoursForStudentDate(item.student,date);
-   event.hasUnjustifiedAbsence=event.explicitFullDay||
-    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled);
+   event.fullDayAbsence=!event.hasBreak&&(event.explicitFullDay||
+    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled));
   }
-  let lastBreak='';
-  for(const [date,event] of events)if(event.hasBreak)lastBreak=date;
-  const activeAbsences=events.filter(([date,event])=>date>lastBreak&&event.hasUnjustifiedAbsence);
-  if(!activeAbsences.length)continue;
-  const first=activeAbsences[0][0],last=activeAbsences[activeAbsences.length-1][0];
-  // اليوم الحالي يدخل في الحساب حتى قبل تسجيل غياب اليوم، ما دامت آخر حالة مسجلة غياباً ولم يُسجل رجوع أو تبرير.
-  const days=Math.max(1,calendarDaysBetween(first,today)+1);
-  out.push({student:item.student,start:first,last,days,thursdayStart:dateFromISO(first).getDay()===4});
+  const ordered=[...events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+  const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
+  const candidates=ordered.filter(([date,event])=>date>lastBreak&&event.fullDayAbsence);
+  if(!candidates.length)continue;
+  const start=candidates[0][0];
+  const lastRecorded=ordered[ordered.length-1][0];
+  let last=start;
+  for(let cursor=dateFromISO(start);;cursor.setDate(cursor.getDate()+1)){
+   const date=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0');
+   if(date>lastRecorded||date>dateISO())break;
+   const weekday=cursor.getDay();
+   if(weekday===5||weekday===6)continue;
+   const scheduled=scheduledHoursForStudentDate(item.student,date);
+   if(scheduled===0)continue;
+   const event=events.get(date);
+   if(!event||event.hasBreak||!event.fullDayAbsence)break;
+   last=date;
+  }
+  const days=Math.max(1,calendarDaysBetween(start,last)+1);
+  out.push({student:item.student,start,last,days,thursdayStart:dateFromISO(start).getDay()===4});
  }
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
