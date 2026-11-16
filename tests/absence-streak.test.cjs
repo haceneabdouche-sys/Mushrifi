@@ -77,6 +77,9 @@ const ctx={
  calendarDaysBetween:(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/86400000)
 };
 vm.createContext(ctx);vm.runInContext(source,ctx);
+const dateValidationSource=String.raw`function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
+const isValidISODate=value=>{const v=String(value||'');if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(v))return false;const [y,m,d]=v.split('-').map(Number),date=dateFromISO(v);return Number.isFinite(date.getTime())&&date.getFullYear()===y&&date.getMonth()===m-1&&date.getDate()===d;};`;
+vm.runInContext(dateValidationSource,ctx);
 function run(rows,hs=[],sc={}){ctx.db.attendance=rows.map((x,i)=>({id:String(i),student:'student-1',type:'غياب',justified:'غير مبرر',hours:6,...x}));holidays=hs;schedule=sc;return JSON.parse(JSON.stringify(ctx.getUnjustifiedStreaks()));}
 function absence(date,extra={}){return {date,...extra};}
 function test(name,fn){try{fn();console.log('PASS',name)}catch(e){console.error('FAIL',name,e.message);process.exitCode=1;}}
@@ -88,3 +91,8 @@ test('missing timetable prevents extending a streak beyond an unknown school day
 test('new active streak after an unrecorded weekday gap is found',()=>{const x=run([absence('2026-11-16'),absence('2026-11-18')]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-18');assert.equal(x[0].days,1);});
 test('full-day flag is ignored when timetable has zero hours',()=>{const x=run([absence('2026-11-18',{fullDay:true})],[],{'2026-11-18':0});assert.equal(x.length,0);});
 test('justified absence breaks the streak',()=>{const x=run([absence('2026-11-16'),absence('2026-11-17',{justified:'مبرر'}),absence('2026-11-18')]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-18');});
+test('valid ISO calendar date is accepted',()=>{assert.equal(vm.runInContext("isValidISODate('2026-11-18')",ctx),true);});
+test('invalid calendar day is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('2026-02-30')",ctx),false);});
+test('invalid month is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('2026-13-01')",ctx),false);});
+test('non-ISO date format is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('18/11/2026')",ctx),false);});
+test('empty holiday date is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('')",ctx),false);});
