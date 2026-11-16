@@ -635,6 +635,13 @@ function getUnjustifiedStreaks(){
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
 function noticeExists(streak,stage){return db.documents.some(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===stage);}
+function canCreateAbsenceStage32(streak){
+ // لا يُسمح بمرحلة الشطب اعتماداً على عدد أيام الغياب وحده.
+ // يلزم وجود إعذار المرحلة الثالثة مع تاريخ تبليغ وإثبات، وانقضاء 14 يوماً كاملة.
+ const warning=db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===18);
+ if(!warning||!String(warning.deliveryProof||'').trim()||!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(warning.deliveryDate||'')))return false;
+ return calendarDaysBetween(String(warning.deliveryDate),dateISO())>=14;
+}
 function createAbsenceStageNoticeRecord(streak,stage){
  if(noticeExists(streak,stage))return false;
  const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار بسبب الغياب',32:'إشعار بالشطب'};
@@ -651,6 +658,7 @@ window.createAbsenceStageNotice=(id,start,stage)=>{
  const streak=getUnjustifiedStreaks().find(x=>String(x.student.id)===String(id)&&x.start===start);
  if(!streak){alert('انقطعت سلسلة الغياب المتتالي أو لم تعد الحالة مستوفية للشروط.');return;}
  if(noticeExists(streak,stage)){alert('سبق تسجيل وثيقة هذه المرحلة لهذا التلميذ.');return;}
+ if(stage===32&&!canCreateAbsenceStage32(streak)){alert('لا يمكن إعداد إشعار الشطب الآن. يجب تسجيل تاريخ تبليغ الإعذار وإثباته، ثم انقضاء 14 يوماً كاملة.');return;}
  if(stage===4&&streak.thursdayStart&&streak.days>=4&&dateFromISO(streak.start).getDay()===4){
   alert('هذه حالة غياب بدأت يوم الخميس. تم تنبيهك يوم الأحد، ويمكنك إنشاء الإشعار بعد مراجعة الحالة.');
  }
@@ -664,22 +672,17 @@ function renderAbsenceFollowup(){
  const items=getUnjustifiedStreaks();
  // عرض المتابعة لا ينشئ وثائق ولا يعدّل السجل الإداري تلقائياً.
  // إنشاء أي وثيقة يبقى بقرار يدوي من المشرف بعد مراجعة الحالة وإثباتات التبليغ.
- if(window.AndroidBridge&&typeof AndroidBridge.notifyAbsenceStage==='function'){
-  items.forEach(x=>{
-   [4,11,18,32].filter(stage=>x.days>=stage).forEach(stage=>{
-    AndroidBridge.notifyAbsenceStage(String(x.student.id),String((x.student.last+' '+x.student.first).trim()),stage,x.start);
-   });
-  });
- }
+ // لا تُرسل تنبيهات مراحل تلقائية قبل ربطها بإثباتات التبليغ الفعلية.
  box.innerHTML=items.length?items.map(x=>{
   const labels={4:'الإشعار الأول',11:'الإشعار الثاني',18:'الإعذار',32:'الإشعار بالشطب'};
   const reached=[4,11,18,32].filter(n=>x.days>=n);
-  const pending=reached.filter(n=>!noticeExists(x,n));
+  const pending=reached.filter(n=>!noticeExists(x,n)&&(n!==32||canCreateAbsenceStage32(x)));
   const stage=x.days>=32?'<span class="status-danger">بلغ اليوم 32: إشعار بالشطب</span>':x.days>=18?'<span class="status-danger">بلغ مرحلة الإعذار — اليوم 18</span>':x.days>=11?'<span class="status-warn">بلغ مرحلة الإشعار الثاني — اليوم 11</span>':x.days>=4?'<span class="status-warn">بلغ مرحلة الإشعار الأول — اليوم 4</span>':'<span class="status-warn">متابعة الغياب المتواصل</span>';
   const actions=pending.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+labels[n]+'</button>').join(' ');
   const special=x.thursdayStart&&x.days>=4&&!noticeExists(x,4)?'<p class="status-warn">بدأ الغياب يوم الخميس: تنبيه خاص يوم الأحد، والإشعار الأول ينتظر مراجعتك.</p>':'';
-  const status=actions|| (reached.length?'<span class="status-ok">وثائق المراحل المعروضة مسجلة بالفعل.</span>':'<span class="status-warn">لم تبلغ الحالة بعد مرحلة إنشاء الوثائق؛ تستمر المتابعة دون إنشاء وثيقة.</span>');
-  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام متتالية (بما فيها العطل)</b></p><p>'+stage+'</p>'+special+'<div class="actions">'+status+'</div></div>';
+  const stage32Blocked=x.days>=32&&!canCreateAbsenceStage32(x)?'<p class="status-warn">بلغت مدة المتابعة 32 يوماً، لكن لا يُتاح إجراء الشطب قبل تسجيل تاريخ تبليغ الإعذار وإثباته وانقضاء 14 يوماً كاملة.</p>':'';
+  const status=actions|| (stage32Blocked|| (reached.length?'<span class="status-ok">وثائق المراحل المعروضة مسجلة بالفعل.</span>':'<span class="status-warn">لم تبلغ الحالة بعد مرحلة إنشاء الوثائق؛ تستمر المتابعة دون إنشاء وثيقة.</span>'));
+  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام متتالية (بما فيها العطل)</b></p><p>'+stage+'</p>'+special+stage32Blocked+'<div class="actions">'+status+'</div></div>';
  }).join(''):'<p class="empty">لا توجد حالياً حالات غياب متواصل تستوجب المتابعة. ستظهر الحالات عند تسجيل الغياب.</p>';
 }
 function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}
