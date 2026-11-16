@@ -107,6 +107,32 @@ footer{padding:24px 12px;color:#71818d}
   unicode-bidi:plaintext;
 }
 
+
+
+/* Keep Arabic student fields readable on narrow Android screens */
+.students-table td,
+.students-table td *{
+  overflow-wrap:normal !important;
+  word-break:normal !important;
+  hyphens:none !important;
+}
+.students-table td{
+  white-space:normal !important;
+  direction:rtl;
+  unicode-bidi:plaintext;
+}
+@media(max-width:700px){
+  .students-table td{
+    grid-template-columns:105px minmax(0,1fr);
+    overflow-wrap:normal !important;
+    word-break:normal !important;
+  }
+  .students-table td::before{
+    white-space:normal;
+    word-break:normal;
+    overflow-wrap:normal;
+  }
+}
 </style>
 </head>
 <body>
