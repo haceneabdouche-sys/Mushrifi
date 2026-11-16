@@ -216,7 +216,7 @@ footer{padding:24px 12px;color:#71818d}
  <div class="row"><div><label>الفترة</label><select id="dailyPeriod"><option>الفترة الصباحية</option><option>الفترة المسائية</option><option>اليوم كاملاً</option></select></div><div><label>عدد الساعات للمحددين</label><input id="dailyHours" type="number" min="0.25" max="24" step="0.25" value="1"><small class="muted">عند تغييرها تُطبّق على التلاميذ المحددين فقط.</small></div><div><label>حالة التبرير الافتراضية</label><select id="dailyJustified"><option>غير مبرر</option><option>قيد التبرير</option><option>مبرر</option></select></div></div>
  <button class="btn primary" id="loadDailyRoster" type="button">عرض قائمة القسم</button><div id="dailyRosterTools" class="row hidden"><div><label>بحث عن تلميذ</label><input id="dailyRosterSearch" type="search" placeholder="اكتب اسم التلميذ للعثور عليه"></div><div class="actions"><button class="btn small" id="selectAllAbsent" type="button">تحديد الكل</button><button class="btn small" id="clearAllAbsent" type="button">إلغاء التحديد</button></div></div><div id="dailyRoster" class="daily-roster empty">اختر القسم لعرض قائمة التلاميذ.</div><div class="actions"><button class="btn primary" id="saveDailyAbsences" type="button" disabled>حفظ كشف الحضور والغياب</button><span class="muted" id="dailyRosterCount"></span></div></div>
  <div class="panel"><h2>تسجيل حالة فردية</h2><form id="attForm"><label>بحث عن تلميذ</label><input id="attStudentSearch" type="search" placeholder="اكتب اسم التلميذ أو القسم للبحث"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type" id="attType"><option value="غياب">غياب</option><option value="تأخر">تأخر</option><option value="حضور">حضور</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div>
- <div class="row"><div><label>الفترة / التوقيت</label><input name="period" placeholder="الفترة الصباحية أو 08:15"></div><div id="absenceHoursField"><label>عدد ساعات الغياب</label><input name="hours" type="number" min="0.25" max="24" step="0.25" placeholder="مثال: 2 أو 7.5"></div><div id="lateMinutesField" class="hidden"><label>مدة التأخر بالدقائق</label><input name="minutes" type="number" min="1" max="600" step="1" placeholder="مثال: 15"></div></div>
+ <div class="row"><div><label>الفترة</label><select name="period" id="attPeriod"><option value="الفترة الصباحية">الفترة الصباحية</option><option value="الفترة المسائية">الفترة المسائية</option><option value="اليوم كاملاً">اليوم كاملاً</option><option value="توقيت آخر">توقيت آخر</option></select><input name="periodCustom" id="attPeriodCustom" class="hidden" placeholder="أدخل التوقيت أو الفترة"></div><div id="absenceHoursField"><label>عدد ساعات الغياب</label><input name="hours" id="attHours" type="number" min="0.25" max="24" step="0.25" placeholder="مثال: 2 أو 7.5"></div><div id="lateMinutesField" class="hidden"><label>مدة التأخر بالدقائق</label><input name="minutes" type="number" min="1" max="600" step="1" placeholder="مثال: 15"></div></div>
  <div class="row"><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>قيد التبرير</option><option>مبرر</option></select></div><div><label>ملاحظات</label><input name="notes" placeholder="سبب الغياب أو التأخر أو ملاحظة"></div></div><button class="btn primary" type="submit">حفظ الحالة</button></form></div>
  <details class="panel attendance-log" open><summary><strong>سجل الغيابات والتأخرات</strong> <span class="pill" id="attLogCount">0 سجل</span> <span class="muted">يمكن تعديل الساعات والتبرير والملاحظات</span></summary><div class="tablewrap"><table class="attendance-table"><thead><tr><th>التلميذ</th><th>القسم</th><th>التاريخ</th><th>الحالة والمدة</th><th>التبرير</th><th>ملاحظات</th><th>الإجراءات</th></tr></thead><tbody id="attRows"></tbody></table></div></details>
 </section>
@@ -502,8 +502,8 @@ function loadDailyRoster(){
  const already=new Map(db.attendance.filter(a=>(a.type==='غياب'||a.type==='حضور')&&a.date===$('#dailyDate').value&&attendanceRecordGroupKey(a)===cls).map(a=>[String(a.student),a.type]));
  $('#dailyRoster').className='daily-roster';
  $('#dailyRoster').innerHTML=students.slice().sort((a,b)=>String(a.last||'').localeCompare(String(b.last||''),'ar')).map(st=>{
-  const existing=already.get(String(st.id)),done=Boolean(existing);
-  return '<label class="daily-student"><input type="checkbox" class="daily-absent" data-id="'+esc(st.id)+'" '+(done?'disabled':'')+'><span class="student-meta"><strong>'+esc((st.last||'')+' '+(st.first||''))+'</strong><small>'+esc(attendanceGroupLabel(st))+(done?' · '+(existing==='حضور'?'حضور مسجل لهذا اليوم':'غياب مسجل لهذا اليوم'):'')+'</small><input class="daily-hours" type="number" min="0.25" max="24" step="0.25" value="'+esc($('#dailyHours').value||'1')+'" aria-label="ساعات الغياب" '+(done?'disabled':'')+'><input class="daily-note" type="text" placeholder="ملاحظة" aria-label="ملاحظة" '+(done?'disabled':'')+'></span></label>';
+  const existing=already.get(String(st.id)),done=Boolean(existing),fullDay=$('#dailyPeriod').value==='اليوم كاملاً',scheduled=fullDay?scheduledHoursForGroupDate(group,$('#dailyDate').value):null,initialHours=fullDay?(scheduled||''):($('#dailyHours').value||'1');
+  return '<label class="daily-student"><input type="checkbox" class="daily-absent" data-id="'+esc(st.id)+'" '+(done?'disabled':'')+'><span class="student-meta"><strong>'+esc((st.last||'')+' '+(st.first||''))+'</strong><small>'+esc(attendanceGroupLabel(st))+(done?' · '+(existing==='حضور'?'حضور مسجل لهذا اليوم':'غياب مسجل لهذا اليوم'):'')+'</small><input class="daily-hours" type="number" min="0.25" max="24" step="0.25" value="'+esc(initialHours)+'" aria-label="ساعات الغياب" '+(done?'disabled':fullDay?'readonly':'')+'><input class="daily-note" type="text" placeholder="ملاحظة" aria-label="ملاحظة" '+(done?'disabled':'')+'></span></label>';
  }).join('');
  $('#dailyRosterTools').classList.remove('hidden');$('#dailyRosterSearch').value='';$('#saveDailyAbsences').disabled=false;$('#dailyRosterCount').textContent=students.length+' تلميذاً · '+already.size+' غياب مسجل مسبقاً';
 }
@@ -513,62 +513,103 @@ $('#selectAllAbsent').onclick=()=>{$$('#dailyRoster .daily-absent:not(:disabled)
 $('#clearAllAbsent').onclick=()=>{$$('#dailyRoster .daily-absent:not(:disabled)').forEach(c=>c.checked=false);};
 $('#dailyClass').addEventListener('change',loadDailyRoster);
 $('#dailyDate').addEventListener('change',()=>{if($('#dailyClass').value)loadDailyRoster();});
-$('#dailyHours').addEventListener('input',()=>{$$('#dailyRoster .daily-absent:checked').forEach(c=>{const h=c.closest('.daily-student')?.querySelector('.daily-hours');if(h&&!h.disabled)h.value=$('#dailyHours').value;});});
+$('#dailyPeriod').addEventListener('change',()=>{
+ const full=$('#dailyPeriod').value==='اليوم كاملاً',group=attendanceGroups().find(g=>g.key===$('#dailyClass').value),scheduled=full?scheduledHoursForGroupDate(group,$('#dailyDate').value):null;
+ $('#dailyHours').readOnly=full;
+ if(full){$('#dailyHours').value=scheduled&&scheduled>0?String(scheduled):'';$('#dailyHours').placeholder=scheduled===null?'أدخل توقيت القسم أولاً':scheduled<=0?'لا توجد دراسة في هذا اليوم':'ساعات اليوم الدراسي';}
+ else{$('#dailyHours').value='1';$('#dailyHours').readOnly=false;$('#dailyHours').placeholder='عدد الساعات';}
+ if($('#dailyClass').value)loadDailyRoster();
+});
+$('#dailyHours').addEventListener('input',()=>{$$('#dailyRoster .daily-absent:checked').forEach(c=>{const h=c.closest('.daily-student')?.querySelector('.daily-hours');if(h&&!h.disabled&&!h.readOnly)h.value=$('#dailyHours').value;});});
 $('#saveDailyAbsences').onclick=()=>{
  const selected=$('.daily-absent:checked');const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),date=$('#dailyDate').value,period=$('#dailyPeriod').value,justified=$('#dailyJustified').value;if(!date){alert('حدد تاريخ الغياب.');return;}const records=[];
- for(const check of selected){const card=check.closest('.daily-student'),st=db.students.find(x=>String(x.id)===check.dataset.id),hours=parseHours(card.querySelector('.daily-hours').value);if(!st||hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('تحقق من عدد ساعات الغياب لكل تلميذ محدد.');return;}records.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'غياب',period,hours,justified,notes:card.querySelector('.daily-note').value.trim()});}
+ for(const check of selected){const card=check.closest('.daily-student'),st=db.students.find(x=>String(x.id)===check.dataset.id);let hours=period==='اليوم كاملاً'?scheduledHoursForGroupDate(group,date):parseHours(card.querySelector('.daily-hours').value);if(!st||hours===null||hours===''||Number.isNaN(Number(hours))||Number(hours)<=0||Number(hours)>24){alert(period==='اليوم كاملاً'?'لا يمكن تسجيل يوم كامل: أدخل توقيت القسم وتأكد من وجود ساعات دراسة في هذا اليوم.':'تحقق من عدد ساعات الغياب لكل تلميذ محدد.');return;}records.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'غياب',period,hours:Number(hours),fullDay:period==='اليوم كاملاً',justified,notes:card.querySelector('.daily-note').value.trim()});}
  const selectedIds=new Set(selected.map(c=>String(c.dataset.id))),currentRecords=db.attendance.filter(a=>a.date===date&&attendanceRecordGroupKey(a)===cls),alreadyToday=new Set(currentRecords.filter(a=>a.type==='غياب'||a.type==='حضور').map(a=>String(a.student))),latest=new Map();
  for(const a of db.attendance){if(!['غياب','حضور','تأخر'].includes(a.type)||!a.date||a.date>date)continue;const key=String(a.student),prior=latest.get(key);if(!prior||String(a.date)>=String(prior.date))latest.set(key,a);}
  const presenceRecords=[];
  for(const st of db.students.filter(x=>attendanceGroupKey(x)===cls)){const key=String(st.id),last=latest.get(key);if(selectedIds.has(key)||alreadyToday.has(key)||!last||last.type!=='غياب'||String(last.justified||'غير مبرر')==='مبرر')continue;presenceRecords.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'حضور',period, hours:0,minutes:null,justified:'مبرر',notes:'حضور مثبت من كشف القسم'});}
  if(!records.length&&!presenceRecords.length){alert('لا توجد غيابات جديدة أو حالات حضور تحتاج إلى تحديث.');return;}const previous=db.attendance.slice();db.attendance.push(...records,...presenceRecords);if(!save()){db.attendance=previous;render();return;}$('#dailyRosterTools').classList.add('hidden');$('#dailyRoster').className='daily-roster empty';$('#dailyRoster').textContent='تم حفظ '+records.length+' سجل غياب و'+presenceRecords.length+' سجل حضور لتحديث سلاسل الغياب.';$('#saveDailyAbsences').disabled=true;$('#dailyRosterCount').textContent='تم الحفظ';alert('تم تسجيل غياب '+records.length+' تلميذاً، وإثبات حضور '+presenceRecords.length+' تلميذاً كانت لديهم سلسلة غياب سابقة في القسم '+cls+'.');
 };
-function updateAttendanceTypeFields(){const type=$('#attType').value,late=type==='تأخر',present=type==='حضور';$('#absenceHoursField').classList.toggle('hidden',late||present);$('#lateMinutesField').classList.toggle('hidden',!late);}
-$('#attType').addEventListener('change',updateAttendanceTypeFields);updateAttendanceTypeFields();
- $('#attStudentSearch').addEventListener('input',()=>{const sel=$('#attForm').elements.student,old=sel.value,q=$('#attStudentSearch').value.trim().toLocaleLowerCase('ar');sel.innerHTML=db.students.filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.schoolYear||'')} ${esc(s.branch||'')} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old;});
+function scheduledHoursForGroupDate(group,date){
+ if(!group||!date)return null;
+ const timetable=timetableForGroup(group);if(!timetable)return null;
+ const weekday=dateFromISO(date).getDay(),key=attendanceWeekdays[weekday]?.[0];if(!key)return 0;
+ const hours=Number(timetable[key]||0);return Number.isFinite(hours)&&hours>0?hours:0;
+}
+function scheduledHoursForStudentDate(st,date){
+ if(!st)return null;
+ const group=attendanceGroups().find(g=>g.key===attendanceGroupKey(st));
+ return scheduledHoursForGroupDate(group,date);
+}
+function updateIndividualPeriodFields(){
+ const period=$('#attPeriod'),custom=$('#attPeriodCustom'),hours=$('#attHours');
+ if(!period||!custom||!hours)return;
+ const full=period.value==='اليوم كاملاً',other=period.value==='توقيت آخر';
+ custom.classList.toggle('hidden',!other);
+ hours.readOnly=full;
+ if(full){
+  const st=db.students.find(x=>String(x.id)===String($('#attForm').elements.student.value));
+  const value=scheduledHoursForStudentDate(st,$('#attForm').elements.date.value);
+  hours.value=value===null||value<=0?'':String(value);
+  hours.placeholder=value===null?'أدخل توقيت القسم أولاً':value<=0?'لا توجد دراسة مبرمجة في هذا اليوم':'ساعات اليوم الدراسي';
+ }else{
+  hours.placeholder='مثال: 2 أو 7.5';
+ }
+}
+function updateAttendanceTypeFields(){const type=$('#attType').value,late=type==='تأخر',present=type==='حضور';$('#absenceHoursField').classList.toggle('hidden',late||present);$('#lateMinutesField').classList.toggle('hidden',!late);if(!late&&!present)updateIndividualPeriodFields();}
+$('#attType').addEventListener('change',updateAttendanceTypeFields);
+$('#attPeriod').addEventListener('change',updateIndividualPeriodFields);
+$('#attForm').elements.student.addEventListener('change',updateIndividualPeriodFields);
+$('#attForm').elements.date.addEventListener('change',updateIndividualPeriodFields);
+updateAttendanceTypeFields();
+$('#attStudentSearch').addEventListener('input',()=>{const sel=$('#attForm').elements.student,old=sel.value,q=$('#attStudentSearch').value.trim().toLocaleLowerCase('ar');sel.innerHTML=db.students.filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(s.schoolYear||'')} ${esc(s.branch||'')} – ${esc(s.class)}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old;updateIndividualPeriodFields();});
 $('#attForm').onsubmit=e=>{
- e.preventDefault();const f=new FormData(e.target),type=String(f.get('type')||'غياب'),isLate=type==='تأخر',period=String(f.get('period')||'').trim();let hours='',minutes='',isPresent=type==='حضور';
- if(isPresent){hours=0;}else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
- const st=db.students.find(x=>String(x.id)===String(f.get('student'))),record={id:crypto.randomUUID(),student:f.get('student'),studentName:st?(st.last+' '+st.first).trim():'',class:st?.class||'',schoolYear:st?.schoolYear||'',branch:st?.branch||'',sectionLabel:st?attendanceGroupLabel(st):'',type,date:f.get('date'),period,hours,minutes:isLate?minutes:null,justified:isPresent?'مبرر':f.get('justified'),notes:f.get('notes')};
+ e.preventDefault();const f=new FormData(e.target),type=String(f.get('type')||'غياب'),isLate=type==='تأخر',isPresent=type==='حضور';
+ let period=String(f.get('period')||'').trim();if(period==='توقيت آخر')period=String(f.get('periodCustom')||'').trim();
+ if(!period){alert('حدد الفترة أو أدخل التوقيت.');return;}
+ const st=db.students.find(x=>String(x.id)===String(f.get('student')));let hours='',minutes='',fullDay=false;
+ if(isPresent){hours=0;}
+ else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}
+ else if(period==='اليوم كاملاً'){
+  hours=scheduledHoursForStudentDate(st,String(f.get('date')||''));
+  if(hours===null){alert('لا يمكن تسجيل يوم كامل قبل إدخال التوقيت الأسبوعي لهذا القسم من الإعدادات.');return;}
+  if(hours<=0){alert('لا توجد ساعات دراسة مبرمجة لهذا القسم في التاريخ المحدد.');return;}
+  fullDay=true;
+ }else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
+ const record={id:crypto.randomUUID(),student:f.get('student'),studentName:st?(st.last+' '+st.first).trim():'',class:st?.class||'',schoolYear:st?.schoolYear||'',branch:st?.branch||'',sectionLabel:st?attendanceGroupLabel(st):'',type,date:f.get('date'),period,hours,fullDay,minutes:isLate?minutes:null,justified:isPresent?'مبرر':f.get('justified'),notes:f.get('notes')};
  db.attendance.push(record);if(!save()){db.attendance.pop();return;}e.target.reset();$('#attForm').elements.date.value=dateISO();updateAttendanceTypeFields();alert(isPresent?'تم تسجيل حضور التلميذ.':isLate?'تم حفظ التأخر لمدة '+minutes+' دقيقة.':'تم حفظ الغياب بنجاح.');
 };
 function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
 function calendarDaysBetween(a,b){return Math.round((dateFromISO(b)-dateFromISO(a))/86400000);}
 function getUnjustifiedStreaks(){
- // Calendar-day duration; weekends count in elapsed days, while only recorded school days determine continuity.
+ // الغياب المستمر: آخر واقعة غير مبررة تظل مفتوحة حتى تسجيل حضور/تأخر أو تبرير.
+ // لا نشترط وجود سجل في الجمعة والسبت أو العطل؛ تُحسب كلها ضمن الأيام التقويمية.
  const grouped=new Map();
  for(const r of db.attendance){
-  if(!r.date)continue;
+  if(!r.date||String(r.date)>dateISO())continue;
   const st=student(r.student);if(!st)continue;
   const key=String(st.id);
-  if(!grouped.has(key))grouped.set(key,{student:st,byDate:new Map(),breakDates:new Set()});
+  if(!grouped.has(key))grouped.set(key,{student:st,events:new Map()});
   const item=grouped.get(key),date=String(r.date);
-  if(r.type==='حضور'||r.type==='تأخر'){item.breakDates.add(date);continue;}
+  if(!item.events.has(date))item.events.set(date,{hasBreak:false,hasUnjustifiedAbsence:false});
+  const day=item.events.get(date);
+  if(r.type==='حضور'||r.type==='تأخر'){day.hasBreak=true;continue;}
   if(r.type!=='غياب')continue;
-  if(String(r.justified||'غير مبرر')==='مبرر'){item.breakDates.add(date);continue;}
+  if(String(r.justified||'غير مبرر')==='مبرر'){day.hasBreak=true;continue;}
   const hours=Number(parseHours(r.hours))||0;
-  if(hours>0)item.byDate.set(date,(item.byDate.get(date)||0)+hours);
+  if(hours>0)day.hasUnjustifiedAbsence=true;
  }
  const today=dateISO(),out=[];
  for(const item of grouped.values()){
-  const dates=[...new Set([...item.byDate.keys(),...item.breakDates])].filter(date=>date<=today).sort();
-  let group=[];
-  for(const d of dates){
-   const day=dateFromISO(d).getDay();
-   if(day===5||day===6)continue;
-   if(item.breakDates.has(d)&&!item.byDate.has(d)){group=[];continue;}
-   if(!item.byDate.has(d)){group=[];continue;}
-   if(!group.length){group=[d];continue;}
-   const prev=group[group.length-1],gap=calendarDaysBetween(prev,d);
-   const expectedGap=(dateFromISO(prev).getDay()===4)?3:1;
-   if(gap===expectedGap)group.push(d);
-   else group=[d];
-  }
-  if(group.length){
-   const first=group[0],last=group[group.length-1];
-   const span=Math.max(1,calendarDaysBetween(first,last)+1);
-   out.push({student:item.student,start:first,last,days:span,thursdayStart:dateFromISO(first).getDay()===4});
-  }
+  const events=[...item.events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+  let lastBreak='';
+  for(const [date,event] of events)if(event.hasBreak)lastBreak=date;
+  const activeAbsences=events.filter(([date,event])=>date>lastBreak&&event.hasUnjustifiedAbsence);
+  if(!activeAbsences.length)continue;
+  const first=activeAbsences[0][0],last=activeAbsences[activeAbsences.length-1][0];
+  // اليوم الحالي يدخل في الحساب حتى قبل تسجيل غياب اليوم، ما دامت آخر حالة مسجلة غياباً ولم يُسجل رجوع أو تبرير.
+  const days=Math.max(1,calendarDaysBetween(first,today)+1);
+  out.push({student:item.student,start:first,last,days,thursdayStart:dateFromISO(first).getDay()===4});
  }
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
@@ -577,10 +618,10 @@ function createAbsenceStageNoticeRecord(streak,stage){
  if(noticeExists(streak,stage))return false;
  const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار بسبب الغياب',32:'إشعار بالشطب'};
  const reasons={
-  4:'غياب متواصل بلغ أربعة أيام تقويمية. يرجى إشعار الولي كتابياً والاستفسار عن سبب الغياب.',
-  11:'استمرار الغياب المتواصل حتى اليوم الحادي عشر من بداية الغياب. يرجى تبليغ الولي بالإشعار الثاني والاحتفاظ بإثبات التبليغ.',
-  18:'استمرار الغياب المتواصل حتى اليوم الثامن عشر. هذا إعذار للولي لتسوية وضعية التلميذ خلال مهلة أربعة عشر يوماً.',
-  32:'استمرار الغياب المتواصل حتى اليوم الثاني والثلاثين، بعد انقضاء أربعة عشر يوماً على الإعذار. تُعرض الحالة على الإدارة لاتخاذ الإجراء القانوني المناسب.'
+  4:'غياب متواصل بلغ أربعة أيام تقويمية، بما فيها أيام العطل الأسبوعية والرسمية. يرجى إشعار الولي كتابياً والاستفسار عن سبب الغياب.',
+  11:'استمرار الغياب المتواصل حتى اليوم الحادي عشر من بداية الغياب، مع احتساب أيام العطل. يرجى تبليغ الولي بالإشعار الثاني والاحتفاظ بإثبات التبليغ.',
+  18:'استمرار الغياب المتواصل حتى اليوم الثامن عشر، مع احتساب أيام العطل. هذا إعذار للولي لتسوية وضعية التلميذ خلال مهلة أربعة عشر يوماً.',
+  32:'استمرار الغياب المتواصل حتى اليوم الثاني والثلاثين، مع احتساب أيام العطل، بعد انقضاء أربعة عشر يوماً على الإعذار. تُعرض الحالة على الإدارة لاتخاذ الإجراء القانوني المناسب.'
  };
  db.documents.push({id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceStage:stage,deliveryProof:''});
  return true;
@@ -620,7 +661,7 @@ function renderAbsenceFollowup(){
   const stage=x.days>=32?'<span class="status-danger">بلغ اليوم 32: إشعار بالشطب</span>':x.days>=18?'<span class="status-danger">بلغ مرحلة الإعذار — اليوم 18</span>':x.days>=11?'<span class="status-warn">بلغ مرحلة الإشعار الثاني — اليوم 11</span>':x.days>=4?'<span class="status-warn">بلغ مرحلة الإشعار الأول — اليوم 4</span>':'<span class="status-warn">متابعة الغياب المتواصل</span>';
   const actions=pending.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+labels[n]+'</button>').join(' ');
   const special=x.thursdayStart&&x.days>=4&&!noticeExists(x,4)?'<p class="status-warn">بدأ الغياب يوم الخميس: تنبيه خاص يوم الأحد، والإشعار الأول ينتظر مراجعتك.</p>':'';
-  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام تقويمية متتالية</b></p><p>'+stage+'</p>'+special+'<div class="actions">'+(actions||'<span class="status-ok">تم إنشاء وثائق المراحل المستحقة تلقائياً</span>')+'</div></div>';
+  return '<div class="followup-card"><h3>'+esc(x.student.last+' '+x.student.first)+' — القسم '+esc(x.student.class||'—')+'</h3><p>بداية الغياب: '+esc(x.start)+' · المدة: <b>'+x.days+' أيام متتالية (بما فيها العطل)</b></p><p>'+stage+'</p>'+special+'<div class="actions">'+(actions||'<span class="status-ok">تم إنشاء وثائق المراحل المستحقة تلقائياً</span>')+'</div></div>';
  }).join(''):'<p class="empty">لا توجد حالياً حالات غياب متواصل تستوجب المتابعة. ستظهر الحالات عند تسجيل الغياب.</p>';
 }
 function monthScheduledHours(group,month){const t=timetableForGroup(group);if(!t)return null;const [y,m]=month.split('-').map(Number),days=new Date(y,m,0).getDate();let sum=0;for(let day=1;day<=days;day++){const dow=new Date(y,m-1,day,12).getDay();if(dow>=0&&dow<=4)sum+=Number(t[attendanceWeekdays[dow][0]]||0);}return sum;}
