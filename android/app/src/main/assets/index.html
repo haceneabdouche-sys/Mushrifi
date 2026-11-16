@@ -649,20 +649,21 @@ function getUnjustifiedStreaks(){
 }
 function noticeExists(streak,stage){return db.documents.some(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===stage);}
 function canCreateAbsenceStage32(streak){
- // لا يُسمح بمرحلة الشطب اعتماداً على عدد أيام الغياب وحده.
- // يلزم وجود إعذار المرحلة الثالثة مع تاريخ تبليغ وإثبات، وانقضاء 14 يوماً كاملة.
+ // مرحلة ما بعد الإعذار لا تظهر قبل اليوم 32 ولا قبل إثبات التبليغ وانقضاء 14 يوماً كاملة.
+ if(!streak||Number(streak.days)<32)return false;
  const warning=db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===18);
- if(!warning||!String(warning.deliveryProof||'').trim()||!/^\d{4}-\d{2}-\d{2}$/.test(String(warning.deliveryDate||'')))return false;
- return calendarDaysBetween(String(warning.deliveryDate),dateISO())>=14;
+ const delivered=String(warning?.deliveryDate||'');
+ if(!warning||!String(warning.deliveryProof||'').trim()||!isValidISODate(delivered)||delivered>dateISO())return false;
+ return calendarDaysBetween(delivered,dateISO())>=14;
 }
 function createAbsenceStageNoticeRecord(streak,stage){
  if(noticeExists(streak,stage))return false;
- const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار بسبب الغياب',32:'إشعار بالشطب'};
+ const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار بسبب الغياب',32:'إحالة ملف الغياب للمراجعة الإدارية'};
  const reasons={
-  4:'غياب متواصل بلغ أربعة أيام تقويمية، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. العطل الرسمية لا تُستثنى تلقائياً ما لم تُسجل في توقيت القسم. يرجى إشعار الولي كتابياً والاستفسار عن سبب الغياب.',
-  11:'استمرار الغياب المتواصل حتى اليوم الحادي عشر من بداية الغياب، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. العطل الرسمية تحتاج إلى ضبط مستقل في التوقيت. يرجى تبليغ الولي بالإشعار الثاني والاحتفاظ بإثبات التبليغ.',
-  18:'استمرار الغياب المتواصل حتى اليوم الثامن عشر، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة. العطل الرسمية تحتاج إلى ضبط مستقل في التوقيت. هذا إعذار للولي لتسوية وضعية التلميذ خلال مهلة أربعة عشر يوماً.',
-  32:'استمرار الغياب المتواصل حتى اليوم الثاني والثلاثين، مع احتساب عطلة نهاية الأسبوع والأيام التي لا توجد فيها حصص مبرمجة، وبعد انقضاء أربعة عشر يوماً كاملة من تاريخ تبليغ الإعذار المثبت. تُعرض الحالة على الإدارة لاتخاذ الإجراء القانوني المناسب.'
+  4:'بلغت متابعة الغياب اليوم الرابع عند العد الشامل ابتداءً من أول يوم غياب. مسودة إشعار أول للمراجعة والتبليغ وفق المادة 21 من القرار 833.',
+  11:'بلغت متابعة الغياب اليوم الحادي عشر عند العد الشامل ابتداءً من أول يوم غياب. مسودة إشعار ثانٍ بعد تسجيل الإشعار الأول؛ راجع التبليغ قبل اعتمادها.',
+  18:'بلغت متابعة الغياب اليوم الثامن عشر عند العد الشامل ابتداءً من أول يوم غياب. مسودة إعذار بعد تسجيل الإشعارين السابقين؛ مهلة الأسبوعين تبدأ من تاريخ التبليغ الفعلي المثبت.',
+  32:'بلغت المتابعة اليوم الثاني والثلاثين عند العد الشامل، وبعد انقضاء 14 يوماً كاملة من تاريخ تبليغ الإعذار المثبت. هذه إحالة للمراجعة الإدارية وليست قرار شطب آلياً.'
  };
  db.documents.push({id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceStage:stage,deliveryProof:''});
  return true;
@@ -670,8 +671,13 @@ function createAbsenceStageNoticeRecord(streak,stage){
 window.createAbsenceStageNotice=(id,start,stage)=>{
  const streak=getUnjustifiedStreaks().find(x=>String(x.student.id)===String(id)&&x.start===start);
  if(!streak){alert('انقطعت سلسلة الغياب المتتالي أو لم تعد الحالة مستوفية للشروط.');return;}
+ if(![4,11,18,32].includes(Number(stage))){alert('مرحلة متابعة غير معروفة.');return;}
+ const requiredDays={4:4,11:11,18:18,32:32}[Number(stage)];
+ if(Number(streak.days)<requiredDays){alert('لم تبلغ سلسلة الغياب بعد المدة المطلوبة لهذه المرحلة.');return;}
  if(noticeExists(streak,stage)){alert('سبق تسجيل وثيقة هذه المرحلة لهذا التلميذ.');return;}
- if(stage===32&&!canCreateAbsenceStage32(streak)){alert('لا يمكن إعداد إشعار الشطب الآن. يجب تسجيل تاريخ تبليغ الإعذار وإثباته، ثم انقضاء 14 يوماً كاملة.');return;}
+ if(stage===11&&!noticeExists(streak,4)){alert('يجب تسجيل الإشعار الأول قبل إنشاء الإشعار الثاني.');return;}
+ if(stage===18&&!noticeExists(streak,11)){alert('يجب تسجيل الإشعار الثاني قبل إنشاء الإعذار.');return;}
+ if(stage===32&&!canCreateAbsenceStage32(streak)){alert('لا يمكن الانتقال إلى المرحلة التالية قبل بلوغ اليوم 32، وتسجيل تاريخ تبليغ الإعذار وإثباته، وانقضاء 14 يوماً كاملة.');return;}
  if(stage===4&&streak.thursdayStart&&streak.days>=4&&dateFromISO(streak.start).getDay()===4){
   alert('هذه حالة غياب بدأت يوم الخميس. تم تنبيهك يوم الأحد، ويمكنك إنشاء الإشعار بعد مراجعة الحالة.');
  }
