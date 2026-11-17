@@ -173,6 +173,7 @@ footer{padding:24px 12px;color:#71818d}
  .students-table tbody td:last-child{border-bottom:0}
 }
 @media(max-width:390px){.students-table tbody tr{grid-template-columns:1fr;gap:0}.students-table tbody td{grid-template-columns:94px minmax(0,1fr)}}
+.signature-pad-panel{max-width:900px;margin:0 auto}.signature-pad-panel canvas{display:block;width:100%;height:auto;min-height:220px;max-height:520px;background:#fff;border:2px solid #d1dbe2;border-radius:12px;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 1px #f2f4f6}.signature-actions{margin-top:12px}.signature-actions .btn{flex:1;min-width:150px}.saved-signature-image{display:block;width:100%;max-height:280px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px}
 </style>
 </head>
 <body>
@@ -181,7 +182,7 @@ footer{padding:24px 12px;color:#71818d}
 <div class="wrap">
 <div class="notice"><b>نسخة مستقلة تعمل محلياً:</b> تُحفظ سجلات التلاميذ على هذا الهاتف فقط، ولا تحتاج إلى حسابات أو مواقع خارجية.</div>
 <nav class="no-print" id="nav">
-<button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
+<button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="signature">التوقيع</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
 </nav>
 <section id="home" class="page"><section id="voiceAssistant" class="panel no-print"><h2>🎙️ التحدث إلى مُشرفي</h2><p class="muted">أعطِ أمراً صوتياً بالعربية، مثل: افتح ملف التلميذ وائل عيسو، أو: سجّل غياب وائل عيسو ليوم الأحد 8 نوفمبر 2026 الفترة الصباحية ساعتين.</p><button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button><p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p><div id="voiceTranscript" class="panel hidden"></div><div id="voiceConfirm" class="panel hidden"></div></section>
 
@@ -229,6 +230,19 @@ footer{padding:24px 12px;color:#71818d}
 <section id="reports" class="page hidden">
 <div class="no-print" style="margin:0 0 12px"><button type="button" class="btn" onclick="goPreviousPage()">↩ العودة إلى الصفحة السابقة</button></div>
 <div class="panel"><h2>التقارير والطباعة</h2><div class="row"><div><label for="reportStudentSearch">البحث عن تلميذ</label><input id="reportStudentSearch" type="search" placeholder="اكتب الاسم أو اللقب أو القسم..." autocomplete="off"></div><div><label>من تاريخ</label><input id="fromDate" type="date"></div><div><label>إلى تاريخ</label><input id="toDate" type="date"></div></div><button class="btn primary" id="makeReport">عرض التقرير</button> <button class="btn" onclick="window.print()">طباعة / حفظ PDF</button><div id="reportOutput" class="panel"><p class="muted">ابحث عن تلميذ أو اترك البحث فارغاً لعرض الجميع، ثم اضغط عرض التقرير.</p></div></div>
+</section>
+<section id="signature" class="page hidden">
+<div class="panel signature-pad-panel">
+<h2>صفحة التوقيع الإلكتروني</h2>
+<p class="muted">وقّع بإصبعك داخل المساحة البيضاء. لون الحبر أسود والخلفية بيضاء. يمكنك مسح التوقيع وإعادة رسمه في أي وقت.</p>
+<canvas id="signatureCanvas" width="1200" height="520" aria-label="مساحة رسم التوقيع"></canvas>
+<div class="actions signature-actions">
+<button class="btn danger" id="clearSignature" type="button">مسح التوقيع</button>
+<button class="btn primary" id="saveSignature" type="button">حفظ التوقيع كصورة PNG</button>
+</div>
+<p id="signatureStatus" class="muted" aria-live="polite">التوقيع غير محفوظ بعد.</p>
+<div id="savedSignaturePreview" class="panel hidden"><h3>التوقيع المحفوظ</h3><img id="savedSignatureImage" class="saved-signature-image" alt="صورة التوقيع المحفوظ"></div>
+</div>
 </section>
 <section id="settings" class="page hidden">
 <div class="panel settings-heading"><h2>مركز الإعدادات والمتابعة</h2><p class="muted">اختر المجال الذي تريد ضبطه. تبقى سجلات التلاميذ والغيابات محفوظة كما هي عند التنقل بين الأقسام.</p></div>
@@ -1263,6 +1277,38 @@ $('#csvImport').onchange=async e=>{
   finally{input.value='';}
 };
 
+// صفحة التوقيع: تحفظ نسخة PNG داخل بيانات التطبيق، وتصدرها إلى صور الهاتف في Android.
+(function initSignaturePad(){
+ const canvas=$('#signatureCanvas');if(!canvas)return;
+ const ctx=canvas.getContext('2d');let drawing=false,hasInk=false;
+ const paintWhite=()=>{ctx.save();ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.restore();};
+ const configure=()=>{ctx.strokeStyle='#000000';ctx.lineWidth=7;ctx.lineCap='round';ctx.lineJoin='round';};
+ paintWhite();configure();
+ const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height};};
+ canvas.addEventListener('pointerdown',e=>{e.preventDefault();drawing=true;hasInk=true;canvas.setPointerCapture?.(e.pointerId);const p=point(e);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+0.1,p.y+0.1);ctx.stroke();});
+ canvas.addEventListener('pointermove',e=>{if(!drawing)return;e.preventDefault();const p=point(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+ const stop=()=>{drawing=false;ctx.closePath();};
+ canvas.addEventListener('pointerup',stop);canvas.addEventListener('pointercancel',stop);canvas.addEventListener('lostpointercapture',stop);
+ const preview=()=>{const data=db.settings.handwrittenSignature||'';const box=$('#savedSignaturePreview'),img=$('#savedSignatureImage');if(data){img.src=data;box.classList.remove('hidden');}else{img.removeAttribute('src');box.classList.add('hidden');}};
+ const saved=db.settings.handwrittenSignature||'';
+ if(saved){const image=new Image();image.onload=()=>{paintWhite();ctx.drawImage(image,0,0,canvas.width,canvas.height);hasInk=true;};image.src=saved;preview();}
+ $('#clearSignature').onclick=()=>{paintWhite();configure();hasInk=false;const previous=db.settings.handwrittenSignature||'';db.settings.handwrittenSignature='';if(!save()){db.settings.handwrittenSignature=previous;return;}$('#signatureStatus').textContent='تم مسح التوقيع من مساحة الرسم ومن النسخة المحفوظة.';preview();};
+ $('#saveSignature').onclick=()=>{
+  if(!hasInk){alert('ارسم توقيعك أولاً قبل الحفظ.');return;}
+  const data=canvas.toDataURL('image/png'),previous=db.settings.handwrittenSignature||'';
+  db.settings.handwrittenSignature=data;
+  if(!save()){db.settings.handwrittenSignature=previous;return;}
+  preview();
+  if(window.AndroidBridge&&typeof AndroidBridge.saveSignatureImage==='function'){
+   const result=String(AndroidBridge.saveSignatureImage(data)||'');
+   if(result.startsWith('ERROR:')){$('#signatureStatus').textContent='حُفظ التوقيع داخل التطبيق، لكن تعذر تصدير الصورة: '+result.slice(6);return;}
+   $('#signatureStatus').textContent='تم حفظ التوقيع داخل التطبيق وتصدير صورة PNG إلى صور الهاتف.';
+  }else{
+   const link=document.createElement('a');link.href=data;link.download='Mushrifi-signature.png';document.body.appendChild(link);link.click();link.remove();
+   $('#signatureStatus').textContent='تم حفظ التوقيع داخل التطبيق وطلب تنزيل صورة PNG.';
+  }
+ };
+})();
 render();
 
 function refreshLicenseStatus(){
