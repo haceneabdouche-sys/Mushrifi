@@ -742,6 +742,12 @@ function renderAbsenceFollowup(){
   const labels={4:'الإشعار الأول',11:'الإشعار الثاني',18:'الإعذار',32:'إحالة للمراجعة الإدارية'};
   const reached=[4,11,18,32].filter(n=>x.days>=n);
   const pending=reached.filter(n=>!noticeExists(x,n)&&(n===4||(n===11&&hasVerifiedAbsenceNoticeDelivery(x,4,7))||(n===18&&hasVerifiedAbsenceNoticeDelivery(x,11,7))||(n===32&&canCreateAbsenceStage32(x))));
+  // أرسل تذكيراً محلياً للمشرف عند بلوغ مرحلة مستحقة فقط؛ لا ينشئ وثيقة تلقائياً.
+  // AndroidBridge يمنع تكرار الإشعار لنفس التلميذ وبداية الغياب والمرحلة.
+  if(pending.length&&window.AndroidBridge&&typeof AndroidBridge.notifyAbsenceStage==='function'){
+   const studentName=(x.student.last+' '+x.student.first).trim()||'التلميذ';
+   pending.forEach(stage=>AndroidBridge.notifyAbsenceStage(String(x.student.id),studentName,stage,x.start));
+  }
   const stage=x.days>=32?'<span class="status-danger">بلغت المتابعة 32 يوماً؛ يلزم التحقق من شروط الإعذار والتبليغ قبل الإحالة للمراجعة الإدارية</span>':x.days>=18?'<span class="status-danger">بلغ مرحلة الإعذار — اليوم 18</span>':x.days>=11?'<span class="status-warn">بلغ مرحلة الإشعار الثاني — اليوم 11</span>':x.days>=4?'<span class="status-warn">بلغ مرحلة الإشعار الأول — اليوم 4</span>':'<span class="status-warn">متابعة الغياب المتواصل</span>';
   const actions=pending.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+labels[n]+'</button>').join(' ');
   const special=x.thursdayStart&&x.days>=4&&!noticeExists(x,4)?'<p class="status-warn">بدأ الغياب يوم الخميس: تنبيه خاص يوم الأحد، والإشعار الأول ينتظر مراجعتك.</p>':'';
