@@ -1324,7 +1324,7 @@ $('#csvImport').onchange=async e=>{
     }
     if(!save()){db=importSnapshot;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');}
     importCommitted=true;
-    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المطابقة والمحدّثة: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+'\nإجمالي بطاقات التلاميذ في القاعدة: '+db.students.length+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
+    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المطابقة والمحدّثة: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+'\nإجمالي التلاميذ في الأقسام المسندة إليك: '+studentsForUser().length+'\nإجمالي بطاقات التلاميذ في القاعدة: '+db.students.length+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
     window.dispatchEvent(new CustomEvent('mushrifi-roster-import-finished',{detail:{ok:true}}));
   }catch(err){if(importSnapshot&&!importCommitted){db=importSnapshot;try{save();}catch(_){}render();}alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV أو Excel وعناوين الأعمدة ثم أعد المحاولة.');window.dispatchEvent(new CustomEvent('mushrifi-roster-import-finished',{detail:{ok:false}}));}
   finally{input.value='';}
