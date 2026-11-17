@@ -18,6 +18,7 @@ vm.createContext(context);
 vm.runInContext(html.slice(start,end),context);
 assert.equal(context.studentsForUser().length,1,'primary profile should show only the assigned primary class');
 assert.equal(context.studentsForUser()[0].id,'p1');
+assert.equal(context.assignedSectionKey({schoolYear:'أولى',branch:'جدع مشترك علوم وتكنولوجيا',sectionNumber:'1'}),context.assignedSectionKey({schoolYear:'أولى',branch:'جذع مشترك علوم وتكنولوجيا',sectionNumber:'1'}),'assigned-section matching should normalize legacy branch spelling');
 assert.equal(context.studentAcademicParts(context.db.students[0]).branch,'عام','primary classes should use the general branch');
 context.db.settings.educationLevel='middle';
 context.db.settings.assignedSections=[{schoolYear:'الأولى متوسط',branch:'عام',sectionNumber:'1'}];
