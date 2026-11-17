@@ -440,7 +440,18 @@ function renderStudentDirectory(){
 }
 function render(){
 refreshStudentSectionOptions();renderAssignedSections();if($('#educationLevelSetting'))$('#educationLevelSetting').value=db.settings.educationLevel||'secondary';
-const assignedIds=new Set(studentsForUser().map(st=>String(st.id))),belongsToAssigned=record=>{const linked=student(record.student);return linked&&assignedIds.has(String(linked.id));};const visibleAttendance=db.attendance.filter(belongsToAssigned),visibleDocuments=db.documents.filter(belongsToAssigned),visibleViolations=db.violations.filter(belongsToAssigned);
+const assignedStudents=studentsForUser(),assignedIds=new Set(assignedStudents.map(st=>String(st.id))),belongsToAssigned=record=>{
+ const recordId=String(record.student??'').trim(),byId=db.students.find(st=>String(st.id)===recordId);
+ if(byId)return assignedIds.has(recordId);
+ const linked=student(record.student);if(linked)return assignedIds.has(String(linked.id));
+ const legacyKey=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/\\s*\\d+$/,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
+ const keys=[record.studentName,record.student].map(legacyKey).filter(Boolean);if(!keys.length)return false;
+ let matches=assignedStudents.filter(st=>[st.last+' '+st.first,st.first+' '+st.last,st.name,st.fullName].some(value=>keys.includes(legacyKey(value))));
+ if(matches.length===1)return true;
+ const section=String(record.class||record.studentClass||record.sectionLabel||record.section||'').trim();
+ if(matches.length>1&&section){matches=matches.filter(st=>[st.class,attendanceGroupLabel(st),st.section,st.className].some(value=>classKey(value)===classKey(section)));return matches.length===1;}
+ return false;
+};const visibleAttendance=db.attendance.filter(belongsToAssigned),visibleDocuments=db.documents.filter(belongsToAssigned),visibleViolations=db.violations.filter(belongsToAssigned);
 const schoolName=String(db.settings.school||'مُشرِفي'),schoolLocation=String(db.settings.location||'');
 $('#schoolHeaderName').textContent=schoolName;$('#schoolHeaderLocation').textContent=schoolLocation;$('#schoolHeaderLocation').classList.toggle('hidden',!schoolLocation.trim());
 if(document.activeElement!==$('#schoolName'))$('#schoolName').value=db.settings.school||'';
