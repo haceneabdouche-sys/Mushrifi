@@ -1130,6 +1130,7 @@ function parseCSV(text, delimiter){
 }
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+function rosterAttributeFields(data){const value=String(data?.schoolingSystem||'').trim();return value?{attribute:value,status:value}:{attribute:'',status:''};}
 $('#clearStudents').onclick=()=>{
   const status=$('#clearStudentsStatus');
   if(!db.students.length){status.textContent='قائمة التلاميذ فارغة بالفعل.';alert(status.textContent);return;}
@@ -1275,6 +1276,7 @@ $('#csvImport').onchange=async e=>{
       if(target){
         // حدّث حقول البطاقة الرسمية فقط؛ الخانات الفارغة في CSV لا تمحو البيانات السابقة.
         for(const key of fields){if(data[key]!==''||!Object.prototype.hasOwnProperty.call(target,key))target[key]=data[key];}
+        const schooling=rosterAttributeFields(data);if(schooling.attribute){if(!target.attribute&&!target.status)target.attribute=schooling.attribute;if(!target.status)target.status=target.attribute||schooling.status;if(!target.attribute)target.attribute=target.status||schooling.attribute;}
         if(data.sectionNumber)target.sectionNumber=data.sectionNumber;
         if(data.enrollmentNumber!=='')target.code=data.enrollmentNumber;
         if(!target.id)target.id=makeStudentImportId();
@@ -1287,7 +1289,7 @@ $('#csvImport').onchange=async e=>{
         }
         updated++;
       }else{
-        const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
+        const record={id:makeStudentImportId(),...data,...rosterAttributeFields(data),code:data.enrollmentNumber||'',guardian:'',phone:''};
         db.students.push(record);
         if(incomingId){if(!existingById.has(incomingId))existingById.set(incomingId,[]);existingById.get(incomingId).push(record);}
         added++;
