@@ -24,7 +24,10 @@ assert.match(source, /return nameMatch&&sectionMatch&&yearMatch&&branchMatch&&id
 // This is not a substitute for running the import UI against the real 557-row file.
 assert.match(source, /String\(record\.student\)===String\(target\.id\)/);
 assert.match(source, /for\(const kind of \['attendance','documents','violations'\]\)/);
-assert.match(source, /db=originalDb;render\(\);throw new Error\('تعذر حفظ الاستيراد/);
+assert.ok(source.includes("const originalDb=JSON.parse(JSON.stringify(db));importSnapshot=originalDb;"), 'import must snapshot the entire database before mutating it');
+assert.ok(source.includes("if(!save())throw new Error('تعذر حفظ الاستيراد"), 'a failed database save must enter the rollback path');
+assert.ok(source.includes('if(importSnapshot&&!importCommitted){db=importSnapshot;try{render();}'), 'a failed import must restore the full database snapshot before refreshing the UI');
+assert.ok(source.includes('importCommitted=true;'), 'the snapshot must be released from rollback only after a successful save');
 assert.ok(source.includes('let importSnapshot=null,importCommitted=false;'), 'import must keep a transaction snapshot');
 assert.ok(source.includes('if(importSnapshot&&!importCommitted){db=importSnapshot;'), 'any exception before commit must restore the entire original database');
 assert.ok(source.includes("if(data.branch)data.branch=canonicalBranch(data.branch);"), 'official roster branch spelling must be canonicalized before matching');
