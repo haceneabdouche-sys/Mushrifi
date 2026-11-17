@@ -261,6 +261,44 @@ public class MainActivity extends Activity {
             for (String id : prefs.getAll().keySet()) cancelReminder(MainActivity.this, id);
             prefs.edit().clear().apply();
         }
+        @JavascriptInterface public void replaceSummonsReminders(String json) {
+            // Replace reminders as one background task; avoid hundreds of synchronous
+            // JavaScript-to-Android bridge calls while restoring a backup.
+            if (json == null) return;
+            reminderExecutor.execute(() -> {
+                try {
+                    android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
+                    java.util.Map<String, ?> previous = prefs.getAll();
+                    for (String id : previous.keySet()) cancelReminder(MainActivity.this, id);
+                    android.content.SharedPreferences.Editor editor = prefs.edit().clear();
+                    org.json.JSONArray items = new org.json.JSONArray(json);
+                    long now = System.currentTimeMillis();
+                    for (int i = 0; i < items.length(); i++) {
+                        org.json.JSONObject item = items.optJSONObject(i);
+                        if (item == null) continue;
+                        String id = item.optString("id", "");
+                        String student = item.optString("student", "");
+                        long reminder = item.optLong("reminderAt", 0L);
+                        long appointment = item.optLong("appointment", 0L);
+                        if (id.isEmpty() || student.isEmpty() || reminder <= now) continue;
+                        editor.putString(id, student + "|" + reminder + "|" + appointment);
+                    }
+                    editor.apply();
+                    for (int i = 0; i < items.length(); i++) {
+                        org.json.JSONObject item = items.optJSONObject(i);
+                        if (item == null) continue;
+                        String id = item.optString("id", "");
+                        String student = item.optString("student", "");
+                        long reminder = item.optLong("reminderAt", 0L);
+                        if (!id.isEmpty() && !student.isEmpty() && reminder > now) {
+                            scheduleReminder(MainActivity.this, id, student, reminder);
+                        }
+                    }
+                } catch (Exception error) {
+                    android.util.Log.e("MushrifiReminder", "Bulk reminder restore failed", error);
+                }
+            });
+        }
         @JavascriptInterface public void pickBackupFile() {
             runOnUiThread(() -> {
                 try {
