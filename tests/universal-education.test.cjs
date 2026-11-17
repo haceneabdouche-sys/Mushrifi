@@ -35,6 +35,7 @@ assert.ok(html.includes('id="setupRosterFile" type="file" accept=".csv,.xls,.htm
 assert.ok(html.includes("const required=['last','first','class']"),'national identity number should be optional in roster imports');
 assert.ok(html.includes('if(data.branch)data.branch=canonicalBranch(data.branch)'),'roster branch aliases should be canonicalized before updating student cards');
 assert.ok(html.includes('mushrifi-roster-import-finished'),'setup should wait for roster import completion');
+assert.ok(html.includes('البطاقات المطابقة والمحدّثة: '+updated)&&html.includes('إجمالي بطاقات التلاميذ في القاعدة: '+db.students.length),'import summary should report matched students and final total');
 assert.ok(html.includes('let importSnapshot=null,importCommitted=false;'),'roster import should track a transaction snapshot');
 assert.ok(html.includes('if(importSnapshot&&!importCommitted)'),'roster import should roll back partial changes after a failed import');
 assert.ok(html.includes('importCommitted=true;'),'roster import should commit only after a successful database save');
