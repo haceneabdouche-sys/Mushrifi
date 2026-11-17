@@ -78,7 +78,23 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         web.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override public void onReceivedError(WebView view, android.webkit.WebResourceRequest request, android.webkit.WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request != null && request.isForMainFrame()) {
+                    String detail = error == null ? "تعذر تحميل صفحة التطبيق" : String.valueOf(error.getDescription());
+                    android.util.Log.e("MushrifiWebView", "Main page load failed: " + detail);
+                    android.widget.TextView failure = new android.widget.TextView(MainActivity.this);
+                    failure.setText("تعذر تشغيل مُشرِفي\n\n" + detail + "\n\nلم يتم حذف بياناتك. لا تحذف التطبيق أو تمسح بياناته. أعد المحاولة لاحقاً أو تواصل مع الدعم.");
+                    failure.setTextDirection(android.view.View.TEXT_DIRECTION_RTL);
+                    failure.setTextSize(17);
+                    failure.setPadding(28, 36, 28, 36);
+                    failure.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                    failure.setBackgroundColor(android.graphics.Color.WHITE);
+                    setContentView(failure);
+                }
+            }
+        });
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
                 EditText input = new EditText(MainActivity.this);
