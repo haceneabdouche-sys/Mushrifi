@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - fix/backup-student-roster-recovery
+      - fix/csv-import-name-section-dedupe
 
 permissions:
   contents: read

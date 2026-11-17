@@ -20,6 +20,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import java.security.KeyStore;
 import android.os.Build;
+import android.os.Environment;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.Intent;
@@ -41,9 +42,12 @@ import android.widget.EditText;
 import android.text.InputType;
 import android.webkit.JsPromptResult;
 import java.io.OutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends Activity {
     private static final int PICK_FILE = 4101;
@@ -57,6 +61,8 @@ public class MainActivity extends Activity {
     private boolean speechPending;
     private WebView web;
     private final ExecutorService licenseExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService reminderExecutor = Executors.newSingleThreadExecutor();
+    private final AtomicBoolean reminderRescheduleQueued = new AtomicBoolean(false);
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -72,7 +78,23 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         web.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
-        web.setWebViewClient(new WebViewClient());
+        web.setWebViewClient(new WebViewClient() {
+            @Override public void onReceivedError(WebView view, android.webkit.WebResourceRequest request, android.webkit.WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request != null && request.isForMainFrame()) {
+                    String detail = error == null ? "تعذر تحميل صفحة التطبيق" : String.valueOf(error.getDescription());
+                    android.util.Log.e("MushrifiWebView", "Main page load failed: " + detail);
+                    android.widget.TextView failure = new android.widget.TextView(MainActivity.this);
+                    failure.setText("تعذر تشغيل مُشرِفي\n\n" + detail + "\n\nلم يتم حذف بياناتك. لا تحذف التطبيق أو تمسح بياناته. أعد المحاولة لاحقاً أو تواصل مع الدعم.");
+                    failure.setTextDirection(android.view.View.TEXT_DIRECTION_RTL);
+                    failure.setTextSize(17);
+                    failure.setPadding(28, 36, 28, 36);
+                    failure.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                    failure.setBackgroundColor(android.graphics.Color.WHITE);
+                    setContentView(failure);
+                }
+            }
+        });
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
                 EditText input = new EditText(MainActivity.this);
@@ -255,6 +277,44 @@ public class MainActivity extends Activity {
             for (String id : prefs.getAll().keySet()) cancelReminder(MainActivity.this, id);
             prefs.edit().clear().apply();
         }
+        @JavascriptInterface public void replaceSummonsReminders(String json) {
+            // Replace reminders as one background task; avoid hundreds of synchronous
+            // JavaScript-to-Android bridge calls while restoring a backup.
+            if (json == null) return;
+            reminderExecutor.execute(() -> {
+                try {
+                    android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
+                    java.util.Map<String, ?> previous = prefs.getAll();
+                    for (String id : previous.keySet()) cancelReminder(MainActivity.this, id);
+                    android.content.SharedPreferences.Editor editor = prefs.edit().clear();
+                    org.json.JSONArray items = new org.json.JSONArray(json);
+                    long now = System.currentTimeMillis();
+                    for (int i = 0; i < items.length(); i++) {
+                        org.json.JSONObject item = items.optJSONObject(i);
+                        if (item == null) continue;
+                        String id = item.optString("id", "");
+                        String student = item.optString("student", "");
+                        long reminder = item.optLong("reminderAt", 0L);
+                        long appointment = item.optLong("appointment", 0L);
+                        if (id.isEmpty() || student.isEmpty() || reminder <= now) continue;
+                        editor.putString(id, student + "|" + reminder + "|" + appointment);
+                    }
+                    editor.apply();
+                    for (int i = 0; i < items.length(); i++) {
+                        org.json.JSONObject item = items.optJSONObject(i);
+                        if (item == null) continue;
+                        String id = item.optString("id", "");
+                        String student = item.optString("student", "");
+                        long reminder = item.optLong("reminderAt", 0L);
+                        if (!id.isEmpty() && !student.isEmpty() && reminder > now) {
+                            scheduleReminder(MainActivity.this, id, student, reminder);
+                        }
+                    }
+                } catch (Exception error) {
+                    android.util.Log.e("MushrifiReminder", "Bulk reminder restore failed", error);
+                }
+            });
+        }
         @JavascriptInterface public void pickBackupFile() {
             runOnUiThread(() -> {
                 try {
@@ -277,6 +337,47 @@ public class MainActivity extends Activity {
                 intent.putExtra(Intent.EXTRA_TITLE, "mushrifi-backup.json");
                 startActivityForResult(intent, SAVE_FILE);
             });
+        }
+        @JavascriptInterface public String saveSignatureImage(String dataUrl) {
+            Uri created = null;
+            try {
+                if (dataUrl == null || !dataUrl.startsWith("data:image/png;base64,"))
+                    return "ERROR:صيغة صورة التوقيع غير صحيحة";
+                byte[] png = Base64.decode(dataUrl.substring(dataUrl.indexOf(',') + 1), Base64.DEFAULT);
+                if (png.length == 0 || png.length > 5 * 1024 * 1024)
+                    return "ERROR:حجم صورة التوقيع غير صالح";
+                String fileName = "Mushrifi-signature-" + System.currentTimeMillis() + ".png";
+                if (Build.VERSION.SDK_INT >= 29) {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                    values.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Mushrifi");
+                    values.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                    created = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                    if (created == null) return "ERROR:تعذر إنشاء ملف الصورة في الهاتف";
+                    try (OutputStream output = getContentResolver().openOutputStream(created)) {
+                        if (output == null) throw new IOException("تعذر فتح ملف الصورة");
+                        output.write(png);
+                        output.flush();
+                    }
+                    ContentValues ready = new ContentValues();
+                    ready.put(MediaStore.Images.Media.IS_PENDING, 0);
+                    getContentResolver().update(created, ready, null, null);
+                    return created.toString();
+                }
+                File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                if (directory == null) return "ERROR:مساحة الصور الخاصة بالتطبيق غير متاحة";
+                if (!directory.exists() && !directory.mkdirs()) return "ERROR:تعذر إنشاء مجلد الصور";
+                File file = new File(directory, fileName);
+                try (OutputStream output = new FileOutputStream(file)) {
+                    output.write(png);
+                    output.flush();
+                }
+                return file.getAbsolutePath();
+            } catch (Exception error) {
+                if (created != null) try { getContentResolver().delete(created, null, null); } catch (Exception ignored) { }
+                return "ERROR:" + String.valueOf(error.getMessage());
+            }
         }
         @JavascriptInterface public void startArabicSpeech() {
             runOnUiThread(() -> {
@@ -338,21 +439,55 @@ public class MainActivity extends Activity {
     }
 
     private void rescheduleStoredReminders() {
-        android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
-        for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) {
-            String value = prefs.getString(id, "");
-            String[] parts = value.split("\\|", 3);
-            if (parts.length != 2 && parts.length != 3) { prefs.edit().remove(id).apply(); continue; }
+        // Alarm restoration can involve hundreds of records after a backup restore.
+        // Never iterate and schedule them on Android's main/UI thread.
+        if (!reminderRescheduleQueued.compareAndSet(false, true)) return;
+        reminderExecutor.execute(() -> {
             try {
-                long reminder = parts.length == 2 ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L : Long.parseLong(parts[1]);
-                if (reminder <= System.currentTimeMillis()) {
-                    cancelReminder(this, id);
-                    prefs.edit().remove(id).apply();
-                } else {
-                    scheduleReminder(this, id, parts[0], reminder);
+                android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
+                java.util.Map<String, ?> stored = prefs.getAll();
+                long now = System.currentTimeMillis();
+                android.content.SharedPreferences.Editor cleanup = prefs.edit();
+                boolean changed = false;
+                for (java.util.Map.Entry<String, ?> entry : stored.entrySet()) {
+                    String id = entry.getKey();
+                    Object raw = entry.getValue();
+                    if (!(raw instanceof String)) {
+                        cleanup.remove(id);
+                        changed = true;
+                        continue;
+                    }
+                    String[] parts = ((String) raw).split("\\|", 3);
+                    if (parts.length != 2 && parts.length != 3) {
+                        cleanup.remove(id);
+                        changed = true;
+                        continue;
+                    }
+                    try {
+                        long reminder = parts.length == 2
+                            ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L
+                            : Long.parseLong(parts[1]);
+                        if (reminder <= now) {
+                            cancelReminder(MainActivity.this, id);
+                            cleanup.remove(id);
+                            changed = true;
+                        } else {
+                            scheduleReminder(MainActivity.this, id, parts[0], reminder);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        cleanup.remove(id);
+                        changed = true;
+                    } catch (RuntimeException error) {
+                        android.util.Log.e("MushrifiReminder", "Could not restore reminder " + id, error);
+                    }
                 }
-            } catch (NumberFormatException ignored) { prefs.edit().remove(id).apply(); }
-        }
+                if (changed) cleanup.apply();
+            } catch (RuntimeException error) {
+                android.util.Log.e("MushrifiReminder", "Reminder restoration failed", error);
+            } finally {
+                reminderRescheduleQueued.set(false);
+            }
+        });
     }
 
     @Override protected void onResume() {
