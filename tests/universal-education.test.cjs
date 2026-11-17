@@ -46,6 +46,8 @@ vm.runInContext(html.slice(attrStart,attrEnd),context);
 assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({schoolingSystem:'نصف داخلي'}))),{attribute:'نصف داخلي',status:'نصف داخلي'},'new imported students should retain their school system as the visible attribute');
 assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({schoolingSystem:''}))),{attribute:'',status:''},'blank roster systems should not invent an attribute');
 assert.ok(html.includes('const schooling=rosterAttributeFields(data)'), 'matched student records should fill missing attribute fields from the roster');
+assert.ok(html.includes('const legacyKey=value=>'),'assigned activity should recognize legacy student-name links');
+assert.ok(html.includes(String.raw`replace(/\s*\d+$/,'')`),'legacy student-name matching should ignore trailing digits without deleting the record');
 assert.ok(html.includes('...rosterAttributeFields(data)'), 'new student records should store attribute and status');
 assert.ok(html.includes('studentsForUser().filter(s=>attendanceGroupKey(s)===cls)'),'daily attendance roster should be limited to assigned classes');
 assert.ok(html.includes('const choices=studentsForUser().map'),'attendance record editing should only offer assigned students');
