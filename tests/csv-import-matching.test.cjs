@@ -26,6 +26,13 @@ assert.match(source, /String\(record\.student\)===String\(target\.id\)/);
 assert.match(source, /for\(const kind of \['attendance','documents','violations'\]\)/);
 assert.match(source, /db=originalDb;render\(\);throw new Error\('تعذر حفظ الاستيراد/);
 
+// The actual student form stores the displayed student attribute in "attribute".
+// Preserve the imported schooling regime ("نصف داخلي" / "خارجي") there.
+assert.match(source, /schoolingSystem:find\(\['نظامالتمدرس','النظام','regime','schoolingsystem'\]\)/);
+assert.match(source, /if\(!data\.attribute&&data\.schoolingSystem\)data\.attribute=data\.schoolingSystem/);
+assert.match(source, /data\.last=normalizeImportName\(data\.last\)/);
+assert.match(source, /data\.first=normalizeImportName\(data\.first\)/);
+
 // Name suffix cleanup handles Arabic and Western digits.
 assert.match(source, /normalizeImportName=v=>normalizeKey\(v\)/);
 assert.match(source, /replace\(\/\(\[\^\\s\]\+\?\)\[0-9٠-٩۰-۹\]\+/);
