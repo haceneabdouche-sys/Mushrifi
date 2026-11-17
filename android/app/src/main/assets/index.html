@@ -1291,11 +1291,40 @@ $('#csvImport').onchange=async e=>{
       const reverse=normalizeImportName(String(first)+' '+String(last));
       return new Set([split,reverse,legacy].map(normalizeImportName).filter(Boolean));
     };
+    // ابنِ فهارس المطابقة مرة واحدة؛ لا تمسح قائمة التلاميذ كاملة لكل صف مستورد.
     const existingById=new Map();
+    const fallbackIndex=new Map(),fallbackKeysByStudent=new Map();
+    const fallbackKey=(name,section)=>name+'¦'+section;
+    const indexFallbackStudent=st=>{
+      const names=getStudentName(st);
+      const cls=st.sectionNumber||st.class||st.section||st.className||st.classe||st.group||'';
+      const section=normalizeClass(cls),keys=new Set();
+      if(section)for(const n of names){const key=fallbackKey(n,section);keys.add(key);if(!fallbackIndex.has(key))fallbackIndex.set(key,new Set());fallbackIndex.get(key).add(st);}
+      fallbackKeysByStudent.set(st,keys);
+    };
+    const removeFallbackStudent=st=>{
+      const keys=fallbackKeysByStudent.get(st);if(!keys)return;
+      for(const key of keys){const bucket=fallbackIndex.get(key);if(bucket){bucket.delete(st);if(!bucket.size)fallbackIndex.delete(key);}}
+      fallbackKeysByStudent.delete(st);
+    };
     for(const st of db.students){
       const key=normalizeId(st.identityNumber);
       if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}
+      indexFallbackStudent(st);
     }
+    // اربط سجلات المتابعة بالتلميذ مرة واحدة بدلاً من مسحها عند كل تحديث.
+    const recordsByStudentId=new Map();
+    for(const kind of ['attendance','documents','violations']){
+      for(const record of db[kind]){
+        const key=String(record.student??'');
+        if(!recordsByStudentId.has(key))recordsByStudentId.set(key,[]);
+        recordsByStudentId.get(key).push(record);
+      }
+    }
+    // اجمع الأقسام الجديدة ثم أضفها دفعة واحدة بعد انتهاء المطابقة.
+    const academicKey=(y,b,c)=>[academicYearKey(y),academicNorm(canonicalBranch(b)),academicNorm(c)].join('¦');
+    const knownAcademic=new Set((Array.isArray(db.settings.academicStructure)?db.settings.academicStructure:[]).map(x=>academicKey(x.schoolYear,x.branch,x.sectionNumber)));
+    const pendingAcademic=new Map();
     const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0;
     const fields=Object.keys(idx);
     for(const cells of rows.slice(1)){
@@ -1325,7 +1354,8 @@ $('#csvImport').onchange=async e=>{
       data.sectionNumber=String(data.class||'').trim();
       if(data.schoolYear&&data.branch&&data.sectionNumber){
         data.class=data.sectionNumber;
-        ensureAcademicCombination(data.schoolYear,data.branch,data.sectionNumber);
+        const key=academicKey(data.schoolYear,data.branch,data.sectionNumber);
+        if(!knownAcademic.has(key))pendingAcademic.set(key,{schoolYear:data.schoolYear,branch:canonicalBranch(data.branch),sectionNumber:data.sectionNumber});
       }
       if(!data.last||!data.first||!data.class){skipped++;continue;}
       const incomingId=normalizeId(data.identityNumber);
@@ -1344,44 +1374,48 @@ $('#csvImport').onchange=async e=>{
       if(idMatches.length>1){skipped++;conflicts++;continue;}
       let target=idMatches[0]||null;
       if(!target){
-        const fallback=db.students.filter(st=>{
-          const names=getStudentName(st);
-          const nameMatch=[...incomingNames].some(n=>names.has(n));
-          const cls=st.sectionNumber||st.class||st.section||st.className||st.classe||st.group||'';
-          const sectionMatch=normalizeClass(cls)===incomingSection;
+        const candidates=new Set();
+        for(const n of incomingNames){
+          const bucket=fallbackIndex.get(fallbackKey(n,incomingSection));
+          if(bucket)for(const st of bucket)candidates.add(st);
+        }
+        const fallback=[...candidates].filter(st=>{
           const yearMatch=!incomingYear||!st.schoolYear||normalizeClass(st.schoolYear)===incomingYear;
           const branchMatch=!incomingBranch||!st.branch||normalizeClass(st.branch)===incomingBranch;
           // إذا كان رقما التعريف مختلفين فهما تلميذان مختلفان ولو تطابق الاسم والقسم.
           const existingId=normalizeId(st.identityNumber);
           const identityCompatible=!incomingId||!existingId||existingId===incomingId;
-          return nameMatch&&sectionMatch&&yearMatch&&branchMatch&&identityCompatible;
+          return yearMatch&&branchMatch&&identityCompatible;
         });
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
       }
       if(target){
-        // حدّث حقول البطاقة الرسمية فقط؛ الخانات الفارغة في CSV لا تمحو البيانات السابقة.
+        // حدّث فهرس الاسم عند تغيير البطاقة، مع الإبقاء على معرّف الطالب وسجلاته.
+        removeFallbackStudent(target);
         for(const key of fields){if(data[key]!==''||!Object.prototype.hasOwnProperty.call(target,key))target[key]=data[key];}
         if(data.sectionNumber)target.sectionNumber=data.sectionNumber;
         if(data.enrollmentNumber!=='')target.code=data.enrollmentNumber;
         if(!target.id)target.id=makeStudentImportId();
-        // حدّث الاسم المعروض في السجلات المرتبطة بمعرّف التلميذ، مع إبقاء تفاصيل الوقائع كما هي.
         const currentDisplayName=(target.last+' '+target.first).trim()||target.name||target.fullName||'';
-        for(const kind of ['attendance','documents','violations']){
-          for(const record of db[kind]){
-            if(String(record.student)===String(target.id))record.studentName=currentDisplayName;
-          }
-        }
+        const linkedRecords=recordsByStudentId.get(String(target.id))||[];
+        for(const record of linkedRecords)record.studentName=currentDisplayName;
+        indexFallbackStudent(target);
         updated++;
       }else{
         const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
         db.students.push(record);
+        indexFallbackStudent(record);
         if(incomingId){
           if(!existingById.has(incomingId))existingById.set(incomingId,[]);
           existingById.get(incomingId).push(record);
         }
         added++;
       }
+    }
+    if(pendingAcademic.size){
+      if(!Array.isArray(db.settings.academicStructure))db.settings.academicStructure=[];
+      for(const [key,section] of pendingAcademic){if(!knownAcademic.has(key)){db.settings.academicStructure.push(section);knownAcademic.add(key);}}
     }
     if(!save())throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');
     importCommitted=true;
