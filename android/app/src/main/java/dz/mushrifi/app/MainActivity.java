@@ -47,6 +47,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MainActivity extends Activity {
     private static final int PICK_FILE = 4101;
@@ -60,6 +61,8 @@ public class MainActivity extends Activity {
     private boolean speechPending;
     private WebView web;
     private final ExecutorService licenseExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService reminderExecutor = Executors.newSingleThreadExecutor();
+    private final AtomicBoolean reminderRescheduleQueued = new AtomicBoolean(false);
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -382,21 +385,55 @@ public class MainActivity extends Activity {
     }
 
     private void rescheduleStoredReminders() {
-        android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
-        for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) {
-            String value = prefs.getString(id, "");
-            String[] parts = value.split("\\|", 3);
-            if (parts.length != 2 && parts.length != 3) { prefs.edit().remove(id).apply(); continue; }
+        // Alarm restoration can involve hundreds of records after a backup restore.
+        // Never iterate and schedule them on Android's main/UI thread.
+        if (!reminderRescheduleQueued.compareAndSet(false, true)) return;
+        reminderExecutor.execute(() -> {
             try {
-                long reminder = parts.length == 2 ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L : Long.parseLong(parts[1]);
-                if (reminder <= System.currentTimeMillis()) {
-                    cancelReminder(this, id);
-                    prefs.edit().remove(id).apply();
-                } else {
-                    scheduleReminder(this, id, parts[0], reminder);
+                android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
+                java.util.Map<String, ?> stored = prefs.getAll();
+                long now = System.currentTimeMillis();
+                android.content.SharedPreferences.Editor cleanup = prefs.edit();
+                boolean changed = false;
+                for (java.util.Map.Entry<String, ?> entry : stored.entrySet()) {
+                    String id = entry.getKey();
+                    Object raw = entry.getValue();
+                    if (!(raw instanceof String)) {
+                        cleanup.remove(id);
+                        changed = true;
+                        continue;
+                    }
+                    String[] parts = ((String) raw).split("\\|", 3);
+                    if (parts.length != 2 && parts.length != 3) {
+                        cleanup.remove(id);
+                        changed = true;
+                        continue;
+                    }
+                    try {
+                        long reminder = parts.length == 2
+                            ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L
+                            : Long.parseLong(parts[1]);
+                        if (reminder <= now) {
+                            cancelReminder(MainActivity.this, id);
+                            cleanup.remove(id);
+                            changed = true;
+                        } else {
+                            scheduleReminder(MainActivity.this, id, parts[0], reminder);
+                        }
+                    } catch (NumberFormatException ignored) {
+                        cleanup.remove(id);
+                        changed = true;
+                    } catch (RuntimeException error) {
+                        android.util.Log.e("MushrifiReminder", "Could not restore reminder " + id, error);
+                    }
                 }
-            } catch (NumberFormatException ignored) { prefs.edit().remove(id).apply(); }
-        }
+                if (changed) cleanup.apply();
+            } catch (RuntimeException error) {
+                android.util.Log.e("MushrifiReminder", "Reminder restoration failed", error);
+            } finally {
+                reminderRescheduleQueued.set(false);
+            }
+        });
     }
 
     @Override protected void onResume() {
