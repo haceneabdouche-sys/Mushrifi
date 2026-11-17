@@ -38,6 +38,7 @@ assert.ok(html.includes('if(data.branch)data.branch=canonicalBranch(data.branch)
 assert.ok(html.includes('mushrifi-roster-import-finished'),'setup should wait for roster import completion');
 assert.ok(html.includes("if(backupFile&&window.AndroidBridge){if(typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();if(typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}"),'first-run JSON restore should rebuild guardian appointment reminders');
 assert.ok(html.includes("البطاقات المطابقة والمحدّثة: '+updated")&&html.includes("إجمالي بطاقات التلاميذ في القاعدة: '+db.students.length"),'import summary should report matched students and final total');
+assert.ok(html.includes("إجمالي التلاميذ في الأقسام المسندة إليك: '+studentsForUser().length"),'import summary should distinguish the supervisor assigned-student total from the full imported roster');
 assert.ok(html.includes('let importSnapshot=null,importCommitted=false;'),'roster import should track a transaction snapshot');
 assert.ok(html.includes('if(importSnapshot&&!importCommitted)'),'roster import should roll back partial changes after a failed import');
 assert.ok(html.includes('importCommitted=true;'),'roster import should commit only after a successful database save');
