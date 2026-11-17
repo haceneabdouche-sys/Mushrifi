@@ -356,7 +356,7 @@ function renderAssignedSections(){
 function updateAssignedBranchVisibility(){const secondary=$('#educationLevelSetting').value==='secondary';$('#assignedBranchField').classList.toggle('hidden',!secondary);$('#assignedBranch').required=secondary;if(!secondary)$('#assignedBranch').value='عام';else if($('#assignedBranch').value==='عام')$('#assignedBranch').value='';}
 $('#educationLevelSetting')?.addEventListener('change',updateAssignedBranchVisibility);
 $('#addAssignedSection')?.addEventListener('click',()=>{
- const level=$('#educationLevelSetting').value,schoolYear=$('#assignedYear').value.trim().replace(/\\s+/g,' '),branch=level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام',sectionNumber=$('#assignedSection').value.trim().replace(/\\s+/g,' '),status=$('#assignedSectionStatus');
+ const level=$('#educationLevelSetting').value,schoolYear=$('#assignedYear').value.trim().replace(/\s+/g,' '),branch=level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام',sectionNumber=$('#assignedSection').value.trim().replace(/\\s+/g,' '),status=$('#assignedSectionStatus');
  if(!schoolYear||!sectionNumber||(level==='secondary'&&!branch)){status.textContent='أدخل المستوى ورقم القسم، والشعبة في الثانوي.';return;}
  const item={schoolYear,branch,sectionNumber},previous=Array.isArray(db.settings.assignedSections)?db.settings.assignedSections.map(x=>({...x})):null;
  if(!Array.isArray(db.settings.assignedSections))db.settings.assignedSections=[];
