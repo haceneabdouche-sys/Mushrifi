@@ -339,7 +339,7 @@ function academicStructure(){
 }
 function ensureAcademicCombination(y,b,c){const list=academicStructure(),key=[y,canonicalBranch(b),c].map(academicNorm).join("¦");if(!list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join("¦")===key))list.push({schoolYear:String(y).trim(),branch:canonicalBranch(b),sectionNumber:String(c).trim()});}
 
-function assignedSectionKey(section){return[section?.schoolYear||'',section?.branch||'',section?.sectionNumber||section?.class||''].map(academicNorm).join('¦');}
+function assignedSectionKey(section){return[section?.schoolYear||'',canonicalBranch(section?.branch||''),section?.sectionNumber||section?.class||''].map(academicNorm).join('¦');}
 function isStudentAssigned(st){
  if(!Array.isArray(db.settings.assignedSections))return true;
  if(!db.settings.assignedSections.length)return false;
