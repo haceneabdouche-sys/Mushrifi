@@ -1210,7 +1210,10 @@ $('#csvImport').onchange=async e=>{
           const sectionMatch=normalizeClass(cls)===incomingSection;
           const yearMatch=!incomingYear||!st.schoolYear||normalizeClass(st.schoolYear)===incomingYear;
           const branchMatch=!incomingBranch||!st.branch||normalizeClass(st.branch)===incomingBranch;
-          return nameMatch&&sectionMatch&&yearMatch&&branchMatch;
+          // إذا كان رقما التعريف مختلفين فهما تلميذان مختلفان ولو تطابق الاسم والقسم.
+          const existingId=normalizeId(st.identityNumber);
+          const identityCompatible=!incomingId||!existingId||existingId===incomingId;
+          return nameMatch&&sectionMatch&&yearMatch&&branchMatch&&identityCompatible;
         });
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
