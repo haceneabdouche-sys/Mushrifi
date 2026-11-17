@@ -29,10 +29,12 @@ const source=String.raw`function getUnjustifiedStreaks(){
   const events=item.events;
   for(const [date,event] of events){
    const scheduled=scheduledHoursForStudentDate(item.student,date);
-   // لا نثبت الغياب الكامل إلا في يوم توجد فيه ساعات دراسة فعلية ومعلومة.
-   // حتى اختيار «اليوم كاملاً» لا يكفي إذا كان توقيت القسم غير مضبوط أو اليوم عطلة.
-   event.fullDayAbsence=!event.hasBreak&&scheduled!==null&&scheduled>0&&
-    (event.explicitFullDay||event.unjustifiedHours>=scheduled);
+   // الغياب المسجل صراحةً «اليوم كاملاً» يُعتد به حتى عند غياب التوقيت الأسبوعي.
+   // أما الساعات الجزئية فلا تثبت يوماً كاملاً إلا بمقارنتها بتوقيت القسم.
+   event.fullDayAbsence=!event.hasBreak&&(
+    (event.explicitFullDay&&scheduled!==0)||
+    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled)
+   );
   }
   const ordered=[...events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
@@ -51,9 +53,9 @@ const source=String.raw`function getUnjustifiedStreaks(){
     if(weekday===5||weekday===6){last=date;continue;}
     const scheduled=scheduledHoursForStudentDate(item.student,date);
     if(scheduled===0){last=date;continue;}
-    // غياب التوقيت الأسبوعي يجعل التحقق غير ممكن؛ لا نحتسب يوماً غير مثبت.
-    if(scheduled===null){valid=false;break;}
+    // إذا كان اليوم مسجلاً صراحةً كاملاً، فلا نحتاج إلى توقيت القسم لإثبات هذا اليوم.
     const event=events.get(date);
+    if(scheduled===null&&(!event||!event.explicitFullDay)){valid=false;break;}
     if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
     last=date;
    }
