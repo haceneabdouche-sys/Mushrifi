@@ -20,6 +20,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import java.security.KeyStore;
 import android.os.Build;
+import android.os.Environment;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.Intent;
@@ -41,6 +42,8 @@ import android.widget.EditText;
 import android.text.InputType;
 import android.webkit.JsPromptResult;
 import java.io.OutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -277,6 +280,47 @@ public class MainActivity extends Activity {
                 intent.putExtra(Intent.EXTRA_TITLE, "mushrifi-backup.json");
                 startActivityForResult(intent, SAVE_FILE);
             });
+        }
+        @JavascriptInterface public String saveSignatureImage(String dataUrl) {
+            Uri created = null;
+            try {
+                if (dataUrl == null || !dataUrl.startsWith("data:image/png;base64,"))
+                    return "ERROR:صيغة صورة التوقيع غير صحيحة";
+                byte[] png = Base64.decode(dataUrl.substring(dataUrl.indexOf(',') + 1), Base64.DEFAULT);
+                if (png.length == 0 || png.length > 5 * 1024 * 1024)
+                    return "ERROR:حجم صورة التوقيع غير صالح";
+                String fileName = "Mushrifi-signature-" + System.currentTimeMillis() + ".png";
+                if (Build.VERSION.SDK_INT >= 29) {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+                    values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                    values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Mushrifi");
+                    values.put(MediaStore.Images.Media.IS_PENDING, 1);
+                    created = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                    if (created == null) return "ERROR:تعذر إنشاء ملف الصورة في الهاتف";
+                    try (OutputStream output = getContentResolver().openOutputStream(created)) {
+                        if (output == null) throw new IOException("تعذر فتح ملف الصورة");
+                        output.write(png);
+                        output.flush();
+                    }
+                    ContentValues ready = new ContentValues();
+                    ready.put(MediaStore.Images.Media.IS_PENDING, 0);
+                    getContentResolver().update(created, ready, null, null);
+                    return created.toString();
+                }
+                File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                if (directory == null) return "ERROR:مساحة الصور الخاصة بالتطبيق غير متاحة";
+                if (!directory.exists() && !directory.mkdirs()) return "ERROR:تعذر إنشاء مجلد الصور";
+                File file = new File(directory, fileName);
+                try (OutputStream output = new FileOutputStream(file)) {
+                    output.write(png);
+                    output.flush();
+                }
+                return file.getAbsolutePath();
+            } catch (Exception error) {
+                if (created != null) try { getContentResolver().delete(created, null, null); } catch (Exception ignored) { }
+                return "ERROR:" + String.valueOf(error.getMessage());
+            }
         }
         @JavascriptInterface public void startArabicSpeech() {
             runOnUiThread(() -> {
