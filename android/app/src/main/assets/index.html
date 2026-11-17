@@ -182,6 +182,20 @@ footer{padding:24px 12px;color:#71818d}
 .setup-wizard .setup-upload{border:1px dashed #9eb6c7;border-radius:13px;padding:13px;background:#f7fafc;margin:14px 0}
 body.setup-required .notice,body.setup-required nav,body.setup-required .page,body.setup-required footer{display:none!important}
 @media(max-width:650px){.setup-wizard .setup-section-row{grid-template-columns:1fr 1fr}.setup-wizard .setup-section-row button{grid-column:1/-1}}
+
+/* Keep the branch value on one line in mobile student cards */
+@media(max-width:700px){
+ .students-table tbody td[data-label="الشعبة"]{
+  grid-column:1/-1;
+  grid-template-columns:94px minmax(0,1fr);
+  align-items:center;
+ }
+ .students-table tbody td[data-label="الشعبة"]{
+  white-space:nowrap !important;
+  overflow-wrap:normal !important;
+  word-break:keep-all !important;
+ }
+}
 </style>
 </head>
 <body>
