@@ -310,7 +310,7 @@ const DEFAULT_ACADEMIC_STRUCTURE=[["أولى","جذع مشترك آداب","1"],
 const academicNorm=v=>String(v??"").normalize("NFKC").replace(/[\u0640\u064B-\u065F\u0670]/g,"").replace(/\s+/g," ").trim().toLocaleLowerCase("ar");
 const BRANCH_SHORTCUTS=[["جذع مشترك علوم وتكنولوجيا","ج م ع ت"],["جذع مشترك آداب","ج م أ"],["آداب وفلسفة","أ ف"],["تسيير واقتصاد","ت إ"],["رياضيات","ريا"],["تقني رياضي","ت ر"],["علوم تجريبية","ع ت"],["لغات أجنبية","ل ا"]];
 const compactAcademic=v=>academicNorm(v).replace(/\s+/g,"");
-function canonicalBranch(value){const raw=String(value??"").trim();if(!raw)return "";const key=compactAcademic(raw);const found=BRANCH_SHORTCUTS.find(([full,short])=>key===compactAcademic(full)||key===compactAcademic(short));return found?found[0]:raw;}
+function canonicalBranch(value){const raw=String(value??"").trim();if(!raw)return "";const key=compactAcademic(raw).replace(/جدع/g,"جذع");const found=BRANCH_SHORTCUTS.find(([full,short])=>key===compactAcademic(full)||key===compactAcademic(short));return found?found[0]:raw;}
 function shortBranch(value){const full=canonicalBranch(value);const found=BRANCH_SHORTCUTS.find(([name])=>academicNorm(name)===academicNorm(full));return found?found[1]:(full||"—");}
 function studentAcademicParts(st){const raw=String(st?.class||"").trim(),parts=raw.split(/\s*\/\s*/);return{schoolYear:String(st?.schoolYear||parts[0]||"").trim(),branch:canonicalBranch(st?.branch||parts[1]||""),sectionNumber:String(st?.sectionNumber||parts[2]||raw).trim()};}
 function academicStructure(){if(!Array.isArray(db.settings.academicStructure))db.settings.academicStructure=[];const list=db.settings.academicStructure,clean=[];const add=(y,b,c)=>{y=String(y||"").trim();b=canonicalBranch(b);c=String(c||"").trim();if(!y||!b||!c)return;const key=[y,b,c].map(academicNorm).join("¦");if(!clean.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join("¦")===key))clean.push({schoolYear:y,branch:b,sectionNumber:c});};list.forEach(x=>add(x.schoolYear,x.branch,x.sectionNumber));DEFAULT_ACADEMIC_STRUCTURE.forEach(x=>add(...x));db.students.forEach(st=>{const p=studentAcademicParts(st);if(p.schoolYear&&p.branch&&p.sectionNumber){st.schoolYear=p.schoolYear;st.branch=p.branch;st.sectionNumber=p.sectionNumber;st.class=p.sectionNumber;add(p.schoolYear,p.branch,p.sectionNumber);}});list.splice(0,list.length,...clean);return list;}
@@ -1192,6 +1192,8 @@ $('#csvImport').onchange=async e=>{
     for(const cells of rows.slice(1)){
       const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
       const data={};for(const key of fields)data[key]=value(key);
+      // توحيد تهجئة «جدع» الواردة في ملفات الإدارة مع «جذع» المعتمدة داخل التطبيق.
+      if(data.branch)data.branch=canonicalBranch(data.branch);
       // يدعم القوائم ذات عمود واحد «الاسم واللقب»، حتى إذا كان أحد حقلي الاسم موجوداً فقط.
       if(data.fullName&&(!data.last||!data.first)){
         const parts=data.fullName.trim().split(/\s+/).filter(Boolean);
