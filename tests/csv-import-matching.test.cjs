@@ -21,7 +21,7 @@ assert.match(source, /const identityCompatible=!incomingId\|\|!existingId\|\|exi
 // Matching is indexed once by normalized name + section, then narrowed by year,
 // branch and official identity. The index is maintained when cards are updated.
 assert.match(source, /const fallbackIndex=new Map\(\)/);
-assert.match(source, /const fallbackKeysByStudent=new Map\(\)/);
+assert.match(source, /fallbackKeysByStudent=new Map\(\)/);
 assert.match(source, /const bucket=fallbackIndex\.get\(fallbackKey\(n,incomingSection\)\)/);
 assert.match(source, /return yearMatch&&branchMatch&&identityCompatible/);
 assert.match(source, /removeFallbackStudent\(target\)/);
