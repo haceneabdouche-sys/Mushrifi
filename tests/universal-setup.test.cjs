@@ -26,3 +26,11 @@ assert.ok(html.includes("window.dispatchEvent(new CustomEvent('mushrifi-roster-i
 assert.ok(html.includes("db.settings.educationLevel=level"));
 assert.ok(html.includes("دون حذف أي تلميذ أو سجل"), 'education profile change is explicitly non-destructive');
 console.log('Universal education setup guardrails passed.');
+
+// A deliberately empty assignment list must never hide the entire saved roster.
+assert.ok(html.includes("if(!Array.isArray(db.settings.assignedSections)||!db.settings.assignedSections.length)return true;"), 'empty assignment configuration must fail open and keep students visible');
+// Render must index students once instead of scanning the full roster for every historic record.
+assert.ok(html.includes('const studentById=new Map(db.students.map(st=>[String(st.id),st]));'));
+assert.ok(html.includes('const studentsByLegacyName=new Map();'));
+assert.ok(html.includes('const byId=studentById.get(recordId);'));
+console.log('Roster visibility and indexed rendering safeguards passed.');
