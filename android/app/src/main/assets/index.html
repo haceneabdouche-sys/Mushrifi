@@ -722,13 +722,15 @@ function updateIndividualPeriodFields(){
  if(!period||!custom||!hours)return;
  const full=period.value==='اليوم كاملاً',other=period.value==='توقيت آخر';
  custom.classList.toggle('hidden',!other);
- hours.readOnly=full;
  if(full){
   const st=studentsForUser().find(x=>String(x.id)===String($('#attForm').elements.student.value));
   const value=scheduledHoursForStudentDate(st,$('#attForm').elements.date.value);
-  hours.value=value===null||value<=0?'':String(value);
-  hours.placeholder=value===null?'أدخل توقيت القسم أولاً':value<=0?'لا توجد دراسة مبرمجة في هذا اليوم':'ساعات اليوم الدراسي';
+  const hasSchedule=value!==null&&value>0;
+  hours.readOnly=hasSchedule;
+  hours.value=hasSchedule?String(value):'';
+  hours.placeholder=hasSchedule?'ساعات اليوم الدراسي':'لا يوجد توقيت مضبوط؛ أدخل الساعات يدوياً';
  }else{
+  hours.readOnly=false;
   hours.placeholder='مثال: 2 أو 7.5';
  }
 }
@@ -747,10 +749,9 @@ $('#attForm').onsubmit=e=>{
  if(isPresent){hours=0;}
  else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}
  else if(period==='اليوم كاملاً'){
-  hours=scheduledHoursForStudentDate(st,String(f.get('date')||''));
-  if(hours===null){alert('لا يمكن تسجيل يوم كامل قبل إدخال التوقيت الأسبوعي لهذا القسم من الإعدادات.');return;}
-  if(hours<=0){alert('لا توجد ساعات دراسة مبرمجة لهذا القسم في التاريخ المحدد.');return;}
-  fullDay=true;
+  const scheduled=scheduledHoursForStudentDate(st,String(f.get('date')||''));
+  if(scheduled!==null&&scheduled>0){hours=scheduled;fullDay=true;}
+  else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('لا يوجد توقيت أسبوعي مضبوط لهذا القسم. أدخل عدد ساعات الغياب يدوياً من 0.25 إلى 24.');return;}}
  }else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
  const record={id:crypto.randomUUID(),student:f.get('student'),studentName:st?(st.last+' '+st.first).trim():'',class:st?.class||'',schoolYear:st?.schoolYear||'',branch:st?.branch||'',sectionLabel:st?attendanceGroupLabel(st):'',type,date:f.get('date'),period,hours,fullDay,minutes:isLate?minutes:null,justified:isPresent?'مبرر':f.get('justified'),notes:f.get('notes')};
  db.attendance.push(record);if(!save()){db.attendance.pop();return;}e.target.reset();$('#attForm').elements.date.value=dateISO();updateAttendanceTypeFields();alert(isPresent?'تم تسجيل حضور التلميذ.':isLate?'تم حفظ التأخر لمدة '+minutes+' دقيقة.':'تم حفظ الغياب بنجاح.');
