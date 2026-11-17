@@ -26,6 +26,8 @@ for(const [full,short] of cases){
  assert.equal(context.canonicalBranch(full),full,'keep canonical branch '+full);
 }
 assert.equal(context.canonicalBranch('  ج   م   ع   ت  '),'جذع مشترك علوم وتكنولوجيا','normalize extra spaces in alias');
+assert.equal(context.canonicalBranch('جدع مشترك علوم وتكنولوجيا'),'جذع مشترك علوم وتكنولوجيا','normalize roster spelling variant for common-core science');
+assert.equal(context.canonicalBranch('جدع مشترك آداب'),'جذع مشترك آداب','normalize roster spelling variant for common-core literature');
 assert.equal(context.shortBranch('شعبة غير معروفة'),'شعبة غير معروفة','preserve unknown branch names');
 const partsStart=html.indexOf('function studentAcademicParts(');
 const partsEnd=html.indexOf('function academicStructure(',partsStart);
