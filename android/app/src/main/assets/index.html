@@ -1104,8 +1104,10 @@ $('#csvImport').onchange=async e=>{
     const find=names=>headers.findIndex(h=>names.some(name=>h===normHeader(name)));
     const idx={
       identityNumber:find(['رقمالتعريف','رقمالتعريفالوطني','matricule','identifiant']),
+      fullName:find(['الاسم واللقب','الاسم الكامل','الاسم الكامل واللقب','nom et prenom','nom complet','fullname','studentname']),
       last:find(['اللقب','الاسم العائلي','nom','lastname','surname']),
       first:find(['الاسم','الاسم الشخصي','prenom','firstname','givenname']),
+      attribute:find(['الصفة','صفة التلميذ','attribute','status']),
       gender:find(['الجنس','sexe','gender']),
       birthDate:find(['تاريخالازدياد','تاريخالميلاد','datenaissance','birthdate']),
       birthByJudgment:find(['مولودبحكم','مولودبموجب حكم','neparjugement']),
@@ -1120,9 +1122,11 @@ $('#csvImport').onchange=async e=>{
       enrollmentNumber:find(['رقمالقيد','رقمالتسجيل','numeroinscription','enrollmentnumber']),
       enrollmentDate:find(['تاريخالتسجيل','dateinscription','enrollmentdate'])
     };
-    const required=['identityNumber','last','first','class'];
-    const missing=required.filter(k=>idx[k]<0);
-    if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
+    const missing=[];
+    if(idx.last<0&&idx.fullName<0)missing.push('الاسم واللقب');
+    if(idx.first<0&&idx.fullName<0)missing.push('الاسم');
+    if(idx.class<0)missing.push('القسم');
+    if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.join('، ')+'.');
     const originalDb=JSON.parse(JSON.stringify(db));
     // المطابقة: رقم التعريف أولاً، ثم الاسم واللقب والقسم حتى للبطاقات القديمة
     // التي لا تحمل رقم تعريف أو تحمل رقماً قديماً. لا نغيّر المعرّف الداخلي للبطاقة.
@@ -1131,18 +1135,20 @@ $('#csvImport').onchange=async e=>{
       .replace(/[\u200B-\u200D\uFEFF]/g,'')
       .replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
     const normalizeId=v=>normalizeKey(v).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\s.-]/g,'');
-    const normalizeClass=v=>{
-      const s=normalizeKey(v);
-      const digits=s.match(/[0-9٠-٩۰-۹]+/g);
-      return digits?digits.join(''):s;
-    };
+    const normalizeClass=v=>normalizeKey(v)
+      .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+      .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+      .replace(/\s+/g,'');
+    const normalizeImportName=v=>normalizeKey(v)
+      .replace(/\s*[0-9٠-٩۰-۹]+$/,'')
+      .replace(/\s+/g,' ').trim();
     const getStudentName=st=>{
       const last=st.last??st.surname??st.familyName??'';
       const first=st.first??st.firstname??st.givenName??'';
       const split=normalizeKey(String(last)+' '+String(first));
       const legacy=normalizeKey(st.name??st.fullName??st.studentName??'');
       const reverse=normalizeKey(String(first)+' '+String(last));
-      return new Set([split,reverse,legacy].filter(Boolean));
+      return new Set([split,reverse,legacy].map(normalizeImportName).filter(Boolean));
     };
     const existingById=new Map();
     for(const st of db.students){
@@ -1154,6 +1160,11 @@ $('#csvImport').onchange=async e=>{
     for(const cells of rows.slice(1)){
       const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
       const data={};for(const key of fields)data[key]=value(key);
+      // يدعم القوائم ذات عمود واحد «الاسم واللقب»؛ يُعامل أول جزء كلقب والباقي اسماً.
+      if(!data.last&&!data.first&&data.fullName){
+        const parts=data.fullName.trim().split(/\s+/).filter(Boolean);
+        if(parts.length>=2){data.last=parts.shift();data.first=parts.join(' ');}
+      }
       data.enrollmentNumber=data.enrollmentNumber||'';
       data.identityNumber=String(data.identityNumber||'').trim();
       // ملف التفويج يفصل السنة والشعبة ورقم القسم؛ احتفظ برقم القسم الأصلي
@@ -1165,30 +1176,25 @@ $('#csvImport').onchange=async e=>{
       }
       if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
       const incomingId=normalizeId(data.identityNumber);
-      if(incoming.has(incomingId)){skipped++;continue;}incoming.add(incomingId);
-      const idMatches=existingById.get(incomingId)||[];
+      const incomingNames=new Set([
+        normalizeImportName(data.last+' '+data.first),
+        normalizeImportName(data.first+' '+data.last),
+        normalizeImportName(data.fullName)
+      ].filter(Boolean));
+      const incomingSection=normalizeClass(data.sectionNumber||data.class);
+      const dedupeKey=incomingId?'id:'+incomingId:'name:'+([...incomingNames].sort()[0]||'')+'|section:'+incomingSection;
+      if(incoming.has(dedupeKey)){skipped++;continue;}incoming.add(dedupeKey);
+      const idMatches=incomingId?(existingById.get(incomingId)||[]):[];
       if(idMatches.length>1){skipped++;conflicts++;continue;}
       let target=idMatches[0]||null;
       if(!target){
-        const incomingNames=new Set([normalizeKey(data.last+' '+data.first),normalizeKey(data.first+' '+data.last)]);
-        let fallback=db.students.filter(st=>{
+        const fallback=db.students.filter(st=>{
           const names=getStudentName(st);
           const nameMatch=[...incomingNames].some(n=>names.has(n));
           const cls=st.sectionNumber??st.class??st.section??st.className??st.classe??st.group??'';
-          const sectionMatch=normalizeClass(cls)===normalizeClass(data.sectionNumber||data.class);
-          const yearMatch=!data.schoolYear||!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear);
-          const branchMatch=!data.branch||!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch);
-          return nameMatch&&sectionMatch&&yearMatch&&branchMatch;
+          const sectionMatch=normalizeClass(cls)===incomingSection;
+          return nameMatch&&sectionMatch;
         });
-        // عند تكرار الاسم والقسم، استعمل السنة والشعبة للتفريق ولا تخمّن.
-        if(fallback.length>1&&data.schoolYear){
-          const exact=fallback.filter(st=>!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear));
-          if(exact.length)fallback=exact;
-        }
-        if(fallback.length>1&&data.branch){
-          const exact=fallback.filter(st=>!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch));
-          if(exact.length)fallback=exact;
-        }
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
       }
@@ -1209,13 +1215,15 @@ $('#csvImport').onchange=async e=>{
       }else{
         const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
         db.students.push(record);
-        if(!existingById.has(data.identityNumber))existingById.set(data.identityNumber,[]);
-        existingById.get(data.identityNumber).push(record);
+        if(incomingId){
+          if(!existingById.has(incomingId))existingById.set(incomingId,[]);
+          existingById.get(incomingId).push(record);
+        }
         added++;
       }
     }
     if(!save()){db=originalDb;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');}
-    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
+    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف أو الاسم والقسم: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
   }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
