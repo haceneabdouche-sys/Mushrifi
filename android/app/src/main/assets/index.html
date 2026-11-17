@@ -427,7 +427,7 @@ function renderStudentDirectory(){
 }
 function render(){
 refreshStudentSectionOptions();renderAssignedSections();if($('#educationLevelSetting'))$('#educationLevelSetting').value=db.settings.educationLevel||'secondary';
-const assignedIds=new Set(studentsForUser().map(st=>String(st.id)));const visibleAttendance=db.attendance.filter(x=>assignedIds.has(String(x.student))),visibleDocuments=db.documents.filter(x=>assignedIds.has(String(x.student))),visibleViolations=db.violations.filter(x=>assignedIds.has(String(x.student)));
+const assignedIds=new Set(studentsForUser().map(st=>String(st.id))),belongsToAssigned=record=>{const linked=student(record.student);return linked&&assignedIds.has(String(linked.id));};const visibleAttendance=db.attendance.filter(belongsToAssigned),visibleDocuments=db.documents.filter(belongsToAssigned),visibleViolations=db.violations.filter(belongsToAssigned);
 const schoolName=String(db.settings.school||'مُشرِفي'),schoolLocation=String(db.settings.location||'');
 $('#schoolHeaderName').textContent=schoolName;$('#schoolHeaderLocation').textContent=schoolLocation;$('#schoolHeaderLocation').classList.toggle('hidden',!schoolLocation.trim());
 if(document.activeElement!==$('#schoolName'))$('#schoolName').value=db.settings.school||'';
