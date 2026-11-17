@@ -84,6 +84,8 @@ jobs:
         run: node tests/academic-branches.test.cjs
       - name: Run CSV import matching regression tests
         run: node tests/csv-import-matching.test.cjs
+      - name: Run signature pad integration tests
+        run: node tests/signature-pad.test.cjs
       - name: Run license read-only and backup safety regression tests
         run: node tests/license-readonly.test.cjs
       - name: Package complete Android project
