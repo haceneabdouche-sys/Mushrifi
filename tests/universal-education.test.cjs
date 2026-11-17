@@ -54,8 +54,8 @@ const nameNormStart=html.indexOf('const normalizeStudentIdentity=');
 const nameNormEnd=html.indexOf('\nconst findStudentForRecord',nameNormStart);
 assert.notEqual(nameNormStart,-1,'legacy student identity normalizer must exist');
 assert.notEqual(nameNormEnd,-1,'legacy student identity normalizer must be isolated');
-vm.runInContext(html.slice(nameNormStart,nameNormEnd),context);
-assert.equal(context.normalizeStudentIdentity('وائل عيسو1'),context.normalizeStudentIdentity('وائل عيسو'),'legacy student history should resolve names ending in digits');
+const normalizeStudentIdentity=vm.runInContext(html.slice(nameNormStart,nameNormEnd)+'\\nnormalizeStudentIdentity',context);
+assert.equal(normalizeStudentIdentity('وائل عيسو1'),normalizeStudentIdentity('وائل عيسو'),'legacy student history should resolve names ending in digits');
 assert.ok(html.includes('const requested=String(id),assignedStudents=studentsForUser();let s=assignedStudents.find'),'student history should resolve legacy name references only within assigned sections');
 
 assert.ok(html.includes(String.raw`replace(/\s*\d+$/,'')`),'legacy student-name matching should ignore trailing digits without deleting the record');
