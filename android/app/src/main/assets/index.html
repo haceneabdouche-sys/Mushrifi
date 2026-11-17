@@ -325,7 +325,7 @@ db.documents=Array.isArray(db.documents)?db.documents:[];
 db.violations=Array.isArray(db.violations)?db.violations:[];
 db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
 if(!db.settings.educationLevel&&db.students.length)db.settings.educationLevel='secondary';
-if(db.students.length&&db.settings.setupComplete!==true){db.settings.educationLevel=db.settings.educationLevel||'secondary';db.settings.setupComplete=true;}
+if((db.students.length||db.attendance.length||db.documents.length||db.violations.length)&&db.settings.setupComplete!==true){db.settings.educationLevel=db.settings.educationLevel||'secondary';db.settings.setupComplete=true;}
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const sectionNorm=v=>String(v??"").trim().replace(/\s+/g," ").toLocaleLowerCase("ar");
