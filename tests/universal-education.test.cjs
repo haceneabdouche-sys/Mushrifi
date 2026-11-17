@@ -58,6 +58,7 @@ assert.ok(html.includes("$('#addAssignedSection')?.addEventListener"),'assigned-
 assert.ok(html.includes("level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام'"),'primary and middle assigned sections should use the general branch');
 assert.ok(html.includes('db.settings.assignedSections.push(item)'),'new assigned sections should be persisted in settings');
 assert.ok(html.includes('assignedSectionKey(x)===assignedSectionKey(item)'),'duplicate assigned sections should be rejected');
+assert.ok(html.includes("if(typeof updateAssignedBranchVisibility==='function')updateAssignedBranchVisibility();"),'saved education level should control the assigned-section branch field on every render');
 
 assert.ok(html.includes('const st=studentsForUser().find(x=>String(x.id)===String(f.get(\'student\')))'),'individual attendance submission should validate the selected student against assigned classes');
 
