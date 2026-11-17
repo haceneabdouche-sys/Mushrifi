@@ -54,6 +54,27 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
   - `POST /v1/admin/licenses/{id}/suspend`
   - `POST /v1/admin/licenses/{id}/renew` with `{ "durationDays":365 }`
 
+## Owner CLI (run locally)
+
+A small owner-only command-line tool is available at `scripts/admin.mjs`. It never stores the admin token in the repository and refuses admin actions when the environment variable is missing.
+
+```sh
+export MUSHRIFI_ADMIN_API_TOKEN="YOUR_ADMIN_TOKEN"
+node scripts/admin.mjs help
+node scripts/admin.mjs issue annual
+node scripts/admin.mjs list
+node scripts/admin.mjs suspend LICENSE_ID
+node scripts/admin.mjs renew LICENSE_ID 365
+```
+
+On Windows PowerShell, set the environment variable for the current terminal with:
+
+```powershell
+$env:MUSHRIFI_ADMIN_API_TOKEN = "YOUR_ADMIN_TOKEN"
+node scripts/admin.mjs issue annual
+```
+
+The activation code is displayed only in the issue command response. Save it securely; the API stores only its hash and cannot reveal it again. Never paste the admin token or signing private key into ChatGPT, source files, or Git commits. This CLI is not a hosted dashboard and has not been exercised with a real owner token in this project.
 ## Remaining validation and hardening
 
 - Run the Android build and regression suite; verify the resulting test APK before installation.
