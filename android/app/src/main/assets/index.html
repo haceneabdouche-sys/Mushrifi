@@ -311,7 +311,6 @@ db.documents=Array.isArray(db.documents)?db.documents:[];
 db.violations=Array.isArray(db.violations)?db.violations:[];
 db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
 if(!db.settings.educationLevel&&db.students.length)db.settings.educationLevel='secondary';
-if(db.students.length&&!db.settings.setupComplete)db.settings.setupComplete=true;
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const sectionNorm=v=>String(v??"").trim().replace(/\s+/g," ").toLocaleLowerCase("ar");
@@ -1334,7 +1333,7 @@ $('#firstRunSetupForm')?.addEventListener('submit',async e=>{
  }catch(err){button.disabled=false;status.textContent=err.message||'تعذر إكمال التهيئة.';alert(status.textContent);}
 });
 function updateFirstRunGate(){
- const complete=db.settings.setupComplete===true||db.students.length>0;document.body.classList.toggle('setup-required',!complete);$('#firstRunSetup')?.classList.toggle('hidden',complete);
+ const complete=db.settings.setupComplete===true;document.body.classList.toggle('setup-required',!complete);$('#firstRunSetup')?.classList.toggle('hidden',complete);
 }
 $('#saveEducationProfile')?.addEventListener('click',()=>{
  const level=$('#educationLevelSetting').value;if(!['primary','middle','secondary'].includes(level)){alert('اختر طوراً تعليمياً صحيحاً.');return;}
