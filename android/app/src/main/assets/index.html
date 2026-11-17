@@ -371,7 +371,7 @@ function isStudentAssigned(st){
  const p=studentAcademicParts(st),key=assignedSectionKey({schoolYear:p.schoolYear,branch:p.branch,sectionNumber:p.sectionNumber});
  return db.settings.assignedSections.some(section=>assignedSectionKey(section)===key);
 }
-function studentsForUser(){return db.students.filter(isStudentAssigned);}
+function studentsForUser(){const visible=db.students.filter(isStudentAssigned);return db.students.length&&!visible.length?db.students:visible;}
 function renderAssignedSections(){
  const el=$('#assignedSectionsList');if(!el)return;
  if(!Array.isArray(db.settings.assignedSections)){el.innerHTML='<p class="muted">لم يتم تخصيص أقسام؛ تظهر جميع الأقسام الموجودة.</p>';return;}
