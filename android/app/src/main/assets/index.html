@@ -315,10 +315,20 @@ body.setup-required .notice,body.setup-required nav,body.setup-required .page,bo
 const DBKEY='mushrifi_v1';
 const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}';
 const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase==='function');
-const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
-if(nativeJson==='!MUSHRIFI_DB_ERROR!'){document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2"><h2>تعذر فتح قاعدة بيانات مُشرفي</h2><p>لم يتم عرض قائمة فارغة حتى لا تُستبدل بياناتك. لا تحذف التطبيق. احتفظ بنسخة احتياطية إن كانت لديك، ثم تواصل مع الدعم.</p></main>';throw new Error('Mushrifi encrypted database could not be read');}
-const legacyJson=localStorage.getItem(DBKEY);
-let db=JSON.parse(nativeJson||legacyJson||EMPTY_DB);
+let nativeJson=null,legacyJson=null,db;
+try{
+ nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
+ if(nativeJson==='!MUSHRIFI_DB_ERROR!')throw new Error('تعذر فك تشفير قاعدة بيانات مُشرِفي أو قراءتها.');
+ legacyJson=localStorage.getItem(DBKEY);
+ db=JSON.parse(nativeJson||legacyJson||EMPTY_DB);
+}catch(error){
+ console.error('[Mushrifi startup] Database bootstrap failed',error);
+ const message=nativeJson==='!MUSHRIFI_DB_ERROR!'
+  ?'تعذر فتح قاعدة بيانات مُشرِفي أو فك تشفيرها.'
+  :'تعذر قراءة بيانات مُشرِفي؛ قد تكون قاعدة البيانات غير مكتملة أو تالفة.';
+ document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2;max-width:720px;margin:30px auto;color:#243746"><h2>تعذر تشغيل مُشرِفي بأمان</h2><p>'+message+'</p><p>حفاظاً على بياناتك، لم يتم إنشاء قاعدة فارغة ولم تُستبدل أي سجلات.</p><p>لا تحذف التطبيق ولا تمسح بياناته. احتفظ بالنسخة الاحتياطية إن كانت لديك، وتواصل مع الدعم لفحص الاستعادة.</p></main>';
+ throw error;
+}
 db.students=Array.isArray(db.students)?db.students:[];
 db.attendance=Array.isArray(db.attendance)?db.attendance:[];
 db.documents=Array.isArray(db.documents)?db.documents:[];
