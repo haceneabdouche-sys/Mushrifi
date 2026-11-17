@@ -51,6 +51,22 @@ jobs:
           canvas.alpha_composite(logo, ((side - logo.width) // 2 + pad, (side - logo.height) // 2 + pad))
           canvas.resize((512, 512), Image.Resampling.LANCZOS).save(dst, optimize=True)
           PY
+      - name: Prepare permanent release signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MUSHRIFI_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "Missing MUSHRIFI_KEYSTORE_BASE64 secret"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mushrifi-release.jks"
+          test -s "$RUNNER_TEMP/mushrifi-release.jks"
+      - name: Validate release signing secrets
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.MUSHRIFI_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.MUSHRIFI_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.MUSHRIFI_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_PASSWORD" || { echo "Missing MUSHRIFI_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "$KEY_ALIAS" || { echo "Missing MUSHRIFI_KEY_ALIAS secret"; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo "Missing MUSHRIFI_KEY_PASSWORD secret"; exit 1; }
       - name: Validate embedded JavaScript syntax
         run: |
           python - <<'PY'
@@ -110,12 +126,24 @@ jobs:
           retention-days: 30
       - name: Confirm individual student file fix is included
         run: grep -q 'const attendanceList=items=>' android/app/src/main/assets/index.html
-      - name: Build debug APK
-        run: gradle --no-daemon -p android assembleDebug
-      - name: Upload APK
+      - name: Build signed release APK
+        env:
+          MUSHRIFI_KEYSTORE_PATH: ${{ runner.temp }}/mushrifi-release.jks
+          MUSHRIFI_KEYSTORE_PASSWORD: ${{ secrets.MUSHRIFI_KEYSTORE_PASSWORD }}
+          MUSHRIFI_KEY_ALIAS: ${{ secrets.MUSHRIFI_KEY_ALIAS }}
+          MUSHRIFI_KEY_PASSWORD: ${{ secrets.MUSHRIFI_KEY_PASSWORD }}
+        run: gradle --no-daemon -p android assembleRelease
+      - name: Verify release APK signature
+        run: |
+          APK="android/app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
+      - name: Upload signed release APK
         uses: actions/upload-artifact@v4
         with:
-          name: mushrifi-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: mushrifi-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
