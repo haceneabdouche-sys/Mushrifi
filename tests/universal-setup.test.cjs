@@ -29,6 +29,7 @@ console.log('Universal education setup guardrails passed.');
 
 // A deliberately empty assignment list must never hide the entire saved roster.
 assert.ok(html.includes("if(!Array.isArray(db.settings.assignedSections)||!db.settings.assignedSections.length)return true;"), 'empty assignment configuration must fail open and keep students visible');
+assert.ok(html.includes('function studentsForUser(){const visible=db.students.filter(isStudentAssigned);return db.students.length&&!visible.length?db.students:visible;}'), 'stale or mismatched assignment filters must never hide the entire saved roster');
 // Render must index students once instead of scanning the full roster for every historic record.
 assert.ok(html.includes('const studentById=new Map(db.students.map(st=>[String(st.id),st]));'));
 assert.ok(html.includes('const studentsByLegacyName=new Map();'));
