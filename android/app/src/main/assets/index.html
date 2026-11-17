@@ -325,7 +325,7 @@ function academicYearKey(value){
   .replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
   .replace(/[\u200B-\u200D\uFEFF]/g,"")
   .replace(/\s+/g," ").trim().toLocaleLowerCase("ar");
- key=key.replace(/^السنة\s+/,"");
+ key=key.replace(/^السن[هة]\s+/,"");
  key=key.replace(/^ال(?=(?:اولي|ثانيه|ثالثه|رابعه|خامسه|سادسه)(?:\s|$))/,"");
  key=key.replace(/\s+(?:ثانوي|الثانوي)$/,"");
  return key;
