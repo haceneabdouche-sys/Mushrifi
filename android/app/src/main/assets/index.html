@@ -1096,9 +1096,21 @@ $('#csvImport').onchange=async e=>{
     if(!raw.trim())throw new Error('الملف فارغ أو تعذرت قراءة محتواه.');
     raw=raw.replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
-    const delimiters=[',',';','\t'];
-    const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
-    const rows=parsed[0].rows;
+    let rows;
+    if(/<table[\s>]/i.test(raw)){
+      // يدعم ملفات Excel التي تُحفظ بصيغة HTML وتحمل امتداد .xls.
+      const parsedHtml=new DOMParser().parseFromString(raw,'text/html');
+      const table=parsedHtml.querySelector('table');
+      if(!table)throw new Error('لم يتم العثور على جدول داخل ملف Excel.');
+      rows=Array.from(table.querySelectorAll('tr')).map(tr=>
+        Array.from(tr.children).filter(cell=>/^(TH|TD)$/i.test(cell.tagName))
+          .map(cell=>String(cell.textContent||'').replace(/\s+/g,' ').trim())
+      ).filter(row=>row.length);
+    }else{
+      const delimiters=[',',';','\t'];
+      const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
+      rows=parsed[0].rows;
+    }
     if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
     const headers=rows[0].map(normHeader);
     const find=names=>headers.findIndex(h=>names.some(name=>h===normHeader(name)));
@@ -1174,7 +1186,7 @@ $('#csvImport').onchange=async e=>{
         data.class=data.sectionNumber;
         ensureAcademicCombination(data.schoolYear,data.branch,data.sectionNumber);
       }
-      if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
+      if(!data.last||!data.first||!data.class){skipped++;continue;}
       const incomingId=normalizeId(data.identityNumber);
       const incomingNames=new Set([
         normalizeImportName(data.last+' '+data.first),
@@ -1182,7 +1194,10 @@ $('#csvImport').onchange=async e=>{
         normalizeImportName(data.fullName)
       ].filter(Boolean));
       const incomingSection=normalizeClass(data.sectionNumber||data.class);
-      const dedupeKey=incomingId?'id:'+incomingId:'name:'+([...incomingNames].sort()[0]||'')+'|section:'+incomingSection;
+      const incomingYear=normalizeClass(data.schoolYear);
+      const incomingBranch=normalizeClass(data.branch);
+      const academicKey=[incomingYear,incomingBranch,incomingSection].join('|');
+      const dedupeKey=incomingId?'id:'+incomingId:'name:'+([...incomingNames].sort()[0]||'')+'|academic:'+academicKey;
       if(incoming.has(dedupeKey)){skipped++;continue;}incoming.add(dedupeKey);
       const idMatches=incomingId?(existingById.get(incomingId)||[]):[];
       if(idMatches.length>1){skipped++;conflicts++;continue;}
@@ -1193,7 +1208,9 @@ $('#csvImport').onchange=async e=>{
           const nameMatch=[...incomingNames].some(n=>names.has(n));
           const cls=st.sectionNumber||st.class||st.section||st.className||st.classe||st.group||'';
           const sectionMatch=normalizeClass(cls)===incomingSection;
-          return nameMatch&&sectionMatch;
+          const yearMatch=!incomingYear||!st.schoolYear||normalizeClass(st.schoolYear)===incomingYear;
+          const branchMatch=!incomingBranch||!st.branch||normalizeClass(st.branch)===incomingBranch;
+          return nameMatch&&sectionMatch&&yearMatch&&branchMatch;
         });
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
