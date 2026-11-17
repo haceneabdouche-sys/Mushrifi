@@ -51,6 +51,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({school
 assert.ok(html.includes('const schooling=rosterAttributeFields(data)'), 'matched student records should fill missing attribute fields from the roster');
 assert.ok(html.includes('target.attribute=schooling.attribute;target.status=schooling.status;'),'matched student cards should keep their schooling attribute synchronized with the master roster');
 assert.ok(html.includes('const legacyKey=value=>'),'assigned activity should recognize legacy student-name links');
+assert.ok(html.includes("let matches=db.students.filter(st=>[st.last+' '+st.first"),'legacy-name activity matching should check the whole institution before assigning records');
+assert.ok(html.includes('return matches.length===1&&assignedIds.has(String(matches[0].id))'),'legacy-name activity matching should reject ambiguous or unassigned students');
 const nameNormStart=html.indexOf('const normalizeStudentIdentity=');
 const nameNormEnd=html.indexOf('\nconst findStudentForRecord',nameNormStart);
 assert.notEqual(nameNormStart,-1,'legacy student identity normalizer must exist');
