@@ -750,8 +750,10 @@ $('#attForm').onsubmit=e=>{
  else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}
  else if(period==='اليوم كاملاً'){
   const scheduled=scheduledHoursForStudentDate(st,String(f.get('date')||''));
-  if(scheduled!==null&&scheduled>0){hours=scheduled;fullDay=true;}
-  else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('لا يوجد توقيت أسبوعي مضبوط لهذا القسم. أدخل عدد ساعات الغياب يدوياً من 0.25 إلى 24.');return;}}
+  if(scheduled!==null&&scheduled>0){hours=scheduled;}
+  else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
+  // اختيار اليوم كاملاً يبقى محفوظاً حتى عند إدخال الساعات يدوياً.
+  fullDay=true;
  }else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
  const record={id:crypto.randomUUID(),student:f.get('student'),studentName:st?(st.last+' '+st.first).trim():'',class:st?.class||'',schoolYear:st?.schoolYear||'',branch:st?.branch||'',sectionLabel:st?attendanceGroupLabel(st):'',type,date:f.get('date'),period,hours,fullDay,minutes:isLate?minutes:null,justified:isPresent?'مبرر':f.get('justified'),notes:f.get('notes')};
  db.attendance.push(record);if(!save()){db.attendance.pop();return;}e.target.reset();$('#attForm').elements.date.value=dateISO();updateAttendanceTypeFields();alert(isPresent?'تم تسجيل حضور التلميذ.':isLate?'تم حفظ التأخر لمدة '+minutes+' دقيقة.':'تم حفظ الغياب بنجاح.');
@@ -790,10 +792,12 @@ function getUnjustifiedStreaks(){
   const events=item.events;
   for(const [date,event] of events){
    const scheduled=scheduledHoursForStudentDate(item.student,date);
-   // لا نثبت الغياب الكامل إلا في يوم توجد فيه ساعات دراسة فعلية ومعلومة.
-   // حتى اختيار «اليوم كاملاً» لا يكفي إذا كان توقيت القسم غير مضبوط أو اليوم عطلة.
-   event.fullDayAbsence=!event.hasBreak&&scheduled!==null&&scheduled>0&&
-    (event.explicitFullDay||event.unjustifiedHours>=scheduled);
+   // الغياب المسجل صراحةً «اليوم كاملاً» يُعتد به حتى عند غياب التوقيت الأسبوعي.
+   // أما الساعات الجزئية فلا تثبت يوماً كاملاً إلا بمقارنتها بتوقيت القسم.
+   event.fullDayAbsence=!event.hasBreak&&(
+    (event.explicitFullDay&&scheduled!==0)||
+    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled)
+   );
   }
   const ordered=[...events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
@@ -812,9 +816,9 @@ function getUnjustifiedStreaks(){
     if(weekday===5||weekday===6){last=date;continue;}
     const scheduled=scheduledHoursForStudentDate(item.student,date);
     if(scheduled===0){last=date;continue;}
-    // غياب التوقيت الأسبوعي يجعل التحقق غير ممكن؛ لا نحتسب يوماً غير مثبت.
-    if(scheduled===null){valid=false;break;}
     const event=events.get(date);
+    // إذا كان اليوم مسجلاً صراحةً كاملاً، فلا نحتاج إلى توقيت القسم لإثبات هذا اليوم.
+    if(scheduled===null&&(!event||!event.explicitFullDay)){valid=false;break;}
     if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
     last=date;
    }
