@@ -86,6 +86,8 @@ jobs:
         run: node tests/csv-import-matching.test.cjs
       - name: Run signature pad integration tests
         run: node tests/signature-pad.test.cjs
+      - name: Run universal education setup tests
+        run: node tests/universal-setup.test.cjs
       - name: Run license read-only and backup safety regression tests
         run: node tests/license-readonly.test.cjs
       - name: Package complete Android project
