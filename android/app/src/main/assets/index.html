@@ -1196,7 +1196,7 @@ $('#csvImport').onchange=async e=>{
       enrollmentNumber:find(['رقمالقيد','رقمالتسجيل','numeroinscription','enrollmentnumber']),
       enrollmentDate:find(['تاريخالتسجيل','dateinscription','enrollmentdate'])
     };
-    const required=['identityNumber','last','first','class'];
+    const required=['last','first','class'];
     const missing=required.filter(k=>idx[k]<0);
     if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
     const originalDb=JSON.parse(JSON.stringify(db));
@@ -1225,7 +1225,7 @@ $('#csvImport').onchange=async e=>{
       const key=normalizeId(st.identityNumber);
       if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}
     }
-    const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0;
+    const incoming=new Set(),incomingWithoutId=new Set();let added=0,updated=0,skipped=0,conflicts=0;
     const fields=Object.keys(idx);
     for(const cells of rows.slice(1)){
       const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
@@ -1240,10 +1240,12 @@ $('#csvImport').onchange=async e=>{
         data.class=data.sectionNumber;
         ensureAcademicCombination(data.schoolYear,data.branch,data.sectionNumber);
       }
-      if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
+      if(!data.last||!data.first||!data.class){skipped++;continue;}
       const incomingId=normalizeId(data.identityNumber);
-      if(incoming.has(incomingId)){skipped++;continue;}incoming.add(incomingId);
-      const idMatches=existingById.get(incomingId)||[];
+      const noIdKey=[normalizeKey(data.last+' '+data.first),normalizeClass(data.sectionNumber||data.class),normalizeKey(data.schoolYear),normalizeKey(data.branch)].join('¦');
+      if(incomingId){if(incoming.has(incomingId)){skipped++;continue;}incoming.add(incomingId);}
+      else{if(incomingWithoutId.has(noIdKey)){skipped++;continue;}incomingWithoutId.add(noIdKey);}
+      const idMatches=incomingId?(existingById.get(incomingId)||[]):[];
       if(idMatches.length>1){skipped++;conflicts++;continue;}
       let target=idMatches[0]||null;
       if(!target){
@@ -1286,8 +1288,7 @@ $('#csvImport').onchange=async e=>{
       }else{
         const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
         db.students.push(record);
-        if(!existingById.has(data.identityNumber))existingById.set(data.identityNumber,[]);
-        existingById.get(data.identityNumber).push(record);
+        if(incomingId){if(!existingById.has(incomingId))existingById.set(incomingId,[]);existingById.get(incomingId).push(record);}
         added++;
       }
     }
