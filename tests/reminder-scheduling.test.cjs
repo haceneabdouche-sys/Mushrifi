@@ -9,7 +9,11 @@ assert.match(java, /private final AtomicBoolean reminderRescheduleQueued = new A
 assert.match(java, /private void rescheduleStoredReminders\(\)[\s\S]*?reminderExecutor\.execute\(\(\) -> \{/);
 assert.match(java, /@JavascriptInterface public void replaceSummonsReminders\(String json\)[\s\S]*?reminderExecutor\.execute\(\(\) -> \{/);
 assert.match(java, /@Override protected void onResume\(\)[\s\S]*?rescheduleStoredReminders\(\);/);
-assert.match(html, /AndroidBridge\.replaceSummonsReminders\(JSON\.stringify\(reminders\)\)/);
-assert.doesNotMatch(html, /AndroidBridge\.clearSummonsReminders\(\);\s*if\(window\.AndroidBridge&&typeof AndroidBridge\.scheduleSummonsReminder==='function'\)db\.documents\.filter/);
+
+const restoreStart = html.indexOf('function restorePendingBackup');
+const restoreEnd = html.indexOf('window.onNativeBackupLoaded', restoreStart);
+const restoreCode = html.slice(restoreStart, restoreEnd);
+assert.match(restoreCode, /AndroidBridge\.replaceSummonsReminders\(JSON\.stringify\(reminders\)\)/);
+assert.match(restoreCode, /else\s*\{/);
 
 console.log('Mushrifi reminder scheduling regression tests passed.');
