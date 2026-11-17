@@ -22,6 +22,36 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Validate embedded JavaScript syntax
+        run: |
+          python - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Extractor(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.inside = False
+                  self.parts = []
+                  self.current = []
+              def handle_starttag(self, tag, attrs):
+                  if tag.lower() == "script":
+                      self.inside = True
+                      self.current = []
+              def handle_data(self, data):
+                  if self.inside:
+                      self.current.append(data)
+              def handle_endtag(self, tag):
+                  if tag.lower() == "script" and self.inside:
+                      self.parts.append("".join(self.current))
+                      self.inside = False
+          parser = Extractor()
+          parser.feed(Path("android/app/src/main/assets/index.html").read_text(encoding="utf-8"))
+          source = "\\n".join(part for part in parser.parts if part.strip())
+          if not source.strip():
+              raise SystemExit("No inline JavaScript found")
+          Path("/tmp/mushrifi-inline.js").write_text(source, encoding="utf-8")
+          PY
+          node --check /tmp/mushrifi-inline.js
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
