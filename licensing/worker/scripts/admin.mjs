@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const API = (process.env.MUSHRIFI_LICENSE_API || "https://mushrifi-license-server.hacene47211.workers.dev").replace(/\\/+$/, "");
+const API = (process.env.MUSHRIFI_LICENSE_API || "https://mushrifi-license-server.hacene47211.workers.dev").replace(/\/+$/, "");
 const TOKEN = process.env.MUSHRIFI_ADMIN_API_TOKEN || "";
 
 function usage() {
@@ -63,9 +63,9 @@ async function main() {
     console.log("معرّف الترخيص: " + result.licenseId);
     console.log("النوع: " + result.licenseType);
     console.log("الانتهاء: " + (result.expiresAt ? new Date(result.expiresAt).toISOString() : "دائم"));
-    console.log("\\nرمز التفعيل — يظهر مرة واحدة فقط:");
+    console.log("\nرمز التفعيل — يظهر مرة واحدة فقط:");
     console.log(result.activationCode);
-    console.log("\\nاحفظ الرمز بأمان. لا يمكن استرجاعه من الخادم بعد هذه المرة.");
+    console.log("\nاحفظ الرمز بأمان. لا يمكن استرجاعه من الخادم بعد هذه المرة.");
     return;
   }
 
