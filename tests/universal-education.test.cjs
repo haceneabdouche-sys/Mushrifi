@@ -78,4 +78,7 @@ assert.ok(html.includes("if(typeof updateAssignedBranchVisibility==='function')u
 
 assert.ok(html.includes('const st=studentsForUser().find(x=>String(x.id)===String(f.get(\'student\')))'),'individual attendance submission should validate the selected student against assigned classes');
 
+assert.ok(html.includes('const EMPTY_DB=\'{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}\';'),'a genuinely new installation should start with empty student and follow-up collections');
+assert.ok(html.includes('لا توجد بطاقات تلاميذ أو سجلات غياب أو تأخر أو مخالفات أو استدعاءات'),'first-run instructions should clearly explain that a clean installation has no previous records');
+assert.ok(html.includes('تبدأ سجلات المتابعة بالظهور عندما تنشئها أنت'),'first-run instructions should explain that follow-up records are created only by the user');
 console.log('Universal education profiles: primary, middle, secondary filtering and data retention passed.');
