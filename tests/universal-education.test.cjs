@@ -50,6 +50,14 @@ assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({school
 assert.ok(html.includes('const schooling=rosterAttributeFields(data)'), 'matched student records should fill missing attribute fields from the roster');
 assert.ok(html.includes('target.attribute=schooling.attribute;target.status=schooling.status;'),'matched student cards should keep their schooling attribute synchronized with the master roster');
 assert.ok(html.includes('const legacyKey=value=>'),'assigned activity should recognize legacy student-name links');
+const nameNormStart=html.indexOf('const normalizeStudentIdentity=');
+const nameNormEnd=html.indexOf('\\nconst findStudentForRecord',nameNormStart);
+assert.notEqual(nameNormStart,-1,'legacy student identity normalizer must exist');
+assert.notEqual(nameNormEnd,-1,'legacy student identity normalizer must be isolated');
+vm.runInContext(html.slice(nameNormStart,nameNormEnd),context);
+assert.equal(context.normalizeStudentIdentity('وائل عيسو1'),context.normalizeStudentIdentity('وائل عيسو'),'legacy student history should resolve names ending in digits');
+assert.ok(html.includes('const requested=String(id),assignedStudents=studentsForUser();let s=assignedStudents.find'),'student history should resolve legacy name references only within assigned sections');
+
 assert.ok(html.includes(String.raw`replace(/\s*\d+$/,'')`),'legacy student-name matching should ignore trailing digits without deleting the record');
 assert.ok(html.includes('...rosterAttributeFields(data)'), 'new student records should store attribute and status');
 assert.ok(html.includes('studentsForUser().filter(s=>attendanceGroupKey(s)===cls)'),'daily attendance roster should be limited to assigned classes');
