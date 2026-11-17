@@ -319,6 +319,17 @@ const sectionLabel=code=>{const map=sectionNames(),key=Object.keys(map).find(k=>
 const sectionDisplay=code=>{const raw=String(code||"").trim();if(!raw)return "—";const full=sectionLabel(raw);return full===raw?raw:raw+" — "+full;};
 const DEFAULT_ACADEMIC_STRUCTURE=[["أولى","جذع مشترك آداب","1"],["أولى","جذع مشترك آداب","2"],["أولى","جذع مشترك آداب","3"],["أولى","جذع مشترك علوم وتكنولوجيا","1"],["أولى","جذع مشترك علوم وتكنولوجيا","2"],["أولى","جذع مشترك علوم وتكنولوجيا","3"],["أولى","جذع مشترك علوم وتكنولوجيا","4"],["ثانية","آداب وفلسفة","1"],["ثانية","تسيير واقتصاد","1"],["ثانية","تقني رياضي","1"],["ثانية","رياضيات","1"],["ثانية","علوم تجريبية","1"],["ثانية","لغات أجنبية","1"],["ثالثة","آداب وفلسفة","1"],["ثالثة","تسيير واقتصاد","1"],["ثالثة","تقني رياضي","1"],["ثالثة","رياضيات","1"],["ثالثة","علوم تجريبية","1"],["ثالثة","لغات أجنبية","1"]];
 const academicNorm=v=>String(v??"").normalize("NFKC").replace(/[\u0640\u064B-\u065F\u0670]/g,"").replace(/\s+/g," ").trim().toLocaleLowerCase("ar");
+function academicYearKey(value){
+ let key=String(value??"").normalize("NFKC")
+  .replace(/[\u0640\u064B-\u065F\u0670]/g,"")
+  .replace(/[أإآ]/g,"ا").replace(/ى/g,"ي")
+  .replace(/[\u200B-\u200D\uFEFF]/g,"")
+  .replace(/\s+/g," ").trim().toLocaleLowerCase("ar");
+ key=key.replace(/^السنه\s+/,"");
+ key=key.replace(/^ال(?=(?:اولى|ثانيه|ثالثه|رابعه|خامسه|سادسه)(?:\s|$))/,"");
+ key=key.replace(/\s+(?:ثانوي|الثانوي)$/,"");
+ return key;
+}
 const BRANCH_SHORTCUTS=[["جذع مشترك علوم وتكنولوجيا","ج م ع ت"],["جذع مشترك آداب","ج م أ"],["آداب وفلسفة","أ ف"],["تسيير واقتصاد","ت إ"],["رياضيات","ريا"],["تقني رياضي","ت ر"],["علوم تجريبية","ع ت"],["لغات أجنبية","ل ا"]];
 const compactAcademic=v=>academicNorm(v).replace(/\s+/g,"");
 function canonicalBranch(value){const raw=String(value??"").trim();if(!raw)return "";const key=compactAcademic(raw).replace(/جدع/g,"جذع");const found=BRANCH_SHORTCUTS.find(([full,short])=>key===compactAcademic(full)||key===compactAcademic(short));return found?found[0]:raw;}
@@ -331,15 +342,15 @@ function studentAcademicParts(st){
 function academicStructure(){
  if(!Array.isArray(db.settings.academicStructure))db.settings.academicStructure=[];
  const list=db.settings.academicStructure,clean=[];
- const add=(y,b,c)=>{y=String(y||"").trim();b=canonicalBranch(b);c=String(c||"").trim();if(!y||!b||!c)return;const key=[y,b,c].map(academicNorm).join("¦");if(!clean.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join("¦")===key))clean.push({schoolYear:y,branch:b,sectionNumber:c});};
+ const add=(y,b,c)=>{y=String(y||"").trim();b=canonicalBranch(b);c=String(c||"").trim();if(!y||!b||!c)return;const key=[academicYearKey(y),academicNorm(b),academicNorm(c)].join("¦");if(!clean.some(x=>[academicYearKey(x.schoolYear),academicNorm(x.branch),academicNorm(x.sectionNumber)].join("¦")===key))clean.push({schoolYear:y,branch:b,sectionNumber:c});};
  list.forEach(x=>add(x.schoolYear,x.branch,x.sectionNumber));
  if(db.settings.educationLevel==="secondary")DEFAULT_ACADEMIC_STRUCTURE.forEach(x=>add(...x));
  db.students.forEach(st=>{const p=studentAcademicParts(st);if(p.schoolYear&&p.branch&&p.sectionNumber){st.schoolYear=p.schoolYear;st.branch=p.branch;st.sectionNumber=p.sectionNumber;st.class=p.sectionNumber;add(p.schoolYear,p.branch,p.sectionNumber);}});
  list.splice(0,list.length,...clean);return list;
 }
-function ensureAcademicCombination(y,b,c){const list=academicStructure(),key=[y,canonicalBranch(b),c].map(academicNorm).join("¦");if(!list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join("¦")===key))list.push({schoolYear:String(y).trim(),branch:canonicalBranch(b),sectionNumber:String(c).trim()});}
+function ensureAcademicCombination(y,b,c){const list=academicStructure(),key=[academicYearKey(y),academicNorm(canonicalBranch(b)),academicNorm(c)].join("¦");if(!list.some(x=>[academicYearKey(x.schoolYear),academicNorm(x.branch),academicNorm(x.sectionNumber)].join("¦")===key))list.push({schoolYear:String(y).trim(),branch:canonicalBranch(b),sectionNumber:String(c).trim()});}
 
-function assignedSectionKey(section){return[section?.schoolYear||'',canonicalBranch(section?.branch||''),section?.sectionNumber||section?.class||''].map(academicNorm).join('¦');}
+function assignedSectionKey(section){return[academicYearKey(section?.schoolYear||''),academicNorm(canonicalBranch(section?.branch||'')),academicNorm(section?.sectionNumber||section?.class||'')].join('¦');}
 function isStudentAssigned(st){
  if(!Array.isArray(db.settings.assignedSections))return true;
  if(!db.settings.assignedSections.length)return false;
