@@ -1340,7 +1340,7 @@ $('#firstRunSetupForm')?.addEventListener('submit',async e=>{
    window.addEventListener('mushrifi-roster-import-finished',event=>{clearTimeout(timer);resolve(event.detail||{ok:false});},{once:true});
    const target=$('#csvImport'),transfer=new DataTransfer();transfer.items.add(file);target.files=transfer.files;target.dispatchEvent(new Event('change'));
   });
-  if(!result.ok){db.settings.setupComplete=false;save();button.disabled=false;status.textContent='لم يكتمل الاستيراد. صحح الملف أو الأعمدة ثم أعد المحاولة.';return;}
+  if(!result.ok){db.settings.setupComplete=false;save();button.disabled=false;status.textContent=backupFile?'تم حفظ سجلات JSON على الجهاز. أزل ملف JSON من الحقل، ثم أعد اختيار قائمة التلاميذ الصحيحة للمحاولة مجدداً.':'لم يكتمل الاستيراد. صحح الملف أو الأعمدة ثم أعد المحاولة.';return;}
   db.settings.setupComplete=true;if(!save()){db.settings.setupComplete=false;button.disabled=false;status.textContent='تم الاستيراد لكن تعذر حفظ اكتمال الإعداد. أعد المحاولة.';return;}
   document.body.classList.remove('setup-required');$('#firstRunSetup').classList.add('hidden');renderAssignedSections();status.textContent='اكتملت التهيئة بنجاح.';
   alert('اكتملت التهيئة واستيراد القائمة. تم عرض تلاميذ الأقسام المسندة إليك فقط.');
