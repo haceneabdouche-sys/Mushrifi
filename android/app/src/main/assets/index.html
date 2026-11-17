@@ -963,7 +963,9 @@ window.saveAttendanceEdit=id=>{
  if(save())alert('تم تحديث السجل بنجاح، مع الاحتفاظ بارتباطه بملف التلميذ.');else{Object.keys(r).forEach(k=>delete r[k]);Object.assign(r,before);render();alert('تعذر حفظ التعديل؛ أُعيد السجل إلى حالته السابقة.');}
 };
 window.studentHistory=id=>{
-  const sid=String(id),s=studentsForUser().find(x=>String(x.id)===sid);if(!s){alert('هذا التلميذ غير موجود ضمن الأقسام المسندة إليك.');return;}
+  const requested=String(id),assignedStudents=studentsForUser();let s=assignedStudents.find(x=>String(x.id)===requested);
+  if(!s){const key=normalizeStudentIdentity(requested),matches=assignedStudents.filter(st=>[st.last+' '+st.first,st.first+' '+st.last,st.name,st.fullName].some(value=>normalizeStudentIdentity(value)===key));if(matches.length===1)s=matches[0];}
+  if(!s){alert('لم يتم العثور على تلميذ مطابق ضمن الأقسام المسندة إليك.');return;}const sid=String(s.id);
   const normStudentName=value=>String(value??'').normalize('NFKC')
     .replace(/[\u064B-\u065F\u0670ـ\u200e\u200f]/g,'')
     .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
