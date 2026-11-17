@@ -1160,8 +1160,15 @@ function restorePendingBackup(){
  const oldDb=db;db=pendingBackupData;
  if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
- if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
- if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
+ if(window.AndroidBridge&&typeof AndroidBridge.replaceSummonsReminders==='function'){
+  const reminders=db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment&&d.reminderAt).map(d=>({
+   id:String(d.id),student:name(d.student),reminderAt:new Date(d.reminderAt).getTime(),appointment:new Date(d.appointment).getTime()
+  })).filter(d=>Number.isFinite(d.reminderAt)&&Number.isFinite(d.appointment));
+  AndroidBridge.replaceSummonsReminders(JSON.stringify(reminders));
+ }else{
+  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
+  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
+ }
  alert('تمت استعادة النسخة الاحتياطية بنجاح. عدد التلاميذ: '+db.students.length+'، وسجلات المتابعة: '+(db.attendance.length+db.documents.length+db.violations.length)+'.');
 }
 window.onNativeBackupLoaded=importBackupText;
