@@ -2,7 +2,7 @@
 
 ## Current development status
 
-The Android client implementation is now present on the isolated `feature/device-license-foundation` branch. It includes:
+The Android client implementation is now included in the primary `main` branch. It includes:
 
 - A per-installation EC P-256 private key held in Android Keystore.
 - One-time server challenges and device-proof signatures.
