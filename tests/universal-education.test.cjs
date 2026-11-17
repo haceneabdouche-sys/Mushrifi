@@ -53,6 +53,8 @@ assert.ok(html.includes('const legacyKey=value=>'),'assigned activity should rec
 assert.ok(html.includes(String.raw`replace(/\s*\d+$/,'')`),'legacy student-name matching should ignore trailing digits without deleting the record');
 assert.ok(html.includes('...rosterAttributeFields(data)'), 'new student records should store attribute and status');
 assert.ok(html.includes('studentsForUser().filter(s=>attendanceGroupKey(s)===cls)'),'daily attendance roster should be limited to assigned classes');
+assert.ok(html.includes('st=studentsForUser().find(x=>String(x.id)===check.dataset.id)'),'daily attendance saving should use only assigned students');
+assert.ok(html.includes('roster=studentsForUser().filter(s=>attendanceGroupKey(s)===group.key)'),'monthly attendance reports should only count assigned students');
 assert.ok(html.includes('const choices=studentsForUser().map'),'attendance record editing should only offer assigned students');
 assert.ok(html.includes('const students=studentsForUser().map'),'document editing should only offer assigned students');
 assert.ok(html.includes('const sid=String(id),s=studentsForUser().find'),'individual student history should be limited to assigned students');
