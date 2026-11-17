@@ -25,6 +25,9 @@ assert.match(source, /return nameMatch&&sectionMatch&&yearMatch&&branchMatch&&id
 assert.match(source, /String\(record\.student\)===String\(target\.id\)/);
 assert.match(source, /for\(const kind of \['attendance','documents','violations'\]\)/);
 assert.match(source, /db=originalDb;render\(\);throw new Error\('تعذر حفظ الاستيراد/);
+assert.ok(source.includes('let importSnapshot=null,importCommitted=false;'), 'import must keep a transaction snapshot');
+assert.ok(source.includes('if(importSnapshot&&!importCommitted){db=importSnapshot;'), 'any exception before commit must restore the entire original database');
+assert.ok(source.includes("if(data.branch)data.branch=canonicalBranch(data.branch);"), 'official roster branch spelling must be canonicalized before matching');
 
 // The actual student form stores the displayed student attribute in "attribute".
 // Preserve the imported schooling regime ("نصف داخلي" / "خارجي") there.
