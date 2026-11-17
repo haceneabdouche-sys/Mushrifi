@@ -13,6 +13,6 @@ assert.ok(html.includes("$('#saveSignature').onclick"), 'signature pad must expo
 assert.ok(html.includes('db.settings.handwrittenSignature=data'), 'saved signature must persist inside the app database');
 assert.ok(html.includes('AndroidBridge.saveSignatureImage(data)'), 'Android must export the saved PNG to device storage');
 assert.ok(java.includes('saveSignatureImage(String dataUrl)'), 'native image export bridge must exist');
-assert.ok(java.includes('MediaStore.Images.Media.RELATIVE_PATH'), 'modern Android must save the PNG in Pictures/Mushrifi');
+assert.ok(java.includes('MediaStore.MediaColumns.RELATIVE_PATH'), 'modern Android must save the PNG in Pictures/Mushrifi');
 assert.ok(java.includes('getExternalFilesDir(Environment.DIRECTORY_PICTURES)'), 'older Android must have an app-scoped fallback');
 console.log('Signature pad integration guardrails passed.');
