@@ -133,8 +133,11 @@ function validCode(value: unknown): value is string {
 }
 
 function randomCode(): string {
+  // Hex is deliberately used here because validCode accepts only A-Z, 0-9 and hyphens.
+  // Base64url can contain underscores, which the activation endpoint correctly rejects.
   const bytes = crypto.getRandomValues(new Uint8Array(24));
-  return "MSH-" + b64url(bytes).toUpperCase();
+  const hex = [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
+  return "MSH-" + hex;
 }
 
 async function adminAuthorized(request: Request, env: Env): Promise<boolean> {
