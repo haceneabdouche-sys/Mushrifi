@@ -31,4 +31,9 @@ context.db.settings.assignedSections=[{schoolYear:'السنة الأولى',bran
 context.academicStructure();
 assert.equal(context.db.students.length,4,'changing education profile must not delete student records');
 assert.equal(context.db.students.find(s=>s.id==='s1').first,'ليلى','unassigned student records remain preserved');
+assert.match(html,/id="setupRosterFile" type="file" accept="[^"]*\\.xls/,'first-run setup should accept legacy Excel roster files');
+assert.match(html,/if\\(/,'application script should remain present');
+assert.match(html,/const required=\\['last','first','class'\\]/,'national identity number should be optional in roster imports');
+assert.match(html,/if\\(data\\.branch\\)data\\.branch=canonicalBranch\\(data\\.branch\\)/,'roster branch aliases should be canonicalized before updating student cards');
+assert.match(html,/mushrifi-roster-import-finished/,'setup should wait for roster import completion');
 console.log('Universal education profiles: primary, middle, secondary filtering and data retention passed.');
