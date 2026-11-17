@@ -509,7 +509,7 @@ function voiceStudentMatches(nameText){return voiceStudentRanked(nameText).map(x
 function showVoiceStudentChoices(matches,title,choose){
  $('#voiceStatus').textContent=title;$('#voiceConfirm').classList.remove('hidden');
  $('#voiceConfirm').innerHTML='<h3>اختر التلميذ الصحيح</h3>'+matches.map(x=>{const st=x.student||x;return '<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc((st.last+' '+st.first).trim()+' – '+st.class)+'</button>';}).join(' ');
- $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st)choose(st);});
+ $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=studentsForUser().find(x=>String(x.id)===btn.dataset.studentId);if(st)choose(st);});
 }
 function handleVoiceOpenStudent(raw){
  let requested=normalizeArabic(raw);
@@ -555,7 +555,7 @@ function onArabicSpeechResult(raw){
  const requestedName=nameMatch[1].replace(/\s+(الفترة|صباحا|صباحية|مساء|مسائية|ساعتين|ساعات?).*$/i,'').trim();
  const ranked=voiceStudentRanked(requestedName);
  let st=null;
- if(window.voiceChosenStudentId){st=db.students.find(x=>String(x.id)===String(window.voiceChosenStudentId))||null;window.voiceChosenStudentId=null;}
+ if(window.voiceChosenStudentId){st=studentsForUser().find(x=>String(x.id)===String(window.voiceChosenStudentId))||null;window.voiceChosenStudentId=null;}
  if(!st&&ranked.length===1&&ranked[0].score>=0.94)st=ranked[0].student;
  if(!st){
   if(ranked.length)showVoiceStudentChoices(ranked,'لم أتأكد من الاسم المنطوق. اختر التلميذ الصحيح قبل متابعة تسجيل الغياب:',chosen=>{window.voiceChosenStudentId=chosen.id;onArabicSpeechResult(raw);});
@@ -586,7 +586,7 @@ const studentCardFieldNames=['first','last','schoolYear','branch','sectionNumber
 function readStudentForm(form){const f=new FormData(form),v={};for(const key of studentCardFieldNames)v[key]=String(f.get(key)||'').trim();v.class=v.sectionNumber;return v;}
 function studentAcademicLabel(st){const p=studentAcademicParts(st);const code=[p.branch==='عام'?'':shortBranch(p.branch),p.sectionNumber].filter(Boolean).join(' ');return [p.schoolYear,code].filter(Boolean).join(' — ')||'—';}
 function resetStudentEditor(){editingStudentId=null;$('#studentForm').reset();refreshStudentSectionOptions({schoolYear:'',branch:'',sectionNumber:''});$('#studentFormTitle').textContent='بطاقة التلميذ – إضافة بيانات';$('#studentSubmit').textContent='حفظ بطاقة التلميذ';$('#cancelStudentEdit').classList.add('hidden');}
-window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['attribute','birthDate','guardian','phone'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
+window.editStudent=id=>{const s=studentsForUser().find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['attribute','birthDate','guardian','phone'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
 $('#cancelStudentEdit').onclick=resetStudentEditor;
 $('#sectionForm').onsubmit=e=>{e.preventDefault();const f=e.target,y=String(f.elements.schoolYear.value||'').trim().replace(/\s+/g,' '),secondary=db.settings.educationLevel==='secondary',b=canonicalBranch(String(f.elements.branch.value||'').trim().replace(/\s+/g,' ')||(secondary?'':'عام')),c=String(f.elements.sectionNumber.value||'').trim().replace(/\s+/g,' ');if(!y||!c||(secondary&&!b)){alert('أدخل المستوى ورقم القسم، والشعبة في التعليم الثانوي.');return;}const list=academicStructure(),key=[y,b,c].map(academicNorm).join('¦');if(list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join('¦')===key)){alert('هذا القسم موجود مسبقًا ضمن المستوى والشعبة المحددين.');return;}list.push({schoolYear:y,branch:b,sectionNumber:c});if(!Array.isArray(db.settings.assignedSections))db.settings.assignedSections=db.students.map(st=>{const p=studentAcademicParts(st);return{schoolYear:p.schoolYear,branch:p.branch,sectionNumber:p.sectionNumber};});if(!db.settings.assignedSections.some(x=>assignedSectionKey(x)===key))db.settings.assignedSections.push({schoolYear:y,branch:b,sectionNumber:c});if(!save()){list.pop();return;}f.reset();refreshStudentSectionOptions();renderAssignedSections();alert('تمت إضافة القسم إلى القوائم والأقسام المسندة إليك.');};
 $('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.last||!values.first||!values.schoolYear||!values.branch||!values.sectionNumber){alert('الاسم واللقب والمستوى والشعبة والقسم حقول إلزامية.');return;}const norm=v=>String(v||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');const duplicate=db.students.find(s=>norm(s.first)===norm(values.first)&&norm(s.last)===norm(values.last)&&norm(s.class)===norm(values.class)&&norm(s.schoolYear)===norm(values.schoolYear)&&norm(s.branch)===norm(values.branch)&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('هذا التلميذ مسجل مسبقاً بالاسم واللقب والقسم نفسيهما. لم تُضف بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ مع الحفاظ على بياناته وسجلات متابعته السابقة.');}else{const record={id:crypto.randomUUID(),identityNumber:'',...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
@@ -609,7 +609,7 @@ function renderAttendanceWorkspace(){
 window.loadTimetableIntoForm=key=>{const group=attendanceGroups().find(g=>g.key===key);if(!group)return;go('settings');setSettingsTab('schedule');const t=timetableForGroup(group)||{},f=$('#scheduleForm');f.elements.class.value=key;attendanceWeekdays.forEach(([k])=>f.elements[k].value=Number(t[k]||0));requestAnimationFrame(()=>f.scrollIntoView({behavior:'smooth',block:'center'}));};
 $('#scheduleForm').onsubmit=e=>{e.preventDefault();const f=e.target,key=String(f.elements.class.value||'').trim(),group=attendanceGroups().find(g=>g.key===key);if(!group){alert('اختر قسماً صحيحاً.');return;}const t={};for(const [k] of attendanceWeekdays){const n=Number(f.elements[k].value);if(!Number.isFinite(n)||n<0||n>12){alert('تحقق من ساعات كل يوم؛ يجب أن تكون بين 0 و12.');return;}t[k]=n;}db.settings.timetables=db.settings.timetables||{};const old=db.settings.timetables[key];db.settings.timetables[key]=t;if(!save()){if(old)db.settings.timetables[key]=old;else delete db.settings.timetables[key];return;}alert('تم حفظ توقيت '+group.label+'. سيُستخدم في حساب النسبة الشهرية لهذا القسم وحده.');};
 function loadDailyRoster(){
- const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),students=db.students.filter(s=>attendanceGroupKey(s)===cls);
+ const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),students=studentsForUser().filter(s=>attendanceGroupKey(s)===cls);
  if(!cls||!group){$('#dailyRoster').className='daily-roster empty';$('#dailyRoster').textContent='اختر القسم لعرض قائمة التلاميذ.';$('#dailyRosterTools').classList.add('hidden');$('#saveDailyAbsences').disabled=true;return;}
  if(!students.length){$('#dailyRoster').innerHTML='<p class="empty">لا يوجد تلاميذ مسجلون في هذا القسم.</p>';$('#dailyRosterTools').classList.remove('hidden');$('#saveDailyAbsences').disabled=true;$('#dailyRosterCount').textContent='0 تلميذ';return;}
  const already=new Map(db.attendance.filter(a=>(a.type==='غياب'||a.type==='حضور')&&a.date===$('#dailyDate').value&&attendanceRecordGroupKey(a)===cls).map(a=>[String(a.student),a.type]));
@@ -640,7 +640,7 @@ $('#saveDailyAbsences').onclick=()=>{
  const selectedIds=new Set(selected.map(c=>String(c.dataset.id))),currentRecords=db.attendance.filter(a=>a.date===date&&attendanceRecordGroupKey(a)===cls),alreadyToday=new Set(currentRecords.filter(a=>a.type==='غياب'||a.type==='حضور').map(a=>String(a.student))),latest=new Map();
  for(const a of db.attendance){if(!['غياب','حضور','تأخر'].includes(a.type)||!a.date||a.date>date)continue;const key=String(a.student),prior=latest.get(key);if(!prior||String(a.date)>=String(prior.date))latest.set(key,a);}
  const presenceRecords=[];
- for(const st of db.students.filter(x=>attendanceGroupKey(x)===cls)){const key=String(st.id),last=latest.get(key);if(selectedIds.has(key)||alreadyToday.has(key)||!last||last.type!=='غياب'||String(last.justified||'غير مبرر')==='مبرر')continue;presenceRecords.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'حضور',period, hours:0,minutes:null,justified:'مبرر',notes:'حضور مثبت من كشف القسم'});}
+ for(const st of studentsForUser().filter(x=>attendanceGroupKey(x)===cls)){const key=String(st.id),last=latest.get(key);if(selectedIds.has(key)||alreadyToday.has(key)||!last||last.type!=='غياب'||String(last.justified||'غير مبرر')==='مبرر')continue;presenceRecords.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'حضور',period, hours:0,minutes:null,justified:'مبرر',notes:'حضور مثبت من كشف القسم'});}
  if(!records.length&&!presenceRecords.length){alert('لا توجد غيابات جديدة أو حالات حضور تحتاج إلى تحديث.');return;}const previous=db.attendance.slice();db.attendance.push(...records,...presenceRecords);if(!save()){db.attendance=previous;render();return;}$('#dailyRosterTools').classList.add('hidden');$('#dailyRoster').className='daily-roster empty';$('#dailyRoster').textContent='تم حفظ '+records.length+' سجل غياب و'+presenceRecords.length+' سجل حضور لتحديث سلاسل الغياب.';$('#saveDailyAbsences').disabled=true;$('#dailyRosterCount').textContent='تم الحفظ';alert('تم تسجيل غياب '+records.length+' تلميذاً، وإثبات حضور '+presenceRecords.length+' تلميذاً كانت لديهم سلسلة غياب سابقة في القسم '+cls+'.');
 };
 function scheduledHoursForGroupDate(group,date){
@@ -661,7 +661,7 @@ function updateIndividualPeriodFields(){
  custom.classList.toggle('hidden',!other);
  hours.readOnly=full;
  if(full){
-  const st=db.students.find(x=>String(x.id)===String($('#attForm').elements.student.value));
+  const st=studentsForUser().find(x=>String(x.id)===String($('#attForm').elements.student.value));
   const value=scheduledHoursForStudentDate(st,$('#attForm').elements.date.value);
   hours.value=value===null||value<=0?'':String(value);
   hours.placeholder=value===null?'أدخل توقيت القسم أولاً':value<=0?'لا توجد دراسة مبرمجة في هذا اليوم':'ساعات اليوم الدراسي';
@@ -680,7 +680,7 @@ $('#attForm').onsubmit=e=>{
  e.preventDefault();const f=new FormData(e.target),type=String(f.get('type')||'غياب'),isLate=type==='تأخر',isPresent=type==='حضور';
  let period=String(f.get('period')||'').trim();if(period==='توقيت آخر')period=String(f.get('periodCustom')||'').trim();
  if(!period){alert('حدد الفترة أو أدخل التوقيت.');return;}
- const st=db.students.find(x=>String(x.id)===String(f.get('student')));let hours='',minutes='',fullDay=false;
+ const st=studentsForUser().find(x=>String(x.id)===String(f.get('student')));let hours='',minutes='',fullDay=false;
  if(isPresent){hours=0;}
  else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}
  else if(period==='اليوم كاملاً'){
@@ -884,7 +884,7 @@ window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل
 window.editDocument=id=>{
  const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;
  const row=document.querySelector('tr[data-doc-id="'+CSS.escape(String(id))+'"]');if(!row)return;
- const students=db.students.map(st=>'<option value="'+esc(st.id)+'" '+(String(st.id)===String(d.student)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName||'تلميذ')+' — '+esc(sectionDisplay(st.class))+'</option>').join('');
+ const students=studentsForUser().map(st=>'<option value="'+esc(st.id)+'" '+(String(st.id)===String(d.student)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName||'تلميذ')+' — '+esc(sectionDisplay(st.class))+'</option>').join('');
  const types=['إشعار غياب','استدعاء ولي','تنبيه'];if(d.type&&!types.includes(d.type))types.push(d.type);
  const typeOptions=types.map(t=>'<option value="'+esc(t)+'" '+(String(d.type)===t?'selected':'')+'>'+esc(t)+'</option>').join('');
  row.innerHTML='<td data-label="التاريخ"><label>التاريخ</label><input id="editDocDate" type="date" value="'+esc(d.date||'')+'"></td>'+
