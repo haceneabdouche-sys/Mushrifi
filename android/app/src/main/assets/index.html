@@ -1301,7 +1301,7 @@ $('#csvImport').onchange=async e=>{
       if(target){
         // حدّث حقول البطاقة الرسمية فقط؛ الخانات الفارغة في CSV لا تمحو البيانات السابقة.
         for(const key of fields){if(data[key]!==''||!Object.prototype.hasOwnProperty.call(target,key))target[key]=data[key];}
-        const schooling=rosterAttributeFields(data);if(schooling.attribute){if(!target.attribute&&!target.status)target.attribute=schooling.attribute;if(!target.status)target.status=target.attribute||schooling.status;if(!target.attribute)target.attribute=target.status||schooling.attribute;}
+        const schooling=rosterAttributeFields(data);if(schooling.attribute){target.attribute=schooling.attribute;target.status=schooling.status;}
         if(data.sectionNumber)target.sectionNumber=data.sectionNumber;
         if(data.enrollmentNumber!=='')target.code=data.enrollmentNumber;
         if(!target.id)target.id=makeStudentImportId();
