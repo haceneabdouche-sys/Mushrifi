@@ -48,6 +48,7 @@ vm.runInContext(html.slice(attrStart,attrEnd),context);
 assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({schoolingSystem:'نصف داخلي'}))),{attribute:'نصف داخلي',status:'نصف داخلي'},'new imported students should retain their school system as the visible attribute');
 assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({schoolingSystem:''}))),{attribute:'',status:''},'blank roster systems should not invent an attribute');
 assert.ok(html.includes('const schooling=rosterAttributeFields(data)'), 'matched student records should fill missing attribute fields from the roster');
+assert.ok(html.includes('target.attribute=schooling.attribute;target.status=schooling.status;'),'matched student cards should keep their schooling attribute synchronized with the master roster');
 assert.ok(html.includes('const legacyKey=value=>'),'assigned activity should recognize legacy student-name links');
 assert.ok(html.includes(String.raw`replace(/\s*\d+$/,'')`),'legacy student-name matching should ignore trailing digits without deleting the record');
 assert.ok(html.includes('...rosterAttributeFields(data)'), 'new student records should store attribute and status');
