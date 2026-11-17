@@ -1172,11 +1172,20 @@ $('#csvImport').onchange=async e=>{
     for(const cells of rows.slice(1)){
       const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
       const data={};for(const key of fields)data[key]=value(key);
-      // يدعم القوائم ذات عمود واحد «الاسم واللقب»؛ يُعامل أول جزء كلقب والباقي اسماً.
-      if(!data.last&&!data.first&&data.fullName){
+      // يدعم القوائم ذات عمود واحد «الاسم واللقب»، حتى إذا كان أحد حقلي الاسم موجوداً فقط.
+      if(data.fullName&&(!data.last||!data.first)){
         const parts=data.fullName.trim().split(/\s+/).filter(Boolean);
-        if(parts.length>=2){data.last=parts.shift();data.first=parts.join(' ');}
+        if(parts.length>=2){
+          if(!data.last)data.last=parts.shift();
+          if(!data.first)data.first=parts.join(' ');
+        }
       }
+      // بطاقة مُشرِفي تعرض «الصفة»؛ احتفظ بنظام التمدرس في هذا الحقل أيضاً
+      // حتى لا تضيع قيم «نصف داخلي» و«خارجي» عند استيراد ملف التفويج.
+      if(!data.attribute&&data.schoolingSystem)data.attribute=data.schoolingSystem;
+      // إزالة أرقام النسخ الملحقة بالاسم قبل الحفظ، لا عند المطابقة فقط.
+      data.last=normalizeImportName(data.last);
+      data.first=normalizeImportName(data.first);
       data.enrollmentNumber=data.enrollmentNumber||'';
       data.identityNumber=String(data.identityNumber||'').trim();
       // ملف التفويج يفصل السنة والشعبة ورقم القسم؛ احتفظ برقم القسم الأصلي
