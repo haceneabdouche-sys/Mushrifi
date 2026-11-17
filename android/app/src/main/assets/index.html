@@ -1166,12 +1166,12 @@ $('#csvImport').onchange=async e=>{
     raw=raw.replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
     let rows;
-    if(/<table[\\s>]/i.test(raw)){
+    if(/<table[\s>]/i.test(raw)){
       const htmlDoc=new DOMParser().parseFromString(raw,'text/html'),table=htmlDoc.querySelector('table');
       if(!table)throw new Error('ملف Excel النصي لا يحتوي على جدول قابل للقراءة.');
-      rows=[...table.rows].map(row=>[...row.cells].map(cell=>String(cell.textContent||'').replace(/\\s+/g,' ').trim()));
+      rows=[...table.rows].map(row=>[...row.cells].map(cell=>String(cell.textContent||'').replace(/\s+/g,' ').trim()));
     }else{
-      const delimiters=[',',';','\\t'];
+      const delimiters=[',',';','\t'];
       const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
       rows=parsed[0].rows;
     }
