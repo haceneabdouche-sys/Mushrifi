@@ -35,4 +35,13 @@ assert.ok(html.includes('id="setupRosterFile" type="file" accept=".csv,.xls,.htm
 assert.ok(html.includes("const required=['last','first','class']"),'national identity number should be optional in roster imports');
 assert.ok(html.includes('if(data.branch)data.branch=canonicalBranch(data.branch)'),'roster branch aliases should be canonicalized before updating student cards');
 assert.ok(html.includes('mushrifi-roster-import-finished'),'setup should wait for roster import completion');
+const attrStart=html.indexOf('function rosterAttributeFields(data)');
+const attrEnd=html.indexOf("\\n$('#clearStudents').onclick=",attrStart);
+assert.notEqual(attrStart,-1,'roster schooling-system mapping must exist');
+assert.notEqual(attrEnd,-1,'roster schooling-system mapping must be isolated');
+vm.runInContext(html.slice(attrStart,attrEnd),context);
+assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({schoolingSystem:'نصف داخلي'}))),{attribute:'نصف داخلي',status:'نصف داخلي'},'new imported students should retain their school system as the visible attribute');
+assert.deepEqual(JSON.parse(JSON.stringify(context.rosterAttributeFields({schoolingSystem:''}))),{attribute:'',status:''},'blank roster systems should not invent an attribute');
+assert.ok(html.includes('const schooling=rosterAttributeFields(data)'), 'matched student records should fill missing attribute fields from the roster');
+assert.ok(html.includes('...rosterAttributeFields(data)'), 'new student records should store attribute and status');
 console.log('Universal education profiles: primary, middle, secondary filtering and data retention passed.');
