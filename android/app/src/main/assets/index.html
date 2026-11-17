@@ -1364,6 +1364,7 @@ $('#firstRunSetupForm')?.addEventListener('submit',async e=>{
  }
  setupSections.forEach(x=>ensureAcademicCombination(x.schoolYear,x.branch,x.sectionNumber));
  if(!save()){db=oldDb;render();return;}
+ if(backupFile&&window.AndroidBridge){if(typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();if(typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}
  button.disabled=true;status.textContent=backupFile?'تم استرجاع سجلات النسخة الاحتياطية. جارٍ مطابقة القائمة الأصلية معها...':'جارٍ استيراد القائمة ومطابقتها مع الأقسام...';
  try{
   const result=await new Promise((resolve,reject)=>{
