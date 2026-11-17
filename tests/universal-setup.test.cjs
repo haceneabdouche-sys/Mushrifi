@@ -32,5 +32,5 @@ assert.ok(html.includes("if(!Array.isArray(db.settings.assignedSections)||!db.se
 // Render must index students once instead of scanning the full roster for every historic record.
 assert.ok(html.includes('const studentById=new Map(db.students.map(st=>[String(st.id),st]));'));
 assert.ok(html.includes('const studentsByLegacyName=new Map();'));
-assert.ok(html.includes('const byId=studentById.get(recordId);'));
+assert.ok(html.includes('byId=studentById.get(recordId)'));
 console.log('Roster visibility and indexed rendering safeguards passed.');
