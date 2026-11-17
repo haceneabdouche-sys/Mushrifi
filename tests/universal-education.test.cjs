@@ -39,7 +39,7 @@ assert.ok(html.includes('let importSnapshot=null,importCommitted=false;'),'roste
 assert.ok(html.includes('if(importSnapshot&&!importCommitted)'),'roster import should roll back partial changes after a failed import');
 assert.ok(html.includes('importCommitted=true;'),'roster import should commit only after a successful database save');
 const attrStart=html.indexOf('function rosterAttributeFields(data)');
-const attrEnd=html.indexOf("\\n$('#clearStudents').onclick=",attrStart);
+const attrEnd=html.indexOf("\n$('#clearStudents').onclick=",attrStart);
 assert.notEqual(attrStart,-1,'roster schooling-system mapping must exist');
 assert.notEqual(attrEnd,-1,'roster schooling-system mapping must be isolated');
 vm.runInContext(html.slice(attrStart,attrEnd),context);
