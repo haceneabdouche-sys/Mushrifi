@@ -1334,6 +1334,17 @@ $('#firstRunSetupForm')?.addEventListener('submit',async e=>{
 });
 function updateFirstRunGate(){
  const complete=db.settings.setupComplete===true;document.body.classList.toggle('setup-required',!complete);$('#firstRunSetup')?.classList.toggle('hidden',complete);
+ if(!complete){
+  $('#setupEducationLevel').value=db.settings.educationLevel||'';
+  $('#setupSchool').value=db.settings.school||'';
+  $('#setupLocation').value=db.settings.location||'';
+  if(!setupSections.length&&db.students.length){
+   const seen=new Set();
+   db.students.forEach(st=>{const p=studentAcademicParts(st),item={schoolYear:p.schoolYear,branch:p.branch||'عام',sectionNumber:p.sectionNumber},key=assignedSectionKey(item);if(item.schoolYear&&item.sectionNumber&&!seen.has(key)){seen.add(key);setupSections.push(item);}});
+   renderSetupSections();
+  }
+  setupBranchVisibility();
+ }
 }
 $('#saveEducationProfile')?.addEventListener('click',()=>{
  const level=$('#educationLevelSetting').value;if(!['primary','middle','secondary'].includes(level)){alert('اختر طوراً تعليمياً صحيحاً.');return;}
