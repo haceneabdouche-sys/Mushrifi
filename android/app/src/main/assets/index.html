@@ -199,7 +199,7 @@ body.setup-required .notice,body.setup-required nav,body.setup-required .page,bo
   <h3>الأقسام المسندة إليك</h3><p class="muted">في الابتدائي والمتوسط لا تحتاج إلى إدخال شعبة.</p>
   <div class="setup-section-row"><div><label for="setupYear">المستوى / السنة</label><input id="setupYear" placeholder="مثال: الأولى متوسط"></div><div id="setupBranchField"><label for="setupBranch">الشعبة / الجذع</label><input id="setupBranch" placeholder="مثال: علوم تجريبية"></div><div><label for="setupSection">رقم القسم</label><input id="setupSection" placeholder="مثال: 1"></div><button class="btn" id="setupAddSection" type="button">إضافة القسم</button></div>
   <div id="setupAssignedList" class="setup-assigned-list"><p class="muted">لم تضف أقساماً بعد.</p></div>
-  <div class="setup-upload"><label for="setupRosterFile">قائمة التلاميذ بصيغة CSV</label><input id="setupRosterFile" type="file" accept=".csv,.xls,.html,text/csv,text/html" required><p class="muted">يدعم CSV وملفات Excel القديمة المحفوظة كجدول HTML (.xls). أما XLSX وملفات Excel الثنائية فحوّلها إلى CSV أولاً. يدعم الفاصلة والفاصلة المنقوطة والجدولة.</p></div>
+  <div class="setup-upload"><label for="setupBackupFile">نسخة JSON الاحتياطية (اختياري عند التثبيت الجديد)</label><input id="setupBackupFile" type="file" accept=".json,application/json"><p class="muted">إذا كنت تثبّت مُشرِفي على هاتف جديد، يمكنك اختيار نسخة JSON لاستعادة الغيابات والتأخرات والاستدعاءات والمخالفات قبل استيراد القائمة. إذا كانت بياناتك موجودة بالفعل على هذا الهاتف، اترك هذا الحقل فارغاً.</p></div><div class="setup-upload"><label for="setupRosterFile">قائمة التلاميذ بصيغة CSV أو Excel</label><input id="setupRosterFile" type="file" accept=".csv,.xls,.html,text/csv,text/html" required><p class="muted">يدعم CSV وملفات Excel القديمة المحفوظة كجدول HTML (.xls). أما XLSX وملفات Excel الثنائية فحوّلها إلى CSV أولاً. يدعم الفاصلة والفاصلة المنقوطة والجدولة.</p></div>
   <button class="btn primary" type="submit" id="finishFirstRunSetup">حفظ الإعدادات واستيراد القائمة</button><p id="setupStatus" class="muted" aria-live="polite"></p>
  </form>
 </section>
@@ -1317,10 +1317,21 @@ $('#setupAddSection')?.addEventListener('click',()=>{
 $('#firstRunSetupForm')?.addEventListener('submit',async e=>{
  e.preventDefault();const level=$('#setupEducationLevel').value,school=$('#setupSchool').value.trim(),location=$('#setupLocation').value.trim(),file=$('#setupRosterFile').files?.[0],status=$('#setupStatus'),button=$('#finishFirstRunSetup');
  if(!level||!school||!file||!setupSections.length){alert('اختر الطور واسم المؤسسة، وأضف قسماً واحداً على الأقل وارفع قائمة التلاميذ.');return;}
- const old=JSON.parse(JSON.stringify(db.settings));db.settings.educationLevel=level;db.settings.school=school;db.settings.location=location;db.settings.assignedSections=setupSections.map(x=>({...x}));db.settings.setupComplete=false;
+ const oldDb=JSON.parse(JSON.stringify(db)),backupFile=$('#setupBackupFile').files?.[0];
+ if(backupFile){
+  if(db.students.length||db.attendance.length||db.documents.length||db.violations.length){alert('توجد بيانات محفوظة بالفعل على هذا الهاتف. اترك ملف JSON فارغاً؛ سيحافظ مُشرِفي على بيانات هذا الجهاز ويحدّث قائمة التلاميذ من ملف Excel/CSV.');return;}
+  try{
+   const raw=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('تعذرت قراءة النسخة الاحتياطية JSON.'));reader.readAsText(backupFile,'UTF-8');});
+   let backup=JSON.parse(raw);if(backup&&typeof backup==='object'&&!Array.isArray(backup)&&!Array.isArray(backup.students)){const nested=backup.data||backup.backup||backup.database||backup.db;if(typeof nested==='string')backup=JSON.parse(nested);else if(nested&&typeof nested==='object')backup=nested;}
+   if(!backup||typeof backup!=='object'||!Array.isArray(backup.students)||!Array.isArray(backup.attendance)||!Array.isArray(backup.documents)||!Array.isArray(backup.violations))throw new Error('النسخة غير مكتملة؛ يجب أن تحتوي على الطلاب والغيابات والوثائق والمخالفات.');
+   db={...backup,settings:{...(backup.settings&&typeof backup.settings==='object'?backup.settings:{}),educationLevel:level,school,location,assignedSections:setupSections.map(x=>({...x})),setupComplete:false}};
+  }catch(err){alert('تعذرت استعادة النسخة الاحتياطية: '+(err.message||'خطأ غير معروف')+' لم تتغير بيانات التطبيق.');db=oldDb;return;}
+ }else{
+  db.settings.educationLevel=level;db.settings.school=school;db.settings.location=location;db.settings.assignedSections=setupSections.map(x=>({...x}));db.settings.setupComplete=false;
+ }
  setupSections.forEach(x=>ensureAcademicCombination(x.schoolYear,x.branch,x.sectionNumber));
- if(!save()){db.settings=old;render();return;}
- button.disabled=true;status.textContent='جارٍ استيراد القائمة ومطابقتها مع الأقسام...';
+ if(!save()){db=oldDb;render();return;}
+ button.disabled=true;status.textContent=backupFile?'تم استرجاع سجلات النسخة الاحتياطية. جارٍ مطابقة القائمة الأصلية معها...':'جارٍ استيراد القائمة ومطابقتها مع الأقسام...';
  try{
   const result=await new Promise((resolve,reject)=>{
    const timer=setTimeout(()=>reject(new Error('انتهت مهلة استيراد القائمة.')),120000);
