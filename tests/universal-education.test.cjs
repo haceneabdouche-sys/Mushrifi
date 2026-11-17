@@ -65,7 +65,7 @@ assert.ok(html.includes('st=studentsForUser().find(x=>String(x.id)===check.datas
 assert.ok(html.includes('roster=studentsForUser().filter(s=>attendanceGroupKey(s)===group.key)'),'monthly attendance reports should only count assigned students');
 assert.ok(html.includes('const choices=studentsForUser().map'),'attendance record editing should only offer assigned students');
 assert.ok(html.includes('const students=studentsForUser().map'),'document editing should only offer assigned students');
-assert.ok(html.includes('const sid=String(id),s=studentsForUser().find'),'individual student history should be limited to assigned students');
+assert.ok(html.includes('const requested=String(id),assignedStudents=studentsForUser();let s=assignedStudents.find'),'individual student history should resolve only within assigned students');
 assert.ok(html.includes('id="assignedYear"')&&html.includes('id="assignedBranch"')&&html.includes('id="assignedSection"'),'settings should allow adding assigned sections after first-run setup');
 assert.ok(html.includes("$('#addAssignedSection')?.addEventListener"),'assigned-section addition should be interactive');
 assert.ok(html.includes("level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام'"),'primary and middle assigned sections should use the general branch');
