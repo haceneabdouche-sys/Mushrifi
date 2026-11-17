@@ -292,10 +292,10 @@ public class MainActivity extends Activity {
                 String fileName = "Mushrifi-signature-" + System.currentTimeMillis() + ".png";
                 if (Build.VERSION.SDK_INT >= 29) {
                     ContentValues values = new ContentValues();
-                    values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
-                    values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
-                    values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Mushrifi");
-                    values.put(MediaStore.Images.Media.IS_PENDING, 1);
+                    values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+                    values.put(MediaStore.MediaColumns.MIME_TYPE, "image/png");
+                    values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Mushrifi");
+                    values.put(MediaStore.MediaColumns.IS_PENDING, 1);
                     created = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
                     if (created == null) return "ERROR:تعذر إنشاء ملف الصورة في الهاتف";
                     try (OutputStream output = getContentResolver().openOutputStream(created)) {
