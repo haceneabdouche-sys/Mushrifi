@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/device-license-foundation
+      - feature/universal-education-platform
     paths:
       - 'licensing/worker/**'
       - '.github/workflows/license-worker-check.yml'
@@ -30,5 +31,5 @@ jobs:
       - run: npm ci
       - run: npm run check
       - name: Smoke-test deployed challenge and device proof without issuing a license
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/device-license-foundation'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/feature/device-license-foundation' || github.ref == 'refs/heads/feature/universal-education-platform')
         run: node scripts/smoke-test.mjs
