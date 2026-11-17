@@ -321,7 +321,7 @@ const DEFAULT_ACADEMIC_STRUCTURE=[["أولى","جذع مشترك آداب","1"],
 const academicNorm=v=>String(v??"").normalize("NFKC").replace(/[\u0640\u064B-\u065F\u0670]/g,"").replace(/\s+/g," ").trim().toLocaleLowerCase("ar");
 const BRANCH_SHORTCUTS=[["جذع مشترك علوم وتكنولوجيا","ج م ع ت"],["جذع مشترك آداب","ج م أ"],["آداب وفلسفة","أ ف"],["تسيير واقتصاد","ت إ"],["رياضيات","ريا"],["تقني رياضي","ت ر"],["علوم تجريبية","ع ت"],["لغات أجنبية","ل ا"]];
 const compactAcademic=v=>academicNorm(v).replace(/\s+/g,"");
-function canonicalBranch(value){const raw=String(value??"").trim();if(!raw)return "";const key=compactAcademic(raw);const found=BRANCH_SHORTCUTS.find(([full,short])=>key===compactAcademic(full)||key===compactAcademic(short));return found?found[0]:raw;}
+function canonicalBranch(value){const raw=String(value??"").trim();if(!raw)return "";const key=compactAcademic(raw).replace(/جدع/g,"جذع");const found=BRANCH_SHORTCUTS.find(([full,short])=>key===compactAcademic(full)||key===compactAcademic(short));return found?found[0]:raw;}
 function shortBranch(value){const full=canonicalBranch(value);const found=BRANCH_SHORTCUTS.find(([name])=>academicNorm(name)===academicNorm(full));return found?found[1]:(full||"—");}
 function studentAcademicParts(st){
  const raw=String(st?.class||"").trim(),parts=raw.split(/\s*\/\s*/);
@@ -1233,6 +1233,7 @@ $('#csvImport').onchange=async e=>{
       data.identityNumber=String(data.identityNumber||'').trim();
       // ملف التفويج يفصل السنة والشعبة ورقم القسم؛ احتفظ برقم القسم الأصلي
       // وركّب رمزاً كاملاً يمنع الخلط بين (1) في شعب أو سنوات مختلفة.
+      if(data.branch)data.branch=canonicalBranch(data.branch);
       data.sectionNumber=String(data.class||'').trim();
       if(data.schoolYear&&data.branch&&data.sectionNumber){
         data.class=data.sectionNumber;
