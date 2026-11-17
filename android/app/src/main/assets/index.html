@@ -1100,6 +1100,7 @@ $('#clearStudents').onclick=()=>{
 function makeStudentImportId(){try{if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();}catch(_){}return 'student_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);}
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
+  let importSnapshot=null,importCommitted=false;
   try{
     // لا نعتمد على اسم الملف أو MIME الذي يرسله مزود الملفات في Android؛ بعض الهواتف تعرض CSV باسم مشفر أو بنوع عام. نتحقق من محتوى الملف ورؤوس أعمدته أدناه.
     // Android WebView قد لا يدعم File.text()؛ استخدم FileReader كمسار متوافق.
@@ -1159,7 +1160,7 @@ $('#csvImport').onchange=async e=>{
     if(idx.first<0&&idx.fullName<0)missing.push('الاسم');
     if(idx.class<0)missing.push('القسم');
     if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.join('، ')+'.');
-    const originalDb=JSON.parse(JSON.stringify(db));
+    const originalDb=JSON.parse(JSON.stringify(db));importSnapshot=originalDb;
     // المطابقة: رقم التعريف أولاً، ثم الاسم واللقب والقسم حتى للبطاقات القديمة
     // التي لا تحمل رقم تعريف أو تحمل رقماً قديماً. لا نغيّر المعرّف الداخلي للبطاقة.
     const normalizeKey=v=>String(v??'').normalize('NFKC')
@@ -1273,9 +1274,13 @@ $('#csvImport').onchange=async e=>{
         added++;
       }
     }
-    if(!save()){db=originalDb;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');}
+    if(!save())throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');
+    importCommitted=true;
     alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف أو الاسم والقسم: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
-  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+  }catch(err){
+    if(importSnapshot&&!importCommitted){db=importSnapshot;try{render();}catch(restoreError){console.error('تعذر تحديث الواجهة بعد التراجع عن الاستيراد',restoreError);}}
+    alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');
+  }
   finally{input.value='';}
 };
 
