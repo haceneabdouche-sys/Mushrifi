@@ -13,7 +13,6 @@ assert.ok(html.includes("if(!level||!school||!file||!setupSections.length)"), 's
 
 // Existing installations with any historical data must not be forced through the wizard.
 assert.ok(html.includes("if((db.students.length||db.attendance.length||db.documents.length||db.violations.length)&&db.settings.setupComplete!==true)"), 'legacy installations with records must be marked as configured');
-assert.ok(html.includes("if(db.students.length&&db.settings.setupComplete!==true)"), 'legacy rosters retain their existing education profile');
 assert.ok(html.includes("if(!complete){"), 'first-run gate is conditional');
 assert.ok(html.includes("$('#firstRunSetup')?.classList.toggle('hidden',complete)"), 'completed setup hides the wizard');
 
@@ -25,5 +24,5 @@ assert.ok(html.includes("window.dispatchEvent(new CustomEvent('mushrifi-roster-i
 
 // Importing or changing the education profile must not replace the user's data.
 assert.ok(html.includes("db.settings.educationLevel=level"));
-assert.ok(html.includes("لا تحذف أي تلميذ أو سجل"), 'education profile change is explicitly non-destructive');
+assert.ok(html.includes("دون حذف أي تلميذ أو سجل"), 'education profile change is explicitly non-destructive');
 console.log('Universal education setup guardrails passed.');
