@@ -199,7 +199,7 @@ body.setup-required .notice,body.setup-required nav,body.setup-required .page,bo
   <h3>الأقسام المسندة إليك</h3><p class="muted">في الابتدائي والمتوسط لا تحتاج إلى إدخال شعبة.</p>
   <div class="setup-section-row"><div><label for="setupYear">المستوى / السنة</label><input id="setupYear" placeholder="مثال: الأولى متوسط"></div><div id="setupBranchField"><label for="setupBranch">الشعبة / الجذع</label><input id="setupBranch" placeholder="مثال: علوم تجريبية"></div><div><label for="setupSection">رقم القسم</label><input id="setupSection" placeholder="مثال: 1"></div><button class="btn" id="setupAddSection" type="button">إضافة القسم</button></div>
   <div id="setupAssignedList" class="setup-assigned-list"><p class="muted">لم تضف أقساماً بعد.</p></div>
-  <div class="setup-upload"><label for="setupRosterFile">قائمة التلاميذ بصيغة CSV</label><input id="setupRosterFile" type="file" accept=".csv,text/csv" required><p class="muted">يمكن تحويل ملف Excel إلى CSV من برنامج Excel أو LibreOffice. يدعم التطبيق الفاصلة والفاصلة المنقوطة والجدولة.</p></div>
+  <div class="setup-upload"><label for="setupRosterFile">قائمة التلاميذ بصيغة CSV</label><input id="setupRosterFile" type="file" accept=".csv,.xls,.html,text/csv,text/html" required><p class="muted">يدعم CSV وملفات Excel القديمة المحفوظة كجدول HTML (.xls). أما XLSX وملفات Excel الثنائية فحوّلها إلى CSV أولاً. يدعم الفاصلة والفاصلة المنقوطة والجدولة.</p></div>
   <button class="btn primary" type="submit" id="finishFirstRunSetup">حفظ الإعدادات واستيراد القائمة</button><p id="setupStatus" class="muted" aria-live="polite"></p>
  </form>
 </section>
@@ -1165,10 +1165,17 @@ $('#csvImport').onchange=async e=>{
     if(!raw.trim())throw new Error('الملف فارغ أو تعذرت قراءة محتواه.');
     raw=raw.replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
-    const delimiters=[',',';','\t'];
-    const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
-    const rows=parsed[0].rows;
-    if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
+    let rows;
+    if(/<table[\\s>]/i.test(raw)){
+      const htmlDoc=new DOMParser().parseFromString(raw,'text/html'),table=htmlDoc.querySelector('table');
+      if(!table)throw new Error('ملف Excel النصي لا يحتوي على جدول قابل للقراءة.');
+      rows=[...table.rows].map(row=>[...row.cells].map(cell=>String(cell.textContent||'').replace(/\\s+/g,' ').trim()));
+    }else{
+      const delimiters=[',',';','\\t'];
+      const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
+      rows=parsed[0].rows;
+    }
+        if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
     const headers=rows[0].map(normHeader);
     const find=names=>headers.findIndex(h=>names.some(name=>h===normHeader(name)));
     const idx={
@@ -1285,7 +1292,8 @@ $('#csvImport').onchange=async e=>{
     }
     if(!save()){db=originalDb;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');}
     alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
-  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+    window.dispatchEvent(new CustomEvent('mushrifi-roster-import-finished',{detail:{ok:true}}));
+  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV أو Excel وعناوين الأعمدة ثم أعد المحاولة.');window.dispatchEvent(new CustomEvent('mushrifi-roster-import-finished',{detail:{ok:false}}));}
   finally{input.value='';}
 };
 
@@ -1306,16 +1314,24 @@ $('#setupAddSection')?.addEventListener('click',()=>{
  const item={schoolYear:y,branch:b,sectionNumber:c},key=assignedSectionKey(item);if(setupSections.some(x=>assignedSectionKey(x)===key)){alert('هذا القسم مضاف مسبقاً.');return;}
  setupSections.push(item);renderSetupSections();$('#setupSection').value='';
 });
-$('#firstRunSetupForm')?.addEventListener('submit',e=>{
- e.preventDefault();const level=$('#setupEducationLevel').value,school=$('#setupSchool').value.trim(),location=$('#setupLocation').value.trim(),file=$('#setupRosterFile').files?.[0];
- if(!level||!school||!file||!setupSections.length){alert('اختر الطور واسم المؤسسة، وأضف قسماً واحداً على الأقل وارفع ملف CSV.');return;}
- const old=JSON.parse(JSON.stringify(db.settings));db.settings.educationLevel=level;db.settings.school=school;db.settings.location=location;db.settings.assignedSections=setupSections.map(x=>({...x}));db.settings.setupComplete=true;
+$('#firstRunSetupForm')?.addEventListener('submit',async e=>{
+ e.preventDefault();const level=$('#setupEducationLevel').value,school=$('#setupSchool').value.trim(),location=$('#setupLocation').value.trim(),file=$('#setupRosterFile').files?.[0],status=$('#setupStatus'),button=$('#finishFirstRunSetup');
+ if(!level||!school||!file||!setupSections.length){alert('اختر الطور واسم المؤسسة، وأضف قسماً واحداً على الأقل وارفع قائمة التلاميذ.');return;}
+ const old=JSON.parse(JSON.stringify(db.settings));db.settings.educationLevel=level;db.settings.school=school;db.settings.location=location;db.settings.assignedSections=setupSections.map(x=>({...x}));db.settings.setupComplete=false;
  setupSections.forEach(x=>ensureAcademicCombination(x.schoolYear,x.branch,x.sectionNumber));
  if(!save()){db.settings=old;render();return;}
- const target=$('#csvImport');
- try{const transfer=new DataTransfer();transfer.items.add(file);target.files=transfer.files;target.dispatchEvent(new Event('change'));}
- catch(err){alert('تم حفظ إعدادات المؤسسة والأقسام، لكن تعذر تمرير الملف تلقائياً. افتح الإعدادات ثم اختر ملف CSV من قسم استيراد التلاميذ.');}
- document.body.classList.remove('setup-required');$('#firstRunSetup').classList.add('hidden');renderAssignedSections();
+ button.disabled=true;status.textContent='جارٍ استيراد القائمة ومطابقتها مع الأقسام...';
+ try{
+  const result=await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(new Error('انتهت مهلة استيراد القائمة.')),120000);
+   window.addEventListener('mushrifi-roster-import-finished',event=>{clearTimeout(timer);resolve(event.detail||{ok:false});},{once:true});
+   const target=$('#csvImport'),transfer=new DataTransfer();transfer.items.add(file);target.files=transfer.files;target.dispatchEvent(new Event('change'));
+  });
+  if(!result.ok){db.settings.setupComplete=false;save();button.disabled=false;status.textContent='لم يكتمل الاستيراد. صحح الملف أو الأعمدة ثم أعد المحاولة.';return;}
+  db.settings.setupComplete=true;if(!save()){db.settings.setupComplete=false;button.disabled=false;status.textContent='تم الاستيراد لكن تعذر حفظ اكتمال الإعداد. أعد المحاولة.';return;}
+  document.body.classList.remove('setup-required');$('#firstRunSetup').classList.add('hidden');renderAssignedSections();status.textContent='اكتملت التهيئة بنجاح.';
+  alert('اكتملت التهيئة واستيراد القائمة. تم عرض تلاميذ الأقسام المسندة إليك فقط.');
+ }catch(err){button.disabled=false;status.textContent=err.message||'تعذر إكمال التهيئة.';alert(status.textContent);}
 });
 function updateFirstRunGate(){
  const complete=db.settings.setupComplete===true||db.students.length>0;document.body.classList.toggle('setup-required',!complete);$('#firstRunSetup')?.classList.toggle('hidden',complete);
