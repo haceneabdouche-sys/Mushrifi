@@ -51,6 +51,12 @@ assert.ok(html.includes('studentsForUser().filter(s=>attendanceGroupKey(s)===cls
 assert.ok(html.includes('const choices=studentsForUser().map'),'attendance record editing should only offer assigned students');
 assert.ok(html.includes('const students=studentsForUser().map'),'document editing should only offer assigned students');
 assert.ok(html.includes('const sid=String(id),s=studentsForUser().find'),'individual student history should be limited to assigned students');
+assert.ok(html.includes('id="assignedYear"')&&html.includes('id="assignedBranch"')&&html.includes('id="assignedSection"'),'settings should allow adding assigned sections after first-run setup');
+assert.ok(html.includes("$('#addAssignedSection')?.addEventListener"),'assigned-section addition should be interactive');
+assert.ok(html.includes("level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام'"),'primary and middle assigned sections should use the general branch');
+assert.ok(html.includes('db.settings.assignedSections.push(item)'),'new assigned sections should be persisted in settings');
+assert.ok(html.includes('assignedSectionKey(x)===assignedSectionKey(item)'),'duplicate assigned sections should be rejected');
+
 assert.ok(html.includes('const st=studentsForUser().find(x=>String(x.id)===String(f.get(\'student\')))'),'individual attendance submission should validate the selected student against assigned classes');
 
 console.log('Universal education profiles: primary, middle, secondary filtering and data retention passed.');
