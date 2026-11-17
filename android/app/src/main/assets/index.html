@@ -356,7 +356,7 @@ function renderAssignedSections(){
 function updateAssignedBranchVisibility(){const secondary=$('#educationLevelSetting').value==='secondary';$('#assignedBranchField').classList.toggle('hidden',!secondary);$('#assignedBranch').required=secondary;if(!secondary)$('#assignedBranch').value='عام';else if($('#assignedBranch').value==='عام')$('#assignedBranch').value='';}
 $('#educationLevelSetting')?.addEventListener('change',updateAssignedBranchVisibility);
 $('#addAssignedSection')?.addEventListener('click',()=>{
- const level=$('#educationLevelSetting').value,schoolYear=$('#assignedYear').value.trim().replace(/\s+/g,' '),branch=level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام',sectionNumber=$('#assignedSection').value.trim().replace(/\\s+/g,' '),status=$('#assignedSectionStatus');
+ const level=$('#educationLevelSetting').value,schoolYear=$('#assignedYear').value.trim().replace(/\s+/g,' '),branch=level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام',sectionNumber=$('#assignedSection').value.trim().replace(/\s+/g,' '),status=$('#assignedSectionStatus');
  if(!schoolYear||!sectionNumber||(level==='secondary'&&!branch)){status.textContent='أدخل المستوى ورقم القسم، والشعبة في الثانوي.';return;}
  const item={schoolYear,branch,sectionNumber},previous=Array.isArray(db.settings.assignedSections)?db.settings.assignedSections.map(x=>({...x})):null;
  if(!Array.isArray(db.settings.assignedSections))db.settings.assignedSections=[];
@@ -934,7 +934,7 @@ window.saveDocumentEdit=id=>{
 };
 
 // مطابقة أسماء التلاميذ مع تجاهل التشكيل واختلافات الهمزة والمسافات
-const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');
+const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\u200f\u200e]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s*\d+$/,'').replace(/\s+/g,' ').toLocaleLowerCase('ar');
 const findStudentForRecord=record=>{
   const byId=db.students.find(s=>String(s.id)===String(record.student));
   if(byId)return {student:byId,reason:'المعرّف'};
@@ -965,11 +965,11 @@ window.saveAttendanceEdit=id=>{
 window.studentHistory=id=>{
   const sid=String(id),s=studentsForUser().find(x=>String(x.id)===sid);if(!s){alert('هذا التلميذ غير موجود ضمن الأقسام المسندة إليك.');return;}
   const normStudentName=value=>String(value??'').normalize('NFKC')
-    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
+    .replace(/[\u064B-\u065F\u0670ـ\u200e\u200f]/g,'')
     .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
-    .replace(/\\s*\\d+$/,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+    .replace(/\s*\d+$/,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
   const normStudentSection=value=>String(value??'').normalize('NFKC')
-    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
+    .replace(/[\u064B-\u065F\u0670ـ\u200e\u200f]/g,'')
     .replace(/[أإآٱ]/g,'ا').replace(/\s+/g,'').trim().toLocaleLowerCase('ar');
   const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''))||normStudentName(s.name||s.fullName||'');
   const belongsToStudent=record=>{
@@ -1027,8 +1027,8 @@ function showBackupPreview(data,bytes){
  const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[];
  const classes={},attributes={};
  students.forEach(st=>{const c=String(st.class||st.section||'غير محدد');classes[c]=(classes[c]||0)+1;const a=String(st.attribute||st.status||'غير محدد');attributes[a]=(attributes[a]||0)+1;});
- const abs=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='غياب').length;
- const late=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='تأخر').length;
+ const abs=attendance.filter(x=>String(x.type||'').replace(/\s/g,'')==='غياب').length;
+ const late=attendance.filter(x=>String(x.type||'').replace(/\s/g,'')==='تأخر').length;
  const summons=documents.filter(x=>String(x.type||'').includes('استدعاء')).length;
  const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length};
  const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length};
@@ -1096,7 +1096,7 @@ function recoverStudentsFromHistory(data){
 }
 async function importBackupText(raw,bytes){
  try{
-  raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
+  raw=String(raw||'').replace(/^\uFEFF/,'').trim();
   if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('محتوى الملف ليس JSON سليماً. تأكد من اختيار ملف النسخة الاحتياطية الأصلي بصيغة JSON.');}
   if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&!Array.isArray(obj.students)){
