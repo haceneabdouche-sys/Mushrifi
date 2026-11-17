@@ -18,12 +18,25 @@ assert.doesNotMatch(source, /const required=\['identityNumber','last','first','c
 assert.match(source, /const incomingYear=normalizeClass\(data\.schoolYear\)/);
 assert.match(source, /const incomingBranch=normalizeClass\(data\.branch\)/);
 assert.match(source, /const identityCompatible=!incomingId\|\|!existingId\|\|existingId===incomingId/);
-assert.match(source, /return nameMatch&&sectionMatch&&yearMatch&&branchMatch&&identityCompatible/);
+// Matching is indexed once by normalized name + section, then narrowed by year,
+// branch and official identity. The index is maintained when cards are updated.
+assert.match(source, /const fallbackIndex=new Map\(\)/);
+assert.match(source, /const fallbackKeysByStudent=new Map\(\)/);
+assert.match(source, /const bucket=fallbackIndex\.get\(fallbackKey\(n,incomingSection\)\)/);
+assert.match(source, /return yearMatch&&branchMatch&&identityCompatible/);
+assert.match(source, /removeFallbackStudent\(target\)/);
+assert.match(source, /indexFallbackStudent\(target\)/);
 
-// Static guardrails for the app's update path and a small reference-model scenario.
-// This is not a substitute for running the import UI against the real 557-row file.
-assert.match(source, /String\(record\.student\)===String\(target\.id\)/);
-assert.match(source, /for\(const kind of \['attendance','documents','violations'\]\)/);
+// Linked records and academic combinations are indexed/collected once per import,
+// avoiding repeated full-array scans inside the student loop.
+assert.match(source, /const recordsByStudentId=new Map\(\)/);
+assert.match(source, /const linkedRecords=recordsByStudentId\.get\(String\(target\.id\)\)\|\|\[\]/);
+assert.match(source, /for\(const record of linkedRecords\)record\.studentName=currentDisplayName/);
+assert.match(source, /const pendingAcademic=new Map\(\)/);
+assert.match(source, /if\(pendingAcademic\.size\)/);
+
+// Static guardrails plus a small reference-model scenario. This is not a substitute
+// for running the import UI against the real 557-row file.
 assert.ok(source.includes("const originalDb=JSON.parse(JSON.stringify(db));importSnapshot=originalDb;"), 'import must snapshot the entire database before mutating it');
 assert.ok(source.includes("if(!save())throw new Error('تعذر حفظ الاستيراد"), 'a failed database save must enter the rollback path');
 assert.ok(source.includes('if(importSnapshot&&!importCommitted){db=importSnapshot;try{render();}'), 'a failed import must restore the full database snapshot before refreshing the UI');
