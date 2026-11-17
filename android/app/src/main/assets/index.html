@@ -358,14 +358,15 @@ function refreshStudentSectionOptions(preferred={}){
  const ys=$("#studentYearSelect"),bs=$("#studentBranchSelect"),cs=$("#studentClassSelect");if(!ys||!bs||!cs)return;
  const list=academicStructure(),oy=preferred.schoolYear??ys.value,ob=preferred.branch??bs.value,oc=preferred.sectionNumber??cs.value;
  const level=db.settings.educationLevel||"secondary",secondary=level==="secondary",suffix=level==="primary"?"ابتدائي":level==="middle"?"متوسط":"ثانوي";
- const years=[...new Set(list.map(x=>x.schoolYear))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));
+ const relevantList=secondary?list:list.filter(x=>x.branch==="عام");
+ const years=[...new Set(relevantList.map(x=>x.schoolYear))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));
  ys.innerHTML='<option value="">اختر المستوى</option>'+years.map(x=>'<option value="'+esc(x)+'">'+esc(x)+' '+suffix+'</option>').join("");
  ys.value=years.includes(oy)?oy:"";
- const branches=secondary?[...new Set(list.filter(x=>x.schoolYear===ys.value).map(x=>x.branch))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true})):["عام"];
+ const branches=secondary?[...new Set(relevantList.filter(x=>x.schoolYear===ys.value).map(x=>x.branch))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true})):["عام"];
  bs.innerHTML='<option value="">اختر الشعبة</option>'+branches.map(x=>'<option value="'+esc(x)+'">'+esc(secondary?shortBranch(x):"تعليم عام")+'</option>').join("");
  bs.value=secondary?(branches.includes(ob)?ob:""):"عام";
  bs.parentElement?.classList.toggle("hidden",!secondary);
- const sections=[...new Set(list.filter(x=>x.schoolYear===ys.value&&x.branch===bs.value).map(x=>x.sectionNumber))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));
+ const sections=[...new Set(relevantList.filter(x=>x.schoolYear===ys.value&&x.branch===bs.value).map(x=>x.sectionNumber))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));
  cs.innerHTML='<option value="">اختر القسم</option>'+sections.map(x=>'<option value="'+esc(x)+'">القسم '+esc(x)+'</option>').join("");
  cs.value=sections.includes(oc)?oc:"";updateStudentClassValue();
  const box=$("#sectionList");if(box){const sorted=list.slice().sort((a,b)=>[a.schoolYear,a.branch,a.sectionNumber].join(" ").localeCompare([b.schoolYear,b.branch,b.sectionNumber].join(" "),"ar",{numeric:true}));box.innerHTML=sorted.map(x=>'<div>'+esc(x.schoolYear)+' — '+esc(x.branch==="عام"?"":shortBranch(x.branch))+' — القسم '+esc(x.sectionNumber)+'</div>').join("");}
