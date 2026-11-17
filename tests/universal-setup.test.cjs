@@ -17,7 +17,7 @@ assert.ok(html.includes("if(!complete){"), 'first-run gate is conditional');
 assert.ok(html.includes("$('#firstRunSetup')?.classList.toggle('hidden',complete)"), 'completed setup hides the wizard');
 
 // The user's assigned sections filter student visibility without deleting the master roster.
-assert.ok(html.includes('function studentsForUser(){return db.students.filter(isStudentAssigned);}'));
+assert.ok(html.includes('function studentsForUser(){const visible=db.students.filter(isStudentAssigned);return db.students.length&&!visible.length?db.students:visible;}'), 'student list must retain a safe fallback when assigned filters match nobody');
 assert.ok(html.includes('function isStudentAssigned(st)'));
 assert.ok(html.includes("db.settings.assignedSections"));
 assert.ok(html.includes("window.dispatchEvent(new CustomEvent('mushrifi-roster-import-finished'"), 'setup receives import completion');
