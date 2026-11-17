@@ -4,7 +4,7 @@ const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
 const java = fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/MainActivity.java', 'utf8');
 
 assert.ok(html.includes('data-page="signature">التوقيع</button>'), 'signature page must be reachable from the main navigation');
-assert.ok(html.includes('<canvas id="signatureCanvas" width="1200" height="520"'), 'signature pad must have a high-resolution drawing surface');
+assert.ok(html.includes('<canvas id="signatureCanvas" width="1200" height="720"'), 'signature pad must have a high-resolution drawing surface');
 assert.ok(html.includes('touch-action:none'), 'finger drawing must not scroll the page');
 assert.ok(html.includes("ctx.strokeStyle='#000000'"), 'signature ink must be black');
 assert.ok(html.includes("ctx.fillStyle='#ffffff'"), 'signature canvas must have a white background');
