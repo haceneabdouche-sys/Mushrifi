@@ -46,7 +46,7 @@ jobs:
                       self.inside = False
           parser = Extractor()
           parser.feed(Path("android/app/src/main/assets/index.html").read_text(encoding="utf-8"))
-          source = "\\n".join(part for part in parser.parts if part.strip())
+          source = "\n".join(part for part in parser.parts if part.strip())
           if not source.strip():
               raise SystemExit("No inline JavaScript found")
           Path("/tmp/mushrifi-inline.js").write_text(source, encoding="utf-8")
