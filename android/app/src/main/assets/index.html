@@ -1388,8 +1388,8 @@ $('#csvImport').onchange=async e=>{
       const incomingSection=normalizeClass(data.sectionNumber||data.class);
       const incomingYear=normalizeClass(data.schoolYear);
       const incomingBranch=normalizeClass(data.branch);
-      const academicKey=[incomingYear,incomingBranch,incomingSection].join('|');
-      const dedupeKey=incomingId?'id:'+incomingId:'name:'+([...incomingNames].sort()[0]||'')+'|academic:'+academicKey;
+      const incomingAcademicKey=[incomingYear,incomingBranch,incomingSection].join('|');
+      const dedupeKey=incomingId?'id:'+incomingId:'name:'+([...incomingNames].sort()[0]||'')+'|academic:'+incomingAcademicKey;
       if(incoming.has(dedupeKey)){skipped++;continue;}incoming.add(dedupeKey);
       const idMatches=incomingId?(existingById.get(incomingId)||[]):[];
       if(idMatches.length>1){skipped++;conflicts++;continue;}
