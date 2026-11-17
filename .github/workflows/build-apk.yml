@@ -1,5 +1,10 @@
 name: Build Mushrifi APK
 on:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'tests/**'
+      - '.github/workflows/build-apk.yml'
   push:
     paths:
       - 'android/**'
