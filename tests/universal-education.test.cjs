@@ -51,7 +51,7 @@ assert.ok(html.includes('const schooling=rosterAttributeFields(data)'), 'matched
 assert.ok(html.includes('target.attribute=schooling.attribute;target.status=schooling.status;'),'matched student cards should keep their schooling attribute synchronized with the master roster');
 assert.ok(html.includes('const legacyKey=value=>'),'assigned activity should recognize legacy student-name links');
 const nameNormStart=html.indexOf('const normalizeStudentIdentity=');
-const nameNormEnd=html.indexOf('\\nconst findStudentForRecord',nameNormStart);
+const nameNormEnd=html.indexOf('\nconst findStudentForRecord',nameNormStart);
 assert.notEqual(nameNormStart,-1,'legacy student identity normalizer must exist');
 assert.notEqual(nameNormEnd,-1,'legacy student identity normalizer must be isolated');
 vm.runInContext(html.slice(nameNormStart,nameNormEnd),context);
