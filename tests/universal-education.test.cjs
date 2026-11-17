@@ -3,9 +3,9 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const html=fs.readFileSync('android/app/src/main/assets/index.html','utf8');
 const start=html.indexOf('const DEFAULT_ACADEMIC_STRUCTURE=');
-const end=html.indexOf('function updateStudentClassValue()',start);
+const end=html.indexOf('function renderAssignedSections()',start);
 assert.notEqual(start,-1,'generic academic configuration must exist');
-assert.notEqual(end,-1,'assigned-section filtering must be defined before form handlers');
+assert.notEqual(end,-1,'assigned-section filtering must be defined before UI handlers');
 const context={
  db:{settings:{educationLevel:'primary',assignedSections:[{schoolYear:'السنة الأولى',branch:'عام',sectionNumber:'1'}]},students:[
   {id:'p1',first:'أحمد',last:'ابتدائي',schoolYear:'السنة الأولى',class:'1'},
