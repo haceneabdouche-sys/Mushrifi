@@ -20,18 +20,18 @@ assert.match(source, /const incomingBranch=normalizeClass\(data\.branch\)/);
 assert.match(source, /const identityCompatible=!incomingId\|\|!existingId\|\|existingId===incomingId/);
 assert.match(source, /return nameMatch&&sectionMatch&&yearMatch&&branchMatch&&identityCompatible/);
 
-// Re-importing a matched student keeps the same internal student id, and
-// attendance/document/violation references are not recreated or discarded.
+// Static guardrails for the app's update path and a small reference-model scenario.
+// This is not a substitute for running the import UI against the real 557-row file.
 assert.match(source, /String\(record\.student\)===String\(target\.id\)/);
 assert.match(source, /for\(const kind of \['attendance','documents','violations'\]\)/);
 assert.match(source, /db=originalDb;render\(\);throw new Error\('تعذر حفظ الاستيراد/);
 
 // The actual student form stores the displayed student attribute in "attribute".
 // Preserve the imported schooling regime ("نصف داخلي" / "خارجي") there.
-assert.match(source, /schoolingSystem:find\(\['نظامالتمدرس','النظام','regime','schoolingsystem'\]\)/);
-assert.match(source, /if\(!data\.attribute&&data\.schoolingSystem\)data\.attribute=data\.schoolingSystem/);
-assert.match(source, /data\.last=normalizeImportName\(data\.last\)/);
-assert.match(source, /data\.first=normalizeImportName\(data\.first\)/);
+assert.ok(source.includes("schoolingSystem:find(['نظامالتمدرس','النظام','regime','schoolingsystem'])"));
+assert.ok(source.includes("if(!data.attribute&&data.schoolingSystem)data.attribute=data.schoolingSystem"));
+assert.ok(source.includes("data.last=normalizeImportName(data.last)"));
+assert.ok(source.includes("data.first=normalizeImportName(data.first)"));
 
 // Name suffix cleanup handles Arabic and Western digits.
 assert.match(source, /normalizeImportName=v=>normalizeKey\(v\)/);
@@ -81,4 +81,5 @@ assert.deepEqual(importRows(db, rows), { added: 0, updated: 3, skipped: 1 });
 assert.equal(db.students.length, 3);
 assert.deepEqual(db.attendance, savedAttendance);
 
-console.log('CSV import matching regression tests passed.');
+assert.ok(source.includes("AndroidBridge.notifyAbsenceStage(String(x.student.id),studentName,stage,x.start)"), 'eligible absence stages must send a one-time native reminder');
+console.log('CSV import static guardrails and reference-model checks passed.');
