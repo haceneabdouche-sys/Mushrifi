@@ -1071,16 +1071,24 @@ window.voiceStudentAction=(id,action)=>{
  const st=studentsForUser().find(x=>String(x.id)===String(id));if(!st)return;
  const selectStudent=form=>{
   if(!form)return false;const sel=form.querySelector('select[name="student"]');
-  if(sel){sel.value=String(st.id);sel.dispatchEvent(new Event('change',{bubbles:true}));}
-  return true;
+  if(!sel)return false;
+  // أعد بناء الخيارات من القائمة الكاملة؛ فقد تكون قائمة الغياب مصفّاة ببحث سابق.
+  const roster=studentsForUser();
+  sel.innerHTML=roster.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.last)+' '+esc(x.first)+' – '+esc(studentAcademicLabel(x))+'</option>').join('');
+  sel.value=String(st.id);
+  if(sel.value!==String(st.id))return false;
+  sel.dispatchEvent(new Event('change',{bubbles:true}));return true;
  };
  if(action==='absence'||action==='late'){
-  go('attendance');const form=$('#attForm');selectStudent(form);
-  if(form){const type=$('#attType');if(type){type.value=action==='late'?'تأخر':'غياب';type.dispatchEvent(new Event('change',{bubbles:true}));}
-   const date=form.querySelector('input[name="date"]');if(date&&!date.value)date.value=dateISO();
-   if(action==='absence'){const period=$('#attPeriod');if(period){period.value='الفترة الصباحية';period.dispatchEvent(new Event('change',{bubbles:true}));}$('#attHours')?.focus();}
-   else form.querySelector('input[name="minutes"]')?.focus();
-  }
+  go('attendance');const form=$('#attForm');
+  const search=$('#attStudentSearch');if(search)search.value='';
+  if(selectStudent(form)){
+   if(form){const type=$('#attType');if(type){type.value=action==='late'?'تأخر':'غياب';type.dispatchEvent(new Event('change',{bubbles:true}));}
+    const date=form.querySelector('input[name="date"]');if(date&&!date.value)date.value=dateISO();
+    if(action==='absence'){const period=$('#attPeriod');if(period){period.value='الفترة الصباحية';period.dispatchEvent(new Event('change',{bubbles:true}));}$('#attHours')?.focus();}
+    else form.querySelector('input[name="minutes"]')?.focus();
+   }
+  }else{alert('تعذر تحديد التلميذ في النموذج. أعد فتح ملفه وحاول مرة أخرى.');}
  }else if(action==='violation'){
   go('violations');const form=$('#violForm');selectStudent(form);
   const date=form?.querySelector('input[name="date"]');if(date&&!date.value)date.value=dateISO();
