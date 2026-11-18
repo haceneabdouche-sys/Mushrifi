@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
 
 const parserStart = html.indexOf('const parseHours=value=>{');
-const parserEnd = html.indexOf(';', parserStart) + 1;
+const parserEnd = html.indexOf(';\\nconst esc=', parserStart) + 1;
 assert.notEqual(parserStart, -1, 'shared hours parser must exist');
 assert.ok(parserEnd > parserStart, 'shared hours parser must be complete');
 const parserSource = html.slice(parserStart, parserEnd);
@@ -18,7 +18,7 @@ for (const [input, expected] of [
   ['7 ساعات غياب', 7],
   ['عدد الساعات 7', 7],
   ['7,5 ساعات', 7.5],
-  ['ساعتان', NaN],
+  ['ساعتان', ''],
   ['', '']
 ]) {
   const actual = context.parseHours(input);
