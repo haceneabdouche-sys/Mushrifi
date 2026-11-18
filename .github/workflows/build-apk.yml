@@ -101,6 +101,8 @@ jobs:
           node --check /tmp/mushrifi-inline.js
       - name: Run recent activity student navigation tests
         run: node tests/recent-activity-navigation.test.cjs
+      - name: Run individual attendance editing and hours parsing tests
+        run: node tests/attendance-editing.test.cjs
       - name: Run shared theme token regression tests
         run: node tests/theme-tokens.test.cjs
       - name: Run absence streak regression tests
