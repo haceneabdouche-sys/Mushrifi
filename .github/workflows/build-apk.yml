@@ -119,6 +119,8 @@ jobs:
         run: node tests/universal-setup.test.cjs
       - name: Run reminder scheduling regression tests
         run: node tests/reminder-scheduling.test.cjs
+      - name: Run summons reminder validation regression tests
+        run: node tests/summons-reminder-validation.test.cjs
       - name: Run license read-only and backup safety regression tests
         run: node tests/license-readonly.test.cjs
       - name: Package complete Android project
