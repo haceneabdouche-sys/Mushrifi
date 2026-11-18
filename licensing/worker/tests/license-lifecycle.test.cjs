@@ -8,9 +8,11 @@ const commitAt = worker.indexOf("UPDATE licenses SET status = 'active', device_p
 assert.ok(signAt >= 0 && commitAt > signAt, 'signing must succeed before activation is committed');
 assert.ok(worker.includes("status = 'active' AND device_thumbprint = ?"), 'activation recovery must be bound to the same device');
 assert.ok(worker.includes('const recoveryToken = await signLicense(env, recovered, now);'), 'same-device recovery must issue a fresh signed token');
-assert.ok(worker.includes('(suspend|renew|revoke)'), 'admin route must expose revoke');
+assert.ok(worker.includes('(suspend|unsuspend|renew|revoke)'), 'admin route must expose suspend, unsuspend, renew, and revoke');
 assert.ok(worker.includes('if (action === "revoke")'), 'revoke action must be handled');
 assert.ok(worker.includes("status = 'revoked'"), 'revoke must persist terminal revoked state');
 assert.ok(worker.includes('existing.status === "issued"'), 'unactivated codes must not violate the D1 device-binding constraint');
+assert.ok(worker.includes('if (action === "unsuspend")'), 'suspended licenses need a guarded reactivation route');
+assert.ok(worker.includes('existing.license_type === "perpetual"'), 'perpetual licenses must not be converted into fixed-term licenses');
 assert.ok(readme.includes('/revoke'), 'operator documentation must describe revocation');
 console.log('PASS: activation signing order, same-device recovery, and admin revocation guards.');
