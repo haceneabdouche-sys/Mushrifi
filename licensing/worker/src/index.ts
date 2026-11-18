@@ -238,9 +238,12 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
     ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, expiresAt, now, now, candidate.id).first();
     if (!updated) {
       const raced = await env.DB.prepare(
-        "SELECT id FROM licenses WHERE id = ? AND status = 'active' AND device_thumbprint = ?"
-      ).bind(candidate.id, thumbprint).first();
+        "SELECT * FROM licenses WHERE id = ? AND status = 'active' AND device_thumbprint = ?"
+      ).bind(candidate.id, thumbprint).first<LicenseRow>();
       if (!raced) return fail("تم ربط رمز التفعيل بجهاز آخر بالفعل", 409);
+      // Return the persisted winner's dates, never the losing request's candidate dates.
+      const racedToken = await signLicense(env, raced, now);
+      return json({ ok: true, license: racedToken, nextCheckAt: now + 30 * DAY, graceDays: 7 });
     }
     return json({ ok: true, license: token, nextCheckAt: now + 30 * DAY, graceDays: 7 });
   } catch (error) {
