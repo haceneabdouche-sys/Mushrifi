@@ -103,6 +103,8 @@ jobs:
         run: node tests/recent-activity-navigation.test.cjs
       - name: Run individual attendance editing and hours parsing tests
         run: node tests/attendance-editing.test.cjs
+      - name: Run student history matching and synthetic aggregation tests
+        run: node tests/student-history-matching.test.cjs
       - name: Run shared theme token regression tests
         run: node tests/theme-tokens.test.cjs
       - name: Run absence streak regression tests
