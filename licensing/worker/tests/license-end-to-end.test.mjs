@@ -53,6 +53,12 @@ const malformedAdmin = await fetch(api + "/v1/admin/licenses", {
   body: "{"
 });
 assert.equal(malformedAdmin.status, 400, "malformed admin JSON should return a client error, not a server error");
+const oversizedAdmin = await fetch(api + "/v1/admin/licenses", {
+  method: "POST",
+  headers: { "content-type": "application/json", "authorization": "Bearer " + adminToken },
+  body: JSON.stringify({ licenseType: "trial", padding: "x".repeat(17000) })
+});
+assert.equal(oversizedAdmin.status, 400, "oversized admin bodies must be rejected before parsing");
 
 const issuedOnly = await issue("annual", 365);
 assert.equal((await request("/v1/admin/licenses/" + issuedOnly.licenseId + "/suspend", {}, true)).status, 409);
