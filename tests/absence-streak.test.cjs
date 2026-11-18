@@ -1,3 +1,4 @@
+// Regression coverage for a continuous absence recorded once at its start date.
 const assert=require('node:assert/strict');
 const vm=require('node:vm');
 const source=String.raw`function getUnjustifiedStreaks(){
