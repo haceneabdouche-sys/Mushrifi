@@ -12,6 +12,10 @@ assert.match(manager, /if \(!hasStoredLicense\(context\)\) return true/,
   'Installations without an issued license must retain existing write access.');
 assert.match(manager, /\.put\("hasLicense", true\)/,
   'A stored token must be distinguishable from an installation without a token.');
+assert.match(manager, /max_seen_wall_time/,
+  'A signed-token validation must preserve a wall-clock high-water mark.');
+assert.match(manager, /clockMovedBackwards\(context, now, lastValidatedAt\)/,
+  'Both status and scheduled validation must detect rollback against the high-water mark.');
 assert.match(manager, /static boolean canWrite\(Context context\)/,
   'Native license write policy must be available.');
 assert.match(manager, /AES\/GCM\/NoPadding/,

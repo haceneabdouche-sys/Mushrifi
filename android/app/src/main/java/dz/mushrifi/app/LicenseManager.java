@@ -106,6 +106,15 @@ final class LicenseManager {
     private static final long VALIDATION_INTERVAL_MS = 30L * DAY_MS;
     private static final long CLOCK_SKEW_TOLERANCE_MS = 5L * 60L * 1000L;
 
+    private static boolean clockMovedBackwards(Context context, long now, long lastValidatedAt) {
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        long maxSeen = prefs.getLong("max_seen_wall_time", 0L);
+        boolean rollback = (maxSeen > 0 && now + CLOCK_SKEW_TOLERANCE_MS < maxSeen) ||
+            (lastValidatedAt > 0 && now + CLOCK_SKEW_TOLERANCE_MS < lastValidatedAt);
+        if (now > maxSeen) prefs.edit().putLong("max_seen_wall_time", now).apply();
+        return rollback;
+    }
+
     static boolean shouldValidate(Context context) throws Exception {
         String token = loadToken(context);
         if (token == null) return false;
@@ -116,7 +125,7 @@ final class LicenseManager {
         long expiry = payload.optLong("expiresAt", 0);
         // Force an online check after a clock rollback or when the signed offline window
         // has elapsed. This never deletes or modifies the student's local database.
-        if (lastValidatedAt <= 0 || now + CLOCK_SKEW_TOLERANCE_MS < lastValidatedAt) return true;
+        if (lastValidatedAt <= 0 || clockMovedBackwards(context, now, lastValidatedAt)) return true;
         if (offlineUntil <= now || (expiry > 0 && expiry <= now)) return true;
         return now - lastValidatedAt >= VALIDATION_INTERVAL_MS;
     }
@@ -130,7 +139,7 @@ final class LicenseManager {
         long expiry = payload.optLong("expiresAt", 0);
         long offlineUntil = payload.optLong("offlineUntil", 0);
         long lastValidatedAt = payload.optLong("lastValidatedAt", 0);
-        boolean clockRollback = lastValidatedAt > 0 && now + CLOCK_SKEW_TOLERANCE_MS < lastValidatedAt;
+        boolean clockRollback = clockMovedBackwards(context, now, lastValidatedAt);
         boolean deviceMatches = deviceThumbprint(publicJwk((ECPublicKey) getOrCreateDeviceKey().getPublic()))
             .equals(payload.optString("deviceThumbprint"));
         boolean serverActive = "active".equals(payload.optString("status"));
@@ -216,6 +225,7 @@ final class LicenseManager {
             .remove("license_token")
             .putString("license_id", payload.getString("licenseId"))
             .putLong("last_server_check", System.currentTimeMillis())
+            .putLong("max_seen_wall_time", payload.optLong("lastValidatedAt", System.currentTimeMillis()))
             .commit();
         if (!ok) throw new Exception("تعذر حفظ بيانات الترخيص المشفر على الهاتف");
     }
