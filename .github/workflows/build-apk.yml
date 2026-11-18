@@ -99,6 +99,8 @@ jobs:
           Path("/tmp/mushrifi-inline.js").write_text(source, encoding="utf-8")
           PY
           node --check /tmp/mushrifi-inline.js
+      - name: Run shared theme token regression tests
+        run: node tests/theme-tokens.test.cjs
       - name: Run absence streak regression tests
         run: node tests/absence-streak.test.cjs
       - name: Run academic branch alias regression tests
