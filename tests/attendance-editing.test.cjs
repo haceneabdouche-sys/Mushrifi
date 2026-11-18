@@ -28,7 +28,7 @@ for (const [input, expected] of [
 
 assert.match(html, /const attendanceList=items=>[\s\S]*?تعديل السجل/);
 assert.match(html, /window\.editAttendanceFromProfile=id=>\{go\('attendance'\);render\(\);/);
-assert.match(html, /onclick="editAttendanceFromProfile\\\\\\('//);
+assert.match(html, /onclick="editAttendanceFromProfile\(\\'/);
 assert.match(html, /window\.saveAttendanceEdit=id=>\{/);
 assert.match(html, /id="editJustified"/);
 assert.match(html, /id="editAttendanceNotes"/);
