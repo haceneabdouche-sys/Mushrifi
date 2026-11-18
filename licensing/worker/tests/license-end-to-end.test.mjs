@@ -64,6 +64,21 @@ const recovered = await activate(annual.activationCode, device);
 assert.equal(recovered.status, 200);
 assert.equal(readToken(recovered.data.license).licenseId, annual.licenseId);
 
+// Concurrent retries from the same device must return exactly the persisted dates.
+const concurrentLicense = await issue("annual", 365);
+const concurrentDevice = await newDevice();
+const concurrentResults = await Promise.all([
+  activate(concurrentLicense.activationCode, concurrentDevice),
+  activate(concurrentLicense.activationCode, concurrentDevice)
+]);
+assert.equal(concurrentResults[0].status, 200);
+assert.equal(concurrentResults[1].status, 200);
+const concurrentPayloadA = readToken(concurrentResults[0].data.license);
+const concurrentPayloadB = readToken(concurrentResults[1].data.license);
+assert.equal(concurrentPayloadA.startsAt, concurrentPayloadB.startsAt);
+assert.equal(concurrentPayloadA.expiresAt, concurrentPayloadB.expiresAt);
+
+// A different device cannot recover or take the already-bound code.
 const otherDevice = await newDevice();
 assert.equal((await activate(annual.activationCode, otherDevice)).status, 409);
 

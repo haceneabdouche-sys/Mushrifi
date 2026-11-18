@@ -8,6 +8,7 @@ const commitAt = worker.indexOf("UPDATE licenses SET status = 'active', device_p
 assert.ok(signAt >= 0 && commitAt > signAt, 'signing must succeed before activation is committed');
 assert.ok(worker.includes("status = 'active' AND device_thumbprint = ?"), 'activation recovery must be bound to the same device');
 assert.ok(worker.includes('const recoveryToken = await signLicense(env, recovered, now);'), 'same-device recovery must issue a fresh signed token');
+assert.ok(worker.includes('const racedToken = await signLicense(env, raced, now);'), 'concurrent same-device activation must return the persisted winner row');
 assert.ok(worker.includes('(suspend|unsuspend|renew|revoke)'), 'admin route must expose suspend, unsuspend, renew, and revoke');
 assert.ok(worker.includes('if (action === "revoke")'), 'revoke action must be handled');
 assert.ok(worker.includes("status = 'revoked'"), 'revoke must persist terminal revoked state');
