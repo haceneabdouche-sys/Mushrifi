@@ -122,9 +122,32 @@ async function signLicense(env: Env, row: LicenseRow, now: number): Promise<stri
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
-  const text = await request.text();
-  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) throw new Error("حجم الطلب أكبر من المسموح");
-  const parsed = JSON.parse(text);
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
+    throw new Error("حجم الطلب أكبر من المسموح");
+  }
+  const reader = request.body?.getReader();
+  if (!reader) throw new Error("محتوى الطلب مطلوب");
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const part = await reader.read();
+    if (part.done) break;
+    total += part.value.byteLength;
+    if (total > MAX_BODY_BYTES) {
+      await reader.cancel();
+      throw new Error("حجم الطلب أكبر من المسموح");
+    }
+    chunks.push(part.value);
+  }
+  reader.releaseLock();
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const parsed = JSON.parse(new TextDecoder().decode(bytes));
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("صيغة الطلب غير صحيحة");
   return parsed as Record<string, unknown>;
 }
