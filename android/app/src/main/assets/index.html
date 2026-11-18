@@ -1052,14 +1052,15 @@ window.studentHistory=id=>{
   const normStudentSection=value=>String(value??'').normalize('NFKC')
     .replace(/[\u064B-\u065F\u0670ـ\u200e\u200f]/g,'')
     .replace(/[أإآٱ]/g,'ا').replace(/\s+/g,'').trim().toLocaleLowerCase('ar');
-  const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''))||normStudentName(s.name||s.fullName||'');
+  const studentNameKeys=[s.last+' '+s.first,s.first+' '+s.last,s.name,s.fullName].map(normStudentName).filter(Boolean);
+  const fullStudentName=studentNameKeys[0]||'';
   const belongsToStudent=record=>{
     const recordId=String(record.student??'').trim();
     if(recordId===sid)return true;
     // المعرّف الداخلي لتلميذ آخر أقوى من تشابه الاسم.
     if(recordId&&db.students.some(other=>String(other.id)===recordId))return false;
     const recordName=normStudentName(record.studentName||record.student);
-    if(!recordName||recordName!==fullStudentName)return false;
+    if(!recordName||!studentNameKeys.includes(recordName))return false;
     const recordSection=normStudentSection(record.class||record.studentClass||record.sectionLabel||record.section||'');
     if(recordSection){
       const studentSections=[s.class,attendanceGroupLabel(s),s.section,s.className].map(normStudentSection).filter(Boolean);
@@ -1067,8 +1068,8 @@ window.studentHistory=id=>{
     }
     // السجل القديم بلا قسم يُربط فقط إذا كان الاسم فريداً.
     const sameNameStudents=db.students.filter(other=>{
-      const otherName=normStudentName(String(other.last||'')+' '+String(other.first||''))||normStudentName(other.name||other.fullName||'');
-      return otherName===fullStudentName;
+      const otherNameKeys=[other.last+' '+other.first,other.first+' '+other.last,other.name,other.fullName].map(normStudentName).filter(Boolean);
+      return otherNameKeys.some(key=>studentNameKeys.includes(key));
     });
     return sameNameStudents.length===1;
   };
