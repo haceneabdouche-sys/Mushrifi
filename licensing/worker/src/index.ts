@@ -305,7 +305,7 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
     return json({ ok: true, licenses: rows.results || [] });
   }
 
-  const match = path.match(/^\/v1\/admin\/licenses\/([0-9a-f-]+)\/(suspend|renew|revoke)$/i);
+  const match = path.match(/^\/v1\/admin\/licenses\/([0-9a-f-]+)\/(suspend|unsuspend|renew|revoke)$/i);
   if (request.method === "POST" && match) {
     const id = match[1];
     const action = match[2];
@@ -319,10 +319,19 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
       return json({ ok: true, status: "revoked" });
     }
     if (action === "suspend") {
+      if (existing.status === "issued") return fail("لا يمكن تعليق رمز لم يُفعّل بعد", 409);
       if (existing.status === "revoked") return fail("الترخيص ملغى نهائياً", 409);
       await env.DB.prepare("UPDATE licenses SET status = 'suspended', updated_at = ? WHERE id = ?").bind(now, id).run();
       return json({ ok: true, status: "suspended" });
     }
+    if (action === "unsuspend") {
+      if (existing.status !== "suspended") return fail("الترخيص ليس معلّقاً", 409);
+      if (existing.expires_at !== null && existing.expires_at <= now) return fail("انتهت مدة الترخيص؛ جدّده قبل إعادة تنشيطه", 409);
+      await env.DB.prepare("UPDATE licenses SET status = 'active', updated_at = ? WHERE id = ? AND status = 'suspended'")
+        .bind(now, id).run();
+      return json({ ok: true, status: "active" });
+    }
+    if (existing.license_type === "perpetual") return fail("الترخيص الدائم لا يحتاج إلى تجديد", 409);
     if (existing.status !== "active" && existing.status !== "expired") return fail("لا يمكن تجديد هذا الترخيص في حالته الحالية", 409);
     const body = await readBody(request);
     const days = Number(body.durationDays ?? 365);
