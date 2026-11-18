@@ -287,7 +287,9 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
   const now = Date.now();
 
   if (request.method === "POST" && path === "/v1/admin/licenses") {
-    const body = await readBody(request);
+    let body: Record<string, unknown>;
+    try { body = await readBody(request); }
+    catch (error) { return fail(error instanceof Error ? error.message : "صيغة الطلب غير صحيحة", 400); }
     const type = body.licenseType;
     if (type !== "annual" && type !== "perpetual" && type !== "trial") return fail("نوع الترخيص غير معتمد");
     const duration = type === "perpetual" ? null : Number(body.durationDays ?? (type === "trial" ? 30 : 365));
@@ -336,7 +338,9 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
     }
     if (existing.license_type === "perpetual") return fail("الترخيص الدائم لا يحتاج إلى تجديد", 409);
     if (existing.status !== "active" && existing.status !== "expired") return fail("لا يمكن تجديد هذا الترخيص في حالته الحالية", 409);
-    const body = await readBody(request);
+    let body: Record<string, unknown>;
+    try { body = await readBody(request); }
+    catch (error) { return fail(error instanceof Error ? error.message : "صيغة الطلب غير صحيحة", 400); }
     const days = Number(body.durationDays ?? 365);
     if (!Number.isInteger(days) || days < 1 || days > 3650) return fail("مدة التجديد غير صحيحة");
     const base = existing.expires_at && existing.expires_at > now ? existing.expires_at : now;
@@ -354,7 +358,10 @@ export default {
     if (request.method === "OPTIONS") return json({ ok: true });
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "mushrifi-license-api" });
 
-    if (url.pathname.startsWith("/v1/admin/")) return adminRoute(request, env, url.pathname);
+    if (url.pathname.startsWith("/v1/admin/")) {
+      try { return await adminRoute(request, env, url.pathname); }
+      catch { return fail("تعذر تنفيذ طلب الإدارة", 500); }
+    }
     if (request.method !== "POST") return fail("الطريقة غير مدعومة", 405);
 
     let body: Record<string, unknown>;
