@@ -191,7 +191,7 @@ public class MainActivity extends Activity {
             try {
                 String deviceId = LicenseManager.deviceId(MainActivity.this);
                 String type = "renewal".equals(requestType) ? "تجديد الترخيص" : "تفعيل جديد";
-                String message = "السلام عليكم، أطلب " + type + " لتطبيق مُشرِفي.\\nرقم الجهاز: " + deviceId;
+                String message = "السلام عليكم، أطلب " + type + " لتطبيق مُشرِفي.\nرقم الجهاز: " + deviceId;
                 Uri uri = Uri.parse("https://wa.me/213699251551?text=" + Uri.encode(message));
                 runOnUiThread(() -> {
                     try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
