@@ -1,0 +1,14 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
+const start = html.indexOf('let all=[...visibleAttendance');
+const end = html.indexOf('refreshAttendanceClassOptions();renderAttendanceWorkspace();', start);
+assert.notEqual(start, -1, 'recent activity list must exist');
+assert.notEqual(end, -1, 'recent activity list must finish before workspace refresh');
+const block = html.slice(start, end);
+assert.match(block, /visibleAttendance\.map\(x=>\(\{date:x\.date,studentId:x\.student/);
+assert.match(block, /visibleViolations\.map\(x=>\(\{date:x\.date,studentId:x\.student/);
+assert.match(block, /visibleDocuments\.map\(x=>\(\{date:x\.date,studentId:x\.student/);
+assert.match(block, /class="student-name recent-student-link" data-student-id="/);
+assert.match(block, /querySelectorAll\('\.recent-student-link'\)\)\.forEach\(btn=>btn\.addEventListener\('click',\(\)=>window\.studentHistory\(btn\.dataset\.studentId\)\)\)/);
+console.log('Recent activity student-profile navigation checks passed.');
