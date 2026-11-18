@@ -11,7 +11,7 @@ The Android client implementation is now included in the primary `main` branch. 
 - A 30-day online validation interval and a signed 37-day offline deadline.
 - Non-destructive read-only behavior after an invalid/expired license or elapsed offline deadline. Student records remain viewable and backup export remains available; restore and write actions are blocked.
 
-**The staging API smoke test passed on 2026-11-16:** the Worker challenge endpoint created a one-time nonce, accepted a valid P-256 device proof far enough to reject an unknown activation code safely, and rejected replay of the consumed challenge. This did not issue a license and does not prove that a valid code can be activated or validated. The Android CI test build also passed, but it is a debug test APK, not a production-signed release. D1 configuration, signing/admin secret ownership, valid-code activation/renewal/suspension, and real-device behavior still require verification. Do not issue customer activation codes or distribute a production APK until these checks pass.
+**Development branch hardening:** activation now signs the token before committing the one-use code and permits recovery after a lost response only when the same device proves possession of its key. Admin revocation is implemented for activated licenses. These changes are under CI validation and are not deployed.\n\n**The staging API smoke test passed on 2026-11-16:** the Worker challenge endpoint created a one-time nonce, accepted a valid P-256 device proof far enough to reject an unknown activation code safely, and rejected replay of the consumed challenge. This did not issue a license and does not prove that a valid code can be activated or validated. The Android CI test build also passed, but it is a debug test APK, not a production-signed release. D1 configuration, signing/admin secret ownership, valid-code activation/renewal/suspension, and real-device behavior still require verification. Do not issue customer activation codes or distribute a production APK until these checks pass.
 
 ## Security model
 
@@ -27,7 +27,7 @@ The Android client implementation is now included in the primary `main` branch. 
 ## Important before deployment
 
 1. Verify the Cloudflare account and D1 database named `mushrifi-licenses` in the dashboard.
-2. Verify the D1 database ID in `wrangler.toml` and confirm that `schema.sql` is applied.
+2. Verify the D1 database ID in `wrangler.toml` and inspect `PRAGMA table_info(licenses)` before changing its schema. For a brand-new empty database, apply `schema.sql` once. For an existing database created from the older schema, apply `migrations/0002-first-activation-duration.sql` only if `duration_days` is absent. Do not apply that migration after `schema.sql` has already created `duration_days`, or SQLite will report a duplicate column.
 3. Generate an RSA 2048-bit key pair. Put the base64-encoded PKCS#8 DER private key in the Worker secret `LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64`. Keep the private key outside Git and outside the APK.
 4. Configure `ADMIN_API_TOKEN` as a long random secret using Worker secrets. Never commit either secret.
 5. Verify that the public key embedded in `LicenseManager.java` matches the private key configured on the Worker.
@@ -58,7 +58,7 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
 ## Remaining validation and hardening
 
 - Run the Android build and regression suite; verify the resulting test APK before installation.
-- Complete end-to-end tests using a valid staging activation code on a real Android device, including subsequent validation, suspension, and renewal.
+- Complete end-to-end tests using a valid staging activation code on a real Android device, including subsequent validation, suspension, revocation, renewal, and recovery after an interrupted activation.
 - Configure Cloudflare rate limiting and an authenticated owner/admin workflow before public use.
 - Review clock-change behavior and Android Keystore key invalidation/recovery.
 - Confirm the backup export path remains usable in every read-only failure state.
