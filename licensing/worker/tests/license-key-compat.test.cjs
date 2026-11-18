@@ -4,7 +4,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const worker = fs.readFileSync(path.join(process.cwd(), 'src/index.ts'), 'utf8');
 const android = fs.readFileSync(path.join(process.cwd(), '../../android/app/src/main/java/dz/mushrifi/app/LicenseManager.java'), 'utf8');
-const pemMatch = android.match(/-----BEGIN PUBLIC KEY-----[\\s\\S]*?-----END PUBLIC KEY-----/);
+const pemMatch = android.match(/-----BEGIN PUBLIC KEY-----[\s\S]*?-----END PUBLIC KEY-----/);
 assert.ok(pemMatch, 'Android client must embed an RSA public key');
 const publicKey = crypto.createPublicKey(pemMatch[0]);
 assert.equal(publicKey.asymmetricKeyType, 'rsa', 'embedded verification key must be RSA');
