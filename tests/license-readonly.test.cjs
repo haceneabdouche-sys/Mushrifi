@@ -37,7 +37,7 @@ assert.match(html, /setLicenseControlDisabled\(importButton,true\)/,
 assert.match(html, /allowed\.has\(el\.id\)/,
   'Backup export, report viewing, and license actions must remain available.');
 
-assert.match(manager, /static String deviceId\\(Context context\\)/,
+assert.ok(manager.includes('static String deviceId(Context context)'),
   'A device fingerprint must be available for support requests.');
 assert.match(activity, /requestLicenseWhatsApp\\(String requestType\\)/,
   'Activation and renewal requests must reach the owner through WhatsApp.');
