@@ -38,7 +38,7 @@ jobs:
         run: node tests/license-key-compat.test.cjs
       - name: Exercise full license lifecycle against a fresh local D1 database
         run: |
-          node -e 'const c=require("node:crypto"),f=require("node:fs");const p=c.generateKeyPairSync("rsa",{modulusLength:2048,publicExponent:65537});const k=p.privateKey.export({type:"pkcs8",format:"der"}).toString("base64");f.writeFileSync(".dev.vars","ADMIN_API_TOKEN=ci-admin-token\\nLICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64="+k+"\\n");f.writeFileSync(".ci-license-public.pem",p.publicKey.export({type:"spki",format:"pem"}));'
+          node -e 'const c=require("node:crypto"),f=require("node:fs");const p=c.generateKeyPairSync("rsa",{modulusLength:2048,publicExponent:65537});const k=p.privateKey.export({type:"pkcs8",format:"der"}).toString("base64");f.writeFileSync(".dev.vars",["ADMIN_API_TOKEN=ci-admin-token","LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64="+k,""].join(String.fromCharCode(10)));f.writeFileSync(".ci-license-public.pem",p.publicKey.export({type:"spki",format:"pem"}));'
           npx wrangler d1 execute mushrifi-licenses --local --file=./schema.sql
           npx wrangler dev --local --ip 127.0.0.1 --port 8787 > /tmp/mushrifi-worker.log 2>&1 &
           WORKER_PID=$!
