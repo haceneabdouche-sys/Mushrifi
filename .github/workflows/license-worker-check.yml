@@ -34,6 +34,8 @@ jobs:
         run: node tests/license-duration.test.cjs
       - name: Verify activation recovery and admin revocation safeguards
         run: node tests/license-lifecycle.test.cjs
+      - name: Verify Android and Worker RSA signing contract
+        run: node tests/license-key-compat.test.cjs
       - name: Smoke-test deployed challenge and device proof without issuing a license
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/device-license-foundation'
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/feature/device-license-foundation' || github.ref == 'refs/heads/feature/voice-student-actions')
         run: node scripts/smoke-test.mjs

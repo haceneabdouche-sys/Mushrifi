@@ -1,0 +1,15 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const worker = fs.readFileSync(path.join(process.cwd(), 'src/index.ts'), 'utf8');
+const android = fs.readFileSync(path.join(process.cwd(), '../../android/app/src/main/java/dz/mushrifi/app/LicenseManager.java'), 'utf8');
+const pemMatch = android.match(/-----BEGIN PUBLIC KEY-----[\\s\\S]*?-----END PUBLIC KEY-----/);
+assert.ok(pemMatch, 'Android client must embed an RSA public key');
+const publicKey = crypto.createPublicKey(pemMatch[0]);
+assert.equal(publicKey.asymmetricKeyType, 'rsa', 'embedded verification key must be RSA');
+assert.equal(publicKey.asymmetricKeyDetails.modulusLength, 2048, 'embedded verification key must be RSA-2048');
+assert.ok(worker.includes('RSASSA-PKCS1-v1_5') && worker.includes('hash: "SHA-256"'), 'Worker must sign using RSA-SHA256');
+assert.ok(android.includes('Signature.getInstance("SHA256withRSA")'), 'Android must verify using RSA-SHA256');
+assert.ok(android.includes('mushrifi-license') && android.includes('dz.mushrifi.app.offline'), 'client issuer and audience contract must be present');
+console.log('PASS: Android RSA-2048 public key parses and Worker/client signing algorithms and claims agree. Private-key match still requires the Cloudflare secret.');
