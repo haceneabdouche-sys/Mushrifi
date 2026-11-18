@@ -9,7 +9,7 @@ assert.ok(worker.includes('const startsAt = now;'));
 assert.ok(worker.includes('const durationDays = candidate.duration_days;'));
 assert.ok(worker.includes('const expiresAt = durationDays === null ? null : startsAt + durationDays * DAY;'));
 assert.ok(worker.includes('starts_at = ?, expires_at = ?'));
-assert.ok(worker.includes('duration_days, starts_at, expires_at) VALUES (?, ?, \'issued\', ?, ?, NULL, NULL'));
+assert.ok(worker.includes("duration_days, starts_at, expires_at) VALUES (?, ?, 'issued', ?, ?, NULL, NULL"));
 assert.ok(worker.includes('duration_days = ?, expires_at = ?'));
 assert.ok(schema.includes('duration_days INTEGER'));
 assert.ok(migration.includes('ALTER TABLE licenses ADD COLUMN duration_days INTEGER'));
