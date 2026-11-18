@@ -36,8 +36,9 @@ jobs:
         run: node tests/license-lifecycle.test.cjs
       - name: Verify Android and Worker RSA signing contract
         run: node tests/license-key-compat.test.cjs
-      - name: Exercise Worker endpoints against a fresh local D1 database
+      - name: Exercise full license lifecycle against a fresh local D1 database
         run: |
+          node -e 'const c=require("node:crypto"),f=require("node:fs");const p=c.generateKeyPairSync("rsa",{modulusLength:2048,publicExponent:65537});const k=p.privateKey.export({type:"pkcs8",format:"der"}).toString("base64");f.writeFileSync(".dev.vars","ADMIN_API_TOKEN=ci-admin-token\\nLICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64="+k+"\\n");f.writeFileSync(".ci-license-public.pem",p.publicKey.export({type:"spki",format:"pem"}));'
           npx wrangler d1 execute mushrifi-licenses --local --file=./schema.sql
           npx wrangler dev --local --ip 127.0.0.1 --port 8787 > /tmp/mushrifi-worker.log 2>&1 &
           WORKER_PID=$!
@@ -50,6 +51,7 @@ jobs:
           done
           curl -fsS http://127.0.0.1:8787/health
           MUSHRIFI_LICENSE_API=http://127.0.0.1:8787 node scripts/smoke-test.mjs
+          MUSHRIFI_LICENSE_API=http://127.0.0.1:8787 ADMIN_API_TOKEN=ci-admin-token MUSHRIFI_TEST_PUBLIC_KEY_FILE=.ci-license-public.pem node tests/license-end-to-end.test.mjs
       - name: Smoke-test deployed challenge and device proof without issuing a license
         if: github.event_name == 'push' && (github.ref == 'refs/heads/feature/device-license-foundation' || github.ref == 'refs/heads/feature/voice-student-actions')
         run: node scripts/smoke-test.mjs
