@@ -11,6 +11,7 @@ type LicenseRow = {
   activation_code_hash: string;
   status: string;
   license_type: string;
+  duration_days: number | null;
   starts_at: number | null;
   expires_at: number | null;
   device_public_key_json: string | null;
@@ -206,10 +207,13 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
       "SELECT * FROM licenses WHERE activation_code_hash = ? AND status = 'issued' AND device_thumbprint IS NULL"
     ).bind(codeHash).first<LicenseRow>();
     if (!candidate) return fail("رمز التفعيل غير صحيح أو سبق استعماله", 409);
-    const startsAt = candidate.starts_at ?? now;
+    // The annual/trial clock starts only when this one-use code is first activated.
+    const startsAt = now;
+    const durationDays = candidate.duration_days;
+    const expiresAt = durationDays === null ? null : startsAt + durationDays * DAY;
     const updated = await env.DB.prepare(
-      "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, activated_at = ?, starts_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL RETURNING *"
-    ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, now, now, candidate.id).first<LicenseRow>();
+      "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, activated_at = ?, starts_at = ?, expires_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL RETURNING *"
+    ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, expiresAt, now, now, candidate.id).first<LicenseRow>();
     if (!updated) return fail("تم ربط رمز التفعيل بجهاز آخر بالفعل", 409);
     const token = await signLicense(env, updated, now);
     return json({ ok: true, license: token, nextCheckAt: now + 30 * DAY, graceDays: 7 });
@@ -262,11 +266,10 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
     const code = randomCode();
     const hash = await sha256Hex(code);
     const id = crypto.randomUUID();
-    const expiresAt = duration === null ? null : now + duration * DAY;
     await env.DB.prepare(
-      "INSERT INTO licenses (id, activation_code_hash, status, license_type, starts_at, expires_at, created_at, updated_at) VALUES (?, ?, 'issued', ?, ?, ?, ?, ?)"
-    ).bind(id, hash, type, now, expiresAt, now, now).run();
-    return json({ ok: true, licenseId: id, activationCode: code, licenseType: type, expiresAt, warning: "يظهر رمز التفعيل مرة واحدة فقط؛ احفظه بأمان." }, 201);
+      "INSERT INTO licenses (id, activation_code_hash, status, license_type, duration_days, starts_at, expires_at, created_at, updated_at) VALUES (?, ?, 'issued', ?, ?, NULL, NULL, ?, ?)"
+    ).bind(id, hash, type, duration, now, now).run();
+    return json({ ok: true, licenseId: id, activationCode: code, licenseType: type, durationDays: duration, startsAt: null, expiresAt: null, warning: "يظهر رمز التفعيل مرة واحدة فقط؛ احفظه بأمان." }, 201);
   }
 
   if (request.method === "GET" && path === "/v1/admin/licenses") {
@@ -292,8 +295,8 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
     if (!Number.isInteger(days) || days < 1 || days > 3650) return fail("مدة التجديد غير صحيحة");
     const base = existing.expires_at && existing.expires_at > now ? existing.expires_at : now;
     const expiry = base + days * DAY;
-    await env.DB.prepare("UPDATE licenses SET status = 'active', expires_at = ?, updated_at = ? WHERE id = ?")
-      .bind(expiry, now, id).run();
+    await env.DB.prepare("UPDATE licenses SET status = 'active', duration_days = ?, expires_at = ?, updated_at = ? WHERE id = ?")
+      .bind(days, expiry, now, id).run();
     return json({ ok: true, expiresAt: expiry, note: "يحتاج الهاتف إلى تحقق متصل لتلقي الترخيص المحدث." });
   }
   return fail("المسار غير موجود", 404);

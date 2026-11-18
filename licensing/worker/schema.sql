@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS licenses (
   activation_code_hash TEXT NOT NULL UNIQUE,
   status TEXT NOT NULL CHECK (status IN ('issued', 'active', 'suspended', 'revoked', 'expired')),
   license_type TEXT NOT NULL CHECK (license_type IN ('annual', 'perpetual', 'trial')),
+  duration_days INTEGER,
   starts_at INTEGER,
   expires_at INTEGER,
   device_public_key_json TEXT,

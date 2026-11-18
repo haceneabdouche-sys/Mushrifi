@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/device-license-foundation
+      - feature/voice-student-actions
     paths:
       - 'licensing/worker/**'
       - '.github/workflows/license-worker-check.yml'
@@ -29,6 +30,8 @@ jobs:
       - run: npm install --package-lock-only
       - run: npm ci
       - run: npm run check
+      - name: Verify annual duration starts at first activation
+        run: node tests/license-duration.test.cjs
       - name: Smoke-test deployed challenge and device proof without issuing a license
         if: github.event_name == 'push' && github.ref == 'refs/heads/feature/device-license-foundation'
         run: node scripts/smoke-test.mjs
