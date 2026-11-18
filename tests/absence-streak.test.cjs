@@ -56,8 +56,8 @@ const source=String.raw`function getUnjustifiedStreaks(){
     if(scheduled===0){last=date;continue;}
     // إذا كان اليوم مسجلاً صراحةً كاملاً، فلا نحتاج إلى توقيت القسم لإثبات هذا اليوم.
     const event=events.get(date);
+    if(event&&(event.hasBreak||!event.fullDayAbsence)){valid=false;break;}
     if(scheduled===null&&(!event||!event.explicitFullDay)){valid=false;break;}
-    if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
     last=date;
    }
    if(valid){active={student:item.student,start,last,days:Math.max(1,calendarDaysBetween(start,last)+1),thursdayStart:dateFromISO(start).getDay()===4};break;}
