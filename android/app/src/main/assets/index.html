@@ -818,10 +818,9 @@ function getUnjustifiedStreaks(){
     const scheduled=scheduledHoursForStudentDate(item.student,date);
     if(scheduled===0){last=date;continue;}
     const event=events.get(date);
-    // عند إدخال غياب يوم كامل كبداية لسلسلة متواصلة، تُفترض الأيام الدراسية التالية غياباً
-    // إلى أن يظهر سجل حضور أو تأخر أو تبرير أو غياب جزئي يوقف الاستمرارية.
-    // لا نطلب إدخال سجل مكرر لكل يوم من أيام الغياب المتواصل.
-    if(event&&(event.hasBreak||!event.fullDayAbsence)){valid=false;break;}
+    // لا تُفترض أيام الغياب غير المسجلة: كل يوم دراسة يجب أن يحمل
+    // غياباً كاملاً غير مبرر بتاريخ ذلك اليوم، حتى لو أُدخل السجل لاحقاً.
+    if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
     if(scheduled===null&&(!event||!event.explicitFullDay)){valid=false;break;}
     last=date;
    }

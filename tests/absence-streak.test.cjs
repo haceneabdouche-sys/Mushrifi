@@ -54,9 +54,9 @@ const source=String.raw`function getUnjustifiedStreaks(){
     if(weekday===5||weekday===6){last=date;continue;}
     const scheduled=scheduledHoursForStudentDate(item.student,date);
     if(scheduled===0){last=date;continue;}
-    // إذا كان اليوم مسجلاً صراحةً كاملاً، فلا نحتاج إلى توقيت القسم لإثبات هذا اليوم.
     const event=events.get(date);
-    if(event&&(event.hasBreak||!event.fullDayAbsence)){valid=false;break;}
+    // لا تمدد السلسلة أيام دراسة بلا سجل غياب كامل بتاريخها.
+    if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
     if(scheduled===null&&(!event||!event.explicitFullDay)){valid=false;break;}
     last=date;
    }
@@ -108,7 +108,8 @@ vm.runInContext(monthlyRecordsSource,ctx);
 function run(rows,hs=[],sc={}){ctx.db.attendance=rows.map((x,i)=>({id:String(i),student:'student-1',type:'غياب',justified:'غير مبرر',hours:6,...x}));holidays=hs;schedule=sc;return JSON.parse(JSON.stringify(ctx.getUnjustifiedStreaks()));}
 function absence(date,extra={}){return {date,...extra};}
 function test(name,fn){try{fn();console.log('PASS',name)}catch(e){console.error('FAIL',name,e.message);process.exitCode=1;}}
-test('a single explicit full-day start continues through unrecorded scheduled days',()=>{const x=run([absence('2026-11-08',{fullDay:true})]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-08');assert.equal(x[0].last,'2026-11-18');assert.equal(x[0].days,11);});
+test('unrecorded scheduled school days do not extend an absence streak',()=>{const x=run([absence('2026-11-08',{fullDay:true})]);assert.equal(x.length,0);});
+test('retroactively entered consecutive full-day absences count by their recorded dates',()=>{const x=run([absence('2026-11-16'),absence('2026-11-17'),absence('2026-11-18')]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-16');assert.equal(x[0].last,'2026-11-18');assert.equal(x[0].days,3);});
 test('a later attendance record interrupts an inferred continuous absence',()=>{const x=run([absence('2026-11-08',{fullDay:true}),{date:'2026-11-16',type:'حضور',hours:0}]);assert.equal(x.length,0);});
 test('a later justified absence interrupts an inferred continuous absence',()=>{const x=run([absence('2026-11-08',{fullDay:true}),absence('2026-11-16',{justified:'مبرر'})]);assert.equal(x.length,0);});
 test('three consecutive scheduled school days',()=>{const x=run([absence('2026-11-16'),absence('2026-11-17'),absence('2026-11-18')]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-16');assert.equal(x[0].days,3);});
