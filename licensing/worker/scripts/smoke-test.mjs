@@ -18,6 +18,15 @@ async function post(path, body) {
   return { status: response.status, data };
 }
 
+const health = await fetch(api + "/health");
+assert(health.status === 200, "Worker health endpoint must be reachable.");
+const unauthorizedAdmin = await fetch(api + "/v1/admin/licenses", {
+  method: "POST",
+  headers: { "content-type": "application/json", "authorization": "Bearer definitely-not-the-admin-token" },
+  body: JSON.stringify({ licenseType: "trial", durationDays: 1 })
+});
+assert(unauthorizedAdmin.status === 401, "Admin license issuance must reject an invalid bearer token.");
+
 const pair = await webcrypto.subtle.generateKey(
   { name: "ECDSA", namedCurve: "P-256" },
   true,
