@@ -51,7 +51,8 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
 - Admin endpoints require `Authorization: Bearer <ADMIN_API_TOKEN>`:
   - `POST /v1/admin/licenses` — issue annual, perpetual, or trial code. The code is shown once.
   - `GET /v1/admin/licenses`
-  - `POST /v1/admin/licenses/{id}/suspend`
+  - `POST /v1/admin/licenses/{id}/suspend` — temporarily suspend an activated license.
+  - `POST /v1/admin/licenses/{id}/revoke` — permanently revoke an activated license; the device learns this at its next online validation.
   - `POST /v1/admin/licenses/{id}/renew` with `{ "durationDays":365 }`
 
 ## Remaining validation and hardening

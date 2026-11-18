@@ -206,16 +206,42 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
     const candidate = await env.DB.prepare(
       "SELECT * FROM licenses WHERE activation_code_hash = ? AND status = 'issued' AND device_thumbprint IS NULL"
     ).bind(codeHash).first<LicenseRow>();
-    if (!candidate) return fail("رمز التفعيل غير صحيح أو سبق استعماله", 409);
-    // The annual/trial clock starts only when this one-use code is first activated.
+    if (!candidate) {
+      // Recover a lost activation response only for the same proven device.
+      const alreadyActivated = await env.DB.prepare(
+        "SELECT * FROM licenses WHERE activation_code_hash = ? AND status = 'active' AND device_thumbprint = ?"
+      ).bind(codeHash, thumbprint).first<LicenseRow>();
+      if (!alreadyActivated) return fail("رمز التفعيل غير صحيح أو سبق استعماله", 409);
+      await env.DB.prepare("UPDATE licenses SET last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'active'")
+        .bind(now, now, alreadyActivated.id).run();
+      const recovered = { ...alreadyActivated, last_validated_at: now };
+      const recoveryToken = await signLicense(env, recovered, now);
+      return json({ ok: true, license: recoveryToken, nextCheckAt: now + 30 * DAY, graceDays: 7 });
+    }
+    // Sign before committing activation so a missing signing secret cannot consume the code.
     const startsAt = now;
     const durationDays = candidate.duration_days;
     const expiresAt = durationDays === null ? null : startsAt + durationDays * DAY;
+    const activatedRow: LicenseRow = {
+      ...candidate,
+      status: "active",
+      device_public_key_json: JSON.stringify(jwk),
+      device_thumbprint: thumbprint,
+      activated_at: now,
+      starts_at: startsAt,
+      expires_at: expiresAt,
+      last_validated_at: now
+    };
+    const token = await signLicense(env, activatedRow, now);
     const updated = await env.DB.prepare(
-      "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, activated_at = ?, starts_at = ?, expires_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL RETURNING *"
-    ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, expiresAt, now, now, candidate.id).first<LicenseRow>();
-    if (!updated) return fail("تم ربط رمز التفعيل بجهاز آخر بالفعل", 409);
-    const token = await signLicense(env, updated, now);
+      "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, activated_at = ?, starts_at = ?, expires_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL RETURNING id"
+    ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, expiresAt, now, now, candidate.id).first();
+    if (!updated) {
+      const raced = await env.DB.prepare(
+        "SELECT id FROM licenses WHERE id = ? AND status = 'active' AND device_thumbprint = ?"
+      ).bind(candidate.id, thumbprint).first();
+      if (!raced) return fail("تم ربط رمز التفعيل بجهاز آخر بالفعل", 409);
+    }
     return json({ ok: true, license: token, nextCheckAt: now + 30 * DAY, graceDays: 7 });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "فشل التفعيل");
@@ -279,13 +305,21 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
     return json({ ok: true, licenses: rows.results || [] });
   }
 
-  const match = path.match(/^\/v1\/admin\/licenses\/([0-9a-f-]+)\/(suspend|renew)$/i);
+  const match = path.match(/^\/v1\/admin\/licenses\/([0-9a-f-]+)\/(suspend|renew|revoke)$/i);
   if (request.method === "POST" && match) {
     const id = match[1];
     const action = match[2];
     const existing = await env.DB.prepare("SELECT * FROM licenses WHERE id = ?").bind(id).first<LicenseRow>();
     if (!existing) return fail("الترخيص غير موجود", 404);
+    if (action === "revoke") {
+      if (existing.status === "revoked") return json({ ok: true, status: "revoked" });
+      if (existing.status === "issued") return fail("لا يمكن إلغاء رمز لم يُربط بجهاز بعد", 409);
+      await env.DB.prepare("UPDATE licenses SET status = 'revoked', updated_at = ? WHERE id = ? AND status <> 'issued'")
+        .bind(now, id).run();
+      return json({ ok: true, status: "revoked" });
+    }
     if (action === "suspend") {
+      if (existing.status === "revoked") return fail("الترخيص ملغى نهائياً", 409);
       await env.DB.prepare("UPDATE licenses SET status = 'suspended', updated_at = ? WHERE id = ?").bind(now, id).run();
       return json({ ok: true, status: "suspended" });
     }
