@@ -183,6 +183,24 @@ public class MainActivity extends Activity {
                 return failure.toString();
             }
         }
+        @JavascriptInterface public String getLicenseDeviceId() {
+            try { return LicenseManager.deviceId(MainActivity.this); }
+            catch (Exception e) { return "تعذر إنشاء رقم الجهاز"; }
+        }
+        @JavascriptInterface public void requestLicenseWhatsApp(String requestType) {
+            try {
+                String deviceId = LicenseManager.deviceId(MainActivity.this);
+                String type = "renewal".equals(requestType) ? "تجديد الترخيص" : "تفعيل جديد";
+                String message = "السلام عليكم، أطلب " + type + " لتطبيق مُشرِفي.\\nرقم الجهاز: " + deviceId;
+                Uri uri = Uri.parse("https://wa.me/213699251551?text=" + Uri.encode(message));
+                runOnUiThread(() -> {
+                    try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); }
+                    catch (Exception e) { Toast.makeText(MainActivity.this, "تعذر فتح واتساب. تأكد من تثبيته أو وجود متصفح.", Toast.LENGTH_LONG).show(); }
+                });
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "تعذر تجهيز طلب الترخيص.", Toast.LENGTH_LONG).show();
+            }
+        }
         @JavascriptInterface public void activateLicense(String activationCode, String callbackId) {
             if (activationCode == null || callbackId == null) return;
             licenseExecutor.execute(() -> {

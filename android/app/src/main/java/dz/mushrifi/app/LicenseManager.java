@@ -300,6 +300,11 @@ final class LicenseManager {
         return payload;
     }
 
+    static String deviceId(Context context) throws Exception {
+        JSONObject jwk = publicJwk((ECPublicKey) getOrCreateDeviceKey().getPublic());
+        return "MSH-" + deviceThumbprint(jwk).substring(0, 24).toUpperCase(java.util.Locale.US);
+    }
+
     private static String deviceThumbprint(JSONObject jwk) throws Exception {
         String q = String.valueOf((char) 34);
         String canonical = "{"+q+"crv"+q+":"+q+jwk.getString("crv")+q+

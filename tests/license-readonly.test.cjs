@@ -37,4 +37,11 @@ assert.match(html, /setLicenseControlDisabled\(importButton,true\)/,
 assert.match(html, /allowed\.has\(el\.id\)/,
   'Backup export, report viewing, and license actions must remain available.');
 
+assert.match(manager, /static String deviceId\\(Context context\\)/,
+  'A device fingerprint must be available for support requests.');
+assert.match(activity, /requestLicenseWhatsApp\\(String requestType\\)/,
+  'Activation and renewal requests must reach the owner through WhatsApp.');
+assert.match(html, /requestLicenseActivationBtn/);
+assert.match(html, /requestLicenseRenewalBtn/);
+assert.match(html, /licenseDeviceId/);
 console.log('PASS: license read-only policy, native database write guard, student viewing, and backup export safeguards.');
