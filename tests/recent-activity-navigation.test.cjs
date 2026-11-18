@@ -10,5 +10,5 @@ assert.match(block, /visibleAttendance\.map\(x=>\(\{date:x\.date,studentId:x\.st
 assert.match(block, /visibleViolations\.map\(x=>\(\{date:x\.date,studentId:x\.student/);
 assert.match(block, /visibleDocuments\.map\(x=>\(\{date:x\.date,studentId:x\.student/);
 assert.match(block, /class="student-name recent-student-link" data-student-id="/);
-assert.match(block, /querySelectorAll\('\.recent-student-link'\)\)\.forEach\(btn=>btn\.addEventListener\('click',\(\)=>window\.studentHistory\(btn\.dataset\.studentId\)\)\)/);
+assert.match(block, /querySelectorAll\('\.recent-student-link'\)\.forEach\(btn=>btn\.addEventListener\('click',\(\)=>window\.studentHistory\(btn\.dataset\.studentId\)\)\)/);
 console.log('Recent activity student-profile navigation checks passed.');
