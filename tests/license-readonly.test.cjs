@@ -39,7 +39,7 @@ assert.match(html, /allowed\.has\(el\.id\)/,
 
 assert.ok(manager.includes('static String deviceId(Context context)'),
   'A device fingerprint must be available for support requests.');
-assert.match(activity, /requestLicenseWhatsApp\\(String requestType\\)/,
+assert.ok(activity.includes('requestLicenseWhatsApp(String requestType)'),
   'Activation and renewal requests must reach the owner through WhatsApp.');
 assert.match(html, /requestLicenseActivationBtn/);
 assert.match(html, /requestLicenseRenewalBtn/);
