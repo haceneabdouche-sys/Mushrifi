@@ -239,7 +239,7 @@ public class MainActivity extends Activity {
             scheduleSummonsReminderAt(id, studentName, reminderMillis, appointmentMillis);
         }
         @JavascriptInterface public void scheduleSummonsReminderAt(String id, String studentName, long reminderMillis, long appointmentMillis) {
-            if (id == null || studentName == null || reminderMillis <= System.currentTimeMillis()) { cancelSummonsReminder(id); return; }
+            if (id == null || studentName == null || !isValidReminderTime(reminderMillis, appointmentMillis)) { cancelSummonsReminder(id); return; }
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + reminderMillis + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
@@ -306,7 +306,6 @@ public class MainActivity extends Activity {
                     for (String id : previous.keySet()) cancelReminder(MainActivity.this, id);
                     android.content.SharedPreferences.Editor editor = prefs.edit().clear();
                     org.json.JSONArray items = new org.json.JSONArray(json);
-                    long now = System.currentTimeMillis();
                     for (int i = 0; i < items.length(); i++) {
                         org.json.JSONObject item = items.optJSONObject(i);
                         if (item == null) continue;
@@ -314,7 +313,7 @@ public class MainActivity extends Activity {
                         String student = item.optString("student", "");
                         long reminder = item.optLong("reminderAt", 0L);
                         long appointment = item.optLong("appointment", 0L);
-                        if (id.isEmpty() || student.isEmpty() || reminder <= now) continue;
+                        if (id.isEmpty() || student.isEmpty() || !isValidReminderTime(reminder, appointment)) continue;
                         editor.putString(id, student + "|" + reminder + "|" + appointment);
                     }
                     editor.apply();
@@ -324,7 +323,8 @@ public class MainActivity extends Activity {
                         String id = item.optString("id", "");
                         String student = item.optString("student", "");
                         long reminder = item.optLong("reminderAt", 0L);
-                        if (!id.isEmpty() && !student.isEmpty() && reminder > now) {
+                        long appointment = item.optLong("appointment", 0L);
+                        if (!id.isEmpty() && !student.isEmpty() && isValidReminderTime(reminder, appointment)) {
                             scheduleReminder(MainActivity.this, id, student, reminder);
                         }
                     }
@@ -436,6 +436,10 @@ public class MainActivity extends Activity {
         pending.cancel();
     }
 
+    static boolean isValidReminderTime(long reminderMillis, long appointmentMillis) {
+        return reminderMillis > System.currentTimeMillis() && appointmentMillis > reminderMillis;
+    }
+
     static void scheduleReminder(Context context, String id, String studentName, long reminderMillis) {
         if (reminderMillis <= System.currentTimeMillis()) { cancelReminder(context, id); return; }
         Intent intent = new Intent(context, SummonsReminderReceiver.class);
@@ -464,7 +468,6 @@ public class MainActivity extends Activity {
             try {
                 android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
                 java.util.Map<String, ?> stored = prefs.getAll();
-                long now = System.currentTimeMillis();
                 android.content.SharedPreferences.Editor cleanup = prefs.edit();
                 boolean changed = false;
                 for (java.util.Map.Entry<String, ?> entry : stored.entrySet()) {
@@ -482,10 +485,13 @@ public class MainActivity extends Activity {
                         continue;
                     }
                     try {
+                        long appointment = parts.length == 2
+                            ? Long.parseLong(parts[1])
+                            : Long.parseLong(parts[2]);
                         long reminder = parts.length == 2
-                            ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L
+                            ? appointment - 24L * 60L * 60L * 1000L
                             : Long.parseLong(parts[1]);
-                        if (reminder <= now) {
+                        if (!isValidReminderTime(reminder, appointment)) {
                             cancelReminder(MainActivity.this, id);
                             cleanup.remove(id);
                             changed = true;

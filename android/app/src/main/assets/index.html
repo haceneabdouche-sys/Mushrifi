@@ -943,6 +943,7 @@ function validateSummonsReminder(appointment,reminder,now=Date.now()){
  if(appointmentMs<=now)return 'يجب أن يكون موعد حضور الولي في المستقبل.';
  if(!Number.isFinite(reminderMs))return 'تاريخ أو ساعة التنبيه غير صحيحين.';
  if(reminderMs<=now)return 'يجب أن يكون تاريخ وساعة التنبيه في المستقبل.';
+ if(reminderMs>=appointmentMs)return 'يجب أن يسبق التنبيه موعد حضور الولي.';
  return '';
 }
 function localDateTimeValue(milliseconds){
@@ -958,7 +959,11 @@ appointmentInput.addEventListener('change',()=>{
  const appointmentMs=parseLocalDateTime(appointmentInput.value),now=Date.now();
  if(!Number.isFinite(appointmentMs))return;
  let reminderMs=appointmentMs-24*60*60*1000;
- if(reminderMs<=now){const oneHourBefore=appointmentMs-60*60*1000;reminderMs=oneHourBefore>now?oneHourBefore:now+5*60*1000;}
+ if(reminderMs<=now){
+  const oneHourBefore=appointmentMs-60*60*1000;
+  reminderMs=oneHourBefore>now?oneHourBefore:Math.min(now+5*60*1000,appointmentMs-1000);
+ }
+ if(reminderMs<=now||reminderMs>=appointmentMs){alert('موعد حضور الولي قريب جداً لإعداد تنبيه مستقبلي يسبقه.');return;}
  const suggested=localDateTimeValue(reminderMs);
  reminderDateInput.value=suggested.slice(0,10);reminderTimeInput.value=suggested.slice(11,16);
 });

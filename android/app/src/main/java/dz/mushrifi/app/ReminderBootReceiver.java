@@ -14,8 +14,9 @@ public class ReminderBootReceiver extends BroadcastReceiver {
             String[] parts = value.split("\\|", 3);
             if (parts.length != 2 && parts.length != 3) { prefs.edit().remove(id).apply(); continue; }
             try {
-                long reminder = parts.length == 2 ? Long.parseLong(parts[1]) - 24L * 60L * 60L * 1000L : Long.parseLong(parts[1]);
-                if (reminder <= System.currentTimeMillis()) {
+                long appointment = parts.length == 2 ? Long.parseLong(parts[1]) : Long.parseLong(parts[2]);
+                long reminder = parts.length == 2 ? appointment - 24L * 60L * 60L * 1000L : Long.parseLong(parts[1]);
+                if (!MainActivity.isValidReminderTime(reminder, appointment)) {
                     MainActivity.cancelReminder(context, id);
                     prefs.edit().remove(id).apply();
                 } else {
