@@ -10,7 +10,7 @@ assert.ok(staging.includes('database_name = "mushrifi-licenses-staging"'), "stag
 const databaseId = staging.match(/database_id\s*=\s*"([^"]+)"/)?.[1];
 assert.ok(databaseId, "staging D1 database ID must be explicitly configured");
 assert.notEqual(databaseId, productionDatabaseId, "staging must never bind to the production D1 database");
-assert.equal(databaseId, "REPLACE_WITH_STAGING_D1_DATABASE_ID", "staging deployment must remain blocked until a real staging D1 ID is deliberately configured");
+assert.match(databaseId, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, "staging must use a valid Cloudflare D1 UUID");
 
 const expected = [
   ["RATE_LIMIT_CHALLENGE", "2026111911", 30],
