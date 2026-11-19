@@ -38,6 +38,8 @@ jobs:
         run: node tests/license-key-compat.test.cjs
       - name: Verify Worker rate-limit configuration and routing
         run: node tests/rate-limit-config.test.mjs
+      - name: Verify staging isolation and prevent production D1 reuse
+        run: node tests/staging-config.test.mjs
       - name: Exercise rate-limit bindings and fail-closed behavior at runtime
         run: node --experimental-strip-types tests/rate-limit-runtime.test.mjs
       - name: Exercise full license lifecycle against a fresh local D1 database
