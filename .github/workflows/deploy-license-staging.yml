@@ -32,7 +32,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: licensing/worker
-          wranglerVersion: "4.45.0"
+          wranglerVersion: "4.165.0"
           command: deploy --env staging
           environment: staging
           secrets: |
