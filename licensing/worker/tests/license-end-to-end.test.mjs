@@ -70,9 +70,27 @@ const oversizedAdmin = await fetch(api + "/v1/admin/licenses", {
 });
 assert.equal(oversizedAdmin.status, 400, "oversized admin bodies must be rejected before parsing");
 
+const unauthorizedList = await fetch(api + "/v1/admin/licenses");
+assert.equal(unauthorizedList.status, 401, "admin listing must reject requests without a bearer token");
+const unauthorizedIssue = await fetch(api + "/v1/admin/licenses", {
+  method: "POST",
+  headers: { "content-type": "application/json", "authorization": "Bearer wrong-token" },
+  body: JSON.stringify({ licenseType: "trial", durationDays: 1 })
+});
+assert.equal(unauthorizedIssue.status, 401, "admin issuance must reject an incorrect bearer token");
+const invalidType = await request("/v1/admin/licenses", { licenseType: "unknown", durationDays: 1 }, true);
+assert.equal(invalidType.status, 400, "admin issuance must reject unknown license types");
+const invalidDuration = await request("/v1/admin/licenses", { licenseType: "trial", durationDays: 0 }, true);
+assert.equal(invalidDuration.status, 400, "admin issuance must reject zero-day licenses");
+
 const issuedOnly = await issue("annual", 365);
 assert.equal((await request("/v1/admin/licenses/" + issuedOnly.licenseId + "/suspend", {}, true)).status, 409);
 assert.equal((await request("/v1/admin/licenses/" + issuedOnly.licenseId + "/revoke", {}, true)).status, 409);
+
+assert.equal((await fetch(api + "/v1/admin/licenses/" + issuedOnly.licenseId + "/suspend", { method: "POST" })).status, 401,
+  "admin state changes must reject requests without a bearer token");
+assert.equal((await adminList()).find(row => row.id === issuedOnly.licenseId).status, "issued",
+  "unauthorized admin requests must not change license state");
 
 const annual = await issue("annual", 365);
 const device = await newDevice();
