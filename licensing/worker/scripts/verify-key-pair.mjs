@@ -12,7 +12,7 @@ const privateKey = createPrivateKey({
   type: "pkcs8"
 });
 const derivedPublicDer = createPublicKey(privateKey).export({ type: "spki", format: "der" });
-const javaPath = new URL("../../android/app/src/main/java/dz/mushrifi/app/LicenseManager.java", import.meta.url);
+const javaPath = new URL("../../../android/app/src/main/java/dz/mushrifi/app/LicenseManager.java", import.meta.url);
 const java = readFileSync(javaPath, "utf8");
 const block = java.match(/PUBLIC_KEY_PEM\s*=\s*([\s\S]*?);/);
 assert.ok(block, "Could not find Android PUBLIC_KEY_PEM.");
