@@ -28,7 +28,7 @@ One-time setup, from `licensing/worker` in a trusted terminal:
 2. Copy the new database UUID returned by Wrangler into `env.staging.d1_databases[0].database_id` in `wrangler.toml`. Confirm it is different from the production ID shown in the root D1 binding.
 3. Confirm that rate-limit namespace IDs `2026111911` through `2026111914` are unused in this Cloudflare account. If any are already in use, choose four unused IDs and update both the staging config and `tests/staging-config.test.mjs`.
 4. Initialize only the new staging database with the current schema:
-   `npx wrangler d1 execute mushrifi-licenses-staging --remote --file=./schema.sql`
+   `npx wrangler d1 execute mushrifi-licenses-staging --env staging --remote --file=./schema.sql`
    Do not run this command against `mushrifi-licenses`.
 5. Configure staging-only secrets (never paste secret values into chat or commit them):
    `npx wrangler secret put ADMIN_API_TOKEN --env staging`
