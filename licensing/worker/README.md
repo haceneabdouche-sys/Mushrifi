@@ -69,7 +69,7 @@ Current per-client-IP thresholds:
 | `POST /v1/validate` | 20 requests / 60 seconds |
 | `/v1/admin/*` | 30 requests / 60 seconds |
 
-When a threshold is reached, the Worker returns HTTP `429` with `Retry-After: 60`. If the rate-limit service itself is unavailable, protected requests fail closed with HTTP `503` rather than silently running without protection.
+When a threshold is reached, the Worker returns HTTP `429` with `Retry-After: 60`. If the rate-limit service itself is unavailable, protected requests fail closed with HTTP `503` rather than silently running without protection. The local CI harness uses a test-only bypass because Wrangler's local runtime does not provide the Cloudflare-hosted counter service; a static regression test verifies that all four bindings are configured and connected to their routes. The bypass is generated only in CI's disposable `.dev.vars` file and must never be set on a deployed Worker.
 
 Important limitations:
 - Cloudflare's Worker Rate Limiting API is approximate and each Cloudflare location maintains separate counters; it is not a strict worldwide limit.
