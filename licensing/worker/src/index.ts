@@ -232,9 +232,16 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
     if (!candidate) {
       // Recover a lost activation response only for the same proven device.
       const alreadyActivated = await env.DB.prepare(
-        "SELECT * FROM licenses WHERE activation_code_hash = ? AND status = 'active' AND device_thumbprint = ?"
+        "SELECT * FROM licenses WHERE activation_code_hash = ? AND status IN ('active', 'expired') AND device_thumbprint = ?"
       ).bind(codeHash, thumbprint).first<LicenseRow>();
       if (!alreadyActivated) return fail("رمز التفعيل غير صحيح أو سبق استعماله", 409);
+      if (alreadyActivated.status === "expired" || (alreadyActivated.expires_at !== null && alreadyActivated.expires_at <= now)) {
+        if (alreadyActivated.status === "active") {
+          await env.DB.prepare("UPDATE licenses SET status = 'expired', updated_at = ? WHERE id = ? AND status = 'active'")
+            .bind(now, alreadyActivated.id).run();
+        }
+        return fail("انتهت مدة الترخيص؛ بياناتك محفوظة ويمكنك تصدير النسخة الاحتياطية", 403);
+      }
       await env.DB.prepare("UPDATE licenses SET last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'active'")
         .bind(now, now, alreadyActivated.id).run();
       const recovered = { ...alreadyActivated, last_validated_at: now };
