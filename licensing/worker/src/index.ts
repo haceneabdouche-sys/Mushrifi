@@ -171,8 +171,10 @@ function randomCode(): string {
 }
 
 async function enforceRateLimit(request: Request, env: Env, limiter: RateLimit): Promise<Response | null> {
-  // This switch is written only to the CI-generated .dev.vars file. It must never be set in Cloudflare.
-  if (env.MUSHRIFI_RATE_LIMITS_TEST_BYPASS === "true") return null;
+  // The test bypass is accepted only on loopback hosts in disposable local CI/dev environments.
+  const hostname = new URL(request.url).hostname;
+  if (env.MUSHRIFI_RATE_LIMITS_TEST_BYPASS === "true" &&
+      (hostname === "127.0.0.1" || hostname === "localhost")) return null;
   // Cloudflare overwrites cf-connecting-ip on inbound requests. Keep a stable fallback for local tests.
   const clientIp = request.headers.get("cf-connecting-ip") || "local-development";
   try {
