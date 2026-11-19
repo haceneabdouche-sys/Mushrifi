@@ -6,6 +6,8 @@ export interface Env {
   RATE_LIMIT_ACTIVATE: RateLimit;
   RATE_LIMIT_VALIDATE: RateLimit;
   RATE_LIMIT_ADMIN: RateLimit;
+  // Set only in disposable local CI/dev environments; never configure this on a deployed Worker.
+  MUSHRIFI_RATE_LIMITS_TEST_BYPASS?: string;
   LICENSE_ISSUER?: string;
   LICENSE_AUDIENCE?: string;
 }
@@ -168,7 +170,9 @@ function randomCode(): string {
   return "MSH-" + hex;
 }
 
-async function enforceRateLimit(request: Request, limiter: RateLimit): Promise<Response | null> {
+async function enforceRateLimit(request: Request, env: Env, limiter: RateLimit): Promise<Response | null> {
+  // This switch is written only to the CI-generated .dev.vars file. It must never be set in Cloudflare.
+  if (env.MUSHRIFI_RATE_LIMITS_TEST_BYPASS === "true") return null;
   // Cloudflare overwrites cf-connecting-ip on inbound requests. Keep a stable fallback for local tests.
   const clientIp = request.headers.get("cf-connecting-ip") || "local-development";
   try {
@@ -408,7 +412,7 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "mushrifi-license-api" });
 
     if (url.pathname.startsWith("/v1/admin/")) {
-      const limited = await enforceRateLimit(request, env.RATE_LIMIT_ADMIN);
+      const limited = await enforceRateLimit(request, env, env.RATE_LIMIT_ADMIN);
       if (limited) return limited;
       try { return await adminRoute(request, env, url.pathname); }
       catch { return fail("تعذر تنفيذ طلب الإدارة", 500); }
@@ -421,7 +425,7 @@ export default {
     else if (url.pathname === "/v1/validate") limiter = env.RATE_LIMIT_VALIDATE;
     else return fail("المسار غير موجود", 404);
 
-    const limited = await enforceRateLimit(request, limiter);
+    const limited = await enforceRateLimit(request, env, limiter);
     if (limited) return limited;
 
     let body: Record<string, unknown>;
