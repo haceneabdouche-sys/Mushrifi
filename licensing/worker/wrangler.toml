@@ -7,7 +7,7 @@ binding = "DB"
 database_name = "mushrifi-licenses"
 database_id = "bb241e07-ed80-4a29-b10f-7ebe7b104cf8"
 
-# Per-IP API abuse protection. These limits are approximate and scoped per Cloudflare location.
+# Production/root bindings. Keep these unchanged unless a production change is explicitly approved.
 [[ratelimits]]
 name = "RATE_LIMIT_CHALLENGE"
 namespace_id = "2026111901"
@@ -37,5 +37,48 @@ name = "RATE_LIMIT_ADMIN"
 namespace_id = "2026111904"
 
   [ratelimits.simple]
+  limit = 30
+  period = 60
+
+# Isolated staging environment. Replace the D1 placeholder only after creating
+# a NEW empty staging database in the intended Cloudflare account.
+[env.staging]
+name = "mushrifi-license-server-staging"
+workers_dev = true
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "mushrifi-licenses-staging"
+database_id = "REPLACE_WITH_STAGING_D1_DATABASE_ID"
+
+[[env.staging.ratelimits]]
+name = "RATE_LIMIT_CHALLENGE"
+namespace_id = "2026111911"
+
+  [env.staging.ratelimits.simple]
+  limit = 30
+  period = 60
+
+[[env.staging.ratelimits]]
+name = "RATE_LIMIT_ACTIVATE"
+namespace_id = "2026111912"
+
+  [env.staging.ratelimits.simple]
+  limit = 10
+  period = 60
+
+[[env.staging.ratelimits]]
+name = "RATE_LIMIT_VALIDATE"
+namespace_id = "2026111913"
+
+  [env.staging.ratelimits.simple]
+  limit = 20
+  period = 60
+
+[[env.staging.ratelimits]]
+name = "RATE_LIMIT_ADMIN"
+namespace_id = "2026111914"
+
+  [env.staging.ratelimits.simple]
   limit = 30
   period = 60
