@@ -6,3 +6,36 @@ compatibility_date = "2026-11-15"
 binding = "DB"
 database_name = "mushrifi-licenses"
 database_id = "bb241e07-ed80-4a29-b10f-7ebe7b104cf8"
+
+# Per-IP API abuse protection. These limits are approximate and scoped per Cloudflare location.
+[[ratelimits]]
+name = "RATE_LIMIT_CHALLENGE"
+namespace_id = "2026111901"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+[[ratelimits]]
+name = "RATE_LIMIT_ACTIVATE"
+namespace_id = "2026111902"
+
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
+[[ratelimits]]
+name = "RATE_LIMIT_VALIDATE"
+namespace_id = "2026111903"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60
+
+[[ratelimits]]
+name = "RATE_LIMIT_ADMIN"
+namespace_id = "2026111904"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
