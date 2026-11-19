@@ -49,7 +49,7 @@ workers_dev = true
 [[env.staging.d1_databases]]
 binding = "DB"
 database_name = "mushrifi-licenses-staging"
-database_id = "REPLACE_WITH_STAGING_D1_DATABASE_ID"
+database_id = "31d1c090-a7d9-4175-adc5-f1f35dba4b28"
 
 [[env.staging.ratelimits]]
 name = "RATE_LIMIT_CHALLENGE"
