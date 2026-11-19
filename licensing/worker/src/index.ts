@@ -2,6 +2,10 @@ export interface Env {
   DB: D1Database;
   ADMIN_API_TOKEN: string;
   LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64: string;
+  RATE_LIMIT_CHALLENGE: RateLimit;
+  RATE_LIMIT_ACTIVATE: RateLimit;
+  RATE_LIMIT_VALIDATE: RateLimit;
+  RATE_LIMIT_ADMIN: RateLimit;
   LICENSE_ISSUER?: string;
   LICENSE_AUDIENCE?: string;
 }
@@ -162,6 +166,21 @@ function randomCode(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(24));
   const hex = [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join("").toUpperCase();
   return "MSH-" + hex;
+}
+
+async function enforceRateLimit(request: Request, limiter: RateLimit): Promise<Response | null> {
+  // Cloudflare overwrites cf-connecting-ip on inbound requests. Keep a stable fallback for local tests.
+  const clientIp = request.headers.get("cf-connecting-ip") || "local-development";
+  try {
+    const result = await limiter.limit({ key: clientIp });
+    if (result.success) return null;
+    const response = fail("طلبات كثيرة خلال وقت قصير؛ حاول مجدداً بعد دقيقة", 429);
+    response.headers.set("retry-after", "60");
+    return response;
+  } catch {
+    // Fail closed: do not silently disable abuse protection if the binding is unavailable.
+    return fail("خدمة الحماية غير متاحة مؤقتاً؛ حاول لاحقاً", 503);
+  }
 }
 
 async function adminAuthorized(request: Request, env: Env): Promise<boolean> {
@@ -389,10 +408,21 @@ export default {
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "mushrifi-license-api" });
 
     if (url.pathname.startsWith("/v1/admin/")) {
+      const limited = await enforceRateLimit(request, env.RATE_LIMIT_ADMIN);
+      if (limited) return limited;
       try { return await adminRoute(request, env, url.pathname); }
       catch { return fail("تعذر تنفيذ طلب الإدارة", 500); }
     }
     if (request.method !== "POST") return fail("الطريقة غير مدعومة", 405);
+
+    let limiter: RateLimit | null = null;
+    if (url.pathname === "/v1/challenge") limiter = env.RATE_LIMIT_CHALLENGE;
+    else if (url.pathname === "/v1/activate") limiter = env.RATE_LIMIT_ACTIVATE;
+    else if (url.pathname === "/v1/validate") limiter = env.RATE_LIMIT_VALIDATE;
+    else return fail("المسار غير موجود", 404);
+
+    const limited = await enforceRateLimit(request, limiter);
+    if (limited) return limited;
 
     let body: Record<string, unknown>;
     try {
@@ -403,7 +433,6 @@ export default {
 
     if (url.pathname === "/v1/challenge") return createChallenge(env, body);
     if (url.pathname === "/v1/activate") return activate(env, body);
-    if (url.pathname === "/v1/validate") return validateLicense(env, body);
-    return fail("المسار غير موجود", 404);
+    return validateLicense(env, body);
   }
 };
