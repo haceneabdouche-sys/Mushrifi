@@ -56,6 +56,29 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
   - `POST /v1/admin/licenses/{id}/revoke` — permanently revoke an activated license; the device learns this at its next online validation.
   - `POST /v1/admin/licenses/{id}/renew` with `{ "durationDays":365 }`
 
+## Worker-level rate limiting
+
+The API is served on a `workers.dev` hostname, so the first protection layer is implemented inside the Worker with Cloudflare Rate Limiting bindings (rather than assuming zone-level WAF rules can be attached to the managed `workers.dev` zone).
+
+Current per-client-IP thresholds:
+
+| Endpoint | Limit |
+| --- | ---: |
+| `POST /v1/challenge` | 30 requests / 60 seconds |
+| `POST /v1/activate` | 10 requests / 60 seconds |
+| `POST /v1/validate` | 20 requests / 60 seconds |
+| `/v1/admin/*` | 30 requests / 60 seconds |
+
+When a threshold is reached, the Worker returns HTTP `429` with `Retry-After: 60`. If the rate-limit service itself is unavailable, protected requests fail closed with HTTP `503` rather than silently running without protection.
+
+Important limitations:
+- Cloudflare's Worker Rate Limiting API is approximate and each Cloudflare location maintains separate counters; it is not a strict worldwide limit.
+- The counter uses the connecting IP. People sharing one public IP (for example, a school or mobile carrier NAT) share that allowance, so thresholds should be monitored and adjusted if legitimate users are affected.
+- These bindings are protection against bursts and simple brute-force attempts, not a replacement for strict global coordination or a full admin access workflow.
+- Namespace IDs in `wrangler.toml` must remain unique within the Cloudflare account. Confirm they do not collide with other Worker rate-limit bindings before deployment.
+
+The rate limiting configuration is code-reviewed and CI-tested on the development branch only. It is not active on the deployed Worker until an explicitly approved deployment is performed.
+
 ## Remaining validation and hardening
 
 - Run the Android build and regression suite; verify the resulting test APK before installation.
