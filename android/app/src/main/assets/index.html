@@ -796,6 +796,11 @@ function mergeBackupWithoutLoss(current, incoming) {
           stats.duplicates[key]++;
           continue;
         }
+        const existingWithSourceId = localById.get(sourceId);
+        if (existingWithSourceId && stable(existingWithSourceId) === signature) {
+          stats.duplicates[key]++;
+          continue;
+        }
         record.id = newId(key);
         stats.conflicts[key]++;
         stats.added[key]++;
