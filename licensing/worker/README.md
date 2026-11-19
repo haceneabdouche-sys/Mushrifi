@@ -19,28 +19,26 @@ The Android client implementation is now included in the primary `main` branch. 
 
 The repository now defines a separate Wrangler environment named `staging`. It deploys a distinct Worker (`mushrifi-license-server-staging`), binds a separately named D1 database (`mushrifi-licenses-staging`), and uses four staging-only rate-limit namespace IDs. Wrangler environments do not inherit bindings or secrets automatically, so the staging D1 and rate-limit bindings are declared explicitly. See the Cloudflare documentation for [Worker environments](https://developers.cloudflare.com/workers/wrangler/environments/) and [D1 environments](https://developers.cloudflare.com/d1/configuration/environments/).
 
-**Deployment is intentionally blocked until the staging D1 placeholder is replaced.** The value `REPLACE_WITH_STAGING_D1_DATABASE_ID` is a guard, not a usable ID. Do not copy the production database ID into this field.
+The staging D1 binding is configured with the dedicated database created for this environment. Verify that its UUID matches the `mushrifi-licenses-staging` database in your Cloudflare account before deployment. Never copy the production database ID into this field.
 
 One-time setup, from `licensing/worker` in a trusted terminal:
 
-1. Create a brand-new D1 database in the intended Cloudflare account:
-   `npx wrangler d1 create mushrifi-licenses-staging`
-2. Copy the new database UUID returned by Wrangler into `env.staging.d1_databases[0].database_id` in `wrangler.toml`. Confirm it is different from the production ID shown in the root D1 binding.
-3. Confirm that rate-limit namespace IDs `2026111911` through `2026111914` are unused in this Cloudflare account. If any are already in use, choose four unused IDs and update both the staging config and `tests/staging-config.test.mjs`.
-4. Initialize only the new staging database with the current schema:
+1. Confirm that the existing `mushrifi-licenses-staging` database UUID matches `env.staging.d1_databases[0].database_id` in `wrangler.toml` and differs from the production ID shown in the root D1 binding.
+2. Confirm that rate-limit namespace IDs `2026111911` through `2026111914` are unused in this Cloudflare account. If any are already in use, choose four unused IDs and update both the staging config and `tests/staging-config.test.mjs`.
+3. Initialize only the new staging database with the current schema:
    `npx wrangler d1 execute mushrifi-licenses-staging --env staging --remote --file=./schema.sql`
    Do not run this command against `mushrifi-licenses`.
-5. Configure staging-only secrets (never paste secret values into chat or commit them):
+4. Configure staging-only secrets (never paste secret values into chat or commit them):
    `npx wrangler secret put ADMIN_API_TOKEN --env staging`
    `npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64 --env staging`
    The signing key must match the RSA public key embedded in the Android test build. Keep the admin token unique to staging.
-6. Review the selected environment and bindings before any deployment. Only the explicitly selected staging command targets this Worker:
+5. Review the selected environment and bindings before any deployment. Only the explicitly selected staging command targets this Worker:
    `npx wrangler deploy --env staging`
    Do not run `wrangler deploy` without `--env staging`.
 
 After deployment, verify the staging Worker health endpoint, then perform the live rate-limit burst test and the valid-code lifecycle on a dedicated test phone. Use only test codes created through the staging admin API. A successful CI run validates configuration guards and local D1 behavior; it does not prove that Cloudflare's live counters, staging secrets, or Android device lifecycle work.
 
-The CI staging-config test asserts that staging uses a distinct Worker name, never reuses the production D1 ID, remains blocked while the placeholder is present, and has separate rate-limit namespace IDs. It does not verify account-level namespace uniqueness; that must be checked in the Cloudflare account before deployment.
+The CI staging-config test asserts that staging uses a distinct Worker name, never reuses the production D1 ID, uses a valid UUID distinct from production, and has separate rate-limit namespace IDs. It does not verify account-level namespace uniqueness; that must be checked in the Cloudflare account before deployment.
 
 ## Security model
 
