@@ -1,0 +1,43 @@
+name: Deploy Mushrifi license API to Staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mushrifi-license-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    name: Deploy isolated Staging Worker
+    if: github.ref == 'refs/heads/feature/voice-student-actions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the explicitly selected development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/voice-student-actions
+
+      - name: Verify staging configuration is isolated
+        working-directory: licensing/worker
+        run: node tests/staging-config.test.mjs
+
+      - name: Deploy only the Staging environment
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.45.0"
+          command: deploy --env staging
+          environment: staging
+          secrets: |
+            ADMIN_API_TOKEN
+            LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
+        env:
+          ADMIN_API_TOKEN: ${{ secrets.STAGING_ADMIN_API_TOKEN }}
+          LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64: ${{ secrets.LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64 }}
