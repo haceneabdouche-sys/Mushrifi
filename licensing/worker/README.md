@@ -11,7 +11,9 @@ The Android client implementation is now included in the primary `main` branch. 
 - A 30-day online validation interval and a signed 37-day offline deadline.
 - Non-destructive read-only behavior after an invalid/expired license or elapsed offline deadline. Student records remain viewable and backup export remains available; restore and write actions are blocked.
 
-**Development branch hardening:** activation now signs the token before committing the one-use code and permits recovery after a lost response only when the same device proves possession of its key. Admin revocation is implemented for activated licenses. These changes are under CI validation and are not deployed.\n\n**The staging API smoke test passed on 2026-11-16:** the Worker challenge endpoint created a one-time nonce, accepted a valid P-256 device proof far enough to reject an unknown activation code safely, and rejected replay of the consumed challenge. This did not issue a license and does not prove that a valid code can be activated or validated. The Android CI test build also passed, but it is a debug test APK, not a production-signed release. D1 configuration, signing/admin secret ownership, valid-code activation/renewal/suspension, and real-device behavior still require verification. Do not issue customer activation codes or distribute a production APK until these checks pass.
+**Development branch hardening:** activation now signs the token before committing the one-use code and permits recovery after a lost response only when the same device proves possession of its key. Admin revocation is implemented for activated licenses. These changes are under CI validation and are not deployed.
+
+**The staging API smoke test passed on 2026-11-16:** the Worker challenge endpoint created a one-time nonce, accepted a valid P-256 device proof far enough to reject an unknown activation code safely, and rejected replay of the consumed challenge. This did not issue a license and does not prove that a valid code can be activated or validated. The Android CI test build also passed, but it is a debug test APK, not a production-signed release. D1 configuration, signing/admin secret ownership, valid-code activation/renewal/suspension, and real-device behavior still require verification. Do not issue customer activation codes or distribute a production APK until these checks pass.
 
 ## Security model
 
@@ -69,7 +71,7 @@ Current per-client-IP thresholds:
 | `POST /v1/validate` | 20 requests / 60 seconds |
 | `/v1/admin/*` | 30 requests / 60 seconds |
 
-When a threshold is reached, the Worker returns HTTP `429` with `Retry-After: 60`. If the rate-limit service itself is unavailable, protected requests fail closed with HTTP `503` rather than silently running without protection. The local CI harness uses a test-only bypass because Wrangler's local runtime does not provide the Cloudflare-hosted counter service; a static regression test verifies that all four bindings are configured and connected to their routes. The bypass is generated only in CI's disposable `.dev.vars` file and must never be set on a deployed Worker.
+When a threshold is reached, the Worker returns HTTP `429` with `Retry-After: 60`. If the rate-limit service itself is unavailable, protected requests fail closed with HTTP `503` rather than silently running without protection. CI now includes both a static configuration check and a runtime test that injects mocked Cloudflare bindings into the Worker handler, verifying all four routes, the `429` response, the retry header, client-IP keying, and fail-closed `503` behavior. Wrangler's local runtime does not provide the Cloudflare-hosted counter service, so this does not replace a live staging test. The local D1 lifecycle test uses a test-only bypass generated in CI's disposable `.dev.vars` file; this bypass must never be set on a deployed Worker.
 
 Important limitations:
 - Cloudflare's Worker Rate Limiting API is approximate and each Cloudflare location maintains separate counters; it is not a strict worldwide limit.
@@ -83,7 +85,7 @@ The rate limiting configuration is code-reviewed and CI-tested on the developmen
 
 - Run the Android build and regression suite; verify the resulting test APK before installation.
 - Complete end-to-end tests using a valid staging activation code on a real Android device, including subsequent validation, suspension, revocation, renewal, and recovery after an interrupted activation.
-- Configure Cloudflare rate limiting and an authenticated owner/admin workflow before public use.
+- Before deployment, verify the four rate-limit namespace IDs are unique in the Cloudflare account and perform a live staging burst test that confirms HTTP `429` and `Retry-After`.
 - Review clock-change behavior and Android Keystore key invalidation/recovery.
 - Confirm the backup export path remains usable in every read-only failure state.
 
