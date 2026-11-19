@@ -129,6 +129,8 @@ const trialDevice = await newDevice();
 const trialActivation = await activate(shortTrial.activationCode, trialDevice);
 assert.equal(trialActivation.status, 200);
 forceLocalExpiry(shortTrial.licenseId);
+const expiredValidation = await validate(shortTrial.licenseId, trialDevice);
+assert.equal(expiredValidation.status, 403, "online validation must reject an expired license");
 const expiredRecovery = await activate(shortTrial.activationCode, trialDevice);
 assert.equal(expiredRecovery.status, 403, "same-device recovery must reject an expired license");
 assert.match(expiredRecovery.data.error, /انتهت مدة الترخيص/);
