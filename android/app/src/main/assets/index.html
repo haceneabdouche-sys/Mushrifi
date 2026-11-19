@@ -633,7 +633,7 @@ function showBackupPreview(data,bytes){
  const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length};
  const reducedKeys=Object.keys(currentCounts).filter(k=>incomingCounts[k]<currentCounts[k]);
  const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations}`;
- const reducedWarning=reducedKeys.length?'<p class="notice"><b>تنبيه مهم:</b> تحتوي النسخة المختارة على سجلات أقل من الموجودة حالياً في الهاتف في بعض الأقسام. راجع الأعداد أدناه وتأكد من أنك اخترت النسخة الصحيحة قبل الاستعادة.</p>':'';
+ const reducedWarning=reducedKeys.length?'<p class="notice"><b>تنبيه حماية:</b> النسخة أقل عدداً من بيانات الهاتف الحالية في بعض الأقسام. سيُدمج محتواها فقط؛ لن تُحذف أي سجلات موجودة على الهاتف.</p>':'<p class="notice"><b>استعادة آمنة:</b> ستتم إضافة السجلات غير الموجودة فقط مع الاحتفاظ ببيانات الهاتف الحالية.</p>';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
  const classText=Object.keys(classes).sort((a,b)=>a.localeCompare(b,'ar',{numeric:true})).map(k=>'القسم '+esc(k)+': '+classes[k]).join('، ');
  const attrText=Object.keys(attributes).map(k=>esc(k)+': '+attributes[k]).join('، ');
@@ -647,8 +647,8 @@ function showBackupPreview(data,bytes){
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
- '<p class="notice">استعادة هذه النسخة ستستبدل البيانات الحالية على الهاتف ببيانات الملف. احتفظ بنسخة من بيانات الهاتف الحالية قبل المتابعة.</p>'+
- '<div class="actions"><button class="btn primary" id="restoreBackupNow" type="button">استعادة هذه النسخة</button><button class="btn" id="cancelBackupPreview" type="button">إلغاء</button></div>';
+ '<p class="notice">سيتم دمج النسخة مع بيانات الهاتف: لا تُحذف التلاميذ أو سجلات الغياب والتأخر أو الوثائق أو المخالفات الموجودة. عند تعارض معرّف سجل مختلف، يُحفظ السجل المستورد بمعرّف جديد.</p>'+
+ '<div class="actions"><button class="btn primary" id="restoreBackupNow" type="button">دمج هذه النسخة دون حذف</button><button class="btn" id="cancelBackupPreview" type="button">إلغاء</button></div>';
  box.classList.remove('hidden');
  $('#restoreBackupNow').onclick=restorePendingBackup;
  $('#cancelBackupPreview').onclick=()=>{pendingBackupData=null;box.classList.add('hidden');box.innerHTML='';};
@@ -672,17 +672,169 @@ async function importBackupText(raw,bytes){
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
  }catch(err){pendingBackupData=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
 }
+function mergeBackupWithoutLoss(current, incoming) {
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const newId = prefix => {
+    try {
+      if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+    } catch (_) {}
+    return prefix + "_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 12);
+  };
+  const norm = value => String(value ?? "").normalize("NFKC").replace(/[\u0640]/g, "").replace(/\s+/g, " ").trim().toLocaleLowerCase("ar");
+  const aliases = student => [
+    student.last && student.first ? student.last + " " + student.first : "",
+    student.first && student.last ? student.first + " " + student.last : "",
+    student.name || "",
+    student.fullName || ""
+  ].map(norm).filter(Boolean);
+  const identity = student => aliases(student)[0] || aliases(student)[1] || "";
+  const stable = value => {
+    if (Array.isArray(value)) return "[" + value.map(stable).join(",") + "]";
+    if (value && typeof value === "object") {
+      return "{" + Object.keys(value).sort().map(key => JSON.stringify(key) + ":" + stable(value[key])).join(",") + "}";
+    }
+    return JSON.stringify(value);
+  };
+  const isPlainObject = value => !!value && typeof value === "object" && !Array.isArray(value);
+  const mergeMissing = (local, imported) => {
+    const result = isPlainObject(local) ? clone(local) : {};
+    if (!isPlainObject(imported)) return result;
+    for (const [key, value] of Object.entries(imported)) {
+      if (!(key in result) || result[key] === undefined || result[key] === null) result[key] = clone(value);
+      else if (isPlainObject(result[key]) && isPlainObject(value)) result[key] = mergeMissing(result[key], value);
+    }
+    return result;
+  };
+
+  const merged = { ...clone(incoming), ...clone(current) };
+  for (const key of ["students", "attendance", "documents", "violations"]) {
+    if (!Array.isArray(merged[key])) merged[key] = [];
+  }
+  merged.settings = mergeMissing(current.settings || {}, incoming.settings || {});
+  const stats = {
+    added: { students: 0, attendance: 0, documents: 0, violations: 0 },
+    duplicates: { students: 0, attendance: 0, documents: 0, violations: 0 },
+    conflicts: { students: 0, attendance: 0, documents: 0, violations: 0 }
+  };
+
+  const localStudents = new Map();
+  merged.students.forEach(student => {
+    const id = String(student?.id ?? "").trim();
+    if (id && !localStudents.has(id)) localStudents.set(id, student);
+  });
+  const importedStudentIds = new Map();
+  const importedIdMap = new Map();
+  const nameTargets = new Map();
+  const addNameTarget = (alias, id) => {
+    if (!alias) return;
+    if (!nameTargets.has(alias)) nameTargets.set(alias, new Set());
+    nameTargets.get(alias).add(String(id));
+  };
+
+  for (const rawStudent of incoming.students) {
+    const student = clone(rawStudent);
+    const sourceId = String(student.id ?? "").trim();
+    const studentIdentity = identity(student);
+    if (sourceId && importedStudentIds.has(sourceId)) {
+      const prior = importedStudentIds.get(sourceId);
+      if (prior.identity !== studentIdentity) {
+        throw new Error("تحتوي النسخة على معرف تلميذ مكرر مرتبط باسمين مختلفين؛ أُوقفت العملية لحماية ربط السجلات.");
+      }
+      stats.duplicates.students++;
+      continue;
+    }
+    if (sourceId) importedStudentIds.set(sourceId, { identity: studentIdentity });
+
+    const local = sourceId ? localStudents.get(sourceId) : null;
+    let targetId;
+    if (local) {
+      const localIdentity = identity(local);
+      if (studentIdentity && localIdentity && studentIdentity !== localIdentity) {
+        targetId = newId("student");
+        student.id = targetId;
+        merged.students.push(student);
+        localStudents.set(targetId, student);
+        stats.added.students++;
+        stats.conflicts.students++;
+      } else {
+        targetId = String(local.id);
+        stats.duplicates.students++;
+      }
+    } else {
+      targetId = sourceId || newId("student");
+      student.id = targetId;
+      merged.students.push(student);
+      localStudents.set(targetId, student);
+      stats.added.students++;
+    }
+    if (sourceId) importedIdMap.set(sourceId, targetId);
+    aliases(student).forEach(alias => addNameTarget(alias, targetId));
+  }
+
+  for (const key of ["attendance", "documents", "violations"]) {
+    const localById = new Map();
+    merged[key].forEach(record => {
+      const id = String(record?.id ?? "").trim();
+      if (id && !localById.has(id)) localById.set(id, record);
+    });
+    const seenIncoming = new Map();
+    for (const rawRecord of incoming[key]) {
+      const record = clone(rawRecord);
+      const sourceStudent = String(record.student ?? "").trim();
+      if (sourceStudent && importedIdMap.has(sourceStudent)) {
+        record.student = importedIdMap.get(sourceStudent);
+      } else {
+        const candidate = nameTargets.get(norm(sourceStudent)) || nameTargets.get(norm(record.studentName));
+        if (candidate && candidate.size === 1) record.student = [...candidate][0];
+      }
+
+      const sourceId = String(record.id ?? "").trim();
+      const signature = stable(record);
+      if (sourceId && seenIncoming.has(sourceId)) {
+        const previous = seenIncoming.get(sourceId);
+        if (previous.signature === signature) {
+          stats.duplicates[key]++;
+          continue;
+        }
+        record.id = newId(key);
+        stats.conflicts[key]++;
+        stats.added[key]++;
+        merged[key].push(record);
+        continue;
+      }
+      if (sourceId) seenIncoming.set(sourceId, { signature });
+      const local = sourceId ? localById.get(sourceId) : null;
+      if (local && stable(local) === signature) {
+        stats.duplicates[key]++;
+        continue;
+      }
+      if (local) {
+        record.id = newId(key);
+        stats.conflicts[key]++;
+      } else if (!sourceId) {
+        record.id = newId(key);
+      }
+      merged[key].push(record);
+      stats.added[key]++;
+      const finalId = String(record.id ?? "").trim();
+      if (finalId) localById.set(finalId, record);
+    }
+  }
+
+  return { data: merged, stats };
+}
 function restorePendingBackup(){
  if(!pendingBackupData)return;
- if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
- const approval=prompt('للتأكيد النهائي وحماية بياناتك، اكتب العبارة التالية كما هي: أوافق على استبدال بيانات الهاتف');
- if(approval!=='أوافق على استبدال بيانات الهاتف'){alert('تم إلغاء الاستعادة؛ لم تتغير بيانات الهاتف.');return;}
- const oldDb=db;db=pendingBackupData;
- if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
+ if(!confirm('سيتم دمج النسخة مع بيانات الهاتف الحالية. ستُضاف السجلات الجديدة فقط، ولن تُحذف أو تُستبدل سجلات الهاتف الموجودة. هل تريد المتابعة؟'))return;
+ const previousDb=db;
+ let result;
+ try{result=mergeBackupWithoutLoss(db,pendingBackupData);db=result.data;}
+ catch(err){alert('أُوقفت عملية الدمج لحماية البيانات:\n'+(err?.message||'خطأ غير معروف')+'؛ لم تتغير بيانات الهاتف.');return;}
+ if(!save()){db=previousDb;render();alert('تعذر حفظ الدمج؛ بقيت قاعدة البيانات السابقة كما هي.');return;}
  pendingBackupData=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
- if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
- alert('تمت استعادة النسخة الاحتياطية بنجاح. عدد التلاميذ: '+db.students.length+'، وسجلات المتابعة: '+(db.attendance.length+db.documents.length+db.violations.length)+'.');
+ const a=result.stats.added,d=result.stats.duplicates,c=result.stats.conflicts;
+ alert('تم دمج النسخة دون حذف البيانات الحالية. أضيف: '+a.students+' تلميذ، '+a.attendance+' سجل غياب/تأخر، '+a.documents+' وثيقة، '+a.violations+' مخالفة. السجلات المطابقة التي تم تجاوزها: '+(d.students+d.attendance+d.documents+d.violations)+'. تعارضات المعرّفات التي حُفظت بمعرّفات جديدة: '+(c.students+c.attendance+c.documents+c.violations)+'.');
 }
 window.onNativeBackupLoaded=importBackupText;
 $('#importBackupNative').onclick=()=>{if(window.AndroidBridge&&typeof AndroidBridge.pickBackupFile==='function')AndroidBridge.pickBackupFile();else $('#importData').click();};
