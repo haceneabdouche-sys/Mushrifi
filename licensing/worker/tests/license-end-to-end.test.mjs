@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { webcrypto, createPublicKey, verify } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 
 const api = process.env.MUSHRIFI_LICENSE_API || "http://127.0.0.1:8787";
 const adminToken = process.env.ADMIN_API_TOKEN || "ci-admin-token";
@@ -14,6 +15,15 @@ async function request(path, body, admin = false) {
   const response = await fetch(api + path, { method: "POST", headers, body: JSON.stringify(body) });
   const data = await response.json();
   return { status: response.status, data };
+}
+async function adminList() {
+  const response = await fetch(api + "/v1/admin/licenses", { headers: { authorization: "Bearer " + adminToken } });
+  assert.equal(response.status, 200, "admin license list should succeed");
+  return (await response.json()).licenses;
+}
+function forceLocalExpiry(licenseId) {
+  // Test-only clock simulation: expire this row in the disposable local D1 database.
+  execFileSync("npx", ["wrangler", "d1", "execute", "mushrifi-licenses", "--local", "--command", `UPDATE licenses SET expires_at = 1 WHERE id = '${licenseId.replaceAll("'", "''")}';`], { stdio: "pipe" });
 }
 async function issue(type, durationDays) {
   const result = await request("/v1/admin/licenses", { licenseType: type, durationDays }, true);
@@ -112,6 +122,20 @@ assert.equal((await request("/v1/admin/licenses/" + annual.licenseId + "/revoke"
 assert.equal((await request("/v1/admin/licenses/" + annual.licenseId + "/revoke", {}, true)).status, 200);
 assert.equal((await request("/v1/challenge", { purpose: "validate", licenseId: annual.licenseId })).status, 403);
 assert.equal((await request("/v1/admin/licenses/" + annual.licenseId + "/renew", { durationDays: 365 }, true)).status, 409);
+
+// An expired license must not be revived by same-device activation recovery.
+const shortTrial = await issue("trial", 1);
+const trialDevice = await newDevice();
+const trialActivation = await activate(shortTrial.activationCode, trialDevice);
+assert.equal(trialActivation.status, 200);
+forceLocalExpiry(shortTrial.licenseId);
+const expiredRecovery = await activate(shortTrial.activationCode, trialDevice);
+assert.equal(expiredRecovery.status, 403, "same-device recovery must reject an expired license");
+assert.match(expiredRecovery.data.error, /انتهت مدة الترخيص/);
+const expiredRow = (await adminList()).find(row => row.id === shortTrial.licenseId);
+assert.equal(expiredRow.status, "expired", "recovery attempt must persist expired status");
+const expiredOtherDevice = await newDevice();
+assert.equal((await activate(shortTrial.activationCode, expiredOtherDevice)).status, 409, "another device must not claim an expired code");
 
 const perpetual = await issue("perpetual");
 const perpetualDevice = await newDevice();
