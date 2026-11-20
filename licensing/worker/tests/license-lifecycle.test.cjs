@@ -13,6 +13,10 @@ const recoveryWrite = worker.indexOf('UPDATE licenses SET last_validated_at = ?,
 assert.ok(recoveryGuard >= 0 && recoveryWrite > recoveryGuard, 'same-device recovery must reject expired licenses before refreshing validation or signing a token');
 assert.ok(worker.includes("status IN ('active', 'expired') AND device_thumbprint = ?"), 'same-device retries must recognize an expired license and reject it explicitly');
 assert.ok(worker.includes('const racedToken = await signLicense(env, raced, now);'), 'concurrent same-device activation must return the persisted winner row');
+assert.ok(worker.includes('(suspend|unsuspend|renew|revoke|transfer)'), 'admin route must expose owner-approved transfer');
+assert.ok(worker.includes('if (action === "transfer")'), 'owner-approved transfer must be handled by the admin route');
+assert.ok(worker.includes('activationCodeHash'), 'transfer must replace the previous activation code hash');
+assert.ok(worker.includes('candidate.expires_at ??'), 'reactivation after transfer must preserve the original expiry');
 assert.ok(worker.includes('(suspend|unsuspend|renew|revoke)'), 'admin route must expose suspend, unsuspend, renew, and revoke');
 assert.ok(worker.includes('if (action === "revoke")'), 'revoke action must be handled');
 assert.ok(worker.includes("status = 'revoked'"), 'revoke must persist terminal revoked state');
