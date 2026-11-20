@@ -6,57 +6,51 @@ const root = path.resolve(__dirname, '..');
 const read = file => fs.readFileSync(path.join(root, file), 'utf8');
 const manager = read('android/app/src/main/java/dz/mushrifi/app/LicenseManager.java');
 const activity = read('android/app/src/main/java/dz/mushrifi/app/MainActivity.java');
+const summonsReceiver = read('android/app/src/main/java/dz/mushrifi/app/SummonsReminderReceiver.java');
+const bootReceiver = read('android/app/src/main/java/dz/mushrifi/app/ReminderBootReceiver.java');
 const html = read('android/app/src/main/assets/index.html');
-
 const gradle = read('android/app/build.gradle');
+const workflow = read('.github/workflows/build-apk.yml');
 
-assert.ok(manager.includes('private static final String API = BuildConfig.MUSHRIFI_LICENSE_API;'),
-  'The Android client must use the build-configured license API, not a hardcoded production URL.');
-assert.ok(gradle.includes('def defaultLicenseApi = "https://mushrifi-license-server.hacene47211.workers.dev"'),
-  'The normal build must keep the existing production API as its default.');
-assert.ok(gradle.includes("buildConfigField 'String', 'MUSHRIFI_LICENSE_API'"),
-  'The selected API origin must be injected into Android BuildConfig.');
-assert.ok(gradle.includes("applicationIdSuffix '.staging'") && gradle.includes("versionNameSuffix '-staging'"),
-  'The staging debug APK must install separately and be visibly identified as a test build.');
+assert.ok(manager.includes('private static final String API = BuildConfig.MUSHRIFI_LICENSE_API;'));
+assert.ok(gradle.includes('def defaultLicenseApi = "https://mushrifi-license-server.hacene47211.workers.dev"'));
+assert.ok(gradle.includes("buildConfigField 'String', 'MUSHRIFI_LICENSE_API'"));
+assert.ok(gradle.includes("applicationIdSuffix '.staging'") && gradle.includes("versionNameSuffix '-staging'"));
 
-assert.match(manager, /if \(!hasStoredLicense\(context\)\) return true/,
-  'Installations without an issued license must retain existing write access.');
-assert.match(manager, /\.put\("hasLicense", true\)/,
-  'A stored token must be distinguishable from an installation without a token.');
-assert.match(manager, /max_seen_wall_time/,
-  'A signed-token validation must preserve a wall-clock high-water mark.');
-assert.match(manager, /clockMovedBackwards\(context, now, lastValidatedAt\)/,
-  'Both status and scheduled validation must detect rollback against the high-water mark.');
-assert.match(manager, /static boolean canWrite\(Context context\)/,
-  'Native license write policy must be available.');
-assert.match(manager, /AES\/GCM\/NoPadding/,
-  'Signed license tokens must be encrypted with Android Keystore AES-GCM.');
-assert.match(manager, /putString\("license_token_enc"/,
-  'The stored token must use the encrypted preference field.');
-assert.match(manager, /\.remove\("license_token"\)/,
-  'The legacy plaintext token must be removed after migration.');
-assert.match(manager, /static boolean hasStoredLicense\(Context context\)/,
-  'Encrypted and legacy token presence must both trigger license enforcement.');
-assert.match(manager, /return status\(context\)\.optBoolean\("activated", false\)/,
-  'Stored licenses may write only while the signed license is active.');
-assert.match(activity, /if \(json == null \|\| !LicenseManager\.canWrite\(MainActivity\.this\)\) return false/,
-  'The native encrypted database bridge must reject writes in read-only mode.');
-assert.match(html, /if\(licenseReadOnly\)\{alert\('وضع القراءة فقط/,
-  'The web save function must block writes in read-only mode.');
-assert.match(html, /if\(!licenseReadOnly&&!save\(\)\)/,
-  'Backup export must remain available without saving over the existing database.');
-assert.match(html, /action\.includes\('studentHistory'\)/,
-  'Student records must remain viewable in read-only mode.');
-assert.match(html, /setLicenseControlDisabled\(importButton,true\)/,
-  'Backup restore must be disabled in read-only mode.');
-assert.match(html, /allowed\.has\(el\.id\)/,
-  'Backup export, report viewing, and license actions must remain available.');
+assert.match(manager, /if\s*\(!hasStoredLicense\(context\)\)\s*return false/,
+  'No license must mean no write access.');
+assert.doesNotMatch(manager, /if\s*\(!hasStoredLicense\(context\)\)\s*return true/);
+assert.match(manager, /\.put\("hasLicense", false\)/);
+assert.match(manager, /max_seen_wall_time/);
+assert.match(manager, /clockMovedBackwards\(context, now, lastValidatedAt\)/);
+assert.match(manager, /return status\(context\)\.optBoolean\("activated", false\)/);
+assert.match(manager, /AES\/GCM\/NoPadding/);
+assert.match(manager, /putString\("license_token_enc"/);
+assert.match(manager, /\.remove\("license_token"\)/);
 
-assert.ok(manager.includes('static String deviceId(Context context)'),
-  'A device fingerprint must be available for support requests.');
-assert.ok(activity.includes('requestLicenseWhatsApp(String requestType)'),
-  'Activation and renewal requests must reach the owner through WhatsApp.');
-assert.match(html, /requestLicenseActivationBtn/);
-assert.match(html, /requestLicenseRenewalBtn/);
-assert.match(html, /licenseDeviceId/);
-console.log('PASS: license read-only policy, native database write guard, student viewing, and backup export safeguards.');
+assert.match(activity, /if \(json == null \|\| !LicenseManager\.canWrite\(MainActivity\.this\)\) return false/);
+assert.match(activity, /setPassword\(String password\) \{ if \(!LicenseManager\.canWrite/);
+assert.match(activity, /scheduleSummonsReminderAt\(String id, String studentName, long reminderMillis, long appointmentMillis\) \{\s*if \(!LicenseManager\.canWrite/);
+assert.match(activity, /saveSignatureImage\(String dataUrl\) \{\s*if \(!LicenseManager\.canWrite/);
+assert.match(activity, /replaceSummonsReminders\(String json\) \{\s*if \(!LicenseManager\.canWrite/);
+assert.match(activity, /if \(!LicenseManager\.canWrite\(MainActivity\.this\)\) \{\s*for \(String id : stored\.keySet\(\)\) cancelReminder/);
+
+assert.match(summonsReceiver, /onReceive\(Context context, Intent intent\) \{\s*if \(!LicenseManager\.canWrite\(context\)\) return;/);
+assert.match(summonsReceiver, /postAbsenceStageNotification\(Context context, String id, String student, int stage\) \{\s*if \(!LicenseManager\.canWrite\(context\)\) return false;/);
+assert.match(bootReceiver, /if \(!LicenseManager\.canWrite\(context\)\) \{/);
+
+assert.match(html, /let licenseReadOnly=isAndroidApp;/);
+assert.match(html, /licenseReadOnly=!!\(!state\|\|!state\.hasLicense\|\|!state\.activated\)/);
+assert.match(html, /if\(licenseReadOnly\)\{alert\('التطبيق غير مفعل/);
+assert.match(html, /if\(!licenseReadOnly&&!save\(\)\)/);
+assert.match(html, /action\.includes\('studentHistory'\)/);
+assert.match(html, /setLicenseControlDisabled\(importButton,true\)/);
+assert.match(html, /allowed\.has\(el\.id\)/);
+
+for (const step of ['Prepare permanent release signing key','Validate release signing secrets','Build signed release APK','Verify release APK signature','Upload signed release APK']) {
+  const at = workflow.indexOf('- name: ' + step);
+  assert.ok(at >= 0, 'Missing workflow step: ' + step);
+  const snippet = workflow.slice(at, at + 110);
+  assert.ok(snippet.includes("if: github.ref == 'refs/heads/main'"), 'Production signing step must run only on main: ' + step);
+}
+console.log('PASS: fail-closed license enforcement, native service guards, backup safeguards, and production signing isolation.');
