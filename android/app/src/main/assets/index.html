@@ -206,7 +206,16 @@ body.setup-required .notice,body.setup-required nav,body.setup-required .page,bo
 <section id="firstRunSetup" class="setup-wizard hidden" aria-labelledby="setupTitle">
  <div class="setup-step">التهيئة الأولى</div><h2 id="setupTitle">مرحباً بك في مُشرِفي</h2>
  <p class="setup-intro">عند بدء جديد دون استعادة نسخة احتياطية، يبدأ التطبيق بقاعدة بيانات فارغة: لا توجد بطاقات تلاميذ أو سجلات غياب أو تأخر أو مخالفات أو استدعاءات. اختر الطور التعليمي، وأضف الأقسام المسندة إليك، ثم ارفع قائمة التلاميذ. بعد الاستيراد يعرض التطبيق تلاميذ الأقسام التي اخترتها فقط، وتبدأ سجلات المتابعة بالظهور عندما تنشئها أنت.</p>
- <form id="firstRunSetupForm">
+ <div class="panel setup-license-panel" id="firstRunLicensePanel">
+  <h3>الخطوة الأولى: تفعيل التطبيق</h3>
+  <p class="muted">أدخل رمز التفعيل الذي استلمته. بعد نجاح التفعيل ستُفتح حقول التهيئة وإضافة الأقسام واستيراد قائمة التلاميذ.</p>
+  <label for="firstRunDeviceId">رقم هذا الجهاز</label><input id="firstRunDeviceId" type="text" readonly>
+  <div class="row"><button type="button" class="btn" id="firstRunRequestLicense">طلب رمز التفعيل عبر واتساب</button><button type="button" class="btn" id="firstRunValidateLicense">التحقق من الترخيص</button></div>
+  <label for="firstRunActivationCode">رمز التفعيل</label><input id="firstRunActivationCode" type="text" autocomplete="off" autocapitalize="characters" placeholder="أدخل رمز التفعيل">
+  <button type="button" class="btn primary" id="firstRunActivateLicense">تفعيل التطبيق والمتابعة</button>
+  <p id="firstRunLicenseStatus" class="muted" aria-live="polite">جارٍ التحقق من حالة التفعيل...</p>
+ </div>
+<form id="firstRunSetupForm">
   <label for="setupEducationLevel">الطور التعليمي</label>
   <select id="setupEducationLevel" required><option value="">اختر الطور التعليمي</option><option value="primary">التعليم الابتدائي</option><option value="middle">التعليم المتوسط</option><option value="secondary">التعليم الثانوي</option></select>
   <div class="row"><div><label for="setupSchool">اسم المؤسسة</label><input id="setupSchool" required maxlength="120" placeholder="اسم المؤسسة"></div><div><label for="setupLocation">البلدية والولاية</label><input id="setupLocation" maxlength="120" placeholder="الموقع"></div></div>
@@ -436,7 +445,7 @@ function setLicenseControlDisabled(el,disabled){
 function applyLicenseAccess(state){
  licenseReadOnly=!!(!state||!state.hasLicense||!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
- const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn','requestLicenseActivationBtn','requestLicenseRenewalBtn']);
+ const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn','requestLicenseActivationBtn','requestLicenseRenewalBtn','firstRunRequestLicense','firstRunValidateLicense','firstRunActivateLicense']);
  if(licenseReadOnly){
   $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
   $$('select').forEach(el=>setLicenseControlDisabled(el,true));
@@ -449,6 +458,9 @@ function applyLicenseAccess(state){
   const importButton=$('#importBackupNative');if(importButton)setLicenseControlDisabled(importButton,true);
   const importInput=$('#importData');if(importInput)setLicenseControlDisabled(importInput,true);
   const saveSettings=$('#saveSettings');if(saveSettings)setLicenseControlDisabled(saveSettings,true);
+   // Keep first-run license controls available; setup/import stays locked until activation.
+   $('#firstRunLicensePanel input,#firstRunLicensePanel button').forEach(el=>setLicenseControlDisabled(el,false));
+   const licenseCode=$('#licenseActivationCode');if(licenseCode)setLicenseControlDisabled(licenseCode,false);
  }else{
   $$('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
  }
@@ -1642,11 +1654,11 @@ function renderLicenseDates(state){
  details.textContent=rows.join(' · ');
 }
 function refreshLicenseStatus(){
- const idBox=$('#licenseDeviceId');if(idBox&&window.AndroidBridge&&typeof AndroidBridge.getLicenseDeviceId==='function'){try{idBox.value=AndroidBridge.getLicenseDeviceId();}catch(_){idBox.value='تعذر قراءة رقم الجهاز';}}
- const box=$('#licenseStatusText');if(!box)return;
- if(!window.AndroidBridge||typeof AndroidBridge.getLicenseStatus!=='function'){box.textContent='إدارة الترخيص متاحة في تطبيق Android فقط.';renderLicenseDates(null);return;}
- try{const state=JSON.parse(AndroidBridge.getLicenseStatus());box.textContent=state.message|| (state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');renderLicenseDates(state);applyLicenseAccess(state);}
- catch(e){box.textContent='تعذر قراءة حالة الترخيص.';renderLicenseDates(null);}
+ const idBoxes=[$('#licenseDeviceId'),$('#firstRunDeviceId')].filter(Boolean);if(window.AndroidBridge&&typeof AndroidBridge.getLicenseDeviceId==='function'){try{idBoxes.forEach(el=>el.value=AndroidBridge.getLicenseDeviceId());}catch(_){idBoxes.forEach(el=>el.value='تعذر قراءة رقم الجهاز');}}
+ const box=$('#licenseStatusText'),firstRunBox=$('#firstRunLicenseStatus');
+ if(!window.AndroidBridge||typeof AndroidBridge.getLicenseStatus!=='function'){if(box)box.textContent='إدارة الترخيص متاحة في تطبيق Android فقط.';if(firstRunBox)firstRunBox.textContent='يجب فتح التطبيق في نسخة Android لتفعيل الترخيص.';renderLicenseDates(null);return;}
+ try{const state=JSON.parse(AndroidBridge.getLicenseStatus()),message=state.message||(state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');if(box)box.textContent=message;if(firstRunBox)firstRunBox.textContent=state.activated?'تم تفعيل التطبيق. يمكنك الآن إكمال التهيئة.':message;renderLicenseDates(state);applyLicenseAccess(state);}
+ catch(e){if(box)box.textContent='تعذر قراءة حالة الترخيص.';if(firstRunBox)firstRunBox.textContent='تعذر قراءة حالة الترخيص. أعد المحاولة.';renderLicenseDates(null);}
 }
 window.onMushrifiLicenseAutoCheck=function(result){
  refreshLicenseStatus();
@@ -1660,11 +1672,29 @@ window.onMushrifiLicenseAutoCheck=function(result){
  }
 };
 window.onMushrifiLicenseResult=function(callbackId,result){
- const status=$('#licenseActionStatus');if(!status)return;
- status.textContent=result&&result.error?result.error:(result&&result.message?result.message:'اكتملت العملية.');
+ const status=$('#licenseActionStatus'),firstRunStatus=$('#firstRunLicenseStatus');
+ const message=result&&result.error?result.error:(result&&result.message?result.message:(result&&result.activated?'تم التفعيل بنجاح.':'اكتملت العملية.'));
+ if(status)status.textContent=message;if(firstRunStatus)firstRunStatus.textContent=message;
  refreshLicenseStatus();
  try{if(window.AndroidBridge&&typeof AndroidBridge.getLicenseStatus==='function')applyLicenseAccess(JSON.parse(AndroidBridge.getLicenseStatus()));}catch(_){}
 };
+$('#firstRunRequestLicense')?.addEventListener('click',()=>{
+ if(!window.AndroidBridge||typeof AndroidBridge.requestLicenseWhatsApp!=='function'){const status=$('#firstRunLicenseStatus');if(status)status.textContent='طلب التفعيل عبر واتساب متاح في تطبيق Android فقط.';return;}
+ AndroidBridge.requestLicenseWhatsApp('activation');
+});
+$('#firstRunActivateLicense')?.addEventListener('click',()=>{
+ const code=$('#firstRunActivationCode')?.value?.trim()||'',status=$('#firstRunLicenseStatus');
+ if(!code){if(status)status.textContent='أدخل رمز التفعيل أولاً.';return;}
+ if(!window.AndroidBridge||typeof AndroidBridge.activateLicense!=='function'){if(status)status.textContent='هذه العملية متاحة في تطبيق Android فقط.';return;}
+ if(status)status.textContent='جارٍ الاتصال بخادم الترخيص...';
+ AndroidBridge.activateLicense(code,'first-run-activate-'+Date.now());
+});
+$('#firstRunValidateLicense')?.addEventListener('click',()=>{
+ const status=$('#firstRunLicenseStatus');
+ if(!window.AndroidBridge||typeof AndroidBridge.validateLicense!=='function'){if(status)status.textContent='هذه العملية متاحة في تطبيق Android فقط.';return;}
+ if(status)status.textContent='جارٍ التحقق من الترخيص...';
+ AndroidBridge.validateLicense('first-run-validate-'+Date.now());
+});
 $('#requestLicenseActivationBtn')?.addEventListener('click',()=>{
  if(!window.AndroidBridge||typeof AndroidBridge.requestLicenseWhatsApp!=='function'){const status=$('#licenseActionStatus');if(status)status.textContent='طلب التفعيل عبر واتساب متاح في تطبيق Android فقط.';return;}
  AndroidBridge.requestLicenseWhatsApp('activation');
