@@ -232,14 +232,14 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public String getDatabaseError() { return localDb.getLastError(); }
         @JavascriptInterface public boolean hasPassword() { return securityPrefs.contains("hash") && securityPrefs.contains("salt"); }
-        @JavascriptInterface public boolean setPassword(String password) { if (password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
+        @JavascriptInterface public boolean setPassword(String password) { if (!LicenseManager.canWrite(MainActivity.this) || password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
         @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
         @JavascriptInterface public void scheduleSummonsReminder(String id, String studentName, long appointmentMillis) {
             long reminderMillis = appointmentMillis - 24L * 60L * 60L * 1000L;
             scheduleSummonsReminderAt(id, studentName, reminderMillis, appointmentMillis);
         }
         @JavascriptInterface public void scheduleSummonsReminderAt(String id, String studentName, long reminderMillis, long appointmentMillis) {
-            if (id == null || studentName == null || !isValidReminderTime(reminderMillis, appointmentMillis)) { cancelSummonsReminder(id); return; }
+            if (!LicenseManager.canWrite(MainActivity.this) || id == null || studentName == null || !isValidReminderTime(reminderMillis, appointmentMillis)) { cancelSummonsReminder(id); return; }
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + reminderMillis + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
@@ -249,6 +249,7 @@ public class MainActivity extends Activity {
             return alarms != null && alarms.canScheduleExactAlarms();
         }
         @JavascriptInterface public void requestExactAlarmAccess() {
+            if (!LicenseManager.canWrite(MainActivity.this)) return;
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT < 31 || hasExactAlarmAccess()) {
                     Toast.makeText(MainActivity.this, "التنبيهات الدقيقة متاحة بالفعل.", Toast.LENGTH_SHORT).show();
@@ -264,6 +265,7 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void notifyAbsenceStage(String studentId, String studentName, int stage, String absenceStart) {
+            if (!LicenseManager.canWrite(MainActivity.this)) return;
             if (studentId == null || studentName == null || absenceStart == null || (stage != 4 && stage != 11 && stage != 18 && stage != 32)) return;
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
@@ -275,6 +277,7 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void testSummonsNotification() {
+            if (!LicenseManager.canWrite(MainActivity.this)) return;
             runOnUiThread(() -> {
                 if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
@@ -296,6 +299,7 @@ public class MainActivity extends Activity {
             prefs.edit().clear().apply();
         }
         @JavascriptInterface public void replaceSummonsReminders(String json) {
+            if (!LicenseManager.canWrite(MainActivity.this)) return;
             // Replace reminders as one background task; avoid hundreds of synchronous
             // JavaScript-to-Android bridge calls while restoring a backup.
             if (json == null) return;
@@ -334,6 +338,7 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void pickBackupFile() {
+            if (!LicenseManager.canWrite(MainActivity.this)) return;
             runOnUiThread(() -> {
                 try {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -357,6 +362,7 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public String saveSignatureImage(String dataUrl) {
+            if (!LicenseManager.canWrite(MainActivity.this)) return "ERROR:التطبيق غير مفعل أو انتهى الترخيص";
             Uri created = null;
             try {
                 if (dataUrl == null || !dataUrl.startsWith("data:image/png;base64,"))
@@ -468,6 +474,10 @@ public class MainActivity extends Activity {
             try {
                 android.content.SharedPreferences prefs = getSharedPreferences("summons_reminders", MODE_PRIVATE);
                 java.util.Map<String, ?> stored = prefs.getAll();
+                if (!LicenseManager.canWrite(MainActivity.this)) {
+                    for (String id : stored.keySet()) cancelReminder(MainActivity.this, id);
+                    return;
+                }
                 android.content.SharedPreferences.Editor cleanup = prefs.edit();
                 boolean changed = false;
                 for (java.util.Map.Entry<String, ?> entry : stored.entrySet()) {
