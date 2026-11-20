@@ -168,6 +168,8 @@ assert.equal(transfer.status, 200, "owner-approved transfer should succeed for a
 assert.equal(transfer.data.status, "issued");
 assert.notEqual(transfer.data.activationCode, transferable.activationCode);
 assert.equal(transfer.data.expiresAt, oldPhonePayload.expiresAt, "transfer must preserve the original expiry");
+assert.equal((await request("/v1/admin/licenses/" + transferable.licenseId + "/transfer", {}, true)).status, 409,
+  "a second transfer requires the license to be active on a device again");
 assert.equal((await request("/v1/challenge", { purpose: "validate", licenseId: transferable.licenseId })).status, 403,
   "the old device must be denied at its next online validation");
 const newPhone = await newDevice();
@@ -178,8 +180,6 @@ assert.equal(newPhonePayload.licenseId, oldPhonePayload.licenseId);
 assert.equal(newPhonePayload.expiresAt, oldPhonePayload.expiresAt, "transfer must not restart or extend the license term");
 assert.equal((await activate(transferable.activationCode, newPhone)).status, 409, "the original activation code must be invalidated");
 assert.equal((await activate(transfer.data.activationCode, oldPhone)).status, 409, "the transfer code must not activate a second device");
-assert.equal((await request("/v1/admin/licenses/" + transferable.licenseId + "/transfer", {}, true)).status, 409,
-  "a second transfer requires the license to be active on a device again");
 
 const perpetual = await issue("perpetual");
 const perpetualDevice = await newDevice();
