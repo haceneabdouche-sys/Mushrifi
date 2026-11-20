@@ -158,6 +158,7 @@ final class LicenseManager {
             .put("activated", active)
             .put("licenseId", payload.optString("licenseId"))
             .put("licenseType", payload.optString("licenseType"))
+            .put("startsAt", starts)
             .put("expiresAt", expiry)
             .put("offlineUntil", offlineUntil)
             .put("lastValidatedAt", lastValidatedAt)
