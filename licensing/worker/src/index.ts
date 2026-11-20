@@ -274,9 +274,14 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
       return json({ ok: true, license: recoveryToken, nextCheckAt: now + 30 * DAY, graceDays: 7 });
     }
     // Sign before committing activation so a missing signing secret cannot consume the code.
-    const startsAt = now;
+    const startsAt = candidate.starts_at ?? now;
     const durationDays = candidate.duration_days;
-    const expiresAt = durationDays === null ? null : startsAt + durationDays * DAY;
+    const expiresAt = candidate.expires_at ?? (durationDays === null ? null : startsAt + durationDays * DAY);
+    if (expiresAt !== null && expiresAt <= now) {
+      await env.DB.prepare("UPDATE licenses SET status = 'expired', updated_at = ? WHERE id = ? AND status = 'issued'")
+        .bind(now, candidate.id).run();
+      return fail("انتهت مدة الترخيص؛ يجب تجديده قبل تفعيله على هاتف آخر", 403);
+    }
     const activatedRow: LicenseRow = {
       ...candidate,
       status: "active",
@@ -365,12 +370,27 @@ async function adminRoute(request: Request, env: Env, path: string): Promise<Res
     return json({ ok: true, licenses: rows.results || [] });
   }
 
-  const match = path.match(/^\/v1\/admin\/licenses\/([0-9a-f-]+)\/(suspend|unsuspend|renew|revoke)$/i);
+  const match = path.match(/^\/v1\/admin\/licenses\/([0-9a-f-]+)\/(suspend|unsuspend|renew|revoke|transfer)$/i);
   if (request.method === "POST" && match) {
     const id = match[1];
     const action = match[2];
     const existing = await env.DB.prepare("SELECT * FROM licenses WHERE id = ?").bind(id).first<LicenseRow>();
     if (!existing) return fail("الترخيص غير موجود", 404);
+    if (action === "transfer") {
+      if (existing.status !== "active") return fail("لا يمكن نقل الترخيص إلا إذا كان نشطاً؛ عالج التعليق أو الانتهاء أولاً", 409);
+      if (existing.expires_at !== null && existing.expires_at <= now) {
+        await env.DB.prepare("UPDATE licenses SET status = 'expired', updated_at = ? WHERE id = ? AND status = 'active'")
+          .bind(now, id).run();
+        return fail("انتهت مدة الترخيص؛ جدّده قبل نقله إلى هاتف آخر", 409);
+      }
+      const activationCode = randomCode();
+      const activationCodeHash = await sha256Hex(activationCode);
+      const transferred = await env.DB.prepare(
+        "UPDATE licenses SET status = 'issued', activation_code_hash = ?, device_public_key_json = NULL, device_thumbprint = NULL, activated_at = NULL, last_validated_at = NULL, updated_at = ? WHERE id = ? AND status = 'active' RETURNING id"
+      ).bind(activationCodeHash, now, id).first();
+      if (!transferred) return fail("تعذر نقل الترخيص؛ حدّث الحالة وحاول مجدداً", 409);
+      return json({ ok: true, status: 'issued', licenseId: id, activationCode, licenseType: existing.license_type, startsAt: existing.starts_at, expiresAt: existing.expires_at, warning: "هذا الرمز صالح لتفعيل هاتف واحد فقط ويظهر مرة واحدة. الهاتف القديم يُمنع عند اتصاله التالي بالخادم؛ وقد يستمر دون اتصال حتى نهاية مهلة العمل الموقعة." });
+    }
     if (action === "revoke") {
       if (existing.status === "revoked") return json({ ok: true, status: "revoked" });
       if (existing.status === "issued") return fail("لا يمكن إلغاء رمز لم يُربط بجهاز بعد", 409);
