@@ -4,6 +4,7 @@ on:
     branches:
       - feature/device-license-foundation
       - feature/voice-student-actions
+      - feature/license-enforcement-hardening
     paths:
       - 'licensing/worker/**'
       - '.github/workflows/license-worker-check.yml'
