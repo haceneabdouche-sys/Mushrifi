@@ -12,6 +12,7 @@ import android.content.pm.PackageManager;
 
 public class SummonsReminderReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
+        if (!LicenseManager.canWrite(context)) return;
         String student = intent.getStringExtra("student");
         if (student == null) student = "التلميذ";
         String id = intent.getStringExtra("id");
@@ -19,6 +20,7 @@ public class SummonsReminderReceiver extends BroadcastReceiver {
     }
 
     public static boolean postAbsenceStageNotification(Context context, String id, String student, int stage) {
+        if (!LicenseManager.canWrite(context)) return false;
         if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         PendingIntent content = launch == null ? null : PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
@@ -36,6 +38,7 @@ public class SummonsReminderReceiver extends BroadcastReceiver {
     }
 
     public static boolean postNotification(Context context, String id, String student) {
+        if (!LicenseManager.canWrite(context)) return false;
         if (Build.VERSION.SDK_INT >= 33 && context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
         Intent launch = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
         PendingIntent content = launch == null ? null : PendingIntent.getActivity(context, 0, launch, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
