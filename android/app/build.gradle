@@ -24,6 +24,14 @@ android {
 
     // Release signing is enabled only from protected CI secrets; never commit a keystore.
     signingConfigs {
+        staging {
+            if (System.getenv('MUSHRIFI_STAGING_KEYSTORE_PATH')) {
+                storeFile file(System.getenv('MUSHRIFI_STAGING_KEYSTORE_PATH'))
+                storePassword System.getenv('MUSHRIFI_STAGING_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('MUSHRIFI_STAGING_KEY_ALIAS')
+                keyPassword System.getenv('MUSHRIFI_STAGING_KEY_PASSWORD')
+            }
+        }
         release {
             if (System.getenv('MUSHRIFI_KEYSTORE_PATH')) {
                 storeFile file(System.getenv('MUSHRIFI_KEYSTORE_PATH'))
@@ -35,10 +43,13 @@ android {
     }
     buildTypes {
         debug {
-            // A staging debug APK installs alongside the normal app and cannot replace it.
+            // Staging remains a separate application and uses its own persistent key.
             if (stagingLicenseBuild) {
                 applicationIdSuffix '.staging'
                 versionNameSuffix '-staging'
+                if (System.getenv('MUSHRIFI_STAGING_KEYSTORE_PATH')) {
+                    signingConfig signingConfigs.staging
+                }
             }
         }
         release {
