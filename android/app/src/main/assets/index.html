@@ -464,7 +464,16 @@ window.addEventListener('popstate',event=>{const page=event.state?.mushrifiPage;
 function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data','license'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
 window.setSettingsTab=setSettingsTab;
 $$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
-$$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+ window.go=go;
+ document.addEventListener('click',event=>{
+  const target=event.target instanceof Element?event.target:null;if(!target)return;
+  const navButton=target.closest('#nav button[data-page]'),quickTile=target.closest('[data-go]');
+  const control=navButton||quickTile;if(!control||control.disabled)return;
+  const page=navButton?navButton.dataset.page:quickTile.dataset.go;
+  if(!page)return;
+  event.preventDefault();event.stopImmediatePropagation();go(page);
+ },true);
 function renderStudentDirectory(){
  const visible=studentsForUser(),q=($('#studentSearch')?.value||'').trim().toLocaleLowerCase('ar');
  const searchable=s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar');
