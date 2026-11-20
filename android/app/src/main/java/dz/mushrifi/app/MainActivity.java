@@ -404,6 +404,7 @@ public class MainActivity extends Activity {
             }
         }
         @JavascriptInterface public void startArabicSpeech() {
+            if (!LicenseManager.canWrite(MainActivity.this)) return;
             runOnUiThread(() -> {
                 if (speechPending) return;
                 try {
