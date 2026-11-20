@@ -463,8 +463,11 @@ try{history.replaceState({mushrifiPage:document.querySelector('.page:not(.hidden
 window.addEventListener('popstate',event=>{const page=event.state?.mushrifiPage;go(page&&document.getElementById(page)?page:'home',false);});
 function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data','license'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
 window.setSettingsTab=setSettingsTab;
-$$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
-$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
+// Use the all-elements helper for collections. Calling forEach on $() (querySelector)
+// throws before the rest of the app initializes, leaving the home screen unresponsive.
+$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
  window.go=go;
  document.addEventListener('click',event=>{
   const target=event.target instanceof Element?event.target:null;if(!target)return;
