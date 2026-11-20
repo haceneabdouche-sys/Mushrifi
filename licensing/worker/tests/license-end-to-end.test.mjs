@@ -157,6 +157,30 @@ assert.equal(expiredRow.status, "expired", "recovery attempt must persist expire
 const expiredOtherDevice = await newDevice();
 assert.equal((await activate(shortTrial.activationCode, expiredOtherDevice)).status, 409, "another device must not claim an expired code");
 
+// Owner-approved transfer issues a fresh one-time code and keeps the original expiry.
+const transferable = await issue("annual", 365);
+const oldPhone = await newDevice();
+const oldPhoneActivation = await activate(transferable.activationCode, oldPhone);
+assert.equal(oldPhoneActivation.status, 200);
+const oldPhonePayload = readToken(oldPhoneActivation.data.license);
+const transfer = await request("/v1/admin/licenses/" + transferable.licenseId + "/transfer", {}, true);
+assert.equal(transfer.status, 200, "owner-approved transfer should succeed for an active license");
+assert.equal(transfer.data.status, "issued");
+assert.notEqual(transfer.data.activationCode, transferable.activationCode);
+assert.equal(transfer.data.expiresAt, oldPhonePayload.expiresAt, "transfer must preserve the original expiry");
+assert.equal((await request("/v1/challenge", { purpose: "validate", licenseId: transferable.licenseId })).status, 403,
+  "the old device must be denied at its next online validation");
+const newPhone = await newDevice();
+const newPhoneActivation = await activate(transfer.data.activationCode, newPhone);
+assert.equal(newPhoneActivation.status, 200, "the new device should activate with the owner-issued transfer code");
+const newPhonePayload = readToken(newPhoneActivation.data.license);
+assert.equal(newPhonePayload.licenseId, oldPhonePayload.licenseId);
+assert.equal(newPhonePayload.expiresAt, oldPhonePayload.expiresAt, "transfer must not restart or extend the license term");
+assert.equal((await activate(transferable.activationCode, newPhone)).status, 409, "the original activation code must be invalidated");
+assert.equal((await activate(transfer.data.activationCode, oldPhone)).status, 409, "the transfer code must not activate a second device");
+assert.equal((await request("/v1/admin/licenses/" + transferable.licenseId + "/transfer", {}, true)).status, 409,
+  "a second transfer requires the license to be active on a device again");
+
 const perpetual = await issue("perpetual");
 const perpetualDevice = await newDevice();
 const perpetualActivation = await activate(perpetual.activationCode, perpetualDevice);
