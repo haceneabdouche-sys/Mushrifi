@@ -82,6 +82,7 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
   - `POST /v1/admin/licenses/{id}/unsuspend` — restore a suspended license while its term remains valid.
   - `POST /v1/admin/licenses/{id}/revoke` — permanently revoke an activated license; the device learns this at its next online validation.
   - `POST /v1/admin/licenses/{id}/renew` with `{ "durationDays":365 }`
+  - `POST /v1/admin/licenses/{id}/transfer` — owner-approved transfer to a replacement phone; returns a new one-time activation code, invalidates the old code, and preserves the existing expiry. The old phone is blocked at its next successful online validation; an already-issued offline window cannot be revoked while that phone remains disconnected.
 
 ## Worker-level rate limiting
 
