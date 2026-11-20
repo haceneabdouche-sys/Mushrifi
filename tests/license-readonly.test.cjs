@@ -40,6 +40,9 @@ assert.match(activity, /if \(json == null \|\| !LicenseManager\.canWrite\(MainAc
 assert.match(activity, /setPassword\(String password\) \{ if \(!LicenseManager\.canWrite/);
 assert.match(activity, /scheduleSummonsReminderAt\(String id, String studentName, long reminderMillis, long appointmentMillis\) \{\s*if \(!LicenseManager\.canWrite/);
 assert.match(activity, /saveSignatureImage\(String dataUrl\) \{\s*if \(!LicenseManager\.canWrite/);
+assert.match(activity, /startArabicSpeech\(\) \{\s*if \(!LicenseManager\.canWrite/,
+  'Arabic voice services must be blocked without an active license.');
+
 assert.match(activity, /replaceSummonsReminders\(String json\) \{\s*if \(!LicenseManager\.canWrite/);
 assert.match(activity, /if \(!LicenseManager\.canWrite\(MainActivity\.this\)\) \{\s*for \(String id : stored\.keySet\(\)\) cancelReminder/);
 
