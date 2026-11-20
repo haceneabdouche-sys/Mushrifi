@@ -102,6 +102,8 @@ jobs:
           Path("/tmp/mushrifi-inline.js").write_text(source, encoding="utf-8")
           PY
           node --check /tmp/mushrifi-inline.js
+      - name: Run DOM collection selector regression tests
+        run: node tests/dom-collection-selectors.test.cjs
       - name: Run recent activity student navigation tests
         run: node tests/recent-activity-navigation.test.cjs
       - name: Run individual attendance editing and hours parsing tests
