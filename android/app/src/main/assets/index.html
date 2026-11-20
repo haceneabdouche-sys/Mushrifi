@@ -1243,9 +1243,20 @@ function restorePendingBackup(){
  if(!pendingBackupData)return;
  if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
  if(!confirm('تأكيد أخير: هل توافق على استبدال بيانات الهاتف بالنسخة التي تمت معاينتها؟'))return;
- const oldDb=db;db=pendingBackupData;
- if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
- pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
+ const oldDb=db,oldPending=pendingBackupData,oldInfo=pendingBackupInfo,preview=$('#backupPreview');
+ // Hide the potentially large preview before the single full application render.
+ // Keep the parsed backup in memory until the encrypted local save succeeds.
+ preview.classList.add('hidden');
+ const oldHtml=preview.innerHTML;
+ preview.innerHTML='';
+ db=oldPending;
+ if(!save()){
+  db=oldDb;pendingBackupData=oldPending;pendingBackupInfo=oldInfo;
+  preview.innerHTML=oldHtml;preview.classList.remove('hidden');
+  alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي. لم تُحذف النسخة التي اخترتها.');
+  return;
+ }
+ pendingBackupData=null;pendingBackupInfo=null;
  if(window.AndroidBridge&&typeof AndroidBridge.replaceSummonsReminders==='function'){
   const reminders=db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment&&d.reminderAt).map(d=>({
    id:String(d.id),student:name(d.student),reminderAt:new Date(d.reminderAt).getTime(),appointment:new Date(d.appointment).getTime()
