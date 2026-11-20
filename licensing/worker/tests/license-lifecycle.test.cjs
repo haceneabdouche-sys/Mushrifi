@@ -17,7 +17,7 @@ assert.ok(worker.includes('(suspend|unsuspend|renew|revoke|transfer)'), 'admin r
 assert.ok(worker.includes('if (action === "transfer")'), 'owner-approved transfer must be handled by the admin route');
 assert.ok(worker.includes('activationCodeHash'), 'transfer must replace the previous activation code hash');
 assert.ok(worker.includes('candidate.expires_at ??'), 'reactivation after transfer must preserve the original expiry');
-assert.ok(worker.includes('(suspend|unsuspend|renew|revoke)'), 'admin route must expose suspend, unsuspend, renew, and revoke');
+assert.ok(worker.includes('(suspend|unsuspend|renew|revoke|transfer)'), 'admin route must expose suspend, unsuspend, renew, revoke, and transfer');
 assert.ok(worker.includes('if (action === "revoke")'), 'revoke action must be handled');
 assert.ok(worker.includes("status = 'revoked'"), 'revoke must persist terminal revoked state');
 assert.ok(worker.includes('existing.status === "issued"'), 'unactivated codes must not violate the D1 device-binding constraint');
