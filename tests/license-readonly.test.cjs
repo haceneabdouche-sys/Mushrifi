@@ -58,6 +58,22 @@ assert.match(html, /action\.includes\('studentHistory'\)/);
 assert.match(html, /setLicenseControlDisabled\(importButton,true\)/);
 assert.match(html, /allowed\.has\(el\.id\)/);
 
+assert.match(html, /id="firstRunLicensePanel"/,
+  'The first-run wizard must expose a license activation path before the main navigation is available.');
+assert.match(html, /id="firstRunDeviceId"/);
+assert.match(html, /id="firstRunActivationCode"/);
+assert.match(html, /id="firstRunRequestLicense"/);
+assert.match(html, /id="firstRunActivateLicense"/);
+assert.match(html, /id="firstRunValidateLicense"/);
+assert.match(html, /firstRunRequestLicense','firstRunValidateLicense','firstRunActivateLicense/,
+  'First-run activation actions must remain enabled while the app is unlicensed.');
+assert.match(html, /firstRunLicensePanel input,#firstRunLicensePanel button/,
+  'Only the first-run license panel may remain interactive before activation.');
+assert.match(html, /AndroidBridge\.activateLicense\(code,'first-run-activate-/,
+  'The first-run activation button must call the native activation bridge.');
+assert.match(html, /firstRunLicenseStatus/,
+  'The first-run wizard must display activation and validation feedback.');
+
 for (const step of ['Prepare permanent release signing key','Validate release signing secrets','Build signed release APK','Verify release APK signature','Upload signed release APK']) {
   const at = workflow.indexOf('- name: ' + step);
   assert.ok(at >= 0, 'Missing workflow step: ' + step);
