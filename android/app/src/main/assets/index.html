@@ -422,8 +422,8 @@ function refreshStudentSectionOptions(preferred={}){
 $("#studentYearSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:"",sectionNumber:""}));
 $("#studentBranchSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:$("#studentBranchSelect").value,sectionNumber:""}));
 $("#studentClassSelect")?.addEventListener("change",updateStudentClassValue);
-let licenseReadOnly=false;
-const save=()=>{if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}try{render();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
+let licenseReadOnly=isAndroidApp;
+const save=()=>{if(licenseReadOnly){alert('التطبيق غير مفعل أو انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ يمكنك تصدير نسخة احتياطية أو طلب التفعيل/التجديد.');return false;}let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}try{render();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
 function setLicenseControlDisabled(el,disabled){
  if(disabled){
   if(!el.hasAttribute('data-license-was-disabled'))el.setAttribute('data-license-was-disabled',el.disabled?'1':'0');
@@ -434,7 +434,7 @@ function setLicenseControlDisabled(el,disabled){
  }
 }
 function applyLicenseAccess(state){
- licenseReadOnly=!!(state&&state.hasLicense&&!state.activated);
+ licenseReadOnly=!!(!state||!state.hasLicense||!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
  const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn','requestLicenseActivationBtn','requestLicenseRenewalBtn']);
  if(licenseReadOnly){
