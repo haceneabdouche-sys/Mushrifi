@@ -123,6 +123,10 @@ jobs:
         run: node tests/summons-reminder-validation.test.cjs
       - name: Run license read-only and backup safety regression tests
         run: node tests/license-readonly.test.cjs
+      - name: Run isolated Staging API smoke test (does not issue a license)
+        env:
+          MUSHRIFI_LICENSE_API: https://mushrifi-license-server-staging.hacene47211.workers.dev
+        run: node licensing/worker/scripts/smoke-test.mjs
       - name: Build isolated Staging debug APK
         run: >-
           gradle --no-daemon -p android assembleDebug
