@@ -1,6 +1,16 @@
 plugins { id 'com.android.application' }
 
+def defaultLicenseApi = "https://mushrifi-license-server.hacene47211.workers.dev"
+def configuredLicenseApi = providers.gradleProperty("mushrifiLicenseApi").getOrElse(defaultLicenseApi)
+def stagingLicenseBuild = providers.gradleProperty("mushrifiStaging").map { it.toBoolean() }.getOrElse(false)
+if (!configuredLicenseApi.startsWith("https://") || configuredLicenseApi.endsWith("/")) {
+    throw new GradleException("mushrifiLicenseApi must be an HTTPS origin without a trailing slash")
+}
+
 android {
+    buildFeatures {
+        buildConfig true
+    }
     namespace 'dz.mushrifi.app'
     compileSdk 35
     defaultConfig {
@@ -9,6 +19,7 @@ android {
         targetSdk 35
         versionCode 9
         versionName '2.3.0'
+        buildConfigField 'String', 'MUSHRIFI_LICENSE_API', "\"${configuredLicenseApi}\""
     }
 
     // Release signing is enabled only from protected CI secrets; never commit a keystore.
@@ -23,6 +34,13 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // A staging debug APK installs alongside the normal app and cannot replace it.
+            if (stagingLicenseBuild) {
+                applicationIdSuffix '.staging'
+                versionNameSuffix '-staging'
+            }
+        }
         release {
             if (System.getenv('MUSHRIFI_KEYSTORE_PATH')) {
                 signingConfig signingConfigs.release
