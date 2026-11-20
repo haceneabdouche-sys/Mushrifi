@@ -459,7 +459,7 @@ function applyLicenseAccess(state){
   const importInput=$('#importData');if(importInput)setLicenseControlDisabled(importInput,true);
   const saveSettings=$('#saveSettings');if(saveSettings)setLicenseControlDisabled(saveSettings,true);
    // Keep first-run license controls available; setup/import stays locked until activation.
-   $('#firstRunLicensePanel input,#firstRunLicensePanel button').forEach(el=>setLicenseControlDisabled(el,false));
+   $$('#firstRunLicensePanel input,#firstRunLicensePanel button').forEach(el=>setLicenseControlDisabled(el,false));
    const licenseCode=$('#licenseActivationCode');if(licenseCode)setLicenseControlDisabled(licenseCode,false);
  }else{
   $$('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
