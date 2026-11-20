@@ -129,11 +129,36 @@ jobs:
         env:
           MUSHRIFI_LICENSE_API: https://mushrifi-license-server-staging.hacene47211.workers.dev
         run: node licensing/worker/scripts/smoke-test.mjs
-      - name: Build isolated Staging debug APK
+      - name: Prepare dedicated Staging signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.STAGING_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.STAGING_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.STAGING_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.STAGING_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "Missing STAGING_KEYSTORE_BASE64 secret"; exit 1; }
+          test -n "$KEYSTORE_PASSWORD" || { echo "Missing STAGING_KEYSTORE_PASSWORD secret"; exit 1; }
+          test -n "$KEY_ALIAS" || { echo "Missing STAGING_KEY_ALIAS secret"; exit 1; }
+          test -n "$KEY_PASSWORD" || { echo "Missing STAGING_KEY_PASSWORD secret"; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mushrifi-staging.jks"
+          test -s "$RUNNER_TEMP/mushrifi-staging.jks"
+          keytool -list -keystore "$RUNNER_TEMP/mushrifi-staging.jks" -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" >/dev/null
+      - name: Build isolated Staging APK with persistent signing
+        env:
+          MUSHRIFI_STAGING_KEYSTORE_PATH: ${{ runner.temp }}/mushrifi-staging.jks
+          MUSHRIFI_STAGING_KEYSTORE_PASSWORD: ${{ secrets.STAGING_KEYSTORE_PASSWORD }}
+          MUSHRIFI_STAGING_KEY_ALIAS: ${{ secrets.STAGING_KEY_ALIAS }}
+          MUSHRIFI_STAGING_KEY_PASSWORD: ${{ secrets.STAGING_KEY_PASSWORD }}
         run: >-
           gradle --no-daemon -p android assembleDebug
           -PmushrifiLicenseApi=https://mushrifi-license-server-staging.hacene47211.workers.dev
           -PmushrifiStaging=true
+      - name: Verify Staging APK signature
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
       - name: Upload Staging test APK
         uses: actions/upload-artifact@v4
         with:
