@@ -9,6 +9,10 @@ public class ReminderBootReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
         if (!Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) return;
         SharedPreferences prefs = context.getSharedPreferences("summons_reminders", Context.MODE_PRIVATE);
+        if (!LicenseManager.canWrite(context)) {
+            for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) MainActivity.cancelReminder(context, id);
+            return;
+        }
         for (String id : new java.util.HashSet<>(prefs.getAll().keySet())) {
             String value = prefs.getString(id, "");
             String[] parts = value.split("\\|", 3);
