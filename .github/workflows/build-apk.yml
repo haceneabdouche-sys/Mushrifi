@@ -123,6 +123,18 @@ jobs:
         run: node tests/summons-reminder-validation.test.cjs
       - name: Run license read-only and backup safety regression tests
         run: node tests/license-readonly.test.cjs
+      - name: Build isolated Staging debug APK
+        run: >-
+          gradle --no-daemon -p android assembleDebug
+          -PmushrifiLicenseApi=https://mushrifi-license-server-staging.hacene47211.workers.dev
+          -PmushrifiStaging=true
+      - name: Upload Staging test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mushrifi-staging-test-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
