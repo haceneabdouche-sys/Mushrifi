@@ -83,23 +83,32 @@ final class LicenseManager {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String licenseId = prefs.getString("license_id", null);
         if (licenseId == null) throw new Exception("لم يتم تفعيل هذا الجهاز بعد");
-        KeyPair pair = getOrCreateDeviceKey();
-        JSONObject challenge = post("/v1/challenge", new JSONObject()
-            .put("purpose", "validate")
-            .put("licenseId", licenseId));
-        String nonce = challenge.getString("nonce");
-        JSONObject response = post("/v1/validate", new JSONObject()
-            .put("licenseId", licenseId)
-            .put("nonce", nonce)
-            .put("signature", signNonce(pair, nonce)));
-        String token = response.getString("license");
-        JSONObject payload = verifyAndReadToken(token);
-        String currentThumbprint = deviceThumbprint(publicJwk((ECPublicKey) pair.getPublic()));
-        if (!"active".equals(payload.optString("status")) ||
-            !currentThumbprint.equals(payload.optString("deviceThumbprint")))
-            throw new Exception("الترخيص غير نشط أو لا يخص هذا الهاتف");
-        save(context, token, payload);
-        return status(context);
+        try {
+            KeyPair pair = getOrCreateDeviceKey();
+            JSONObject challenge = post("/v1/challenge", new JSONObject()
+                .put("purpose", "validate")
+                .put("licenseId", licenseId));
+            String nonce = challenge.getString("nonce");
+            JSONObject response = post("/v1/validate", new JSONObject()
+                .put("licenseId", licenseId)
+                .put("nonce", nonce)
+                .put("signature", signNonce(pair, nonce)));
+            String token = response.getString("license");
+            JSONObject payload = verifyAndReadToken(token);
+            String currentThumbprint = deviceThumbprint(publicJwk((ECPublicKey) pair.getPublic()));
+            if (!"active".equals(payload.optString("status")) ||
+                !currentThumbprint.equals(payload.optString("deviceThumbprint")))
+                throw new Exception("الترخيص غير نشط أو لا يخص هذا الهاتف");
+            save(context, token, payload);
+            return status(context);
+        } catch (LicenseApiException rejected) {
+            // An explicit server denial (suspended, revoked, expired, or device proof rejected)
+            // overrides the cached offline token immediately. Network failures keep the grace window.
+            if (rejected.statusCode == 401 || rejected.statusCode == 403 || rejected.statusCode == 404) {
+                prefs.edit().putBoolean("server_blocked", true).commit();
+            }
+            throw rejected;
+        }
     }
 
     private static final long DAY_MS = 24L * 60L * 60L * 1000L;
@@ -118,6 +127,8 @@ final class LicenseManager {
     static boolean shouldValidate(Context context) throws Exception {
         String token = loadToken(context);
         if (token == null) return false;
+        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (prefs.getBoolean("server_blocked", false)) return true;
         JSONObject payload = verifyAndReadToken(token);
         long now = System.currentTimeMillis();
         long lastValidatedAt = payload.optLong("lastValidatedAt", 0);
@@ -139,14 +150,16 @@ final class LicenseManager {
         long expiry = payload.optLong("expiresAt", 0);
         long offlineUntil = payload.optLong("offlineUntil", 0);
         long lastValidatedAt = payload.optLong("lastValidatedAt", 0);
+        boolean serverBlocked = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("server_blocked", false);
         boolean clockRollback = clockMovedBackwards(context, now, lastValidatedAt);
         boolean deviceMatches = deviceThumbprint(publicJwk((ECPublicKey) getOrCreateDeviceKey().getPublic()))
             .equals(payload.optString("deviceThumbprint"));
         boolean serverActive = "active".equals(payload.optString("status"));
-        boolean active = serverActive && deviceMatches && !clockRollback &&
+        boolean active = serverActive && !serverBlocked && deviceMatches && !clockRollback &&
             starts <= now && (expiry == 0 || expiry > now) && offlineUntil > now;
         String message;
-        if (!deviceMatches) message = "مفتاح هذا الهاتف لا يطابق الجهاز المسجل للترخيص.";
+        if (serverBlocked) message = "أوقف المسؤول هذا الترخيص أو نُقل إلى هاتف آخر. اتصل بصاحب التطبيق.";
+        else if (!deviceMatches) message = "مفتاح هذا الهاتف لا يطابق الجهاز المسجل للترخيص.";
         else if (!serverActive) message = "الترخيص غير نشط. يرجى مراجعة المسؤول.";
         else if (clockRollback) message = "تاريخ الهاتف أقدم من آخر تحقق آمن. اضبط التاريخ والوقت ثم اتصل بالإنترنت.";
         else if (starts > now) message = "لم يبدأ سريان الترخيص بعد.";
@@ -162,6 +175,7 @@ final class LicenseManager {
             .put("expiresAt", expiry)
             .put("offlineUntil", offlineUntil)
             .put("lastValidatedAt", lastValidatedAt)
+            .put("serverBlocked", serverBlocked)
             .put("message", message);
     }
 
@@ -224,6 +238,7 @@ final class LicenseManager {
             .putString("license_token_enc", Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .putString("license_token_iv", Base64.encodeToString(iv, Base64.NO_WRAP))
             .remove("license_token")
+            .remove("server_blocked")
             .putString("license_id", payload.getString("licenseId"))
             .putLong("last_server_check", System.currentTimeMillis())
             .putLong("max_seen_wall_time", payload.optLong("lastValidatedAt", System.currentTimeMillis()))
@@ -325,6 +340,14 @@ final class LicenseManager {
         return hex(MessageDigest.getInstance("SHA-256").digest(canonical.getBytes(StandardCharsets.UTF_8)));
     }
 
+    private static final class LicenseApiException extends Exception {
+        final int statusCode;
+        LicenseApiException(String message, int statusCode) {
+            super(message);
+            this.statusCode = statusCode;
+        }
+    }
+
     private static JSONObject post(String path, JSONObject body) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(API + path).openConnection();
         connection.setRequestMethod("POST");
@@ -345,7 +368,7 @@ final class LicenseManager {
             in.close();
             JSONObject result = new JSONObject(new String(buffer.toByteArray(), StandardCharsets.UTF_8));
             if (code < 200 || code >= 300)
-                throw new Exception(result.optString("error", "رفض الخادم الطلب") + " (" + code + ")");
+                throw new LicenseApiException(result.optString("error", "رفض الخادم الطلب") + " (" + code + ")", code);
             if (!result.optBoolean("ok")) throw new Exception(result.optString("error", "فشل الطلب"));
             return result;
         } finally {
