@@ -67,8 +67,8 @@ assert.match(html, /id="firstRunActivateLicense"/);
 assert.match(html, /id="firstRunValidateLicense"/);
 assert.match(html, /firstRunRequestLicense','firstRunValidateLicense','firstRunActivateLicense/,
   'First-run activation actions must remain enabled while the app is unlicensed.');
-assert.match(html, /firstRunLicensePanel input,#firstRunLicensePanel button/,
-  'Only the first-run license panel may remain interactive before activation.');
+assert.match(html, /\\$\\$\\('#firstRunLicensePanel input,#firstRunLicensePanel button'\\)\\.forEach/,
+  'The first-run panel must use the collection selector helper when enabling its controls.');
 assert.match(html, /AndroidBridge\.activateLicense\(code,'first-run-activate-/,
   'The first-run activation button must call the native activation bridge.');
 assert.match(html, /firstRunLicenseStatus/,
