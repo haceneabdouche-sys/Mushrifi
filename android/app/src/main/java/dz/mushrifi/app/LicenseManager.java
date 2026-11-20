@@ -38,7 +38,7 @@ import javax.crypto.spec.GCMParameterSpec;
  * The server signing private key is never included in this app.
  */
 final class LicenseManager {
-    private static final String API = "https://mushrifi-license-server.hacene47211.workers.dev";
+    private static final String API = BuildConfig.MUSHRIFI_LICENSE_API;
     private static final String KEY_ALIAS = "mushrifi_device_license_ec";
     private static final String TOKEN_KEY_ALIAS = "mushrifi_license_token_aes";
     private static final String PREFS = "mushrifi_license";
