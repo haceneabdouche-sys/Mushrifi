@@ -8,6 +8,17 @@ const manager = read('android/app/src/main/java/dz/mushrifi/app/LicenseManager.j
 const activity = read('android/app/src/main/java/dz/mushrifi/app/MainActivity.java');
 const html = read('android/app/src/main/assets/index.html');
 
+const gradle = read('android/app/build.gradle');
+
+assert.ok(manager.includes('private static final String API = BuildConfig.MUSHRIFI_LICENSE_API;'),
+  'The Android client must use the build-configured license API, not a hardcoded production URL.');
+assert.ok(gradle.includes('def defaultLicenseApi = "https://mushrifi-license-server.hacene47211.workers.dev"'),
+  'The normal build must keep the existing production API as its default.');
+assert.ok(gradle.includes("buildConfigField 'String', 'MUSHRIFI_LICENSE_API'"),
+  'The selected API origin must be injected into Android BuildConfig.');
+assert.ok(gradle.includes("applicationIdSuffix '.staging'") && gradle.includes("versionNameSuffix '-staging'"),
+  'The staging debug APK must install separately and be visibly identified as a test build.');
+
 assert.match(manager, /if \(!hasStoredLicense\(context\)\) return true/,
   'Installations without an issued license must retain existing write access.');
 assert.match(manager, /\.put\("hasLicense", true\)/,
