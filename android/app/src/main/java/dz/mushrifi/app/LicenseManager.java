@@ -171,7 +171,7 @@ final class LicenseManager {
     }
 
     static boolean canWrite(Context context) {
-        if (!hasStoredLicense(context)) return true; // Existing installations remain usable until a license is issued.
+        if (!hasStoredLicense(context)) return false; // No activation means no access to application services.
         try {
             return status(context).optBoolean("activated", false);
         } catch (Exception invalidLicense) {
