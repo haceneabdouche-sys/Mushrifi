@@ -291,7 +291,7 @@ body.setup-required .notice,body.setup-required nav,body.setup-required .page,bo
 <div class="panel"><h2>وقت التنبيه الافتراضي</h2><p class="muted">اختر الساعة التي تريد أن ينبهك فيها مُشرِفي قبل موعد حضور الولي بيوم. سيُستخدم هذا الوقت تلقائياً عند إنشاء استدعاء جديد، ويمكنك تغييره لذلك الاستدعاء وحده.</p><label for="defaultSummonsReminderTime">ساعة التنبيه الافتراضية</label><input id="defaultSummonsReminderTime" type="time" value="18:00"><button class="btn primary" id="saveSummonsReminderTime" type="button">حفظ وقت التنبيه</button><p id="summonsReminderTimeStatus" class="muted" aria-live="polite">الوقت الافتراضي: 18:00</p></div><div class="panel"><h2>صلاحيات الإشعارات</h2><p class="muted">فعّل وصول التنبيهات الدقيقة، ثم أرسل إشعاراً تجريبياً للتأكد من وصوله.</p><button class="btn primary" id="requestExactAlarmAccess" type="button">تفعيل التنبيهات الدقيقة</button> <button class="btn" id="testSummonsNotification" type="button">اختبار وصول الإشعار</button></div>
 </div>
 <div class="settings-pane hidden" id="settings-pane-license" role="tabpanel">
-<div class="panel"><h2>ترخيص تطبيق مُشرِفي</h2><p class="muted">الترخيص سنوي ويُربط بهذا الجهاز. لطلب التفعيل أو التجديد، تواصل مع صاحب التطبيق عبر واتساب وأرسل رقم الجهاز تلقائياً.</p><p id="licenseStatusText" class="muted" aria-live="polite">جارٍ قراءة حالة الترخيص...</p><label for="licenseDeviceId">رقم الجهاز (Device ID)</label><input id="licenseDeviceId" type="text" readonly aria-label="رقم الجهاز الخاص بهذا الهاتف"><div class="row"><button type="button" class="btn primary" id="requestLicenseActivationBtn">طلب تفعيل عبر واتساب</button><button type="button" class="btn" id="requestLicenseRenewalBtn">طلب تجديد عبر واتساب</button></div><label for="licenseActivationCode">رمز التفعيل</label><input id="licenseActivationCode" type="text" autocomplete="off" autocapitalize="characters" placeholder="أدخل رمز التفعيل الذي استلمته"><div class="row"><button type="button" class="btn primary" id="activateLicenseBtn">تفعيل هذا الهاتف</button><button type="button" class="btn" id="validateLicenseBtn">التحقق من الترخيص</button></div><p id="licenseActionStatus" class="muted" aria-live="polite">لم يُنفذ أي طلب بعد.</p></div>
+<div class="panel"><h2>ترخيص تطبيق مُشرِفي</h2><p class="muted">يرتبط الترخيص بهذا الجهاز. يمكنك الاطلاع هنا على نوع الترخيص وتاريخ بدايته وانتهائه والمدة المتبقية. لطلب التفعيل أو التجديد، تواصل مع صاحب التطبيق عبر واتساب وأرسل رقم الجهاز تلقائياً.</p><p id="licenseStatusText" class="muted" aria-live="polite">جارٍ قراءة حالة الترخيص...</p><div id="licenseDateDetails" class="muted" aria-live="polite">لا توجد بيانات تاريخ الترخيص بعد.</div><label for="licenseDeviceId">رقم الجهاز (Device ID)</label><input id="licenseDeviceId" type="text" readonly aria-label="رقم الجهاز الخاص بهذا الهاتف"><div class="row"><button type="button" class="btn primary" id="requestLicenseActivationBtn">طلب تفعيل عبر واتساب</button><button type="button" class="btn" id="requestLicenseRenewalBtn">طلب تجديد عبر واتساب</button></div><label for="licenseActivationCode">رمز التفعيل</label><input id="licenseActivationCode" type="text" autocomplete="off" autocapitalize="characters" placeholder="أدخل رمز التفعيل الذي استلمته"><div class="row"><button type="button" class="btn primary" id="activateLicenseBtn">تفعيل هذا الهاتف</button><button type="button" class="btn" id="validateLicenseBtn">التحقق من الترخيص</button></div><p id="licenseActionStatus" class="muted" aria-live="polite">لم يُنفذ أي طلب بعد.</p></div>
 </div>
 <div class="settings-pane hidden" id="settings-pane-data" role="tabpanel">
 <div class="panel"><h2>إعدادات المؤسسة</h2><p class="muted">أدخل معلومات مؤسستك يدوياً، وستظهر في أعلى واجهة التطبيق مباشرة فوق اسمك وإمضائك المتحركين.</p><label for="schoolName">اسم المؤسسة</label><input id="schoolName" type="text" maxlength="120" placeholder="أدخل اسم المؤسسة"><label for="schoolLocation">الموقع (البلدية والولاية)</label><input id="schoolLocation" type="text" maxlength="120" placeholder="أدخل البلدية والولاية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div><div class="panel" id="educationProfileSettings"><h2>الطور التعليمي والأقسام المسندة</h2><label for="educationLevelSetting">الطور التعليمي</label><select id="educationLevelSetting"><option value="primary">التعليم الابتدائي</option><option value="middle">التعليم المتوسط</option><option value="secondary">التعليم الثانوي</option></select><button class="btn primary" id="saveEducationProfile" type="button">حفظ الطور</button><p class="muted">تغيير الطور لا يحذف أي تلميذ أو سجل. راجع الأقسام المسندة بعد تغييره.</p><h3>الأقسام المسندة حالياً</h3><div id="assignedSectionsList" class="setup-assigned-list"></div><h3>إضافة قسم إلى المتابعة</h3><div class="setup-section-row"><div><label for="assignedYear">المستوى / السنة</label><input id="assignedYear" placeholder="مثال: الأولى متوسط"></div><div id="assignedBranchField"><label for="assignedBranch">الشعبة / الجذع</label><input id="assignedBranch" placeholder="مثال: علوم تجريبية"></div><div><label for="assignedSection">رقم القسم</label><input id="assignedSection" placeholder="مثال: 1"></div><button class="btn" id="addAssignedSection" type="button">إضافة القسم</button></div><p id="assignedSectionStatus" class="muted" aria-live="polite">يمكنك تعديل الأقسام المسندة في أي وقت.</p></div>
@@ -1606,12 +1606,32 @@ $('#saveEducationProfile')?.addEventListener('click',()=>{
 });
 render();
 
+function formatLicenseDate(value){
+ const timestamp=Number(value||0);
+ if(!Number.isFinite(timestamp)||timestamp<=0)return '—';
+ return new Date(timestamp).toLocaleString('ar-DZ',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function renderLicenseDates(state){
+ const details=$('#licenseDateDetails');if(!details)return;
+ if(!state||!state.hasLicense){details.textContent='لم يتم تفعيل ترخيص على هذا الجهاز.';return;}
+ const type=state.licenseType==='trial'?'تجريبي':state.licenseType==='annual'?'سنوي':state.licenseType==='perpetual'?'دائم':(state.licenseType||'غير محدد');
+ const starts=Number(state.startsAt||0),expiry=Number(state.expiresAt||0),now=Date.now();
+ const rows=['نوع الترخيص: '+type,'تاريخ البداية: '+formatLicenseDate(starts)];
+ if(!expiry){rows.push('تاريخ الانتهاء: لا ينتهي (ترخيص دائم)');}
+ else{
+  rows.push('تاريخ الانتهاء: '+formatLicenseDate(expiry));
+  const remaining=expiry-now;
+  if(remaining<=0)rows.push('المدة المتبقية: انتهت صلاحية الترخيص');
+  else{const totalHours=Math.ceil(remaining/3600000),days=Math.floor(totalHours/24),hours=totalHours%24;rows.push('المدة المتبقية: '+(days?days+' يوم و ':'')+hours+' ساعة');}
+ }
+ details.textContent=rows.join(' · ');
+}
 function refreshLicenseStatus(){
  const idBox=$('#licenseDeviceId');if(idBox&&window.AndroidBridge&&typeof AndroidBridge.getLicenseDeviceId==='function'){try{idBox.value=AndroidBridge.getLicenseDeviceId();}catch(_){idBox.value='تعذر قراءة رقم الجهاز';}}
  const box=$('#licenseStatusText');if(!box)return;
- if(!window.AndroidBridge||typeof AndroidBridge.getLicenseStatus!=='function'){box.textContent='إدارة الترخيص متاحة في تطبيق Android فقط.';return;}
- try{const state=JSON.parse(AndroidBridge.getLicenseStatus());box.textContent=state.message|| (state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');applyLicenseAccess(state);}
- catch(e){box.textContent='تعذر قراءة حالة الترخيص.';}
+ if(!window.AndroidBridge||typeof AndroidBridge.getLicenseStatus!=='function'){box.textContent='إدارة الترخيص متاحة في تطبيق Android فقط.';renderLicenseDates(null);return;}
+ try{const state=JSON.parse(AndroidBridge.getLicenseStatus());box.textContent=state.message|| (state.activated?'الترخيص صالح':'لم يتم تفعيل التطبيق');renderLicenseDates(state);applyLicenseAccess(state);}
+ catch(e){box.textContent='تعذر قراءة حالة الترخيص.';renderLicenseDates(null);}
 }
 window.onMushrifiLicenseAutoCheck=function(result){
  refreshLicenseStatus();
