@@ -1616,7 +1616,10 @@ function renderLicenseDates(state){
  if(!state||!state.hasLicense){details.textContent='لم يتم تفعيل ترخيص على هذا الجهاز.';return;}
  const type=state.licenseType==='trial'?'تجريبي':state.licenseType==='annual'?'سنوي':state.licenseType==='perpetual'?'دائم':(state.licenseType||'غير محدد');
  const starts=Number(state.startsAt||0),expiry=Number(state.expiresAt||0),now=Date.now();
+ const duration=Number(state.durationDays||((starts>0&&expiry>starts)?Math.round((expiry-starts)/86400000):0));
  const rows=['نوع الترخيص: '+type,'تاريخ البداية: '+formatLicenseDate(starts)];
+ if(expiry&&duration>0)rows.push('مدة التفعيل: '+duration+' يوم');
+ else if(!expiry)rows.push('مدة التفعيل: دائمة');
  if(!expiry){rows.push('تاريخ الانتهاء: لا ينتهي (ترخيص دائم)');}
  else{
   rows.push('تاريخ الانتهاء: '+formatLicenseDate(expiry));
