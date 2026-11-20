@@ -24,6 +24,14 @@ assert.match(manager, /\.put\("hasLicense", false\)/);
 assert.match(manager, /max_seen_wall_time/);
 assert.match(manager, /clockMovedBackwards\(context, now, lastValidatedAt\)/);
 assert.match(manager, /return status\(context\)\.optBoolean\("activated", false\)/);
+assert.match(manager, /statusCode == 401 \|\| rejected\.statusCode == 403 \|\| rejected\.statusCode == 404/,
+  'Explicit server denials must immediately override the cached offline token.');
+assert.match(manager, /putBoolean\("server_blocked", true\)/);
+assert.match(manager, /\.remove\("server_blocked"\)/,
+  'A successful renewal or unsuspension validation must clear the server block.');
+assert.match(manager, /if \(prefs\.getBoolean\("server_blocked", false\)\) return true/,
+  'A server-blocked phone must retry online validation so renewal can restore access.');
+
 assert.match(manager, /AES\/GCM\/NoPadding/);
 assert.match(manager, /putString\("license_token_enc"/);
 assert.match(manager, /\.remove\("license_token"\)/);
