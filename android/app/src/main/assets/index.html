@@ -1460,11 +1460,7 @@ $('#csvImport').onchange=async e=>{
       // وركّب رمزاً كاملاً يمنع الخلط بين (1) في شعب أو سنوات مختلفة.
       if(db.settings.educationLevel&&db.settings.educationLevel!=='secondary'&&!data.branch)data.branch='عام';
       data.sectionNumber=String(data.class||'').trim();
-      if(data.schoolYear&&data.branch&&data.sectionNumber){
-        data.class=data.sectionNumber;
-        const key=academicKey(data.schoolYear,data.branch,data.sectionNumber);
-        if(!knownAcademic.has(key))pendingAcademic.set(key,{schoolYear:data.schoolYear,branch:canonicalBranch(data.branch),sectionNumber:data.sectionNumber});
-      }
+      if(data.schoolYear&&data.branch&&data.sectionNumber)data.class=data.sectionNumber;
       if(!data.last||!data.first||!data.class){skipped++;continue;}
       const incomingId=normalizeId(data.identityNumber);
       const incomingNames=new Set([
@@ -1497,6 +1493,10 @@ $('#csvImport').onchange=async e=>{
         });
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
+      }
+      if(data.schoolYear&&data.branch&&data.sectionNumber){
+        const key=academicKey(data.schoolYear,data.branch,data.sectionNumber);
+        if(!knownAcademic.has(key))pendingAcademic.set(key,{schoolYear:data.schoolYear,branch:canonicalBranch(data.branch),sectionNumber:data.sectionNumber});
       }
       if(target){
         // حدّث فهرس الاسم عند تغيير البطاقة، مع الإبقاء على معرّف الطالب وسجلاته.
