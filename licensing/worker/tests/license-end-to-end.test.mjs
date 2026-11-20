@@ -189,4 +189,4 @@ const perpetualPayload = readToken(perpetualActivation.data.license);
 assert.equal(perpetualPayload.expiresAt, null);
 assert.equal((await request("/v1/admin/licenses/" + perpetual.licenseId + "/renew", { durationDays: 365 }, true)).status, 409);
 
-console.log("PASS: local D1 end-to-end activation, RSA token verification, same-device recovery, device binding, validation, renewal, suspend/unsuspend, revoke, and perpetual-term guards.");
+console.log("PASS: local D1 activation, RSA tokens, same-device recovery, one-phone binding, owner-approved transfer, preserved expiry, validation, renewal, suspension, revocation, and perpetual-term guards.");
