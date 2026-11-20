@@ -53,6 +53,7 @@ jobs:
           canvas.resize((512, 512), Image.Resampling.LANCZOS).save(dst, optimize=True)
           PY
       - name: Prepare permanent release signing key
+        if: github.ref == 'refs/heads/main'
         env:
           KEYSTORE_BASE64: ${{ secrets.MUSHRIFI_KEYSTORE_BASE64 }}
         run: |
@@ -60,6 +61,7 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/mushrifi-release.jks"
           test -s "$RUNNER_TEMP/mushrifi-release.jks"
       - name: Validate release signing secrets
+        if: github.ref == 'refs/heads/main'
         env:
           KEYSTORE_PASSWORD: ${{ secrets.MUSHRIFI_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.MUSHRIFI_KEY_ALIAS }}
@@ -181,6 +183,7 @@ jobs:
       - name: Confirm individual student file fix is included
         run: grep -q 'const attendanceList=items=>' android/app/src/main/assets/index.html
       - name: Build signed release APK
+        if: github.ref == 'refs/heads/main'
         env:
           MUSHRIFI_KEYSTORE_PATH: ${{ runner.temp }}/mushrifi-release.jks
           MUSHRIFI_KEYSTORE_PASSWORD: ${{ secrets.MUSHRIFI_KEYSTORE_PASSWORD }}
@@ -188,6 +191,7 @@ jobs:
           MUSHRIFI_KEY_PASSWORD: ${{ secrets.MUSHRIFI_KEY_PASSWORD }}
         run: gradle --no-daemon -p android assembleRelease
       - name: Verify release APK signature
+        if: github.ref == 'refs/heads/main'
         run: |
           APK="android/app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
@@ -195,6 +199,7 @@ jobs:
           test -n "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
       - name: Upload signed release APK
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: mushrifi-release-apk
