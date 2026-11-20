@@ -13,7 +13,7 @@ concurrency:
 jobs:
   deploy-staging:
     name: Deploy isolated Staging Worker
-    if: github.ref == 'refs/heads/feature/voice-student-actions'
+    if: github.ref == 'refs/heads/feature/license-enforcement-hardening'
     runs-on: ubuntu-latest
     environment: staging
     timeout-minutes: 15
@@ -21,7 +21,7 @@ jobs:
       - name: Check out the explicitly selected development branch
         uses: actions/checkout@v4
         with:
-          ref: feature/voice-student-actions
+          ref: feature/license-enforcement-hardening
 
       - name: Verify staging configuration is isolated
         working-directory: licensing/worker
