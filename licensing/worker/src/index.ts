@@ -119,6 +119,7 @@ async function signLicense(env: Env, row: LicenseRow, now: number): Promise<stri
     issuedAt: now,
     startsAt: row.starts_at ?? now,
     expiresAt: row.expires_at,
+    durationDays: row.duration_days,
     lastValidatedAt: now,
     offlineUntil: now + OFFLINE_WINDOW_DAYS * DAY
   };
