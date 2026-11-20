@@ -27,6 +27,15 @@ assert.match(source, /return yearMatch&&branchMatch&&identityCompatible/);
 assert.match(source, /removeFallbackStudent\(target\)/);
 assert.match(source, /indexFallbackStudent\(target\)/);
 
+// Rows rejected as incomplete or ambiguous must not create empty academic sections.
+const requiredRowGuardAt = source.indexOf("if(!data.last||!data.first||!data.class){skipped++;continue;}");
+const ambiguousRowGuardAt = source.indexOf("else if(fallback.length>1){skipped++;conflicts++;continue;}", requiredRowGuardAt);
+const academicQueueAt = source.indexOf("if(data.schoolYear&&data.branch&&data.sectionNumber){", ambiguousRowGuardAt);
+assert.ok(requiredRowGuardAt >= 0 && ambiguousRowGuardAt > requiredRowGuardAt,
+  'incomplete roster rows must be rejected before academic-section collection');
+assert.ok(academicQueueAt > ambiguousRowGuardAt,
+  'ambiguous rows must be rejected before they can add an academic section');
+
 // Linked records and academic combinations are indexed/collected once per import,
 // avoiding repeated full-array scans inside the student loop.
 assert.match(source, /const recordsByStudentId=new Map\(\)/);
