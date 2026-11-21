@@ -60,5 +60,7 @@ jobs:
           MUSHRIFI_LICENSE_API=http://127.0.0.1:8787 node scripts/smoke-test.mjs
           MUSHRIFI_LICENSE_API=http://127.0.0.1:8787 ADMIN_API_TOKEN=ci-admin-token MUSHRIFI_TEST_PUBLIC_KEY_FILE=.ci-license-public.pem node tests/license-end-to-end.test.mjs
       - name: Smoke-test deployed challenge and device proof without issuing a license
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/device-license-foundation'
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/feature/device-license-foundation') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/license-enforcement-hardening')
+        env:
+          MUSHRIFI_LICENSE_API: https://mushrifi-license-server-staging.hacene47211.workers.dev
         run: node scripts/smoke-test.mjs
