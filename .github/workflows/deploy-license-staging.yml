@@ -1,4 +1,4 @@
-name: Deploy Mushrifi license API to Staging
+name: Deploy Mushrifi license Staging
 
 on:
   workflow_dispatch:
@@ -7,37 +7,32 @@ permissions:
   contents: read
 
 concurrency:
-  group: mushrifi-license-staging
+  group: mushrifi-license-staging-deploy
   cancel-in-progress: false
 
 jobs:
   deploy-staging:
-    name: Deploy isolated Staging Worker
-    if: github.ref == 'refs/heads/feature/voice-student-actions'
+    name: Deploy Staging Worker only
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
-      - name: Check out the explicitly selected development branch
+      - name: Check out licensing development branch
         uses: actions/checkout@v4
         with:
-          ref: feature/voice-student-actions
+          ref: feature/device-license-foundation
 
-      - name: Verify staging configuration is isolated
+      - name: Verify TypeScript
         working-directory: licensing/worker
-        run: node tests/staging-config.test.mjs
+        run: |
+          npm install
+          npm run check
 
-      - name: Deploy only the Staging environment
+      - name: Deploy Staging Worker only
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: licensing/worker
           wranglerVersion: "4.165.0"
-          command: deploy --env staging
-          environment: staging
-          secrets: |
-            ADMIN_API_TOKEN
-            LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
-        env:
-          ADMIN_API_TOKEN: ${{ secrets.STAGING_ADMIN_API_TOKEN }}
-          LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64: ${{ secrets.LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64 }}
+          command: deploy --config wrangler.staging.toml
