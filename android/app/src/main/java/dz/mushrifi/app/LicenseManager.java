@@ -161,7 +161,7 @@ final class LicenseManager {
     }
 
     static boolean canWrite(Context context) {
-        if (!hasStoredLicense(context)) return true; // Existing installations remain usable until a license is issued.
+        if (!hasStoredLicense(context)) return false; // Staging builds require activation before student data can be changed.
         try {
             return status(context).optBoolean("activated", false);
         } catch (Exception invalidLicense) {
