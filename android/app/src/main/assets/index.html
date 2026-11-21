@@ -154,10 +154,11 @@ footer{padding:24px 12px;color:#71818d}
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
-<div class="panel"><h2>فحص تشابه أسماء التلاميذ</h2><p class="muted">يعرض التلاميذ الذين تتشابه أسماؤهم في القسم نفسه بعد تجاهل الأرقام الموجودة في نهاية الاسم. هذا فحص للقراءة فقط؛ لا يدمج ولا يحذف ولا يغيّر أي بطاقة أو سجل متابعة.</p><button class="btn" id="auditStudentNames" type="button">فحص الأسماء المتشابهة</button><div id="studentNameAudit" class="hidden" aria-live="polite"></div></div>
+<div class="panel"><h2>مراجعة تكرار أسماء التلاميذ</h2><p class="muted">تعرض البطاقات المتشابهة ومعرفاتها الثابتة، والسجلات المرتبطة بالمعرف، والسجلات القديمة التي لا يمكن إسنادها بأمان. لا تُجرى أي عملية نقل أو تعديل أو حذف.</p><button class="btn" id="auditStudentNames" type="button">فحص ومراجعة الأسماء</button><div id="studentNameAudit" class="hidden" aria-live="polite"></div></div>
 </section>
 </div>
 </div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
+<script src="./student-identity-audit.js"></script>
 <script>
 /* MUSHRIFI QUIET DIAGNOSTICS — no test overlay in the user interface */
 (function(){
@@ -534,19 +535,7 @@ window.saveDocumentEdit=id=>{
  if(d.type==='استدعاء ولي'&&d.reminderAt&&new Date(d.reminderAt).getTime()<=Date.now())alert('تم حفظ التعديل. موعد التنبيه أصبح في الماضي، لذلك لم يُجدول تنبيه جديد.');else alert('تم تحديث الوثيقة بنجاح مع الحفاظ على الصورة والسجل المرتبط بالتلميذ.');
 };
 
-// مطابقة أسماء التلاميذ مع تجاهل التشكيل واختلافات الهمزة والمسافات
-const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');
-const findStudentForRecord=record=>{
-  const byId=db.students.find(s=>String(s.id)===String(record.student));
-  if(byId)return {student:byId,reason:'المعرّف'};
-  const candidates=[record.studentName,record.student].filter(Boolean).map(normalizeStudentIdentity).filter(Boolean);
-  if(!candidates.length)return {student:null,ambiguous:[]};
-  const matches=db.students.filter(s=>{
-    const names=[s.last+' '+s.first,s.first+' '+s.last,s.name,s.fullName].map(normalizeStudentIdentity).filter(Boolean);
-    return names.some(n=>candidates.includes(n));
-  });
-  return matches.length===1?{student:matches[0],reason:'الاسم'}:{student:null,ambiguous:matches};
-};
+const findStudentForRecord=record=>window.MushrifiStudentAudit.resolveStudentForRecord(db.students,record);
 window.editAttendance=id=>{
  const r=db.attendance.find(x=>x.id===id);if(!r)return;const row=document.querySelector('tr[data-att-id="'+CSS.escape(id)+'"]');if(!row)return;
  const match=findStudentForRecord(r),linked=match.student,currentName=String(linked?((linked.last+' '+linked.first).trim()||linked.name||linked.fullName):r.studentName||name(r.student)||''),currentClass=String(linked?attendanceGroupLabel(linked):(r.sectionLabel||r.class||r.studentClass||'')),isLate=r.type==='تأخر',isPresent=r.type==='حضور',duration=isLate?(r.minutes??Math.round(Number(r.hours||0)*60)):(r.hours??(parseHours(r.period)!==''?parseHours(r.period):''));
@@ -565,32 +554,9 @@ window.saveAttendanceEdit=id=>{
 };
 window.studentHistory=id=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
-  const normStudentName=value=>String(value??'').normalize('NFKC')
-    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
-    .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
-    .replace(/\\s*\\d+$/,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
-  const normStudentSection=value=>String(value??'').normalize('NFKC')
-    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
-    .replace(/[أإآٱ]/g,'ا').replace(/\s+/g,'').trim().toLocaleLowerCase('ar');
-  const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''))||normStudentName(s.name||s.fullName||'');
   const belongsToStudent=record=>{
-    const recordId=String(record.student??'').trim();
-    if(recordId===sid)return true;
-    // المعرّف الداخلي لتلميذ آخر أقوى من تشابه الاسم.
-    if(recordId&&db.students.some(other=>String(other.id)===recordId))return false;
-    const recordName=normStudentName(record.studentName||record.student);
-    if(!recordName||recordName!==fullStudentName)return false;
-    const recordSection=normStudentSection(record.class||record.studentClass||record.sectionLabel||record.section||'');
-    if(recordSection){
-      const studentSections=[s.class,attendanceGroupLabel(s),s.section,s.className].map(normStudentSection).filter(Boolean);
-      return studentSections.includes(recordSection);
-    }
-    // السجل القديم بلا قسم يُربط فقط إذا كان الاسم فريداً.
-    const sameNameStudents=db.students.filter(other=>{
-      const otherName=normStudentName(String(other.last||'')+' '+String(other.first||''))||normStudentName(other.name||other.fullName||'');
-      return otherName===fullStudentName;
-    });
-    return sameNameStudents.length===1;
+    const resolution=window.MushrifiStudentAudit.resolveStudentForRecord(db.students,record);
+    return Boolean(resolution.student&&String(resolution.student.id)===sid);
   };
   const a=db.attendance.filter(belongsToStudent);
   const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
@@ -872,62 +838,61 @@ $('#csvImport').onchange=async e=>{
 
 
 function collectStudentNameAuditGroups(){
- const normalizeText=value=>String(value??'').normalize('NFKC')
-  .replace(/[ـ\u064B-\u065F\u0670\u200B-\u200F\uFEFF]/g,'')
-  .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
-  .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
-  .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
-  .replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
- const normalizeNamePart=value=>normalizeText(value).replace(/\s*[0-9]+$/,'').trim();
- const groups=new Map();
- db.students.forEach(st=>{
-  const last=String(st.last??st.surname??'').trim();
-  const first=String(st.first??st.firstname??'').trim();
-  const rawName=(last+' '+first).trim()||String(st.name??st.fullName??st.studentName??'').trim();
-  const normalizedName=last||first
-   ? [last,first].filter(Boolean).map(normalizeNamePart).join(' ').trim()
-   : normalizeNamePart(rawName);
-  const classValue=String(st.sectionNumber||st.class||st.section||st.className||st.classe||st.group||'').trim();
-  if(!normalizedName||!classValue)return;
-  const schoolYear=String(st.schoolYear||'').trim();
-  const branch=String(st.branch||'').trim();
-  const sectionKey=[schoolYear,branch,classValue].map(normalizeText).join('¦');
-  const key=sectionKey+'||'+normalizedName;
-  if(!groups.has(key))groups.set(key,{section:[schoolYear,branch,classValue].filter(Boolean).join(' / '),students:[]});
-  const id=String(st.id??'').trim();
-  const count=kind=>id?db[kind].filter(record=>String(record.student??'').trim()===id).length:0;
-  groups.get(key).students.push({
-   id,
-   name:rawName||'اسم غير محدد',
-   attendance:count('attendance'),
-   documents:count('documents'),
-   violations:count('violations')
-  });
- });
- return [...groups.values()].filter(group=>group.students.length>1);
+ return window.MushrifiStudentAudit.buildStudentNameAuditReport(db);
 }
 $('#auditStudentNames').onclick=()=>{
  const output=$('#studentNameAudit');
- const groups=collectStudentNameAuditGroups();
- if(!groups.length){
-  output.innerHTML='<p class="empty">لم تظهر مجموعات أسماء متشابهة داخل القسم نفسه وفق معيار الفحص الحالي.</p>';
- }else{
-  const cards=groups.map((group,index)=>{
-   const distinctNames=new Set(group.students.map(student=>String(student.name||'').normalize('NFKC'))).size;
-   const members=group.students.map(student=>{
-    const linked=student.attendance+student.documents+student.violations;
-    return '<li><b>'+esc(student.name)+'</b> — المعرّف: '+esc(student.id||'غير موجود')+
-     ' — سجلات مرتبطة بالمعرّف: '+linked+
-     ' (حضور/غياب/تأخر: '+student.attendance+'، وثائق: '+student.documents+'، مخالفات: '+student.violations+')</li>';
-   }).join('');
-   return '<div class="panel"><h4>المجموعة '+(index+1)+'</h4><p><b>القسم:</b> '+esc(group.section)+
-    ' — <b>عدد البطاقات:</b> '+group.students.length+
-    (distinctNames>1?' — أسماء مختلفة تتشابه بعد تجاهل الرقم النهائي':' — بطاقات بالاسم نفسه')+
-    '</p><ul>'+members+'</ul></div>';
+ const report=collectStudentNameAuditGroups();
+ const renderRecord=record=>{
+  const candidates=record.candidateNames&&record.candidateNames.length
+   ?' — الاحتمالات: '+record.candidateNames.map(esc).join('، ')
+   :'';
+  return '<li><b>'+esc(record.kindLabel)+'</b> · '+esc(record.type)+' · '+esc(record.date||'—')+
+   ' · الاسم: '+esc(record.name||'—')+' · القسم: '+esc(record.section||'غير محدد')+
+   (record.id?' · رقم السجل: '+esc(record.id):'')+candidates+
+   (record.notes?' · ملاحظة: '+esc(record.notes):'')+'</li>';
+ };
+ const renderList=(items,emptyText)=>{
+  if(!items.length)return '<p class="empty">'+emptyText+'</p>';
+  return '<ul>'+items.slice(0,80).map(renderRecord).join('')+'</ul>'+
+   (items.length>80?'<p class="muted">عُرضت أول 80 حالة من أصل '+items.length+'.</p>':'');
+ };
+ const cards=report.groups.map((group,index)=>{
+  const members=group.members.map(member=>{
+   const stable=member.stable,legacy=member.legacy;
+   const stableAbs=stable.attendance.filter(record=>record.type==='غياب').length;
+   const stableLate=stable.attendance.filter(record=>record.type==='تأخر').length;
+   const stablePresent=stable.attendance.filter(record=>record.type==='حضور').length;
+   const legacyAbs=legacy.attendance.filter(record=>record.type==='غياب').length;
+   const legacyLate=legacy.attendance.filter(record=>record.type==='تأخر').length;
+   const legacyTotal=legacy.attendance.length+legacy.documents.length+legacy.violations.length;
+   const legacyRecords=[...legacy.attendance,...legacy.documents,...legacy.violations];
+   return '<div class="panel"><h4>'+esc(member.name)+'</h4><p><b>المعرّف الثابت:</b> '+esc(member.id||'غير موجود')+'</p>'+
+    '<p><b>سجلات مرتبطة بالمعرّف:</b> غياب '+stableAbs+'، تأخر '+stableLate+'، حضور '+stablePresent+
+    '، وثائق '+stable.documents.length+'، مخالفات '+stable.violations.length+'</p>'+
+    '<p><b>مطابقات اسمية غير مثبتة:</b> غياب '+legacyAbs+'، تأخر '+legacyLate+
+    '، إجمالي سجلات '+legacyTotal+'</p>'+
+    '<details><summary>عرض السجلات القديمة المطابقة بالاسم فقط ('+legacyTotal+')</summary>'+
+    renderList(legacyRecords,'لا توجد سجلات قديمة مطابقة بالاسم فقط.')+'</details></div>';
   }).join('');
-  output.innerHTML='<p><b>عدد المجموعات المرشحة للمراجعة:</b> '+groups.length+'</p>'+cards;
- }
- output.innerHTML+='<p class="notice">هذه النتائج للتدقيق فقط. أعداد السجلات المعروضة تعتمد على ارتباطها بالمعرّف الداخلي؛ السجلات القديمة المرتبطة بالاسم قد لا تظهر ضمن هذه الأعداد. لم تُجرَ أي عملية دمج أو تعديل.</p>';
+  return '<div class="panel"><h4>المجموعة '+(index+1)+'</h4><p><b>القسم:</b> '+esc(group.section)+
+   ' — <b>عدد البطاقات:</b> '+group.members.length+
+   ' — <b>سجلات ملتبسة محتملة:</b> '+group.ambiguousRecords.length+'</p><div class="grid">'+members+'</div></div>';
+ }).join('');
+ const summary=report.summary;
+ output.innerHTML='<div class="grid">'+
+  '<div class="stat"><small>مجموعات التكرار</small><strong>'+summary.groups+'</strong></div>'+
+  '<div class="stat"><small>بطاقات ضمن المجموعات</small><strong>'+summary.duplicateCards+'</strong></div>'+
+  '<div class="stat"><small>سجلات مرتبطة بمعرف ثابت</small><strong>'+summary.stableLinked+'</strong></div>'+
+  '<div class="stat"><small>مطابقات اسمية وحيدة</small><strong>'+summary.legacyUnique+'</strong></div>'+
+  '<div class="stat"><small>سجلات ملتبسة</small><strong>'+summary.ambiguous+'</strong></div>'+
+  '<div class="stat"><small>سجلات بلا تطابق آمن</small><strong>'+summary.unmatched+'</strong></div></div>'+
+  (cards||'<p class="empty">لم تظهر بطاقات متشابهة في القسم نفسه.</p>')+
+  '<details><summary>السجلات القديمة الملتبسة ('+summary.ambiguous+')</summary>'+
+  renderList(report.ambiguousRecords,'لا توجد سجلات قديمة ملتبسة.')+'</details>'+
+  '<details><summary>السجلات القديمة التي لم تطابق بطاقة ('+summary.unmatched+')</summary>'+
+  renderList(report.unmatchedRecords,'لا توجد سجلات يتعذر مطابقتها.')+'</details>'+
+  '<p class="notice">هذه معاينة للقراءة فقط. لا يتم نقل السجلات أو تعديلها أو حذفها، ولا تُعد المطابقة الاسمية إثباتاً لهوية التلميذ. يجب مراجعة كل حالة قبل أي توحيد مستقبلي.</p>';
  output.classList.remove('hidden');
 };
 
