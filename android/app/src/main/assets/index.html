@@ -343,6 +343,32 @@ footer{padding:24px 12px;color:#71818d}
  }
 }
 
+
+/* Identity header must span the complete student card; keep Arabic names as intact words */
+@media(max-width:700px){
+ .students-table tbody td.student-primary-cell{
+  display:block!important;
+  grid-column:1/-1!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  box-sizing:border-box!important;
+ }
+ .students-table tbody td.student-primary-cell .student-name{
+  display:flex!important;align-items:stretch!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  box-sizing:border-box!important;
+ }
+ .students-table tbody td.student-primary-cell .student-name-value{
+  display:block!important;flex:1 1 auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  box-sizing:border-box!important;
+  white-space:normal!important;
+  word-break:keep-all!important;
+  overflow-wrap:normal!important;
+  text-align:right!important;
+  line-height:1.75!important;
+ }
+}
+
 </style>
 </head>
 <body>
