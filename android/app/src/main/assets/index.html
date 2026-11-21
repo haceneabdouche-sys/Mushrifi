@@ -318,7 +318,7 @@ function setLicenseControlDisabled(el,disabled){
  }
 }
 function applyLicenseAccess(state){
- licenseReadOnly=!!(state&&state.hasLicense&&!state.activated);
+ licenseReadOnly=!!(!state||!state.hasLicense||!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
  const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn']);
  if(licenseReadOnly){
