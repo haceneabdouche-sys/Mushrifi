@@ -26,6 +26,7 @@ const db = {
 const before = JSON.parse(JSON.stringify(db));
 assert.equal(audit.normalizeNameKey('وائل عيسو١'), audit.normalizeNameKey('عيسو1 وائل'));
 assert.equal(audit.normalizeNameKey('وَائِل عيسو'), audit.normalizeNameKey('وائل عيسو1'));
+assert.equal(audit.normalizeNameKey('محمد 2 علي') === audit.normalizeNameKey('محمد علي'), false);
 
 const idPriority = audit.resolveStudentForRecord(db.students, db.attendance[0]);
 assert.equal(idPriority.reason, 'id');
