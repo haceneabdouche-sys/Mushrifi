@@ -77,20 +77,20 @@
     const list = Array.isArray(students) ? students : [];
     const reference = String(record?.student ?? '').trim();
     const idMatches = reference ? list.filter(student => String(student?.id ?? '').trim() === reference) : [];
-    if (idMatches.length === 1) return { student: idMatches[0], reason: 'id', candidates: idMatches };
-    if (idMatches.length > 1) return { student: null, reason: 'ambiguous', candidates: idMatches };
+    if (idMatches.length === 1) return { student: idMatches[0], reason: 'id', candidates: idMatches, ambiguous: [] };
+    if (idMatches.length > 1) return { student: null, reason: 'ambiguous', candidates: idMatches, ambiguous: idMatches };
 
     const nameValues = [];
     if (record?.studentName) nameValues.push(record.studentName);
     if (reference && !isIdLike(reference)) nameValues.push(reference);
     const nameKeys = new Set(nameValues.map(normalizeNameKey).filter(Boolean));
-    if (!nameKeys.size) return { student: null, reason: 'none', candidates: [] };
+    if (!nameKeys.size) return { student: null, reason: 'none', candidates: [], ambiguous: [] };
 
     const candidates = list.filter(student =>
       nameKeys.has(studentNameKey(student)) && sectionsMatch(student, record)
     );
-    if (candidates.length === 1) return { student: candidates[0], reason: 'name', candidates };
-    if (candidates.length > 1) return { student: null, reason: 'ambiguous', candidates };
+    if (candidates.length === 1) return { student: candidates[0], reason: 'name', candidates, ambiguous: [] };
+    if (candidates.length > 1) return { student: null, reason: 'ambiguous', candidates, ambiguous: candidates };
     return { student: null, reason: 'none', candidates: [] };
   }
 
