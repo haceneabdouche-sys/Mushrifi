@@ -1,0 +1,37 @@
+name: Initialize Mushrifi Staging D1
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mushrifi-staging-d1-init
+  cancel-in-progress: false
+
+jobs:
+  initialize-staging-d1:
+    name: Initialize isolated Staging D1 database
+    if: github.ref == 'refs/heads/feature/license-enforcement-hardening'
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 10
+    steps:
+      - name: Check out the licensing development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/license-enforcement-hardening
+
+      - name: Verify staging database isolation
+        working-directory: licensing/worker
+        run: node tests/staging-config.test.mjs
+
+      - name: Apply the idempotent schema to Staging only
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.165.0"
+          command: d1 execute mushrifi-licenses-staging --env staging --remote --file=./schema.sql
