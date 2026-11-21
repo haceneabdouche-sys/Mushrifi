@@ -1,0 +1,38 @@
+name: Inspect Mushrifi license Staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mushrifi-license-staging-inspect
+  cancel-in-progress: false
+
+jobs:
+  inspect-staging:
+    name: Read-only Staging checks
+    if: github.ref == 'refs/heads/feature/device-license-foundation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the licensing development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/device-license-foundation
+
+      - name: Verify TypeScript
+        working-directory: licensing/worker
+        run: |
+          npm install
+          npm run check
+
+      - name: Inspect only the Staging D1 database (read-only)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.165.0"
+          command: d1 execute mushrifi-licenses-staging --remote --command "SELECT name, sql FROM sqlite_master WHERE type = 'index' AND tbl_name = 'licenses';" --config wrangler.staging.toml
