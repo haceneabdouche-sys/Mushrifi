@@ -129,7 +129,7 @@ async function readBody(request: Request): Promise<Record<string, unknown>> {
 }
 
 function validCode(value: unknown): value is string {
-  return typeof value === "string" && /^[A-Za-z0-9-]{12,100}$/.test(value.trim());
+  return typeof value === "string" && /^[A-Za-z0-9_-]{12,100}$/.test(value.trim());
 }
 
 function randomCode(): string {
