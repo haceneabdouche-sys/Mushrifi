@@ -13,7 +13,7 @@
       .replace(/[أإآٱ]/g, 'ا').replace(/[ىي]/g, 'ي').replace(/ة/g, 'ه')
       .replace(/[^\p{L}\p{N}\s]/gu, ' ')
       .trim().split(/\s+/)
-      .map(token => token.replace(/[0-9]+$/g, ''))
+      .map(token => /[\p{L}][0-9]+$/u.test(token) ? token.replace(/[0-9]+$/g, '') : token)
       .filter(Boolean)
       .sort((a, b) => a.localeCompare(b, 'ar'))
       .join(' ').toLocaleLowerCase('ar');
