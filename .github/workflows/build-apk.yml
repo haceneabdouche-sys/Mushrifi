@@ -122,6 +122,8 @@ jobs:
         run: node tests/signature-pad.test.cjs
       - name: Run universal education setup tests
         run: node tests/universal-setup.test.cjs
+      - name: Run first-run Android input and file picker regression tests
+        run: node tests/first-run-android-inputs.test.cjs
       - name: Run reminder scheduling regression tests
         run: node tests/reminder-scheduling.test.cjs
       - name: Run summons reminder validation regression tests

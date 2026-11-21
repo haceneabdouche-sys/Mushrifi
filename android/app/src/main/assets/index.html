@@ -462,7 +462,11 @@ function applyLicenseAccess(state){
    $$('#firstRunLicensePanel input,#firstRunLicensePanel button').forEach(el=>setLicenseControlDisabled(el,false));
    const licenseCode=$('#licenseActivationCode');if(licenseCode)setLicenseControlDisabled(licenseCode,false);
  }else{
-  $$('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
+  $('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
+  // A successful activation must explicitly unlock the first-run wizard,
+  // including its native file inputs, even if an earlier status check locked them.
+  const setupForm=$('#firstRunSetupForm');
+  if(setupForm)setupForm.querySelectorAll('input,select,textarea,button').forEach(el=>setLicenseControlDisabled(el,false));
  }
 }
 const parseHours=value=>{let s=String(value??'').normalize('NFKC').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،,]/g,'.').replace(/^(?:عدد\s*)?الساعات?\s*/,'').replace(/\s*(?:ساعة|ساعات|ساعتان|ساعتين)\s*(?:غياب)?$/,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};

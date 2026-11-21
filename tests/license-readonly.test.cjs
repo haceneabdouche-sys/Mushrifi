@@ -57,6 +57,8 @@ assert.match(html, /if\(!licenseReadOnly&&!save\(\)\)/);
 assert.match(html, /action\.includes\('studentHistory'\)/);
 assert.match(html, /setLicenseControlDisabled\(importButton,true\)/);
 assert.match(html, /allowed\.has\(el\.id\)/);
+assert.match(html, /const setupForm=\$\('#firstRunSetupForm'\);\s*if\(setupForm\)setupForm\.querySelectorAll\('input,select,textarea,button'\)\.forEach\(el=>setLicenseControlDisabled\(el,false\)\)/,
+  'A successful license state must explicitly re-enable first-run fields after an earlier read-only check.');
 
 assert.match(html, /id="firstRunLicensePanel"/,
   'The first-run wizard must expose a license activation path before the main navigation is available.');

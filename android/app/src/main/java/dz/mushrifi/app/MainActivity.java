@@ -581,10 +581,19 @@ public class MainActivity extends Activity {
                     Toast.makeText(this, "تعذرت قراءة النسخة: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
             }
-        } else if (requestCode == PICK_FILE && fileCallback != null) {
-            Uri[] result = resultCode == RESULT_OK ? WebChromeClient.FileChooserParams.parseResult(resultCode, data) : null;
-            fileCallback.onReceiveValue(result);
+        } else if (requestCode == PICK_FILE) {
+            Uri[] result = null;
+            if (resultCode == RESULT_OK && data != null) {
+                result = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                // ACTION_OPEN_DOCUMENT commonly returns the selected URI directly;
+                // accept it when WebView's parser yields no array.
+                if ((result == null || result.length == 0) && data.getData() != null) {
+                    result = new Uri[]{data.getData()};
+                }
+            }
+            ValueCallback<Uri[]> callback = fileCallback;
             fileCallback = null;
+            if (callback != null) callback.onReceiveValue(result);
         } else if (requestCode == SAVE_FILE) {
             if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingBackup != null) {
                 try {
