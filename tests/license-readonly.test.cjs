@@ -8,8 +8,10 @@ const manager = read('android/app/src/main/java/dz/mushrifi/app/LicenseManager.j
 const activity = read('android/app/src/main/java/dz/mushrifi/app/MainActivity.java');
 const html = read('android/app/src/main/assets/index.html');
 
-assert.match(manager, /if \(!hasStoredLicense\(context\)\) return true/,
-  'Installations without an issued license must retain existing write access.');
+assert.match(manager, /if \(!hasStoredLicense\(context\)\) return false/,
+  'Installations without an issued license must be read-only until activation.');
+assert.match(manager, /\.put\("hasLicense", false\).*\.put\("activated", false\)/,
+  'An installation without a stored license must report itself as not activated.');
 assert.match(manager, /\.put\("hasLicense", true\)/,
   'A stored token must be distinguishable from an installation without a token.');
 assert.match(manager, /static boolean canWrite\(Context context\)/,
