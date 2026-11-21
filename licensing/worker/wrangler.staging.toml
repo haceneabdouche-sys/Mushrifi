@@ -1,0 +1,8 @@
+name = "mushrifi-license-server-staging"
+main = "src/index.ts"
+compatibility_date = "2026-11-15"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mushrifi-licenses-staging"
+database_id = "31d1c090-a7d9-4175-adc5-f1f35dba4b28"
