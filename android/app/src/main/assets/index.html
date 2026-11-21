@@ -192,6 +192,52 @@ footer{padding:24px 12px;color:#71818d}
  .students-table tbody td.student-primary-cell{grid-column:1/-1}
 }
 
+
+/* Premium student identity card: every value sits in its own softly shaded field */
+.students-table .student-value{
+ display:inline-flex;align-items:center;min-height:34px;max-width:100%;
+ padding:7px 12px;border:1px solid #dce7f0;border-radius:11px;
+ background:linear-gradient(135deg,#f1f6fb 0%,#e8f0f8 100%);
+ color:#173b58;font-weight:700;line-height:1.55;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 2px 6px rgba(24,55,82,.045);
+ overflow-wrap:anywhere;
+}
+.students-table .student-value.branch-value,
+.students-table .student-value.date-value{white-space:nowrap;overflow-wrap:normal;word-break:keep-all;unicode-bidi:isolate}
+.students-table .student-primary-cell .student-name{
+ display:block;width:100%;padding:0;border:0;background:transparent;text-align:right;
+}
+.students-table .student-primary-cell .student-name-value{
+ display:flex;width:100%;min-height:52px;padding:12px 15px;
+ border-radius:15px;background:linear-gradient(120deg,#e5f0f8 0%,#d9e8f4 55%,#edf4fa 100%);
+ border:1px solid #c9dbe9;color:#123b5b;font-size:19px;font-weight:900;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 5px 14px rgba(19,58,87,.08);
+}
+@media(max-width:700px){
+ .students-table tbody tr{
+  display:grid;grid-template-columns:minmax(0,1fr)!important;gap:5px;
+  margin:14px 0;padding:14px;border:1px solid #cfdeea;border-radius:20px;
+  background:linear-gradient(155deg,#fbfdff 0%,#f1f6fb 48%,#eaf1f8 100%);
+  box-shadow:0 10px 28px rgba(17,48,75,.10),inset 0 1px 0 #fff;
+ }
+ .students-table tbody td:not(.student-primary-cell):not(.student-actions-cell){
+  display:grid;grid-template-columns:minmax(92px,34%) minmax(0,1fr)!important;
+  align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #dfe8ef;
+ }
+ .students-table tbody td::before{font-size:12px;color:#61798b;font-weight:800;line-height:1.5}
+ .students-table tbody td:not(.student-primary-cell):not(.student-actions-cell) .student-value{
+  justify-self:stretch;min-width:0;min-height:38px;padding:8px 11px;
+  border-radius:11px;background:linear-gradient(135deg,#e5eef6,#f5f8fc);
+  border-color:#d5e2ed;font-size:14px;
+ }
+ .students-table tbody td[data-label="الشعبة"] .student-value{justify-self:start;min-width:52px;white-space:nowrap}
+ .students-table tbody td[data-label="تاريخ الميلاد"] .student-value{justify-self:start;white-space:nowrap;direction:ltr}
+ .students-table tbody td.student-primary-cell{padding:2px 0 8px;margin:0;border:0}
+ .students-table tbody td.student-primary-cell::before{content:'بطاقة التلميذ';font-size:11px;letter-spacing:.04em;color:#7890a2}
+ .students-table .student-primary-cell .student-name-value{font-size:20px;min-height:58px}
+ .students-table tbody td.student-actions-cell{padding:12px 0 0;margin-top:5px;border-top:1px solid #dbe5ed}
+}
+
 </style>
 </head>
 <body>
@@ -374,7 +420,7 @@ function renderStudentDirectory(){
 let q=($('#studentSearch')?.value||'').trim().toLocaleLowerCase('ar');
 $('#studentCount').textContent=db.students.filter(s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).length+' تلميذ';
 const searchable=s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar');
-$('#studentsRows').innerHTML=db.students.filter(s=>searchable(s).includes(q)).slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(((s.last||'')+' '+(s.first||'')).trim()||'—')}</button></td><td data-label="المستوى">${esc(p.schoolYear||'—')}</td><td data-label="الشعبة">${esc(shortBranch(p.branch))}</td><td data-label="القسم">${esc(p.sectionNumber||s.class||'—')}</td><td data-label="الصفة">${esc(s.attribute||s.status||'—')}</td><td data-label="تاريخ الميلاد">${esc(s.birthDate||'—')}</td><td data-label="اسم الولي">${esc(s.guardian||'—')}</td><td data-label="رقم الهاتف">${esc(s.phone||'—')}</td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="empty">لا يوجد تلاميذ.</td></tr>';
+$('#studentsRows').innerHTML=db.students.filter(s=>searchable(s).includes(q)).slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')"><span class="student-value student-name-value">${esc(((s.last||'')+' '+(s.first||'')).trim()||'—')}</span></button></td><td data-label="المستوى"><span class="student-value">${esc(p.schoolYear||'—')}</span></td><td data-label="الشعبة"><span class="student-value branch-value">${esc(shortBranch(p.branch))}</span></td><td data-label="القسم"><span class="student-value">${esc(p.sectionNumber||s.class||'—')}</span></td><td data-label="الصفة"><span class="student-value">${esc(s.attribute||s.status||'—')}</span></td><td data-label="تاريخ الميلاد"><span class="student-value date-value" dir="ltr">${esc(s.birthDate||'—')}</span></td><td data-label="اسم الولي"><span class="student-value">${esc(s.guardian||'—')}</span></td><td data-label="رقم الهاتف"><span class="student-value date-value" dir="ltr">${esc(s.phone||'—')}</span></td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="empty">لا يوجد تلاميذ.</td></tr>';
 }
 
 function render(){
