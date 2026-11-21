@@ -77,6 +77,8 @@ jobs:
           Path("/tmp/mushrifi-inline.js").write_text(source, encoding="utf-8")
           PY
           node --check /tmp/mushrifi-inline.js
+      - name: Test student identity audit
+        run: node android/tests/student-identity-audit.test.cjs
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
