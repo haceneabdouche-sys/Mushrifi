@@ -20,9 +20,13 @@ CREATE TABLE IF NOT EXISTS licenses (
   )
 );
 
+-- Keep at most one active license per device. Historical expired,
+-- suspended, or revoked rows may retain their device binding.
+DROP INDEX IF EXISTS idx_licenses_device_thumbprint;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_licenses_device_thumbprint
 ON licenses(device_thumbprint)
-WHERE device_thumbprint IS NOT NULL;
+WHERE device_thumbprint IS NOT NULL AND status = 'active';
 
 CREATE INDEX IF NOT EXISTS idx_licenses_status_expiry
 ON licenses(status, expires_at);
