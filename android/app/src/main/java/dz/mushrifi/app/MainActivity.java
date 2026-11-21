@@ -150,6 +150,10 @@ public class MainActivity extends Activity {
     private android.content.SharedPreferences securityPrefs;
     private static String derive(String password, byte[] salt) throws Exception { PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 150000, 256); try { return Base64.encodeToString(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded(), Base64.NO_WRAP); } finally { spec.clearPassword(); } }
     public class AndroidBridge {
+        @JavascriptInterface public void openWhatsAppSupport() {
+            try { Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/213699251551")); startActivity(intent); }
+            catch (Exception e) { Toast.makeText(MainActivity.this, "تعذر فتح واتساب. تحقق من تثبيته أو افتح الرابط في المتصفح.", Toast.LENGTH_LONG).show(); }
+        }
         @JavascriptInterface public String getLicenseStatus() {
             try { return LicenseManager.status(MainActivity.this).toString(); }
             catch (Exception e) {
