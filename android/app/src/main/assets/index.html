@@ -462,7 +462,7 @@ function applyLicenseAccess(state){
    $$('#firstRunLicensePanel input,#firstRunLicensePanel button').forEach(el=>setLicenseControlDisabled(el,false));
    const licenseCode=$('#licenseActivationCode');if(licenseCode)setLicenseControlDisabled(licenseCode,false);
  }else{
-  $('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
+  $$('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
   // A successful activation must explicitly unlock the first-run wizard,
   // including its native file inputs, even if an earlier status check locked them.
   const setupForm=$('#firstRunSetupForm');
