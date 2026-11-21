@@ -1,6 +1,6 @@
 import { webcrypto } from "node:crypto";
 
-const api = process.env.MUSHRIFI_LICENSE_API || "https://mushrifi-license-server.hacene47211.workers.dev";
+const api = process.env.MUSHRIFI_LICENSE_API || "https://mushrifi-license-server-staging.hacene47211.workers.dev";
 const encoder = new TextEncoder();
 const code = "MSH-SMOKE-TEST-NOT-ISSUED-" + Date.now().toString(36).toUpperCase();
 
