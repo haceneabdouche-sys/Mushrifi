@@ -1,0 +1,40 @@
+name: Backup Mushrifi license Staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mushrifi-license-staging-backup
+  cancel-in-progress: false
+
+jobs:
+  backup-staging:
+    name: Export Staging D1 backup
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out licensing development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/device-license-foundation
+
+      - name: Export only the Staging D1 database
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.165.0"
+          command: d1 export mushrifi-licenses-staging --remote --output=staging-backup.sql --config wrangler.staging.toml
+
+      - name: Store private backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mushrifi-license-staging-backup
+          path: licensing/worker/staging-backup.sql
+          if-no-files-found: error
+          retention-days: 1
