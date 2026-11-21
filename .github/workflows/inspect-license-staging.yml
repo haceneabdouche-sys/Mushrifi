@@ -25,7 +25,7 @@ jobs:
       - name: Verify TypeScript
         working-directory: licensing/worker
         run: |
-          npm ci
+          npm install
           npm run check
 
       - name: Inspect only the Staging D1 database (read-only)
