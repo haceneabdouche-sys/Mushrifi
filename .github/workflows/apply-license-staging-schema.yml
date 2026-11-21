@@ -1,0 +1,32 @@
+name: Apply Mushrifi license Staging schema
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mushrifi-license-staging-schema
+  cancel-in-progress: false
+
+jobs:
+  apply-staging-schema:
+    name: Update Staging D1 indexes
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out licensing development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/device-license-foundation
+
+      - name: Apply schema to Staging D1 only
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.165.0"
+          command: d1 execute mushrifi-licenses-staging --remote --file=schema.sql --config wrangler.staging.toml
