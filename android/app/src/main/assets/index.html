@@ -163,7 +163,7 @@ footer{padding:24px 12px;color:#71818d}
  .students-table tbody td{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:start;gap:6px;min-width:0;width:100%;padding:8px 1px;border-bottom:1px solid #edf1f4;white-space:normal;text-align:right;overflow-wrap:normal;word-break:normal}
  .students-table tbody td::before{content:attr(data-label);color:#7a8994;font-size:11px;font-weight:700;line-height:1.7}
  .students-table tbody td.student-primary-cell{display:block;grid-column:1/-1;padding:3px 0 10px;margin-bottom:4px;border-bottom:1px solid #e5edf2}
- .students-table tbody td.student-primary-cell::before{content:'الاسم';display:block;margin-bottom:2px}
+ .students-table tbody td.student-primary-cell::before{content:'اللقب والاسم';display:block;margin-bottom:2px}
  .students-table .student-primary-cell .student-name{font-size:17px;line-height:1.6;color:#173b58}
  .students-table tbody td.student-actions-cell{display:block;grid-column:1/-1;padding:11px 0 1px;margin-top:4px;border:0}
  .students-table tbody td.student-actions-cell::before{display:block;margin-bottom:8px;color:#536b7b;font-size:12px}
@@ -173,6 +173,25 @@ footer{padding:24px 12px;color:#71818d}
  .students-table tbody td:last-child{border-bottom:0}
 }
 @media(max-width:390px){.students-table tbody tr{grid-template-columns:1fr;gap:0}.students-table tbody td{grid-template-columns:94px minmax(0,1fr)}}
+
+/* Final mobile directory layout: one aligned field per row, with readable Arabic */
+@media(max-width:700px){
+ .students-table tbody tr{grid-template-columns:minmax(0,1fr)!important;gap:0!important}
+ .students-table tbody td:not(.student-primary-cell){
+   display:grid;
+   grid-template-columns:minmax(100px,34%) minmax(0,1fr)!important;
+   align-items:start;
+   min-width:0;
+   overflow-wrap:normal!important;
+   word-break:normal!important;
+   hyphens:none!important;
+ }
+ .students-table tbody td[data-label="تاريخ الميلاد"]{white-space:nowrap}
+ .students-table tbody td[data-label="الشعبة"]{line-height:1.8}
+ .students-table tbody td::before{white-space:normal;word-break:normal;overflow-wrap:normal}
+ .students-table tbody td.student-primary-cell{grid-column:1/-1}
+}
+
 </style>
 </head>
 <body>
@@ -208,7 +227,7 @@ footer{padding:24px 12px;color:#71818d}
 <div class="row"><div><label>اسم الولي</label><input name="guardian"></div><div><label>رقم الهاتف</label><input name="phone" type="tel" inputmode="tel" autocomplete="tel"></div></div>
 <div class="actions"><button class="btn primary" id="studentSubmit" type="submit">حفظ بطاقة التلميذ</button><button class="btn hidden" id="cancelStudentEdit" type="button">إلغاء التعديل</button></div></form></div>
 <div class="panel"><h2>إضافة مستوى أو شعبة أو قسم</h2><p class="muted">يمكنك إضافة تركيبة جديدة، وسيُدرج المستوى والشعبة والقسم تلقائيًا في القوائم المتدرجة.</p><form id="sectionForm"><div class="row"><div><label>المستوى</label><input name="schoolYear" placeholder="مثال: أولى" required></div><div><label>الشعبة</label><input name="branch" placeholder="مثال: علوم تجريبية" required></div><div><label>رقم القسم</label><input name="sectionNumber" placeholder="مثال: 2" required></div></div><button class="btn primary" type="submit">إضافة إلى القوائم</button></form><div id="sectionList" class="muted"></div></div>
-<div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count">0 تلميذ</span></div><input id="studentSearch" class="student-search" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو اسم الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>الاسم</th><th>اللقب</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+<div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count">0 تلميذ</span></div><input id="studentSearch" class="student-search" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو اسم الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>اللقب والاسم</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
 <section id="attendance" class="page hidden">
  <div class="panel attendance-workspace"><h2>تسجيل الغياب اليومي للقسم</h2><p class="muted">اختر القسم والتاريخ، ثم حدّد الغائبين فقط. تُحفظ السجلات دفعة واحدة مع ساعات الغياب والتبرير والملاحظات.</p>
@@ -355,7 +374,7 @@ function renderStudentDirectory(){
 let q=($('#studentSearch')?.value||'').trim().toLocaleLowerCase('ar');
 $('#studentCount').textContent=db.students.filter(s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).length+' تلميذ';
 const searchable=s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar');
-$('#studentsRows').innerHTML=db.students.filter(s=>searchable(s).includes(q)).slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(s.first||'—')}</button></td><td data-label="اللقب">${esc(s.last||'—')}</td><td data-label="المستوى">${esc(p.schoolYear||'—')}</td><td data-label="الشعبة">${esc(shortBranch(p.branch))}</td><td data-label="القسم">${esc(p.sectionNumber||s.class||'—')}</td><td data-label="الصفة">${esc(s.attribute||s.status||'—')}</td><td data-label="تاريخ الميلاد">${esc(s.birthDate||'—')}</td><td data-label="اسم الولي">${esc(s.guardian||'—')}</td><td data-label="رقم الهاتف">${esc(s.phone||'—')}</td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="10" class="empty">لا يوجد تلاميذ.</td></tr>';
+$('#studentsRows').innerHTML=db.students.filter(s=>searchable(s).includes(q)).slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(((s.last||'')+' '+(s.first||'')).trim()||'—')}</button></td><td data-label="المستوى">${esc(p.schoolYear||'—')}</td><td data-label="الشعبة">${esc(shortBranch(p.branch))}</td><td data-label="القسم">${esc(p.sectionNumber||s.class||'—')}</td><td data-label="الصفة">${esc(s.attribute||s.status||'—')}</td><td data-label="تاريخ الميلاد">${esc(s.birthDate||'—')}</td><td data-label="اسم الولي">${esc(s.guardian||'—')}</td><td data-label="رقم الهاتف">${esc(s.phone||'—')}</td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="empty">لا يوجد تلاميذ.</td></tr>';
 }
 
 function render(){
