@@ -204,10 +204,21 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
     ).bind(codeHash).first<LicenseRow>();
     if (!candidate) return fail("رمز التفعيل غير صحيح أو سبق استعماله", 409);
     const startsAt = candidate.starts_at ?? now;
+    // If this phone already has an active license, retire that record before
+    // activating the newly issued code. The unique index permits only one
+    // active license per device; expired history remains intact.
+    await env.DB.batch([
+      env.DB.prepare(
+        "UPDATE licenses SET status = 'expired', updated_at = ? WHERE device_thumbprint = ? AND status = 'active' AND EXISTS (SELECT 1 FROM licenses WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL)"
+      ).bind(now, thumbprint, candidate.id),
+      env.DB.prepare(
+        "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, activated_at = ?, starts_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL"
+      ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, now, now, candidate.id)
+    ]);
     const updated = await env.DB.prepare(
-      "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, activated_at = ?, starts_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL RETURNING *"
-    ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, now, now, candidate.id).first<LicenseRow>();
-    if (!updated) return fail("تم ربط رمز التفعيل بجهاز آخر بالفعل", 409);
+      "SELECT * FROM licenses WHERE id = ? AND status = 'active' AND device_thumbprint = ?"
+    ).bind(candidate.id, thumbprint).first<LicenseRow>();
+    if (!updated) return fail("رمز التفعيل غير صالح أو سبق استعماله؛ لم يتم تغيير الترخيص السابق", 409);
     const token = await signLicense(env, updated, now);
     return json({ ok: true, license: token, nextCheckAt: now + 30 * DAY, graceDays: 7 });
   } catch (error) {
