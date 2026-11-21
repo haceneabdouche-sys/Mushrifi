@@ -15,7 +15,8 @@ The Android client implementation is now present on the isolated `feature/device
 
 ## Security model
 
-- One license is bound to one Android device public key (EC P-256).
+- An active license is bound to one Android device public key (EC P-256); a device can have only one active license at a time.
+- Activating a newly issued code on a device that already has an active license expires the previous license record and activates the new one. The previous record and device binding remain in history; student data is not involved.
 - The app proves possession of the private key by signing a one-time server nonce.
 - Activation codes are stored as SHA-256 hashes and can be used once.
 - License responses are signed by an RSA-SHA256 private key held only as a Worker secret.
@@ -53,6 +54,8 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
   - `GET /v1/admin/licenses`
   - `POST /v1/admin/licenses/{id}/suspend`
   - `POST /v1/admin/licenses/{id}/renew` with `{ "durationDays":365 }`
+
+The database schema change narrows the unique device index to active licenses only. Apply the updated `schema.sql` to the staging D1 database before deploying the updated Worker. Do not apply it to production as part of this development task.
 
 ## Remaining validation and hardening
 
