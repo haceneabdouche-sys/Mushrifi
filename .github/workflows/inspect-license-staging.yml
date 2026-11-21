@@ -13,7 +13,7 @@ concurrency:
 jobs:
   inspect-staging:
     name: Read-only Staging checks
-    if: github.ref == 'refs/heads/feature/device-license-foundation'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
