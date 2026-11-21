@@ -31,6 +31,8 @@ assert.equal(audit.normalizeNameKey('محمد 2 علي') === audit.normalizeName
 const idPriority = audit.resolveStudentForRecord(db.students, db.attendance[0]);
 assert.equal(idPriority.reason, 'id');
 assert.equal(idPriority.student.id, 'student-a');
+const ambiguousMatch = audit.resolveStudentForRecord(db.students, { studentName: 'وائل عيسو1', class: section });
+assert.equal(ambiguousMatch.ambiguous.length, 2);
 
 const report = audit.buildStudentNameAuditReport(db);
 assert.equal(report.summary.groups, 1);
