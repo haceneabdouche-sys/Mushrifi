@@ -38,7 +38,7 @@ import javax.crypto.spec.GCMParameterSpec;
  * The server signing private key is never included in this app.
  */
 final class LicenseManager {
-    private static final String API = "https://mushrifi-license-server.hacene47211.workers.dev";
+    private static final String API = "https://mushrifi-license-server-staging.hacene47211.workers.dev";
     private static final String KEY_ALIAS = "mushrifi_device_license_ec";
     private static final String TOKEN_KEY_ALIAS = "mushrifi_license_token_aes";
     private static final String PREFS = "mushrifi_license";
@@ -56,7 +56,7 @@ final class LicenseManager {
     private LicenseManager() {}
 
     static JSONObject activate(Context context, String activationCode) throws Exception {
-        if (activationCode == null || !activationCode.trim().matches("[A-Za-z0-9-]{12,100}"))
+        if (activationCode == null || !activationCode.trim().matches("[A-Za-z0-9_-]{12,100}"))
             throw new Exception("رمز التفعيل غير صالح");
         KeyPair pair = getOrCreateDeviceKey();
         JSONObject publicJwk = publicJwk((ECPublicKey) pair.getPublic());
