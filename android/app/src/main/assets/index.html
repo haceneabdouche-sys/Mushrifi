@@ -536,7 +536,7 @@ function educationStageForYear(value,fallback="secondary"){
  if(/ثانوي/.test(key))return "secondary";
  return ["primary","middle","secondary"].includes(fallback)?fallback:"secondary";
 }
-function educationStageLabel(value){return EDUCATION_LEVELS.find(x=>x.key===value)?.label||"ثانوي";}
+function educationStageLabel(value){return value==="primary"?"ابتدائي":value==="middle"?"متوسط":"ثانوي";}
 function stageYears(value){return EDUCATION_LEVELS.find(x=>x.key===value)?.years||EDUCATION_LEVELS[2].years;}
 const BRANCH_SHORTCUTS=[["جذع مشترك علوم وتكنولوجيا","ج م ع ت"],["جذع مشترك آداب","ج م أ"],["آداب وفلسفة","أ ف"],["تسيير واقتصاد","ت إ"],["رياضيات","ريا"],["تقني رياضي","ت ر"],["علوم تجريبية","ع ت"],["لغات أجنبية","ل ا"]];
 const compactAcademic=v=>academicNorm(v).replace(/\s+/g,"");
