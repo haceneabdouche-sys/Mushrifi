@@ -38,5 +38,5 @@ assert.notEqual(labelStart,-1,'student academic label must exist');
 assert.notEqual(labelEnd,-1,'student editor follows academic label');
 vm.runInContext(html.slice(labelStart,labelEnd),context);
 const sample={schoolYear:'أولى',branch:'جذع مشترك علوم وتكنولوجيا',sectionNumber:'1'};
-assert.equal(context.studentAcademicLabel(sample),'ثانوي — أولى — ج م ع ت 1','compact student section code includes its education stage');
+assert.equal(context.studentAcademicLabel(sample),'ثانوي - أولى - ج م ع ت - القسم 1','secondary student label includes stage, branch, and section');
 console.log('Academic branch aliases: '+cases.length+' mappings and compact section label passed.');
