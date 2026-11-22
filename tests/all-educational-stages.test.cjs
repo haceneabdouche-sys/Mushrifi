@@ -21,6 +21,9 @@ assert.equal(context.__test.DEFAULT_ACADEMIC_STRUCTURE.filter(x=>x.educationLeve
 assert.equal(context.__test.DEFAULT_ACADEMIC_STRUCTURE.filter(x=>x.educationLevel==='middle').length,4,'all middle years need a default general class');
 assert.equal(context.__test.DEFAULT_ACADEMIC_STRUCTURE.filter(x=>x.educationLevel==='secondary').length,14,'secondary years need first-year trunks and upper-year branches');
 assert.equal(context.studentAcademicParts(context.db.students[0]).educationLevel,'primary');
+assert.equal(context.shortAcademicYear('السنة الأولى ابتدائي'),'سنة أولى','primary year labels should be short');
+assert.equal(context.shortAcademicYear('السنة الأولى متوسط'),'سنة أولى','middle year labels should be short');
+assert.equal(context.shortAcademicYear('السنة الرابعة متوسط'),'سنة رابعة','middle year labels should be short');
 assert.equal(context.studentAcademicParts(context.db.students[1]).educationLevel,'middle');
 assert.equal(context.studentAcademicParts(context.db.students[2]).educationLevel,'secondary');
 assert.equal(context.studentAcademicParts(context.db.students[0]).branch,'عام','primary students use a general branch');
@@ -34,6 +37,7 @@ assert.equal(context.db.students.length,4,'building the new academic structure m
 assert.equal(context.db.students.find(x=>x.id==='legacy').schoolYear,'أولى','legacy year labels must remain intact');
 assert.equal(context.db.students.find(x=>x.id==='legacy').educationLevel,'secondary','legacy student records should be classified without losing their old year value');
 assert.ok(html.includes('id="studentEducationLevel"'),'student form must allow choosing the education stage');
+assert.ok(html.includes('function studentAcademicLabel(st){const p=studentAcademicParts(st);return [educationStageLabel(p.educationLevel),shortAcademicYear(p.schoolYear),...(p.educationLevel==="secondary"?[shortBranch(p.branch)]:[]),"القسم "+p.sectionNumber].filter(Boolean).join(" - ")||"—";}'),'primary and middle display labels must omit the general branch');
 assert.ok(html.includes("v.educationLevel=educationStageForYear(v.schoolYear,v.educationLevel)"),'new student cards must persist their education stage');
 assert.ok(html.includes("if(v.educationLevel!=='secondary')v.branch='عام'"),'primary and middle cards must not require a secondary stream');
 console.log('All educational stages: 5 primary, 4 middle, 3 secondary years and data preservation passed.');
