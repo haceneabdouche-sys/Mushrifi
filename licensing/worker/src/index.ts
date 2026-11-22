@@ -15,6 +15,7 @@ type LicenseRow = {
   expires_at: number | null;
   device_public_key_json: string | null;
   device_thumbprint: string | null;
+  device_identity_hash: string | null;
   activated_at: number | null;
   last_validated_at: number | null;
   created_at: number;
@@ -155,13 +156,23 @@ async function createChallenge(env: Env, body: Record<string, unknown>): Promise
   let licenseId: string | null = null;
   let codeHash: string | null = null;
   let thumbprint: string;
+  let identityHash: string | null = null;
 
   try {
-    if (purpose === "activate") {
+    if (body.recover === true) {
+      if (typeof body.deviceIdentityHash !== "string" || !/^[a-f0-9]{64}$/.test(body.deviceIdentityHash)) return fail("معرّف الجهاز غير صالح");
+      const jwk = canonicalDeviceJwk(body.devicePublicKey);
+      thumbprint = await deviceThumbprint(jwk);
+      identityHash = body.deviceIdentityHash;
+      const license = await env.DB.prepare("SELECT id FROM licenses WHERE device_identity_hash = ? AND status = 'active' AND (expires_at IS NULL OR expires_at > ?)").bind(identityHash, now).first<{id:string}>();
+      if (!license) return fail("لا يوجد ترخيص نشط محفوظ لهذا الهاتف", 404);
+      licenseId = license.id;
+    } else if (purpose === "activate") {
       if (!validCode(body.activationCode)) return fail("رمز التفعيل غير صالح");
       const jwk = canonicalDeviceJwk(body.devicePublicKey);
       thumbprint = await deviceThumbprint(jwk);
       codeHash = await sha256Hex(body.activationCode.trim().toUpperCase());
+      if (typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash)) identityHash = body.deviceIdentityHash;
     } else {
       if (typeof body.licenseId !== "string" || !body.licenseId) return fail("معرّف الترخيص مطلوب");
       const license = await env.DB.prepare(
@@ -172,12 +183,13 @@ async function createChallenge(env: Env, body: Record<string, unknown>): Promise
       }
       licenseId = license.id;
       thumbprint = license.device_thumbprint;
+      if (typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash)) identityHash = body.deviceIdentityHash;
     }
     // Remove expired one-time challenges opportunistically to keep the D1 table bounded.
     await env.DB.prepare("DELETE FROM challenges WHERE expires_at <= ?").bind(now).run();
     await env.DB.prepare(
-      "INSERT INTO challenges (nonce, purpose, license_id, activation_code_hash, device_thumbprint, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
-    ).bind(nonce, purpose, licenseId, codeHash, thumbprint, expires, now).run();
+      "INSERT INTO challenges (nonce, purpose, license_id, activation_code_hash, device_thumbprint, device_identity_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(nonce, purpose, licenseId, codeHash, thumbprint, identityHash, expires, now).run();
     return json({ ok: true, nonce, expiresAt: expires });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "تعذر إنشاء التحدي");
