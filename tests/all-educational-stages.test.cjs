@@ -13,11 +13,11 @@ const context={db:{settings:{academicStructure:[]},students:[
  {id:'legacy',schoolYear:'أولى',branch:'جذع مشترك علوم وتكنولوجيا',class:'1'}
 ]}};
 vm.createContext(context);
-vm.runInContext(html.slice(start,end),context);
-assert.equal(context.EDUCATION_LEVELS.find(x=>x.key==='primary').years.length,5,'primary must have five years');
+vm.runInContext(html.slice(start,end)+'\nglobalThis.__test={EDUCATION_LEVELS,DEFAULT_ACADEMIC_STRUCTURE};',context);
+assert.equal(context.__test.EDUCATION_LEVELS.find(x=>x.key==='primary').years.length,5,'primary must have five years');
 assert.equal(context.EDUCATION_LEVELS.find(x=>x.key==='middle').years.length,4,'middle must have four years');
 assert.equal(context.EDUCATION_LEVELS.find(x=>x.key==='secondary').years.length,3,'secondary must have three years');
-assert.equal(context.DEFAULT_ACADEMIC_STRUCTURE.filter(x=>x.educationLevel==='primary').length,5,'all primary years need a default general class');
+assert.equal(context.__test.DEFAULT_ACADEMIC_STRUCTURE.filter(x=>x.educationLevel==='primary').length,5,'all primary years need a default general class');
 assert.equal(context.DEFAULT_ACADEMIC_STRUCTURE.filter(x=>x.educationLevel==='middle').length,4,'all middle years need a default general class');
 assert.equal(context.DEFAULT_ACADEMIC_STRUCTURE.filter(x=>x.educationLevel==='secondary').length,14,'secondary years need first-year trunks and upper-year branches');
 assert.equal(context.studentAcademicParts(context.db.students[0]).educationLevel,'primary');
