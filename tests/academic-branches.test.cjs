@@ -40,3 +40,5 @@ vm.runInContext(html.slice(labelStart,labelEnd),context);
 const sample={schoolYear:'أولى',branch:'جذع مشترك علوم وتكنولوجيا',sectionNumber:'1'};
 assert.equal(context.studentAcademicLabel(sample),'ثانوي - أولى - ج م ع ت - القسم 1','secondary student label includes stage, branch, and section');
 console.log('Academic branch aliases: '+cases.length+' mappings and compact section label passed.');
+
+// Keep the concise academic label format covered by the regression suite.
