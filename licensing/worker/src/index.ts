@@ -239,6 +239,23 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
   }
 }
 
+async function recoverLicense(env: Env, body: Record<string, unknown>): Promise<Response> {
+  if (typeof body.licenseId !== "string" || typeof body.deviceIdentityHash !== "string" || !/^[a-f0-9]{64}$/.test(body.deviceIdentityHash) || typeof body.nonce !== "string" || typeof body.signature !== "string") return fail("بيانات استعادة الترخيص غير مكتملة");
+  const now = Date.now();
+  try {
+    const jwk = canonicalDeviceJwk(body.devicePublicKey);
+    const thumbprint = await deviceThumbprint(jwk);
+    const license = await env.DB.prepare("SELECT * FROM licenses WHERE id = ? AND device_identity_hash = ? AND status = 'active'").bind(body.licenseId, body.deviceIdentityHash).first<LicenseRow>();
+    if (!license || (license.expires_at !== null && license.expires_at <= now)) return fail("الترخيص غير نشط أو انتهت مدته", 403);
+    const challenge = await env.DB.prepare("UPDATE challenges SET consumed_at = ? WHERE nonce = ? AND purpose = 'validate' AND license_id = ? AND device_thumbprint = ? AND device_identity_hash = ? AND consumed_at IS NULL AND expires_at > ? RETURNING nonce").bind(now, body.nonce, license.id, thumbprint, body.deviceIdentityHash, now).first();
+    if (!challenge) return fail("انتهت صلاحية طلب الاستعادة أو استُخدم مسبقاً", 409);
+    if (!(await verifyDeviceProof(jwk, body.nonce, body.signature))) return fail("تعذر إثبات ملكية مفتاح التطبيق الجديد", 401);
+    await env.DB.prepare("UPDATE licenses SET device_public_key_json = ?, device_thumbprint = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND device_identity_hash = ? AND status = 'active'").bind(JSON.stringify(jwk), thumbprint, now, now, license.id, body.deviceIdentityHash).run();
+    const updated = await env.DB.prepare("SELECT * FROM licenses WHERE id = ?").bind(license.id).first<LicenseRow>();
+    if (!updated) return fail("تعذر تحديث ربط الجهاز", 500);
+    return json({ ok: true, license: await signLicense(env, updated, now), nextCheckAt: now + 30 * DAY, graceDays: 7 });
+  } catch (error) { return fail(error instanceof Error ? error.message : "تعذرت استعادة الترخيص"); }
+}
 async function validateLicense(env: Env, body: Record<string, unknown>): Promise<Response> {
   if (typeof body.licenseId !== "string" || typeof body.nonce !== "string" || typeof body.signature !== "string") {
     return fail("بيانات التحقق غير مكتملة");
@@ -341,6 +358,7 @@ export default {
     if (url.pathname === "/v1/challenge") return createChallenge(env, body);
     if (url.pathname === "/v1/activate") return activate(env, body);
     if (url.pathname === "/v1/validate") return validateLicense(env, body);
+    if (url.pathname === "/v1/recover") return recoverLicense(env, body);
     return fail("المسار غير موجود", 404);
   }
 };
