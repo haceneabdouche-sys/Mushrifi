@@ -1,0 +1,46 @@
+name: Deploy Mushrifi license recovery to Staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mushrifi-license-staging-recovery
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    if: github.ref == 'refs/heads/feature/device-license-foundation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout licensing development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/device-license-foundation
+
+      - name: Verify Worker source
+        working-directory: licensing/worker
+        run: |
+          npm ci
+          npm run check
+
+      - name: Apply additive migration to Staging D1 only
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.165.0"
+          command: d1 migrations apply mushrifi-licenses-staging --remote --config wrangler.staging.toml
+
+      - name: Deploy recovery API to Staging only
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.165.0"
+          command: deploy --config wrangler.staging.toml
