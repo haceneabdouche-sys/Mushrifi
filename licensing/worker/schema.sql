@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS licenses (
   expires_at INTEGER,
   device_public_key_json TEXT,
   device_thumbprint TEXT,
+  device_identity_hash TEXT,
   activated_at INTEGER,
   last_validated_at INTEGER,
   created_at INTEGER NOT NULL,
@@ -28,6 +29,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_licenses_device_thumbprint
 ON licenses(device_thumbprint)
 WHERE device_thumbprint IS NOT NULL AND status = 'active';
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_licenses_device_identity_active
+ON licenses(device_identity_hash)
+WHERE device_identity_hash IS NOT NULL AND status = 'active';
+
 CREATE INDEX IF NOT EXISTS idx_licenses_status_expiry
 ON licenses(status, expires_at);
 
@@ -37,6 +42,7 @@ CREATE TABLE IF NOT EXISTS challenges (
   license_id TEXT,
   activation_code_hash TEXT,
   device_thumbprint TEXT NOT NULL,
+  device_identity_hash TEXT,
   expires_at INTEGER NOT NULL,
   created_at INTEGER NOT NULL,
   consumed_at INTEGER,
