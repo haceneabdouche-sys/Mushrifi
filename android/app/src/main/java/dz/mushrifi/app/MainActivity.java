@@ -369,8 +369,17 @@ public class MainActivity extends Activity {
         licenseExecutor.execute(() -> {
             org.json.JSONObject result;
             try {
-                if (!LicenseManager.shouldValidate(MainActivity.this)) return;
-                result = LicenseManager.validate(MainActivity.this);
+                if (!LicenseManager.hasStoredLicense(MainActivity.this)) {
+                    try {
+                        result = LicenseManager.recover(MainActivity.this);
+                    } catch (Exception recoveryError) {
+                        result = LicenseManager.status(MainActivity.this);
+                        result.put("validationError", recoveryError.getMessage() == null ? "لا يوجد ترخيص قابل للاستعادة لهذا الهاتف" : recoveryError.getMessage());
+                    }
+                } else {
+                    if (!LicenseManager.shouldValidate(MainActivity.this)) return;
+                    result = LicenseManager.validate(MainActivity.this);
+                }
             } catch (Exception error) {
                 try {
                     result = LicenseManager.status(MainActivity.this);
