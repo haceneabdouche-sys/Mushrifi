@@ -2,6 +2,7 @@ package dz.mushrifi.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.provider.Settings;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
@@ -55,6 +56,15 @@ final class LicenseManager {
 
     private LicenseManager() {}
 
+    private static String installationIdentity(Context context) throws Exception {
+        String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+        if (androidId == null || androidId.trim().isEmpty()) throw new Exception("تعذر قراءة هوية الهاتف الآمنة");
+        byte[] digest = MessageDigest.getInstance("SHA-256").digest((context.getPackageName() + "|" + androidId).getBytes(StandardCharsets.UTF_8));
+        StringBuilder hex = new StringBuilder(64);
+        for (byte b : digest) hex.append(String.format(java.util.Locale.ROOT, "%02x", b & 0xff));
+        return hex.toString();
+    }
+
     static JSONObject activate(Context context, String activationCode) throws Exception {
         if (activationCode == null || !activationCode.trim().matches("[A-Za-z0-9_-]{12,100}"))
             throw new Exception("رمز التفعيل غير صالح");
@@ -63,11 +73,13 @@ final class LicenseManager {
         JSONObject challenge = post("/v1/challenge", new JSONObject()
             .put("purpose", "activate")
             .put("activationCode", activationCode.trim())
-            .put("devicePublicKey", publicJwk));
+            .put("devicePublicKey", publicJwk)
+            .put("deviceIdentityHash", installationIdentity(context)));
         String nonce = challenge.getString("nonce");
         JSONObject response = post("/v1/activate", new JSONObject()
             .put("activationCode", activationCode.trim())
             .put("devicePublicKey", publicJwk)
+            .put("deviceIdentityHash", installationIdentity(context))
             .put("nonce", nonce)
             .put("signature", signNonce(pair, nonce)));
         String token = response.getString("license");
@@ -79,6 +91,29 @@ final class LicenseManager {
         return status(context);
     }
 
+    static JSONObject recover(Context context) throws Exception {
+        KeyPair pair = getOrCreateDeviceKey();
+        JSONObject publicJwk = publicJwk((ECPublicKey) pair.getPublic());
+        String identity = installationIdentity(context);
+        JSONObject challenge = post("/v1/challenge", new JSONObject()
+            .put("purpose", "validate")
+            .put("recover", true)
+            .put("deviceIdentityHash", identity)
+            .put("devicePublicKey", publicJwk));
+        String nonce = challenge.getString("nonce");
+        String licenseId = challenge.getString("licenseId");
+        JSONObject response = post("/v1/recover", new JSONObject()
+            .put("licenseId", licenseId)
+            .put("deviceIdentityHash", identity)
+            .put("devicePublicKey", publicJwk)
+            .put("nonce", nonce)
+            .put("signature", signNonce(pair, nonce)));
+        String token = response.getString("license");
+        JSONObject payload = verifyAndReadToken(token);
+        if (!"active".equals(payload.optString("status")) || !deviceThumbprint(publicJwk).equals(payload.optString("deviceThumbprint"))) throw new Exception("استعادة الترخيص لا تطابق هذا الهاتف");
+        save(context, token, payload);
+        return status(context);
+    }
     static JSONObject validate(Context context) throws Exception {
         SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         String licenseId = prefs.getString("license_id", null);
@@ -86,10 +121,12 @@ final class LicenseManager {
         KeyPair pair = getOrCreateDeviceKey();
         JSONObject challenge = post("/v1/challenge", new JSONObject()
             .put("purpose", "validate")
-            .put("licenseId", licenseId));
+            .put("licenseId", licenseId)
+            .put("deviceIdentityHash", installationIdentity(context)));
         String nonce = challenge.getString("nonce");
         JSONObject response = post("/v1/validate", new JSONObject()
             .put("licenseId", licenseId)
+            .put("deviceIdentityHash", installationIdentity(context))
             .put("nonce", nonce)
             .put("signature", signNonce(pair, nonce)));
         String token = response.getString("license");
