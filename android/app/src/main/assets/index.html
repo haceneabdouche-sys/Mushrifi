@@ -727,7 +727,7 @@ function showVoiceSuggestedActions(st){
  const actions=[['absence','تسجيل غياب'],['late','تسجيل تأخر'],['report','عرض ملف التلميذ'],['violation','تسجيل مخالفة'],['summons','إنشاء استدعاء']];
  $('#voiceConfirm').innerHTML='<h3>الإجراءات المقترحة للتلميذ</h3><p><b>'+esc(fullName)+'</b> · '+esc(st.class||'')+'</p><div class="actions"><button type="button" class="btn primary" id="voiceOpenStudentRecord">فتح الملف الكامل</button>'+actions.map(([value,label])=>'<button type="button" class="btn voiceSuggestedAction" data-action="'+value+'">'+label+'</button>').join('')+'</div>';
  $('#voiceOpenStudentRecord').onclick=()=>{window.studentHistory(st.id);$('#voiceConfirm').classList.add('hidden');};
- $('.voiceSuggestedAction').forEach(button=>button.onclick=()=>{window.studentAction({value:button.dataset.action},String(st.id));$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم اختيار: '+button.textContent+' للتلميذ '+fullName+'.';});
+ $$('.voiceSuggestedAction').forEach(button=>button.onclick=()=>{window.studentAction({value:button.dataset.action},String(st.id));$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم اختيار: '+button.textContent+' للتلميذ '+fullName+'.';});
 }
 function handleVoiceOpenStudent(raw){
  let requested=normalizeArabic(raw);
