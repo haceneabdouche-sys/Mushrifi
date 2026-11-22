@@ -190,7 +190,7 @@ async function createChallenge(env: Env, body: Record<string, unknown>): Promise
     await env.DB.prepare(
       "INSERT INTO challenges (nonce, purpose, license_id, activation_code_hash, device_thumbprint, device_identity_hash, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     ).bind(nonce, purpose, licenseId, codeHash, thumbprint, identityHash, expires, now).run();
-    return json({ ok: true, nonce, expiresAt: expires });
+    return json({ ok: true, nonce, expiresAt: expires, licenseId });
   } catch (error) {
     return fail(error instanceof Error ? error.message : "تعذر إنشاء التحدي");
   }
