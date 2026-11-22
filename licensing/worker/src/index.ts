@@ -205,9 +205,10 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
     const jwk = canonicalDeviceJwk(body.devicePublicKey);
     const thumbprint = await deviceThumbprint(jwk);
     const codeHash = await sha256Hex(body.activationCode.trim().toUpperCase());
+    const identityHash = typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash) ? body.deviceIdentityHash : null;
     const challenge = await env.DB.prepare(
-      "UPDATE challenges SET consumed_at = ? WHERE nonce = ? AND purpose = 'activate' AND activation_code_hash = ? AND device_thumbprint = ? AND consumed_at IS NULL AND expires_at > ? RETURNING nonce"
-    ).bind(now, body.nonce, codeHash, thumbprint, now).first();
+      "UPDATE challenges SET consumed_at = ? WHERE nonce = ? AND purpose = 'activate' AND activation_code_hash = ? AND device_thumbprint = ? AND device_identity_hash IS ? AND consumed_at IS NULL AND expires_at > ? RETURNING nonce"
+    ).bind(now, body.nonce, codeHash, thumbprint, identityHash, now).first();
     if (!challenge) return fail("انتهت صلاحية طلب التفعيل أو استُخدم مسبقاً", 409);
     if (!(await verifyDeviceProof(jwk, body.nonce, body.signature))) return fail("تعذر إثبات ملكية مفتاح هذا الهاتف", 401);
 
@@ -221,11 +222,11 @@ async function activate(env: Env, body: Record<string, unknown>): Promise<Respon
     // active license per device; expired history remains intact.
     await env.DB.batch([
       env.DB.prepare(
-        "UPDATE licenses SET status = 'expired', updated_at = ? WHERE device_thumbprint = ? AND status = 'active' AND EXISTS (SELECT 1 FROM licenses WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL)"
-      ).bind(now, thumbprint, candidate.id),
+        "UPDATE licenses SET status = 'expired', updated_at = ? WHERE status = 'active' AND (device_thumbprint = ? OR (? IS NOT NULL AND device_identity_hash = ?)) AND EXISTS (SELECT 1 FROM licenses WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL)"
+      ).bind(now, thumbprint, identityHash, identityHash, candidate.id),
       env.DB.prepare(
-        "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, activated_at = ?, starts_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL"
-      ).bind(JSON.stringify(jwk), thumbprint, now, startsAt, now, now, candidate.id)
+        "UPDATE licenses SET status = 'active', device_public_key_json = ?, device_thumbprint = ?, device_identity_hash = ?, activated_at = ?, starts_at = ?, last_validated_at = ?, updated_at = ? WHERE id = ? AND status = 'issued' AND device_thumbprint IS NULL"
+      ).bind(JSON.stringify(jwk), thumbprint, identityHash, now, startsAt, now, now, candidate.id)
     ]);
     const updated = await env.DB.prepare(
       "SELECT * FROM licenses WHERE id = ? AND status = 'active' AND device_thumbprint = ?"
@@ -250,18 +251,20 @@ async function validateLicense(env: Env, body: Record<string, unknown>): Promise
       return fail("الترخيص غير نشط", 403);
     }
     const jwk = JSON.parse(license.device_public_key_json) as JsonWebKey;
+    const identityHash = typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash) ? body.deviceIdentityHash : null;
+    if (license.device_identity_hash && identityHash && license.device_identity_hash !== identityHash) return fail("هوية الهاتف لا تطابق الترخيص", 403);
     const challenge = await env.DB.prepare(
-      "UPDATE challenges SET consumed_at = ? WHERE nonce = ? AND purpose = 'validate' AND license_id = ? AND device_thumbprint = ? AND consumed_at IS NULL AND expires_at > ? RETURNING nonce"
-    ).bind(now, body.nonce, license.id, license.device_thumbprint, now).first();
+      "UPDATE challenges SET consumed_at = ? WHERE nonce = ? AND purpose = 'validate' AND license_id = ? AND device_thumbprint = ? AND device_identity_hash IS ? AND consumed_at IS NULL AND expires_at > ? RETURNING nonce"
+    ).bind(now, body.nonce, license.id, license.device_thumbprint, identityHash, now).first();
     if (!challenge) return fail("انتهت صلاحية طلب التحقق أو استُخدم مسبقاً", 409);
     if (!(await verifyDeviceProof(jwk, body.nonce, body.signature))) return fail("فشل إثبات هوية الهاتف", 401);
     if (license.expires_at !== null && license.expires_at <= now) {
       await env.DB.prepare("UPDATE licenses SET status = 'expired', updated_at = ? WHERE id = ?").bind(now, license.id).run();
       return fail("انتهت مدة الترخيص؛ بياناتك محفوظة ويمكنك تصدير النسخة الاحتياطية", 403);
     }
-    await env.DB.prepare("UPDATE licenses SET last_validated_at = ?, updated_at = ? WHERE id = ?")
-      .bind(now, now, license.id).run();
-    const refreshed = { ...license, last_validated_at: now };
+    await env.DB.prepare("UPDATE licenses SET device_identity_hash = COALESCE(device_identity_hash, ?), last_validated_at = ?, updated_at = ? WHERE id = ?")
+      .bind(identityHash, now, now, license.id).run();
+    const refreshed = { ...license, device_identity_hash: license.device_identity_hash || identityHash, last_validated_at: now };
     const token = await signLicense(env, refreshed, now);
     return json({ ok: true, license: token, nextCheckAt: now + 30 * DAY, graceDays: 7 });
   } catch (error) {
