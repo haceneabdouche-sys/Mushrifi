@@ -30,6 +30,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run test:rate-limit
+      - run: npm run test:rate-limit-behavior
       - name: Smoke-test deployed challenge and device proof without issuing a license
         if: github.event_name == 'push' && github.ref == 'refs/heads/feature/device-license-foundation'
         run: node scripts/smoke-test.mjs
