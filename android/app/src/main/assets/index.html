@@ -628,6 +628,13 @@ function applyLicenseAccess(state){
  refreshUndoPanel();
 }
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
+function resolveIndividualAbsenceHours(period,enteredHours,timetableHours){
+ const hours=parseHours(enteredHours);
+ if(hours===''||!Number.isFinite(hours)||hours<0.25||hours>24)return {ok:false,reason:'invalid-hours'};
+ if(period==='اليوم كاملاً'&&(timetableHours===null||timetableHours===undefined))return {ok:false,reason:'missing-timetable'};
+ if(period==='اليوم كاملاً'&&Number(timetableHours)<=0)return {ok:false,reason:'no-school-hours'};
+ return {ok:true,hours:Number(hours),fullDay:period==='اليوم كاملاً'};
+}
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
@@ -905,12 +912,16 @@ $('#attForm').onsubmit=e=>{
  const st=db.students.find(x=>String(x.id)===String(f.get('student')));let hours='',minutes='',fullDay=false;
  if(isPresent){hours=0;}
  else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}
- else if(period==='اليوم كاملاً'){
-  hours=scheduledHoursForStudentDate(st,String(f.get('date')||''));
-  if(hours===null){alert('لا يمكن تسجيل يوم كامل قبل إدخال التوقيت الأسبوعي لهذا القسم من الإعدادات.');return;}
-  if(hours<=0){alert('لا توجد ساعات دراسة مبرمجة لهذا القسم في التاريخ المحدد.');return;}
-  fullDay=true;
- }else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
+ else{
+  const timetableHours=period==='اليوم كاملاً'?scheduledHoursForStudentDate(st,String(f.get('date')||'')):null;
+  const resolved=resolveIndividualAbsenceHours(period,f.get('hours'),timetableHours);
+  if(!resolved.ok){
+   if(resolved.reason==='missing-timetable'){alert('لا يمكن تسجيل يوم كامل قبل إدخال التوقيت الأسبوعي لهذا القسم من الإعدادات.');return;}
+   if(resolved.reason==='no-school-hours'){alert('لا توجد ساعات دراسة مبرمجة لهذا القسم في التاريخ المحدد.');return;}
+   alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;
+  }
+  hours=resolved.hours;fullDay=resolved.fullDay;
+ }
  const record={id:crypto.randomUUID(),student:f.get('student'),studentName:st?(st.last+' '+st.first).trim():'',class:st?.class||'',schoolYear:st?.schoolYear||'',branch:st?.branch||'',sectionLabel:st?attendanceGroupLabel(st):'',type,date:f.get('date'),period,hours,fullDay,minutes:isLate?minutes:null,justified:isPresent?'مبرر':f.get('justified'),notes:f.get('notes')};
  db.attendance.push(record);if(!save()){db.attendance.pop();return;}e.target.reset();$('#attForm').elements.date.value=dateISO();updateAttendanceTypeFields();alert(isPresent?'تم تسجيل حضور التلميذ.':isLate?'تم حفظ التأخر لمدة '+minutes+' دقيقة.':'تم حفظ الغياب بنجاح.');
 };
