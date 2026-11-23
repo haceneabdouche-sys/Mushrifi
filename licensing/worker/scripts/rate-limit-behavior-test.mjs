@@ -70,13 +70,12 @@ async function publicRequest(env, ip = "203.0.113.10") {
   }), env);
 }
 
-async function adminRequest(env, ip = "203.0.113.20") {
+async function adminRequest(env, ip = "203.0.113.20", authorization = "Bearer unit-test-admin-token") {
+  const headers = { "cf-connecting-ip": ip };
+  if (authorization !== null) headers.authorization = authorization;
   return worker.fetch(new Request("https://unit.test/v1/admin/not-a-real-route", {
     method: "GET",
-    headers: {
-      authorization: "Bearer unit-test-admin-token",
-      "cf-connecting-ip": ip
-    }
+    headers
   }), env);
 }
 
@@ -120,6 +119,27 @@ async function probeRequest(env, ip = "203.0.113.30") {
   assert(adminLimiter.calls.length === 3 && adminLimiter.calls.every(key => key === "203.0.113.20"),
     "Admin limiter must receive the trusted client IP for every request");
   assert(getDbCalls() === 0, "Admin behavior test must not access D1");
+}
+
+
+// Unauthorized admin attempts are rate-limited before authorization and never reach D1.
+{
+  const adminLimiter = makeLimiter(2);
+  const { env, getDbCalls } = makeEnv({ adminLimiter });
+  const first = await adminRequest(env, "203.0.113.21", "Bearer invalid-token");
+  const second = await adminRequest(env, "203.0.113.21", null);
+  assert(first.status === 401 && second.status === 401,
+    "Unauthorized admin requests under the threshold must be rejected by authentication");
+  const limited = await adminRequest(env, "203.0.113.21", "Bearer invalid-token");
+  assert(limited.status === 429,
+    "Unauthorized admin requests must be rate limited before authorization");
+  assert(limited.headers.get("retry-after") === "60",
+    "Unauthorized admin 429 response must include Retry-After: 60");
+  assert(adminLimiter.calls.length === 3 &&
+    adminLimiter.calls.every(key => key === "203.0.113.21"),
+    "Unauthorized admin attempts must consume the same client-IP admin bucket");
+  assert(getDbCalls() === 0,
+    "Unauthorized admin requests must never access D1");
 }
 
 // Health checks remain available and do not consume either rate-limit bucket.
@@ -180,4 +200,4 @@ async function probeRequest(env, ip = "203.0.113.30") {
   assert(response.status === 503, "Admin requests must fail closed when the limiter throws");
 }
 
-console.log("PASS: public/admin/probe 429 behavior, client-key isolation, Retry-After, health bypass, production probe disablement, fail-closed handling, and zero D1 access.");
+console.log("PASS: public/admin/probe 429 behavior, unauthorized-admin throttling before auth, client-key isolation, Retry-After, health bypass, production probe disablement, fail-closed handling, and zero D1 access.");
