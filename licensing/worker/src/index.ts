@@ -52,6 +52,7 @@ async function enforceRateLimit(request: Request, env: Env, admin = false, test 
   const limiter = test ? env.TEST_RATE_LIMITER : admin ? env.ADMIN_RATE_LIMITER : env.PUBLIC_RATE_LIMITER;
   const key = ip.slice(0, 64);
   try {
+    if (!limiter) throw new Error("Rate limiter binding is missing");
     const result = await limiter.limit({ key });
     if (result.success) return null;
     return new Response(JSON.stringify({
