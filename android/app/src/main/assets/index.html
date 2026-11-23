@@ -628,12 +628,13 @@ function applyLicenseAccess(state){
  refreshUndoPanel();
 }
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
+const isFullDayAbsence=(type,period)=>type==='غياب'&&['اليومكاملاً','اليومكاملا','يومكامل'].includes(String(period||'').replace(/[\u0640\s]/g,''));
 function resolveIndividualAbsenceHours(period,enteredHours,timetableHours){
- const hours=parseHours(enteredHours);
+ const hours=parseHours(enteredHours),fullDay=isFullDayAbsence('غياب',period);
  if(hours===''||!Number.isFinite(hours)||hours<0.25||hours>24)return {ok:false,reason:'invalid-hours'};
- if(period==='اليوم كاملاً'&&(timetableHours===null||timetableHours===undefined))return {ok:false,reason:'missing-timetable'};
- if(period==='اليوم كاملاً'&&Number(timetableHours)<=0)return {ok:false,reason:'no-school-hours'};
- return {ok:true,hours:Number(hours),fullDay:period==='اليوم كاملاً'};
+ if(fullDay&&(timetableHours===null||timetableHours===undefined))return {ok:false,reason:'missing-timetable'};
+ if(fullDay&&Number(timetableHours)<=0)return {ok:false,reason:'no-school-hours'};
+ return {ok:true,hours:Number(hours),fullDay};
 }
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
@@ -913,7 +914,7 @@ $('#attForm').onsubmit=e=>{
  if(isPresent){hours=0;}
  else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}
  else{
-  const timetableHours=period==='اليوم كاملاً'?scheduledHoursForStudentDate(st,String(f.get('date')||'')):null;
+  const timetableHours=isFullDayAbsence('غياب',period)?scheduledHoursForStudentDate(st,String(f.get('date')||'')):null;
   const resolved=resolveIndividualAbsenceHours(period,f.get('hours'),timetableHours);
   if(!resolved.ok){
    if(resolved.reason==='missing-timetable'){alert('لا يمكن تسجيل يوم كامل قبل إدخال التوقيت الأسبوعي لهذا القسم من الإعدادات.');return;}
@@ -1168,7 +1169,7 @@ window.saveAttendanceEdit=id=>{
  const r=db.attendance.find(x=>x.id===id);if(!r)return;const selectedId=$('#editStudentMatch').value,linked=selectedId?db.students.find(st=>String(st.id)===String(selectedId)):null,before={...r},editedName=$('#editAttendanceName').value.trim(),editedClass=$('#editAttendanceClass').value.trim(),type=$('#editAttendanceType').value,date=$('#editAttendanceDate').value,period=$('#editAttendancePeriod').value.trim(),duration=Number($('#editAttendanceDuration').value),justified=$('#editJustified').value,notes=$('#editAttendanceNotes').value;
  if(!editedName||!date){alert('يرجى إدخال اسم التلميذ والتاريخ.');return;}if(type!=='حضور'&&(!Number.isFinite(duration)||(type==='تأخر'?(duration<1||duration>600):(duration<=0||duration>24)))){alert(type==='تأخر'?'أدخل مدة التأخر بالدقائق من 1 إلى 600.':'أدخل ساعات الغياب من 0.25 إلى 24.');return;}
  if(linked){r.student=linked.id;r.studentName=(linked.last+' '+linked.first).trim()||linked.name||linked.fullName||editedName;r.class=linked.class||editedClass;r.schoolYear=linked.schoolYear||'';r.branch=linked.branch||'';r.sectionLabel=attendanceGroupLabel(linked);r.studentClass=linked.class||editedClass;}else{r.studentName=editedName;r.class=editedClass;r.sectionLabel=editedClass;r.schoolYear=r.schoolYear||'';r.branch=r.branch||'';r.studentClass=editedClass;}
- r.type=type;r.date=date;r.period=period;r.hours=type==='حضور'?0:type==='تأخر'?duration/60:duration;r.minutes=type==='تأخر'?duration:null;r.justified=type==='حضور'?'مبرر':justified;r.notes=notes;
+ r.type=type;r.date=date;r.period=period;r.hours=type==='حضور'?0:type==='تأخر'?duration/60:duration;r.minutes=type==='تأخر'?duration:null;r.fullDay=isFullDayAbsence(type,period);r.justified=type==='حضور'?'مبرر':justified;r.notes=notes;
  if(save())alert('تم تحديث السجل بنجاح، مع الاحتفاظ بارتباطه بملف التلميذ.');else{Object.keys(r).forEach(k=>delete r[k]);Object.assign(r,before);render();alert('تعذر حفظ التعديل؛ أُعيد السجل إلى حالته السابقة.');}
 };
 window.studentHistory=id=>{
