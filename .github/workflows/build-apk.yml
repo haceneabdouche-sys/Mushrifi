@@ -26,8 +26,14 @@ jobs:
       - name: Restore persistent Mushrifi debug signing key
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
+          path: ~/.android/mushrifi-debug.keystore
           key: mushrifi-android-debug-signing-v1
+      - name: Ensure persistent debug signing key exists
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/mushrifi-debug.keystore" ]; then
+            keytool -genkeypair -v -keystore "$HOME/.android/mushrifi-debug.keystore" -storetype JKS -storepass android -alias mushrifi -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Mushrifi Debug,O=Mushrifi,C=US"
+          fi
       - name: Prepare transparent full-color signature logo
         run: |
           python -m pip install --quiet pillow numpy
