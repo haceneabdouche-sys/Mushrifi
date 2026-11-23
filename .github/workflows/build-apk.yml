@@ -95,6 +95,12 @@ jobs:
         run: node tests/academic-branches.test.cjs
       - name: Run license read-only and backup safety regression tests
         run: node tests/license-readonly.test.cjs
+      - name: Run individual absence hours regression tests
+        run: node tests/individual-absence-hours.test.cjs
+      - name: Run backup protection warning regression tests
+        run: node tests/backup-protection-warning.test.cjs
+      - name: Run database corruption guard regression tests
+        run: node tests/database-corruption-guard.test.cjs
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
