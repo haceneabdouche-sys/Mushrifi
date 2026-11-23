@@ -824,7 +824,7 @@ function updateIndividualPeriodFields(){
  if(!period||!custom||!hours)return;
  const full=period.value==='اليوم كاملاً',other=period.value==='توقيت آخر';
  custom.classList.toggle('hidden',!other);
- hours.readOnly=full;
+ hours.readOnly=false;
  if(full){
   const st=db.students.find(x=>String(x.id)===String($('#attForm').elements.student.value));
   const value=scheduledHoursForStudentDate(st,$('#attForm').elements.date.value);
