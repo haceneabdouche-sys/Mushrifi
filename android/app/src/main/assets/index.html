@@ -758,7 +758,7 @@ function showVoiceSuggestedActions(st){
  const actions=[['absence','تسجيل غياب'],['late','تسجيل تأخر'],['report','عرض ملف التلميذ'],['violation','تسجيل مخالفة'],['summons','إنشاء استدعاء']];
  $('#voiceConfirm').innerHTML='<h3>الإجراءات المقترحة للتلميذ</h3><p><b>'+esc(fullName)+'</b> · '+esc(st.class||'')+'</p><div class="actions"><button type="button" class="btn primary" id="voiceOpenStudentRecord">فتح الملف الكامل</button>'+actions.map(([value,label])=>'<button type="button" class="btn voiceSuggestedAction" data-action="'+value+'">'+label+'</button>').join('')+'</div>';
  $('#voiceOpenStudentRecord').onclick=()=>{window.studentHistory(st.id);$('#voiceConfirm').classList.add('hidden');};
- $$('.voiceSuggestedAction').forEach(button=>button.onclick=()=>{window.studentAction({value:button.dataset.action},String(st.id));$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم اختيار: '+button.textContent+' للتلميذ '+fullName+'.';});
+ $('.voiceSuggestedAction').forEach(button=>button.addEventListener('click',()=>{const opened=window.studentAction(button.dataset.action,String(st.id));if(!opened){$('#voiceStatus').textContent='تعذر فتح الإجراء المطلوب. تحقق من بطاقة التلميذ ثم أعد المحاولة.';return;}$('#voiceConfirm').classList.add('hidden');}));
 }
 function handleVoiceOpenStudent(raw){
  let requested=normalizeArabic(raw);
@@ -1111,18 +1111,66 @@ let studentSearchTimer=0;$('#studentSearch').oninput=()=>{clearTimeout(studentSe
 $('#requestExactAlarmAccess').onclick=()=>{if(window.AndroidBridge&&typeof AndroidBridge.requestExactAlarmAccess==='function')AndroidBridge.requestExactAlarmAccess();else alert('هذه الخاصية متاحة في نسخة التطبيق المثبتة فقط.');};
 $('#testSummonsNotification').onclick=()=>{if(window.AndroidBridge&&typeof AndroidBridge.testSummonsNotification==='function')AndroidBridge.testSummonsNotification();else alert('هذه الخاصية متاحة في نسخة التطبيق المثبتة فقط.');};
 window.addEventListener('load',()=>{if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function'){db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}});
-window.studentAction=(el,id)=>{
-  const action=el.value;el.value='';if(!action)return;
+window.studentAction=(source,id)=>{
+  const action=typeof source==='string'?source:String(source?.value||'');
+  if(source&&typeof source==='object'&&'value'in source)source.value='';
+  if(!action)return false;
+  const targetId=String(id??'');
+  const selectedStudent=db.students.find(st=>String(st.id)===targetId);
+  if(!selectedStudent){if($('#voiceStatus'))$('#voiceStatus').textContent='لم يتم العثور على بطاقة التلميذ المطلوبة. أعد البحث الصوتي واختر التلميذ الصحيح.';return false;}
   const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  const selectStudent=form=>{
+    const select=form?.elements?.student;
+    if(!select)return false;
+    // إزالة مرشح البحث السابق حتى لا يُستبعد التلميذ الذي اختاره الصوت.
+    if(form.id==='attForm'&&$('#attStudentSearch'))$('#attStudentSearch').value='';
+    const hasOption=[...(select.options||[])].some(option=>String(option.value)===targetId);
+    if(!hasOption){
+      const option=document.createElement('option');
+      option.value=targetId;
+      option.textContent=(selectedStudent.last+' '+selectedStudent.first).trim()+' — '+(selectedStudent.class||'');
+      select.appendChild(option);
+    }
+    select.value=targetId;
+    if(String(select.value)!==targetId)return false;
+    select.dispatchEvent(new Event('change',{bubbles:true}));
+    return true;
+  };
   if(action==='absence'||action==='late'){
-    go('attendance');const form=$('#attForm');form.elements.student.value=id;form.elements.type.value=action==='absence'?'غياب':'تأخر';form.elements.date.value=today();form.elements.period.focus();
-  }else if(action==='report'){
-    studentHistory(id);
-  }else if(action==='violation'){
-    go('violations');const form=$('#violForm');form.elements.student.value=id;form.elements.date.value=today();form.elements.description.focus();
-  }else if(action==='summons'){
-    go('documents');const form=$('#docForm');form.elements.type.value='استدعاء ولي';form.elements.student.value=id;form.elements.date.value=today();form.elements.reason.focus();
+    const form=$('#attForm');
+    if(!form||!selectStudent(form))return false;
+    form.elements.type.value=action==='absence'?'غياب':'تأخر';
+    form.elements.type.dispatchEvent(new Event('change',{bubbles:true}));
+    form.elements.date.value=today();
+    go('attendance');
+    const focusTarget=action==='late'?form.elements.minutes:form.elements.hours;
+    (focusTarget||form.elements.period)?.focus();
+    return true;
   }
+  if(action==='report'){
+    if(typeof window.studentHistory!=='function')return false;
+    window.studentHistory(targetId);
+    return true;
+  }
+  if(action==='violation'){
+    const form=$('#violForm');
+    if(!form||!selectStudent(form))return false;
+    form.elements.date.value=today();
+    go('violations');
+    form.elements.description?.focus();
+    return true;
+  }
+  if(action==='summons'){
+    const form=$('#docForm');
+    if(!form||!selectStudent(form))return false;
+    form.elements.type.value='استدعاء ولي';
+    form.elements.type.dispatchEvent(new Event('change',{bubbles:true}));
+    form.elements.date.value=today();
+    go('documents');
+    form.elements.appointment?.focus();
+    return true;
+  }
+  return false;
 };
 window.delStudent=id=>{if(!confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.'))return;if(!saveUndoSnapshot('حذف بطاقة تلميذ'))return;const old=db.students;db.students=old.filter(s=>s.id!==id);if(!save()){db.students=old;clearStoredRecoverySnapshot();refreshUndoPanel();render();alert('تعذر حفظ الحذف؛ أُعيد ملف التلميذ إلى القائمة.');}};
 window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل؟'))return;const titles={attendance:'سجل غياب أو تأخر',documents:'إشعار أو استدعاء',violations:'سجل مخالفة'};if(!Array.isArray(db[kind])||!db[kind].some(x=>String(x.id)===String(id)))return;if(!saveUndoSnapshot('حذف '+(titles[kind]||'سجل')))return;const old=db[kind];db[kind]=old.filter(x=>x.id!==id);if(!save()){db[kind]=old;clearStoredRecoverySnapshot();refreshUndoPanel();render();return;}if(kind==='documents'&&window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));};
