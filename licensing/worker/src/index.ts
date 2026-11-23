@@ -50,7 +50,10 @@ function fail(message: string, status = 400, origin = "*"): Response {
 async function enforceRateLimit(request: Request, env: Env, admin = false, test = false): Promise<Response | null> {
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
   const limiter = test ? env.TEST_RATE_LIMITER : admin ? env.ADMIN_RATE_LIMITER : env.PUBLIC_RATE_LIMITER;
-  const key = ip.slice(0, 64);
+  const probeId = test ? request.headers.get("x-mushrifi-probe-id") : null;
+  const key = test && probeId && /^[A-Za-z0-9_-]{1,64}$/.test(probeId)
+    ? `${ip.slice(0, 64)}:probe:${probeId}`
+    : ip.slice(0, 64);
   try {
     if (!limiter) throw new Error("Rate limiter binding is missing");
     const result = await limiter.limit({ key });
