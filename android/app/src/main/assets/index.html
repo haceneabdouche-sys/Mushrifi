@@ -3,7 +3,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#173b58"><title>مُشرفي | تسيير الحياة المدرسية</title>
+<meta name="theme-color" content="#102a43"><title>مُشرفي | تسيير الحياة المدرسية</title>
 
 <style>
 :root{--navy:#173b58;--blue:#2878a8;--bg:#f3f6f9;--ink:#172b3a;--muted:#667987;--line:#dce5eb;--white:#fff;--red:#b74646;--green:#21845f}
@@ -470,7 +470,60 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
   body{padding-bottom:0!important}
 }
 
-</style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}</style>
+</style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}
+/* Brand signature refinement — midnight blue, static signature and a single gold glint */
+:root{--navy:#102A43}
+header{
+  background:linear-gradient(128deg,#0b1f33 0%,#102A43 54%,#183B63 100%);
+  border-bottom:3px solid #D6B46B;
+}
+header .credit-wrap{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  perspective:none;
+  transform:none;
+  transform-style:flat;
+  transform-origin:center;
+  animation:none!important;
+  padding:3px 12px 5px;
+  border-radius:12px;
+}
+header p.credit{
+  transform:none;
+  text-shadow:0 2px 3px rgba(0,0,0,.22);
+}
+header .credit-rule{transform:none}
+header .credit-signature{
+  transform:none;
+  backface-visibility:visible;
+}
+header .credit-wrap::after{
+  content:"";
+  position:absolute;
+  top:-12%;
+  bottom:-12%;
+  left:0;
+  width:32%;
+  z-index:4;
+  pointer-events:none;
+  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.12) 25%,rgba(255,249,220,.72) 48%,rgba(214,180,107,.32) 66%,transparent 100%);
+  filter:blur(.4px);
+  mix-blend-mode:screen;
+  transform:translateX(380%) skewX(-22deg);
+  animation:mushrifi-gold-glint 4.2s ease-in-out .25s 1 both;
+}
+@keyframes mushrifi-gold-glint{
+  0%{transform:translateX(380%) skewX(-22deg);opacity:0}
+  12%{opacity:.78}
+  88%{opacity:.78}
+  100%{transform:translateX(-430%) skewX(-22deg);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+  header .credit-wrap::after{animation:none;opacity:.18;transform:none}
+}
+
+</style>
 </head>
 <body>
 <header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><span class="credit-rule" aria-hidden="true"></span><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"></div>
