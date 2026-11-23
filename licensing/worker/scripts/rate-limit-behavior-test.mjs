@@ -83,7 +83,10 @@ async function adminRequest(env, ip = "203.0.113.20") {
 async function probeRequest(env, ip = "203.0.113.30") {
   return worker.fetch(new Request("https://unit.test/__test/rate-limit-probe", {
     method: "GET",
-    headers: { "cf-connecting-ip": ip }
+    headers: {
+      "cf-connecting-ip": ip,
+      "x-mushrifi-probe-id": "unit-probe-session"
+    }
   }), env);
 }
 
@@ -143,6 +146,8 @@ async function probeRequest(env, ip = "203.0.113.30") {
   assert(limited.status === 429, "Probe request 4 must be rate limited");
   assert(limited.headers.get("retry-after") === "60", "Probe 429 must include Retry-After: 60");
   assert(testLimiter.calls.length === 4, "Probe should call only its dedicated limiter");
+  assert(testLimiter.calls.every(key => key === "203.0.113.30:probe:unit-probe-session"),
+    "Probe should use one isolated session key for the whole test");
   assert(getDbCalls() === 0, "Probe behavior test must not access D1");
 }
 
