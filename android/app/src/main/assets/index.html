@@ -514,12 +514,24 @@ const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase===
 const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
 if(nativeJson==='!MUSHRIFI_DB_ERROR!'){document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2"><h2>تعذر فتح قاعدة بيانات مُشرفي</h2><p>لم يتم عرض قائمة فارغة حتى لا تُستبدل بياناتك. لا تحذف التطبيق. احتفظ بنسخة احتياطية إن كانت لديك، ثم تواصل مع الدعم.</p></main>';throw new Error('Mushrifi encrypted database could not be read');}
 const legacyJson=localStorage.getItem(DBKEY);
-let db=JSON.parse(nativeJson||legacyJson||EMPTY_DB);
-db.students=Array.isArray(db.students)?db.students:[];
-db.attendance=Array.isArray(db.attendance)?db.attendance:[];
-db.documents=Array.isArray(db.documents)?db.documents:[];
-db.violations=Array.isArray(db.violations)?db.violations:[];
-db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
+function parseMushrifiDatabase(raw){
+ const parsed=JSON.parse(raw);
+ if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('صيغة قاعدة البيانات ليست كائناً صالحاً.');
+ for(const key of ['students','attendance','documents','violations']){
+  if(Object.prototype.hasOwnProperty.call(parsed,key)&&!Array.isArray(parsed[key]))throw new Error('حقل '+key+' تالف أو ليس قائمة صالحة.');
+  if(!Array.isArray(parsed[key]))parsed[key]=[];
+ }
+ if(Object.prototype.hasOwnProperty.call(parsed,'settings')&&(!parsed.settings||typeof parsed.settings!=='object'||Array.isArray(parsed.settings)))throw new Error('إعدادات التطبيق تالفة.');
+ parsed.settings=parsed.settings&&typeof parsed.settings==='object'?parsed.settings:{};
+ return parsed;
+}
+let db;
+try{db=parseMushrifiDatabase(nativeJson||legacyJson||EMPTY_DB);}
+catch(error){
+ const detail=String(error&&error.message||'تعذر تحليل البيانات');
+ document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2;max-width:760px;margin:auto"><h2>توقّف مُشرِفي لحماية بياناتك</h2><p>اكتشف التطبيق أن ملف البيانات تالف أو غير مكتمل. لم ينشئ قاعدة فارغة ولم يحفظ فوق الملف الأصلي.</p><p>لا تحذف التطبيق ولا تمسح بياناته. إذا كانت لديك نسخة احتياطية خارجية فاحتفظ بها، ثم تواصل مع الدعم لمراجعة الملف واستعادته بأمان.</p><p style="color:#a33">تفاصيل الفحص: '+detail.replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))+'</p></main>';
+ throw new Error('Mushrifi database validation failed; original data was not overwritten.');
+}
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const sectionNorm=v=>String(v??"").trim().replace(/\s+/g," ").toLocaleLowerCase("ar");
