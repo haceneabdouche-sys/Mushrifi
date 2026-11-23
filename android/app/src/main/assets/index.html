@@ -403,7 +403,74 @@ footer{padding:24px 12px;color:#71818d}
  #reportOutput tr{page-break-inside:avoid}
 }
 
-.quick-voice-tile{font:inherit;color:var(--navy);width:100%;border:1px solid #cbdce7;cursor:pointer;background:linear-gradient(145deg,#fff,#edf5fa)}.quick-voice-tile small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.report-actions{margin:8px 0}.report-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}.report-summary-item{border:1px solid #dce5eb;border-radius:11px;padding:10px;background:#f7fafc;min-width:0}.report-summary-item small{display:block;color:#607485;font-size:11px}.report-summary-item strong{display:block;margin-top:5px;color:#173b58;font-size:20px}.report-heading{border-bottom:2px solid #d6b46b;padding-bottom:10px;margin-bottom:12px}.report-heading h2{text-align:center;margin:0 0 6px}.report-heading p{text-align:center;margin:3px 0;color:#536675}.report-section-title{margin:18px 0 8px;padding:7px 10px;background:#edf3f7;border-right:3px solid #286b91;border-radius:6px}.report-print-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:#526575;margin:10px 0}.report-print-signatures{display:flex;justify-content:space-between;gap:30px;margin:50px 12px 0;padding-top:10px}.report-print-signatures span{min-width:150px;text-align:center;border-top:1px solid #777;padding-top:8px}@media(max-width:700px){.report-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media print{@page{size:A4 portrait;margin:14mm}.print-preview-paper{width:100%!important;min-height:0!important;padding:0!important;box-shadow:none!important}.report-summary-item{break-inside:avoid}.report-section-title{break-after:avoid}.report-print-signatures{break-inside:avoid}#reportOutput table{font-size:8.5pt!important}}</style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}</style>
+.quick-voice-tile{font:inherit;color:var(--navy);width:100%;border:1px solid #cbdce7;cursor:pointer;background:linear-gradient(145deg,#fff,#edf5fa)}.quick-voice-tile small{display:block;margin-top:5px;color:var(--muted);font-size:11px}.report-actions{margin:8px 0}.report-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}.report-summary-item{border:1px solid #dce5eb;border-radius:11px;padding:10px;background:#f7fafc;min-width:0}.report-summary-item small{display:block;color:#607485;font-size:11px}.report-summary-item strong{display:block;margin-top:5px;color:#173b58;font-size:20px}.report-heading{border-bottom:2px solid #d6b46b;padding-bottom:10px;margin-bottom:12px}.report-heading h2{text-align:center;margin:0 0 6px}.report-heading p{text-align:center;margin:3px 0;color:#536675}.report-section-title{margin:18px 0 8px;padding:7px 10px;background:#edf3f7;border-right:3px solid #286b91;border-radius:6px}.report-print-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:12px;color:#526575;margin:10px 0}.report-print-signatures{display:flex;justify-content:space-between;gap:30px;margin:50px 12px 0;padding-top:10px}.report-print-signatures span{min-width:150px;text-align:center;border-top:1px solid #777;padding-top:8px}@media(max-width:700px){.report-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media print{@page{size:A4 portrait;margin:14mm}.print-preview-paper{width:100%!important;min-height:0!important;padding:0!important;box-shadow:none!important}.report-summary-item{break-inside:avoid}.report-section-title{break-after:avoid}.report-print-signatures{break-inside:avoid}#reportOutput table{font-size:8.5pt!important}}
+/* Home dashboard refresh — compact institutional layout */
+header{padding:12px 10px 11px}
+header .credit-wrap{margin:5px auto 0;gap:1px}
+header p.credit{font-size:clamp(18px,5vw,24px);line-height:1.2}
+header .credit-rule{width:58px;margin:1px 0}
+header .credit-signature{width:72px;height:72px;margin-top:2px}
+.wrap>.notice{padding:8px 10px;margin-bottom:7px;font-size:11px;line-height:1.55}
+.home-heading{margin-top:0;display:flex;align-items:center;justify-content:space-between;gap:14px;background:linear-gradient(115deg,#fff 0%,#f8fafb 70%,#f5f0e4 100%);border-right:4px solid var(--gold)}
+.home-heading h2{margin:4px 0;font-size:clamp(20px,3vw,25px)}
+.home-heading p{margin:4px 0 0;line-height:1.65}
+.home-eyebrow{display:inline-block;color:#9a762e;font-size:11px;font-weight:800;letter-spacing:.2px}
+.home-kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:12px}
+.home-kpis .stat{min-height:88px;padding:13px}
+.home-kpis .stat small{display:block;line-height:1.5}
+.home-kpis .stat strong{font-size:clamp(23px,4vw,29px)}
+.voice-panel{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px;background:linear-gradient(115deg,#fff 0%,#f4f8fa 100%);border-color:#d6e2e9}
+.voice-panel .voice-copy{flex:1 1 230px;min-width:0}
+.voice-panel h2{margin:4px 0 5px}
+.voice-panel p{margin:4px 0;line-height:1.6}
+.voice-panel #startVoiceBtn{flex:0 0 auto;min-height:46px;padding-inline:18px}
+.voice-panel #voiceTranscript,.voice-panel #voiceConfirm{flex:1 1 100%;margin:4px 0 0}
+.home-feature-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:stretch}
+.home-feature-grid>.panel{min-width:0;margin-top:0}
+.panel-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.panel-title-row h2{margin:0 0 8px}
+.upcoming-panel>p{margin:3px 0 10px}
+.home-quick-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.home-quick-tiles .tile{min-width:0;min-height:88px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.home-quick-tiles .tile b{margin:0;line-height:1.5}
+.home-quick-tiles .tile small,.more-tiles .tile small{display:block;color:var(--muted);font-size:10px;line-height:1.5}
+.home-stat-details{margin-top:12px}
+.home-stat-details>summary{gap:9px}
+.home-stat-grid{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:12px}
+.home-stat-grid .stat{padding:12px;min-width:0}
+.home-stat-grid .stat strong{font-size:22px}
+.recent-log{margin-top:12px}
+.more-intro{margin-top:0;background:linear-gradient(115deg,#fff 0%,#f7f9fa 75%,#f5f0e4 100%);border-right:4px solid var(--gold)}
+.more-intro h2{margin:4px 0}
+.more-intro p{margin:5px 0 0}
+.more-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+.more-tiles .tile{min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.more-tiles .tile b{margin:0}
+#nav{position:fixed!important;left:50%;right:auto;bottom:0;transform:translateX(-50%);width:min(calc(100% - 20px),820px);max-width:820px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;align-items:stretch;margin:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));overflow:visible;z-index:9999;background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border:1px solid #d8e2e9;border-bottom:0;border-radius:17px 17px 0 0;box-shadow:0 -8px 24px rgba(20,47,73,.12)}
+#nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:52px;padding:6px 2px;border:0;border-radius:11px;background:transparent;color:var(--muted);font-size:11px;font-weight:800;line-height:1.25;white-space:normal}
+#nav button span:first-child{font-size:18px;line-height:1}
+#nav button.active{background:#edf3f7;color:var(--navy);box-shadow:inset 0 -2px 0 var(--gold)}
+body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
+.wrap{padding-bottom:16px}
+@media(max-width:760px){
+  .home-feature-grid{grid-template-columns:1fr}
+  .home-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .home-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .more-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .home-heading{padding:14px}
+}
+@media(max-width:420px){
+  #nav{width:calc(100% - 10px);gap:3px;padding-inline:5px}
+  #nav button{font-size:10px;min-height:50px}
+  #nav button span:first-child{font-size:17px}
+  .home-quick-tiles .tile{min-height:82px}
+  .home-stat-grid .stat{padding:10px}
+}
+@media print{
+  body{padding-bottom:0!important}
+}
+
+</style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}</style>
 </head>
 <body>
 <header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><span class="credit-rule" aria-hidden="true"></span><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"></div>
@@ -411,25 +478,93 @@ footer{padding:24px 12px;color:#71818d}
 <div class="wrap">
 <div class="notice"><b>نسخة مستقلة تعمل محلياً:</b> تُحفظ سجلات التلاميذ على هذا الهاتف فقط، ولا تحتاج إلى حسابات أو مواقع خارجية.</div>
 <div class="notice license-advisory" role="note"><b>تنبيه الترخيص:</b> يحتاج تطبيق مُشرِفي إلى تفعيل الترخيص على هذا الهاتف للاستفادة من خدماته. افتح قسم <strong>الإعدادات ← الترخيص</strong> لإتمام التفعيل.</div>
-<nav class="no-print" id="nav">
-<button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
+<nav class="no-print" id="nav" aria-label="التنقل الرئيسي">
+<button class="active" data-page="home"><span aria-hidden="true">🏠</span><span>الرئيسية</span></button>
+<button data-page="students"><span aria-hidden="true">👥</span><span>التلاميذ</span></button>
+<button data-page="attendance"><span aria-hidden="true">📋</span><span>المتابعة</span></button>
+<button data-page="documents"><span aria-hidden="true">📨</span><span>الوثائق</span></button>
+<button data-page="more"><span aria-hidden="true">☰</span><span>المزيد</span></button>
 </nav>
-<section id="home" class="page"><section id="voiceAssistant" class="panel no-print"><h2>🎙️ التحدث إلى مُشرفي</h2><p class="muted">أعطِ أمراً صوتياً بالعربية، مثل: افتح ملف التلميذ وائل عيسو، أو: سجّل غياب وائل عيسو ليوم الأحد 8 نوفمبر 2026 الفترة الصباحية ساعتين.</p><button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button><p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p><div id="voiceTranscript" class="panel hidden"></div><div id="voiceConfirm" class="panel hidden"></div></section>
-
-<div class="grid">
-<div class="stat"><small>إجمالي التلاميذ</small><strong id="sStudents">0</strong></div><div class="stat"><small>الغيابات المسجلة</small><strong id="sAbs">0</strong></div><div class="stat"><small>التأخرات المسجلة</small><strong id="sLate">0</strong></div><div class="stat"><small>المخالفات المسجلة</small><strong id="sViol">0</strong></div><div class="stat"><small>الوثائق والإشعارات</small><strong id="sDocs">0</strong></div><div class="stat"><small>استدعاءات الأولياء</small><strong id="sSummons">0</strong></div><div class="stat"><small>إشعارات الغياب</small><strong id="sAbsNotices">0</strong></div><div class="stat"><small>مجموع السجلات</small><strong id="sRecords">0</strong></div>
+<section id="home" class="page">
+<div class="home-heading panel">
+  <div>
+    <span class="home-eyebrow">لوحة القيادة</span>
+    <h2>متابعة الحياة المدرسية</h2>
+    <p class="muted">ملخص سريع لأهم نشاطات المؤسسة، مع وصول مباشر إلى المهام اليومية.</p>
+  </div>
 </div>
-<div class="panel dashboard-today"><h2>ملخص اليوم</h2><div class="grid">
-<div class="stat"><small>غيابات اليوم</small><strong id="todayAbs">0</strong></div>
-<div class="stat"><small>تأخرات اليوم</small><strong id="todayLate">0</strong></div>
-<div class="stat"><small>مخالفات اليوم</small><strong id="todayViol">0</strong></div>
-<div class="stat"><small>استدعاءات منشأة اليوم</small><strong id="todaySummons">0</strong></div>
-</div></div>
-<div class="panel"><h2>استدعاءات الأولياء القادمة</h2><p class="muted">المواعيد القادمة المسجلة، مرتبة من الأقرب إلى الأبعد.</p><div id="upcomingSummons" class="empty">لا توجد استدعاءات قادمة.</div></div>
-<div class="panel"><h2>الوصول السريع</h2><div class="tiles">
-<div class="tile" data-go="students">👥<b>ملفات التلاميذ</b></div><div class="tile" data-go="attendance">🗓️<b>تسجيل غياب أو تأخر</b></div><div class="tile" data-go="documents">📨<b>إنشاء إشعار أو استدعاء</b></div><div class="tile" data-go="violations">⚠️<b>تسجيل مخالفة</b></div><div class="tile" data-go="reports">📊<b>التقارير</b></div><button type="button" class="tile quick-voice-tile" id="quickVoiceAccess">🎙️<b>التحدث إلى مُشرِفي</b><small>أمر صوتي سريع</small></button><div class="tile" data-go="settings">☁️<b>النسخ والمزامنة</b></div>
-</div></div>
-<details class="panel attendance-log recent-log"><summary><strong>آخر العمليات</strong> <span class="pill" id="recentCount">0 عملية</span> <span class="muted">اضغط لعرض العمليات أو إخفائها</span></summary><div id="recent" class="empty">لا توجد عمليات مسجلة بعد.</div></details>
+
+<div class="home-kpis grid">
+  <div class="stat"><small>إجمالي التلاميذ</small><strong id="sStudents">0</strong></div>
+  <div class="stat"><small>غيابات اليوم</small><strong id="todayAbs">0</strong></div>
+  <div class="stat"><small>تأخرات اليوم</small><strong id="todayLate">0</strong></div>
+  <div class="stat"><small>استدعاءات اليوم</small><strong id="todaySummons">0</strong></div>
+</div>
+
+<section id="voiceAssistant" class="panel voice-panel no-print">
+  <div class="voice-copy">
+    <span class="home-eyebrow">مساعدك الصوتي</span>
+    <h2>🎙️ التحدث إلى مُشرِفي</h2>
+    <p class="muted">قل أمراً بالعربية، مثل: افتح ملف التلميذ وائل عيسو، أو سجّل غياب تلميذ.</p>
+    <p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p>
+  </div>
+  <button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button>
+  <div id="voiceTranscript" class="panel hidden"></div>
+  <div id="voiceConfirm" class="panel hidden"></div>
+</section>
+
+<div class="home-feature-grid">
+  <div class="panel upcoming-panel">
+    <div class="panel-title-row"><h2>استدعاءات الأولياء القادمة</h2><span class="pill">المواعيد الأقرب</span></div>
+    <p class="muted">تظهر هنا المواعيد المسجلة مرتبة من الأقرب إلى الأبعد.</p>
+    <div id="upcomingSummons" class="empty">لا توجد استدعاءات قادمة.</div>
+  </div>
+  <div class="panel quick-panel">
+    <h2>الوصول السريع</h2>
+    <div class="home-quick-tiles">
+      <div class="tile" data-go="students">👥<b>ملفات التلاميذ</b><small>بحث وإدارة الملفات</small></div>
+      <div class="tile" data-go="attendance">📋<b>الغياب والتأخر</b><small>تسجيل ومراجعة</small></div>
+      <div class="tile" data-go="documents">📨<b>الإشعارات والاستدعاءات</b><small>إنشاء ومتابعة الوثائق</small></div>
+      <button type="button" class="tile quick-voice-tile" id="quickVoiceAccess">🎙️<b>التحدث إلى مُشرِفي</b><small>أمر صوتي سريع</small></button>
+    </div>
+  </div>
+</div>
+
+<details class="panel attendance-log home-stat-details">
+  <summary><strong>الإحصاءات التفصيلية</strong><span class="muted">الغيابات والتأخرات والوثائق والمخالفات</span></summary>
+  <div class="grid home-stat-grid">
+    <div class="stat"><small>الغيابات المسجلة</small><strong id="sAbs">0</strong></div>
+    <div class="stat"><small>التأخرات المسجلة</small><strong id="sLate">0</strong></div>
+    <div class="stat"><small>المخالفات المسجلة</small><strong id="sViol">0</strong></div>
+    <div class="stat"><small>الوثائق والإشعارات</small><strong id="sDocs">0</strong></div>
+    <div class="stat"><small>استدعاءات الأولياء</small><strong id="sSummons">0</strong></div>
+    <div class="stat"><small>إشعارات الغياب</small><strong id="sAbsNotices">0</strong></div>
+    <div class="stat"><small>مجموع السجلات</small><strong id="sRecords">0</strong></div>
+    <div class="stat"><small>مخالفات اليوم</small><strong id="todayViol">0</strong></div>
+  </div>
+</details>
+
+<details class="panel attendance-log recent-log">
+  <summary><strong>آخر العمليات</strong><span class="pill" id="recentCount">0 عملية</span><span class="muted">اضغط لعرض العمليات أو إخفائها</span></summary>
+  <div id="recent" class="empty">لا توجد عمليات مسجلة بعد.</div>
+</details>
+</section>
+
+<section id="more" class="page hidden">
+  <div class="panel more-intro">
+    <span class="home-eyebrow">القائمة الكاملة</span>
+    <h2>المزيد من خدمات مُشرِفي</h2>
+    <p class="muted">كل الوظائف الإضافية موجودة هنا، ويمكنك الرجوع إلى الأقسام الأساسية من شريط التنقل السفلي.</p>
+  </div>
+  <div class="panel">
+    <div class="tiles more-tiles">
+      <div class="tile" data-go="violations">⚠️<b>سجل المخالفات</b><small>إضافة ومراجعة المخالفات</small></div>
+      <div class="tile" data-go="reports">📊<b>التقارير والطباعة</b><small>الإحصاءات واستخراج الوثائق</small></div>
+      <div class="tile" data-go="settings">⚙️<b>الإعدادات والترخيص</b><small>النسخ الاحتياطي والبيانات والتفعيل</small></div>
+      <div class="tile" data-go="documents">📨<b>الإشعارات والاستدعاءات</b><small>متابعة مواعيد الأولياء</small></div>
+      <div class="tile" data-go="attendance">📋<b>سجل الغياب والتأخر</b><small>المراجعة والتبرير والتعديل</small></div>
+    </div>
+  </div>
 </section>
 <section id="students" class="page hidden">
 <div class="panel"><h2 id="studentFormTitle">بطاقة التلميذ – إضافة بيانات</h2><p class="muted">تتضمن بطاقة التلميذ الاسم واللقب والمستوى والشعبة والقسم والصفة وتاريخ الميلاد واسم الولي ورقم هاتفه.</p><form id="studentForm">
@@ -652,7 +787,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
 const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.name||s.fullName||'—';for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>normalizeStudentKey(x.student)===normalizeStudentKey(id)&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
-let previousAppPage='home';const appPageStack=['home'];function go(page,addHistory=true){if(!document.getElementById(page)||!document.getElementById(page).classList.contains('page'))return;const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current!==page&&addHistory){previousAppPage=current;appPageStack.push(page);try{history.pushState({mushrifiPage:page},'');}catch(err){console.warn('Mushrifi: browser history unavailable; using in-page navigation',err);}}document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}function goPreviousPage(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;let index=appPageStack.lastIndexOf(current);let target=index>0?appPageStack[index-1]:previousAppPage;if(!target||target===current||!document.getElementById(target)||!document.getElementById(target).classList.contains('page'))target='home';if(index>0)appPageStack.splice(index);if(!appPageStack.length)appPageStack.push('home');go(target,false);previousAppPage=appPageStack.length>1?appPageStack[appPageStack.length-2]:'home';return true;}window.handleMushrifiAndroidBack=function(){if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(false);return true;}const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;return goPreviousPage();};
+let previousAppPage='home';const appPageStack=['home'];function go(page,addHistory=true){if(!document.getElementById(page)||!document.getElementById(page).classList.contains('page'))return;const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current!==page&&addHistory){previousAppPage=current;appPageStack.push(page);try{history.pushState({mushrifiPage:page},'');}catch(err){console.warn('Mushrifi: browser history unavailable; using in-page navigation',err);}}document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page||(x.dataset.page==='more'&&['violations','reports','settings'].includes(page))))}function goPreviousPage(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;let index=appPageStack.lastIndexOf(current);let target=index>0?appPageStack[index-1]:previousAppPage;if(!target||target===current||!document.getElementById(target)||!document.getElementById(target).classList.contains('page'))target='home';if(index>0)appPageStack.splice(index);if(!appPageStack.length)appPageStack.push('home');go(target,false);previousAppPage=appPageStack.length>1?appPageStack[appPageStack.length-2]:'home';return true;}window.handleMushrifiAndroidBack=function(){if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(false);return true;}const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;return goPreviousPage();};
 try{history.replaceState({mushrifiPage:document.querySelector('.page:not(.hidden)')?.id||'home'},'');}catch(err){console.warn('Mushrifi: initial browser history unavailable; navigation remains enabled',err);}
 window.addEventListener('popstate',event=>{if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(true);return;}const page=event.state?.mushrifiPage;go(page&&document.getElementById(page)?page:'home',false);});
 function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data','license'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}

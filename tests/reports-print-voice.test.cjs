@@ -2,6 +2,12 @@ const fs = require('fs');
 const vm = require('vm');
 const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
 const checks = [
+  ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
+  ['home keeps all detailed metrics available in the expandable statistics panel', /class="home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
+  ['upcoming parent summons remain visible on the home dashboard', /class="upcoming-panel"[\s\S]*?id="upcomingSummons"/],
+  ['the More page exposes violations, reports and settings', /<section id="more" class="page hidden">[\s\S]*?data-go="violations"[\s\S]*?data-go="reports"[\s\S]*?data-go="settings"/],
+  ['bottom navigation is fixed and reserves space for mobile safe areas', /#nav\{position:fixed[\s\S]*?env\(safe-area-inset-bottom\)/],
+  ['navigation keeps More selected for violations, reports and settings', /x\.dataset\.page==='more'&&\['violations','reports','settings'\]\.includes\(page\)/],
   ['quick voice action is present on the home screen', /id="quickVoiceAccess"[^>]*>🎙️<b>التحدث إلى مُشرِفي<\/b>/],
   ['quick voice action launches the Arabic speech button', /\$\('#quickVoiceAccess'\)\?\.addEventListener\('click',[\s\S]*?\$\('#startVoiceBtn'\)\?\.click\(\)/],
   ['report print uses a dedicated preview instead of printing the whole app', /window\.printReport\s*=\s*\(\)=>[\s\S]*?id='mushrifiPrintPreview'[\s\S]*?window\.print\(\)/],
@@ -102,4 +108,24 @@ for (const [label, pattern] of checks) {
   process.stdout.write((ok ? 'PASS ' : 'FAIL ') + label + '\n');
   if (!ok) failed++;
 }
+
+const navBlock = html.match(/<nav[^>]*id="nav"[^>]*>([\\s\\S]*?)<\\/nav>/);
+if (!navBlock) {
+  process.stderr.write('FAIL bottom navigation markup exists\\n');
+  failed++;
+} else {
+  const navPages = [...navBlock[1].matchAll(/data-page="([^"]+)"/g)].map(match => match[1]);
+  const expectedPages = ['home', 'students', 'attendance', 'documents', 'more'];
+  const ok = navPages.join(',') === expectedPages.join(',');
+  process.stdout.write((ok ? 'PASS ' : 'FAIL ') + 'bottom navigation exposes the five primary app destinations\\n');
+  if (!ok) failed++;
+}
+const preservedHomeIds = ['sStudents','todayAbs','todayLate','todaySummons','sAbs','sLate','sViol','sDocs','sSummons','sAbsNotices','sRecords','todayViol','upcomingSummons','voiceAssistant','startVoiceBtn','voiceStatus','voiceTranscript','voiceConfirm','quickVoiceAccess','recentCount','recent'];
+for (const id of preservedHomeIds) {
+  const count = (html.match(new RegExp('id="' + id + '"','g')) || []).length;
+  const ok = count === 1;
+  if (!ok) failed++;
+  process.stdout.write((ok ? 'PASS ' : 'FAIL ') + 'home integration ID remains unique: ' + id + '\\n');
+}
+
 if (failed) process.exit(1);
