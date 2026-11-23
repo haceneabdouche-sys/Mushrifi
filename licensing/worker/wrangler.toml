@@ -6,3 +6,21 @@ compatibility_date = "2026-11-15"
 binding = "DB"
 database_name = "mushrifi-licenses"
 database_id = "bb241e07-ed80-4a29-b10f-7ebe7b104cf8"
+
+# Cloudflare per-location request throttles. Keep namespace IDs unique
+# within the account; staging and production use separate namespaces.
+[[ratelimits]]
+name = "PUBLIC_RATE_LIMITER"
+namespace_id = "1442946986"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+[[ratelimits]]
+name = "ADMIN_RATE_LIMITER"
+namespace_id = "1442946987"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60
