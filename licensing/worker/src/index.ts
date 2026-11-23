@@ -2,6 +2,8 @@ export interface Env {
   DB: D1Database;
   ADMIN_API_TOKEN: string;
   LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64: string;
+  PUBLIC_RATE_LIMITER: RateLimit;
+  ADMIN_RATE_LIMITER: RateLimit;
   LICENSE_ISSUER?: string;
   LICENSE_AUDIENCE?: string;
 }
@@ -41,6 +43,34 @@ function json(data: unknown, status = 200, origin = "*"): Response {
 
 function fail(message: string, status = 400, origin = "*"): Response {
   return json({ ok: false, error: message }, status, origin);
+}
+
+async function enforceRateLimit(request: Request, env: Env, admin = false): Promise<Response | null> {
+  const ip = request.headers.get("cf-connecting-ip") || "unknown";
+  const limiter = admin ? env.ADMIN_RATE_LIMITER : env.PUBLIC_RATE_LIMITER;
+  const key = ip.slice(0, 64);
+  try {
+    const result = await limiter.limit({ key });
+    if (result.success) return null;
+    return new Response(JSON.stringify({
+      ok: false,
+      error: "تم تجاوز عدد الطلبات المسموح به. يرجى المحاولة بعد دقيقة."
+    }), {
+      status: 429,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store",
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET,POST,OPTIONS",
+        "access-control-allow-headers": "content-type,authorization",
+        "retry-after": "60"
+      }
+    });
+  } catch {
+    // Fail closed: a missing or unavailable limiter must never silently disable
+    // protection on activation, validation, recovery, or administration routes.
+    return fail("خدمة الحماية غير متاحة مؤقتاً؛ حاول لاحقاً", 503);
+  }
 }
 
 function b64url(bytes: Uint8Array): string {
@@ -345,8 +375,17 @@ export default {
     if (request.method === "OPTIONS") return json({ ok: true });
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "mushrifi-license-api" });
 
-    if (url.pathname.startsWith("/v1/admin/")) return adminRoute(request, env, url.pathname);
+    if (url.pathname.startsWith("/v1/admin/")) {
+      const limited = await enforceRateLimit(request, env, true);
+      if (limited) return limited;
+      return adminRoute(request, env, url.pathname);
+    }
     if (request.method !== "POST") return fail("الطريقة غير مدعومة", 405);
+
+    if (url.pathname.startsWith("/v1/")) {
+      const limited = await enforceRateLimit(request, env);
+      if (limited) return limited;
+    }
 
     let body: Record<string, unknown>;
     try {
