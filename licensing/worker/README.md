@@ -57,6 +57,20 @@ npx wrangler secret put LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64
 
 The database schema change narrows the unique device index to active licenses only. Apply the updated `schema.sql` to the staging D1 database before deploying the updated Worker. Do not apply it to production as part of this development task.
 
+## Request throttling
+
+The Worker now has separate Cloudflare Rate Limiting bindings in both Wrangler configurations:
+
+- Public license API routes: 30 requests per 60 seconds per client IP.
+- Admin routes: 20 requests per 60 seconds per client IP.
+- Exceeded limits return HTTP 429 with `Retry-After: 60`.
+- If a limiter binding is missing or unavailable, protected routes fail closed with HTTP 503 instead of bypassing protection.
+- Staging and production use separate numeric namespaces so their counters do not mix.
+
+Cloudflare's Workers Rate Limiting API is approximate and maintained independently in each Cloudflare location; it is an abuse-throttling layer, not a strict global quota. Since this first layer keys anonymous requests by Cloudflare's client IP, users sharing one public/mobile-network IP can share a bucket. Review the thresholds against real staging traffic before production deployment. For strict global limits, a Durable Object-backed limiter would be required.
+
+The rate-limit regression test runs with `npm run test:rate-limit` and is included in the license Worker CI workflow. Deploy the staging Worker with `wrangler.staging.toml` before testing the new bindings. Do not deploy the production configuration as part of this task.
+
 ## Remaining validation and hardening
 
 - Run the Android build and regression suite; verify the resulting test APK before installation.
