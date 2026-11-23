@@ -28,8 +28,15 @@ for (const [label, config] of [["production", production], ["staging", staging]]
 }
 
 const prodIds = [binding(production, "PUBLIC_RATE_LIMITER").namespace, binding(production, "ADMIN_RATE_LIMITER").namespace];
-const stageIds = [binding(staging, "PUBLIC_RATE_LIMITER").namespace, binding(staging, "ADMIN_RATE_LIMITER").namespace];
-assert(new Set([...prodIds, ...stageIds]).size === 4, "Staging and production must use separate namespaces");
+const stageIds = [
+  binding(staging, "PUBLIC_RATE_LIMITER").namespace,
+  binding(staging, "ADMIN_RATE_LIMITER").namespace
+];
+const testProbe = binding(staging, "TEST_RATE_LIMITER");
+assert(testProbe.limit === 3 && testProbe.period === 60, "Staging probe must use a 3-per-60-second threshold");
+assert(!production.includes('name = "TEST_RATE_LIMITER"'), "Production must not bind the test probe limiter");
+assert(new Set([...prodIds, ...stageIds, testProbe.namespace]).size === 5,
+  "Staging, its probe, and production must use separate namespaces");
 assert(source.includes("PUBLIC_RATE_LIMITER: RateLimit") && source.includes("ADMIN_RATE_LIMITER: RateLimit"),
   "Worker environment must declare both rate-limit bindings");
 assert(source.includes('request.headers.get("cf-connecting-ip")'), "Use Cloudflare's trusted client IP header");
@@ -37,6 +44,11 @@ assert(source.includes('status: 429') && source.includes('"retry-after": "60"'),
 assert(source.includes("const limited = await enforceRateLimit(request, env, true)") &&
   source.includes("const limited = await enforceRateLimit(request, env);"),
   "Public and admin routes must enforce their respective limiters");
+assert(source.includes('url.pathname === "/__test/rate-limit-probe"') &&
+  source.includes("if (!env.TEST_RATE_LIMITER)"),
+  "The harmless probe endpoint must be disabled when the staging-only binding is absent");
+assert(source.includes("const limited = await enforceRateLimit(request, env, false, true)"),
+  "The staging probe must use its dedicated rate limiter");
 assert(source.includes("// Fail closed:"), "Limiter failures must not silently bypass protection");
 
 console.log("PASS: public/admin limits, staging/production isolation, trusted client IP, 429 response, and fail-closed enforcement.");
