@@ -109,15 +109,17 @@ for (const [label, pattern] of checks) {
   if (!ok) failed++;
 }
 
-const navBlock = html.match(/<nav[^>]*id="nav"[^>]*>([\\s\\S]*?)<\\/nav>/);
+const navStart = html.indexOf('<nav');
+const navEnd = navStart < 0 ? -1 : html.indexOf('</nav>', navStart);
+const navBlock = navEnd < 0 ? '' : html.slice(navStart, navEnd + 6);
 if (!navBlock) {
-  process.stderr.write('FAIL bottom navigation markup exists\\n');
+  process.stderr.write('FAIL bottom navigation markup exists\n');
   failed++;
 } else {
-  const navPages = [...navBlock[1].matchAll(/data-page="([^"]+)"/g)].map(match => match[1]);
+  const navPages = [...navBlock.matchAll(/data-page="([^"]+)"/g)].map(match => match[1]);
   const expectedPages = ['home', 'students', 'attendance', 'documents', 'more'];
   const ok = navPages.join(',') === expectedPages.join(',');
-  process.stdout.write((ok ? 'PASS ' : 'FAIL ') + 'bottom navigation exposes the five primary app destinations\\n');
+  process.stdout.write((ok ? 'PASS ' : 'FAIL ') + 'bottom navigation exposes the five primary app destinations\n');
   if (!ok) failed++;
 }
 const preservedHomeIds = ['sStudents','todayAbs','todayLate','todaySummons','sAbs','sLate','sViol','sDocs','sSummons','sAbsNotices','sRecords','todayViol','upcomingSummons','voiceAssistant','startVoiceBtn','voiceStatus','voiceTranscript','voiceConfirm','quickVoiceAccess','recentCount','recent'];
