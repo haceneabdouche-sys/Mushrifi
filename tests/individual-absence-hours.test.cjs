@@ -16,6 +16,13 @@ const result=(period,value,timetable)=>JSON.parse(JSON.stringify(
   context.resolveIndividualAbsenceHours(period,value,timetable)
 ));
 
+assert.equal(context.isFullDayAbsence('غياب','اليوم كاملاً'),true,
+  'a full-day absence period must be recognized');
+assert.equal(context.isFullDayAbsence('غياب','الفترة الصباحية'),false,
+  'editing an absence to a partial period must clear the full-day flag');
+assert.equal(context.isFullDayAbsence('تأخر','اليوم كاملاً'),false,
+  'a lateness record must never retain a full-day absence flag');
+
 assert.deepEqual(result('اليوم كاملاً','7',6),{
   ok:true,hours:7,fullDay:true
 },'user-entered hours must override the timetable estimate for a full-day individual absence');
@@ -55,5 +62,12 @@ assert.match(submit,/hours=resolved\.hours;fullDay=resolved\.fullDay/,
   'the value returned from the input must be what is stored in the record');
 assert.doesNotMatch(submit,/hours=scheduledHoursForStudentDate/,
   'the timetable estimate must never overwrite the manually edited input');
+
+const editStart=html.indexOf('window.saveAttendanceEdit=id=>');
+const editEnd=html.indexOf('window.studentHistory=',editStart);
+assert.notEqual(editStart,-1,'attendance edit handler must exist');
+const edit=html.slice(editStart,editEnd);
+assert.match(edit,/r\.fullDay=isFullDayAbsence\(type,period\)/,
+  'editing a record must recompute its full-day state from the edited type and period');
 
 console.log('PASS: individual absence hours are editable, validated, Arabic-digit aware, and saved exactly as entered.');
