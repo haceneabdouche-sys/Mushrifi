@@ -24,3 +24,12 @@ namespace_id = "1442946989"
   [ratelimits.simple]
   limit = 20
   period = 60
+
+# Dedicated low-threshold binding used only by the harmless Staging probe.
+[[ratelimits]]
+name = "TEST_RATE_LIMITER"
+namespace_id = "1442946990"
+
+  [ratelimits.simple]
+  limit = 3
+  period = 60
