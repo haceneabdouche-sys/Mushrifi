@@ -139,12 +139,36 @@ public class MainActivity extends Activity {
     }
     private static class LocalDb extends SQLiteOpenHelper {
         LocalDb(Context c) { super(c, "mushrifi_local.db", null, 1); }
-        @Override public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE appdata (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL)"); }
-        @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { }
+        @Override public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE appdata (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL)"); ensureRecoveryTable(db); }
+        @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { ensureRecoveryTable(db); }
+        private void ensureRecoveryTable(SQLiteDatabase db) { db.execSQL("CREATE TABLE IF NOT EXISTS recovery_snapshot (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL, updated_at INTEGER NOT NULL)"); }
         synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? decryptData(c.getString(0)) : null; } catch (Exception e) { return "!MUSHRIFI_DB_ERROR!"; } }
         private String lastError = "";
         synchronized String getLastError() { return lastError; }
         synchronized boolean write(String json) { try { android.content.ContentValues v = new android.content.ContentValues(); v.put("id", 1); v.put("json", encryptData(json)); long result = getWritableDatabase().insertWithOnConflict("appdata", null, v, SQLiteDatabase.CONFLICT_REPLACE); if (result == -1) { lastError = "SQLite لم يقبل حفظ السجل (insertWithOnConflict أعاد -1)."; return false; } lastError = ""; return true; } catch (Exception e) { lastError = e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()); android.util.Log.e("MushrifiDB", "Database write failed", e); return false; } }
+        synchronized boolean saveRecoverySnapshot(String json) {
+            try {
+                if (json == null || json.trim().isEmpty()) return false;
+                SQLiteDatabase db = getWritableDatabase(); ensureRecoveryTable(db);
+                android.content.ContentValues v = new android.content.ContentValues();
+                v.put("id", 1); v.put("json", encryptData(json)); v.put("updated_at", System.currentTimeMillis());
+                return db.insertWithOnConflict("recovery_snapshot", null, v, SQLiteDatabase.CONFLICT_REPLACE) != -1;
+            } catch (Exception e) { android.util.Log.e("MushrifiDB", "Recovery snapshot write failed", e); return false; }
+        }
+        synchronized String readRecoverySnapshot() {
+            try {
+                SQLiteDatabase db = getWritableDatabase(); ensureRecoveryTable(db);
+                try (Cursor c = db.rawQuery("SELECT json FROM recovery_snapshot WHERE id=1", null)) {
+                    return c.moveToFirst() ? decryptData(c.getString(0)) : null;
+                }
+            } catch (Exception e) { android.util.Log.e("MushrifiDB", "Recovery snapshot read failed", e); return null; }
+        }
+        synchronized boolean clearRecoverySnapshot() {
+            try {
+                SQLiteDatabase db = getWritableDatabase(); ensureRecoveryTable(db);
+                db.delete("recovery_snapshot", "id=1", null); return true;
+            } catch (Exception e) { android.util.Log.e("MushrifiDB", "Recovery snapshot clear failed", e); return false; }
+        }
     }
     private LocalDb localDb;
     private android.content.SharedPreferences securityPrefs;
@@ -195,6 +219,12 @@ public class MainActivity extends Activity {
             return localDb.write(json);
         }
         @JavascriptInterface public String getDatabaseError() { return localDb.getLastError(); }
+        @JavascriptInterface public boolean saveRecoverySnapshot(String json) {
+            if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
+            return localDb.saveRecoverySnapshot(json);
+        }
+        @JavascriptInterface public String loadRecoverySnapshot() { return localDb.readRecoverySnapshot(); }
+        @JavascriptInterface public boolean clearRecoverySnapshot() { return localDb.clearRecoverySnapshot(); }
         @JavascriptInterface public boolean hasPassword() { return securityPrefs.contains("hash") && securityPrefs.contains("salt"); }
         @JavascriptInterface public boolean setPassword(String password) { if (password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
         @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
