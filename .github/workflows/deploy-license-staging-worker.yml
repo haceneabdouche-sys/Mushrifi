@@ -43,6 +43,6 @@ jobs:
           wranglerVersion: "4.165.0"
           command: deploy --config wrangler.staging.toml
 
-      - name: Verify real Cloudflare Staging rate limiter (four harmless requests)
+      - name: Verify real Cloudflare Staging rate limiter (up to ten harmless requests)
         working-directory: licensing/worker
         run: npm run test:rate-limit-staging
