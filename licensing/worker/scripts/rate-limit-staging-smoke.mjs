@@ -47,7 +47,7 @@ for (let index = 1; index <= 10; index++) {
     const payload = await response.json();
     assert(payload.ok === false, "The live 429 response must use the standard error payload");
     blockedOnRequest = index;
-    process.stdout.write(`PASS: staging probe was rate limited on request ${index} (HTTP 429, Retry-After: 60)\\n`);
+    process.stdout.write(`PASS: staging probe was rate limited on request ${index} (HTTP 429, Retry-After: 60)\n`);
     break;
   }
 
@@ -56,7 +56,7 @@ for (let index = 1; index <= 10; index++) {
   const payload = await response.json();
   assert(payload.ok === true && payload.probe === "rate-limit",
     `Probe request ${index} returned an unexpected payload`);
-  if (index <= 3) process.stdout.write(`PASS: staging probe request ${index} allowed (HTTP 200)\\n`);
+  if (index <= 3) process.stdout.write(`PASS: staging probe request ${index} allowed (HTTP 200)\n`);
 
   await new Promise(resolve => setTimeout(resolve, 200));
 }
@@ -64,4 +64,4 @@ for (let index = 1; index <= 10; index++) {
 assert(blockedOnRequest !== null,
   "No HTTP 429 was observed within 10 harmless probe requests; review the Cloudflare Staging limiter configuration");
 
-process.stdout.write("PASS: live Cloudflare Staging rate limiter enforced the isolated probe; no license or D1 operation was invoked.\\n");
+process.stdout.write("PASS: live Cloudflare Staging rate limiter enforced the isolated probe; no license or D1 operation was invoked.\n");
