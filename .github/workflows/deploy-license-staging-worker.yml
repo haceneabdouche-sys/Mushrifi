@@ -1,0 +1,43 @@
+name: Deploy Mushrifi license API to Staging (no database migration)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mushrifi-license-staging-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging-worker:
+    if: github.ref == 'refs/heads/feature/device-license-foundation'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout licensing development branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/device-license-foundation
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify Worker and rate-limit configuration
+        working-directory: licensing/worker
+        run: |
+          npm ci
+          npm run check
+          npm run test:rate-limit
+
+      - name: Deploy Worker to Staging only (no D1 migration)
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: licensing/worker
+          wranglerVersion: "4.165.0"
+          command: deploy --config wrangler.staging.toml
