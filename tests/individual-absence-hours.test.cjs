@@ -16,11 +16,11 @@ const result=(period,value,timetable)=>JSON.parse(JSON.stringify(
   context.resolveIndividualAbsenceHours(period,value,timetable)
 ));
 
-assert.equal(context.isFullDayAbsence('غياب','اليوم كاملاً'),true,
+assert.equal(vm.runInContext("isFullDayAbsence('غياب','اليوم كاملاً')",context),true,
   'a full-day absence period must be recognized');
-assert.equal(context.isFullDayAbsence('غياب','الفترة الصباحية'),false,
+assert.equal(vm.runInContext("isFullDayAbsence('غياب','الفترة الصباحية')",context),false,
   'editing an absence to a partial period must clear the full-day flag');
-assert.equal(context.isFullDayAbsence('تأخر','اليوم كاملاً'),false,
+assert.equal(vm.runInContext("isFullDayAbsence('تأخر','اليوم كاملاً')",context),false,
   'a lateness record must never retain a full-day absence flag');
 
 assert.deepEqual(result('اليوم كاملاً','7',6),{
