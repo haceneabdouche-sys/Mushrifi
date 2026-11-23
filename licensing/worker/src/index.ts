@@ -4,6 +4,8 @@ export interface Env {
   LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64: string;
   PUBLIC_RATE_LIMITER: RateLimit;
   ADMIN_RATE_LIMITER: RateLimit;
+  // Bound only in Staging; absent in production so the probe endpoint stays disabled.
+  TEST_RATE_LIMITER?: RateLimit;
   LICENSE_ISSUER?: string;
   LICENSE_AUDIENCE?: string;
 }
@@ -45,9 +47,9 @@ function fail(message: string, status = 400, origin = "*"): Response {
   return json({ ok: false, error: message }, status, origin);
 }
 
-async function enforceRateLimit(request: Request, env: Env, admin = false): Promise<Response | null> {
+async function enforceRateLimit(request: Request, env: Env, admin = false, test = false): Promise<Response | null> {
   const ip = request.headers.get("cf-connecting-ip") || "unknown";
-  const limiter = admin ? env.ADMIN_RATE_LIMITER : env.PUBLIC_RATE_LIMITER;
+  const limiter = test ? env.TEST_RATE_LIMITER : admin ? env.ADMIN_RATE_LIMITER : env.PUBLIC_RATE_LIMITER;
   const key = ip.slice(0, 64);
   try {
     const result = await limiter.limit({ key });
@@ -374,6 +376,15 @@ export default {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return json({ ok: true });
     if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "mushrifi-license-api" });
+
+    // Harmless integration probe. It is enabled only when the Staging-only
+    // TEST_RATE_LIMITER binding is present and never touches the D1 database.
+    if (request.method === "GET" && url.pathname === "/__test/rate-limit-probe") {
+      if (!env.TEST_RATE_LIMITER) return fail("المسار غير موجود", 404);
+      const limited = await enforceRateLimit(request, env, false, true);
+      if (limited) return limited;
+      return json({ ok: true, probe: "rate-limit" });
+    }
 
     if (url.pathname.startsWith("/v1/admin/")) {
       const limited = await enforceRateLimit(request, env, true);
