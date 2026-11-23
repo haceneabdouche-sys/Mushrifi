@@ -69,7 +69,11 @@ The Worker now has separate Cloudflare Rate Limiting bindings in both Wrangler c
 
 Cloudflare's Workers Rate Limiting API is approximate and maintained independently in each Cloudflare location; it is an abuse-throttling layer, not a strict global quota. Since this first layer keys anonymous requests by Cloudflare's client IP, users sharing one public/mobile-network IP can share a bucket. Review the thresholds against real staging traffic before production deployment. For strict global limits, a Durable Object-backed limiter would be required.
 
-The rate-limit regression test runs with `npm run test:rate-limit` and is included in the license Worker CI workflow. Deploy the staging Worker with `wrangler.staging.toml` before testing the new bindings. Do not deploy the production configuration as part of this task.
+The rate-limit regression tests run with `npm run test:rate-limit` and `npm run test:rate-limit-behavior`; both are included in the license Worker CI workflow.
+
+Staging alone has a third binding, `TEST_RATE_LIMITER`, configured for 3 requests per 60 seconds. It enables the harmless `GET /__test/rate-limit-probe` endpoint. The probe returns a small JSON response, does not read or write D1, and is disabled when that binding is absent; production does not bind it. After a Staging deployment, `npm run test:rate-limit-staging` sends exactly four requests to the known Staging Worker: three expected HTTP 200 responses followed by HTTP 429 with `Retry-After: 60`. This live probe is run by the Staging deployment workflow. Do not point the test at production or add the test binding to `wrangler.toml`.
+
+Deploy the staging Worker with `wrangler.staging.toml` before running the live probe. Do not deploy the production configuration as part of this task.
 
 ## Remaining validation and hardening
 
