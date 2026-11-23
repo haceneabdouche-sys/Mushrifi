@@ -2,11 +2,11 @@ const fs = require('fs');
 const vm = require('vm');
 const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
 const checks = [
-  ['top brand bar uses midnight blue', /<meta name="theme-color" content="#102a43">[\\s\\S]*?header\\{[\\s\\S]*?background:linear-gradient\\(128deg,#0b1f33 0%,#102A43 54%,#183B63 100%\\)/],
-  ['author name and signature wrapper no longer rotate', /header \.credit-wrap\\{[\\s\\S]*?animation:none!important/],
-  ['author name remains fixed in place', /header p\\.credit\\{[\\s\\S]*?transform:none/],
-  ['signature image remains fixed in place', /header \.credit-signature\\{[\\s\\S]*?transform:none/],
-  ['a single gold shimmer passes over the name and signature', /header \.credit-wrap::after\\{[\\s\\S]*?animation:mushrifi-gold-glint 4\\.2s ease-in-out \.25s 1 both[\\s\\S]*?@keyframes mushrifi-gold-glint/],
+  ['top brand bar uses midnight blue', /<meta name="theme-color" content="#102a43">[\s\S]*?header\{[\s\S]*?background:linear-gradient\(128deg,#0b1f33 0%,#102A43 54%,#183B63 100%\)/],
+  ['author name and signature wrapper no longer rotate', /header \.credit-wrap\{[\s\S]*?animation:none!important/],
+  ['author name remains fixed in place', /header p\.credit\{[\s\S]*?transform:none/],
+  ['signature image remains fixed in place', /header \.credit-signature\{[\s\S]*?transform:none/],
+  ['a single gold shimmer passes over the name and signature', /header \.credit-wrap::after\{[\s\S]*?animation:mushrifi-gold-glint 4\.2s ease-in-out \.25s 1 both[\s\S]*?@keyframes mushrifi-gold-glint/],
   ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
   ['home keeps all detailed metrics available in the expandable statistics panel', /class="[^"]*home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
   ['upcoming parent summons remain visible on the home dashboard', /class="[^"]*upcoming-panel[\s\S]*?id="upcomingSummons"/],
