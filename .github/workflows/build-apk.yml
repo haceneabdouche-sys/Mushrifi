@@ -101,6 +101,8 @@ jobs:
         run: node tests/backup-protection-warning.test.cjs
       - name: Run database corruption guard regression tests
         run: node tests/database-corruption-guard.test.cjs
+      - name: Run reports, print and voice shortcut regression tests
+        run: node tests/reports-print-voice.test.cjs
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
