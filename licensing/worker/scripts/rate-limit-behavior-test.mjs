@@ -37,7 +37,7 @@ function makeLimiter(limit) {
   };
 }
 
-function makeEnv({ publicLimiter = makeLimiter(2), adminLimiter = makeLimiter(2) } = {}) {
+function makeEnv({ publicLimiter = makeLimiter(2), adminLimiter = makeLimiter(2), testLimiter } = {}) {
   let dbCalls = 0;
   const env = {
     DB: {
@@ -53,7 +53,8 @@ function makeEnv({ publicLimiter = makeLimiter(2), adminLimiter = makeLimiter(2)
     ADMIN_API_TOKEN: "unit-test-admin-token",
     LICENSE_SIGNING_PRIVATE_KEY_PKCS8_B64: "",
     PUBLIC_RATE_LIMITER: publicLimiter,
-    ADMIN_RATE_LIMITER: adminLimiter
+    ADMIN_RATE_LIMITER: adminLimiter,
+    TEST_RATE_LIMITER: testLimiter
   };
   return { env, getDbCalls: () => dbCalls };
 }
@@ -76,6 +77,13 @@ async function adminRequest(env, ip = "203.0.113.20") {
       authorization: "Bearer unit-test-admin-token",
       "cf-connecting-ip": ip
     }
+  }), env);
+}
+
+async function probeRequest(env, ip = "203.0.113.30") {
+  return worker.fetch(new Request("https://unit.test/__test/rate-limit-probe", {
+    method: "GET",
+    headers: { "cf-connecting-ip": ip }
   }), env);
 }
 
@@ -124,6 +132,27 @@ async function adminRequest(env, ip = "203.0.113.20") {
   assert(getDbCalls() === 0, "Health behavior test must not access D1");
 }
 
+// The staging-only probe has an independent low threshold and never accesses D1.
+{
+  const testLimiter = makeLimiter(3);
+  const { env, getDbCalls } = makeEnv({ testLimiter });
+  assert((await probeRequest(env)).status === 200, "Probe request 1 should pass");
+  assert((await probeRequest(env)).status === 200, "Probe request 2 should pass");
+  assert((await probeRequest(env)).status === 200, "Probe request 3 should pass");
+  const limited = await probeRequest(env);
+  assert(limited.status === 429, "Probe request 4 must be rate limited");
+  assert(limited.headers.get("retry-after") === "60", "Probe 429 must include Retry-After: 60");
+  assert(testLimiter.calls.length === 4, "Probe should call only its dedicated limiter");
+  assert(getDbCalls() === 0, "Probe behavior test must not access D1");
+}
+
+// With no staging-only binding, the probe route is not available (production safe default).
+{
+  const { env, getDbCalls } = makeEnv();
+  assert((await probeRequest(env)).status === 404, "Probe route must be disabled when its binding is absent");
+  assert(getDbCalls() === 0, "Disabled probe must not access D1");
+}
+
 // Missing or failing protection must fail closed with HTTP 503, not bypass the limit.
 {
   const brokenLimiter = { async limit() { throw new Error("simulated limiter outage"); } };
@@ -146,4 +175,4 @@ async function adminRequest(env, ip = "203.0.113.20") {
   assert(response.status === 503, "Admin requests must fail closed when the limiter throws");
 }
 
-console.log("PASS: public/admin 429 behavior, client-key isolation, Retry-After, health bypass, fail-closed handling, and zero D1 access.");
+console.log("PASS: public/admin/probe 429 behavior, client-key isolation, Retry-After, health bypass, production probe disablement, fail-closed handling, and zero D1 access.");
