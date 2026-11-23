@@ -4,7 +4,7 @@ const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
 const checks = [
   ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
   ['home keeps all detailed metrics available in the expandable statistics panel', /class="home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
-  ['upcoming parent summons remain visible on the home dashboard', /class="upcoming-panel"[\s\S]*?id="upcomingSummons"/],
+  ['upcoming parent summons remain visible on the home dashboard', /class="[^"]*upcoming-panel[\s\S]*?id="upcomingSummons"/],
   ['the More page exposes violations, reports and settings', /<section id="more" class="page hidden">[\s\S]*?data-go="violations"[\s\S]*?data-go="reports"[\s\S]*?data-go="settings"/],
   ['bottom navigation is fixed and reserves space for mobile safe areas', /#nav\{position:fixed[\s\S]*?env\(safe-area-inset-bottom\)/],
   ['navigation keeps More selected for violations, reports and settings', /x\.dataset\.page==='more'&&\['violations','reports','settings'\]\.includes\(page\)/],
