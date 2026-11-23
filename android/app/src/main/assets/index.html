@@ -511,7 +511,7 @@ header .credit-wrap::after{
   filter:blur(.4px);
   mix-blend-mode:screen;
   transform:translateX(380%) skewX(-22deg);
-  animation:mushrifi-gold-glint 4.2s ease-in-out .25s 1 both;
+  animation:mushrifi-gold-glint 4.2s ease-in-out .25s infinite;
 }
 @keyframes mushrifi-gold-glint{
   0%{transform:translateX(380%) skewX(-22deg);opacity:0}
@@ -520,7 +520,7 @@ header .credit-wrap::after{
   100%{transform:translateX(-430%) skewX(-22deg);opacity:0}
 }
 @media(prefers-reduced-motion:reduce){
-  header .credit-wrap::after{animation:none;opacity:.18;transform:none}
+  header .credit-wrap::after{animation:mushrifi-gold-glint 8s ease-in-out .25s infinite;opacity:.5}
 }
 
 </style>
