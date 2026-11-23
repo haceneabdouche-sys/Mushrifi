@@ -32,6 +32,7 @@ jobs:
           npm install --no-package-lock --no-audit --no-fund
           npm run check
           npm run test:rate-limit
+          npm run test:rate-limit-behavior
 
       - name: Deploy Worker to Staging only (no D1 migration)
         uses: cloudflare/wrangler-action@v4
@@ -41,3 +42,7 @@ jobs:
           workingDirectory: licensing/worker
           wranglerVersion: "4.165.0"
           command: deploy --config wrangler.staging.toml
+
+      - name: Verify real Cloudflare Staging rate limiter (four harmless requests)
+        working-directory: licensing/worker
+        run: npm run test:rate-limit-staging
