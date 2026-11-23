@@ -10,7 +10,8 @@
     "db:local": "wrangler d1 execute mushrifi-licenses --local --file=./schema.sql",
     "db:remote": "wrangler d1 execute mushrifi-licenses --remote --file=./schema.sql",
     "test:rate-limit": "node scripts/rate-limit-config-test.mjs",
-    "test:rate-limit-behavior": "node scripts/rate-limit-behavior-test.mjs"
+    "test:rate-limit-behavior": "node scripts/rate-limit-behavior-test.mjs",
+    "test:rate-limit-staging": "node scripts/rate-limit-staging-smoke.mjs"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261114.1",
