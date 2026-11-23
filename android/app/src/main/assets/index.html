@@ -492,6 +492,7 @@ footer{padding:24px 12px;color:#71818d}
 <div class="settings-pane hidden" id="settings-pane-data" role="tabpanel">
 <div class="panel"><h2>إعدادات المؤسسة</h2><p class="muted">أدخل معلومات مؤسستك يدوياً، وستظهر في أعلى واجهة التطبيق مباشرة فوق اسمك وإمضائك المتحركين.</p><label for="schoolName">اسم المؤسسة</label><input id="schoolName" type="text" maxlength="120" placeholder="أدخل اسم المؤسسة"><label for="schoolLocation">الموقع (البلدية والولاية)</label><input id="schoolLocation" type="text" maxlength="120" placeholder="أدخل البلدية والولاية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
+<div class="panel" id="undoLastDeletePanel"><h2>التراجع عن آخر حذف أو استعادة</h2><p class="muted" id="undoLastDeleteStatus">لا توجد عملية حذف محفوظة للتراجع عنها حالياً.</p><button class="btn" id="undoLastDelete" type="button">التراجع عن آخر عملية</button><p class="muted">تُحفظ نقطة التراجع مشفّرة على الهاتف، وتبقى متاحة إلى أن تحفظ تعديلاً جديداً. عندها تُلغى تلقائياً حتى لا تُستبدل بيانات أحدث.</p></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
 </section>
@@ -540,7 +541,62 @@ $("#studentYearSelect")?.addEventListener("change",()=>refreshStudentSectionOpti
 $("#studentBranchSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:$("#studentBranchSelect").value,sectionNumber:""}));
 $("#studentClassSelect")?.addEventListener("change",updateStudentClassValue);
 let licenseReadOnly=false;
-const save=()=>{if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}try{render();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
+let preserveUndoOnNextSave=false;
+const save=()=>{if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}const clearUndoAfterSave=!preserveUndoOnNextSave;preserveUndoOnNextSave=false;let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}if(clearUndoAfterSave){try{clearStoredRecoverySnapshot();}catch(e){console.warn('Mushrifi recovery cleanup failed',e);}}try{render();refreshUndoPanel();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
+function readStoredRecoverySnapshot(){
+ try{let raw=null;if(isAndroidApp&&typeof AndroidBridge.loadRecoverySnapshot==='function')raw=AndroidBridge.loadRecoverySnapshot();else raw=localStorage.getItem('mushrifi_last_delete_v1');return raw?String(raw):null;}
+ catch(e){console.warn('Mushrifi recovery read failed',e);return null;}
+}
+function writeStoredRecoverySnapshot(raw){
+ if(isAndroidApp&&typeof AndroidBridge.saveRecoverySnapshot==='function')return AndroidBridge.saveRecoverySnapshot(String(raw));
+ localStorage.setItem('mushrifi_last_delete_v1',String(raw));return true;
+}
+function clearStoredRecoverySnapshot(){
+ try{if(isAndroidApp&&typeof AndroidBridge.clearRecoverySnapshot==='function')return AndroidBridge.clearRecoverySnapshot()===true;localStorage.removeItem('mushrifi_last_delete_v1');return true;}
+ catch(e){console.warn('Mushrifi recovery clear failed',e);return false;}
+}
+function parseRecoverySnapshot(raw){
+ if(!raw)return null;const item=JSON.parse(raw),data=item&&item.database;
+ if(!item||item.version!==1||!data||!Array.isArray(data.students)||!Array.isArray(data.attendance)||!Array.isArray(data.documents)||!Array.isArray(data.violations)||!data.settings||typeof data.settings!=='object')return null;
+ return item;
+}
+function refreshUndoPanel(){
+ const button=$('#undoLastDelete'),status=$('#undoLastDeleteStatus');if(!button||!status)return;
+ let snapshot=null;try{snapshot=parseRecoverySnapshot(readStoredRecoverySnapshot());}catch(_){}
+ if(!snapshot){status.textContent='لا توجد عملية حذف محفوظة للتراجع عنها حالياً.';button.disabled=true;return;}
+ const when=snapshot.createdAt?new Date(snapshot.createdAt).toLocaleString('ar-DZ'):'وقت غير محدد';
+ status.textContent='آخر عملية: '+String(snapshot.label||'تغيير بيانات')+' · '+when+'. يمكنك التراجع عنها ما لم تحفظ تعديلاً آخر.';
+ button.disabled=!!licenseReadOnly;
+}
+function saveUndoSnapshot(label){
+ try{
+  if(licenseReadOnly)throw new Error('لا يمكن تعديل البيانات في وضع القراءة فقط.');
+  const payload={version:1,label:String(label||'حذف'),createdAt:new Date().toISOString(),database:JSON.parse(JSON.stringify(db))};
+  const raw=JSON.stringify(payload);
+  if(!raw||raw.length<2||writeStoredRecoverySnapshot(raw)!==true)throw new Error('لم يؤكد الهاتف حفظ نقطة التراجع.');
+  preserveUndoOnNextSave=true;refreshUndoPanel();return true;
+ }catch(e){alert('أُلغيت العملية حفاظاً على بياناتك؛ تعذر تجهيز نقطة التراجع. '+(e?.message||''));return false;}
+}
+window.undoLastDelete=()=>{
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن استرجاع البيانات قبل تجديد الترخيص.');return;}
+ let raw,snapshot;try{raw=readStoredRecoverySnapshot();snapshot=parseRecoverySnapshot(raw);}catch(_){}
+ if(!snapshot){refreshUndoPanel();alert('لا توجد نقطة تراجع صالحة.');return;}
+ const data=snapshot.database;
+ const summary='سيتم إرجاع البيانات إلى ما كانت عليه قبل: '+String(snapshot.label||'العملية الأخيرة')+'، بتاريخ '+(snapshot.createdAt?new Date(snapshot.createdAt).toLocaleString('ar-DZ'):'غير محدد')+'.\n\nسيُستبدل الوضع الحالي بالكامل بهذه الحالة السابقة. هل تريد المتابعة؟';
+ if(!confirm(summary))return;
+ const oldDb=db;
+ if(!clearStoredRecoverySnapshot()){alert('تعذر إغلاق نقطة التراجع بأمان. لم تتغير البيانات.');return;}
+ db=data;
+ if(!save()){
+  db=oldDb;try{writeStoredRecoverySnapshot(raw);}catch(_){}render();refreshUndoPanel();
+  alert('تعذر حفظ الاسترجاع؛ بقيت البيانات السابقة كما هي، وأُعيدت نقطة التراجع للمحاولة لاحقاً.');return;
+ }
+ if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
+ if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
+ alert('تم التراجع بنجاح واستعادة البيانات السابقة. عدد التلاميذ: '+db.students.length+'، وسجلات المتابعة: '+(db.attendance.length+db.documents.length+db.violations.length)+'.');
+};
+$('#undoLastDelete').onclick=window.undoLastDelete;
+
 function setLicenseControlDisabled(el,disabled){
  if(disabled){
   if(!el.hasAttribute('data-license-was-disabled'))el.setAttribute('data-license-was-disabled',el.disabled?'1':'0');
@@ -994,8 +1050,8 @@ function renderSchoolHolidays(){
 window.deleteSchoolHoliday=id=>{
  const list=schoolHolidayRanges(),index=list.findIndex(h=>String(h.id)===String(id));if(index<0)return;
  if(!confirm('هل تريد حذف فترة العطلة المحددة؟'))return;
- const old=list.slice();db.settings.schoolHolidays=list.filter(h=>String(h.id)!==String(id));
- if(!save())db.settings.schoolHolidays=old;
+ const old=list.slice();if(!saveUndoSnapshot('حذف فترة عطلة مدرسية'))return;db.settings.schoolHolidays=list.filter(h=>String(h.id)!==String(id));
+ if(!save()){db.settings.schoolHolidays=old;clearStoredRecoverySnapshot();refreshUndoPanel();}
 };
 $('#schoolHolidayForm').onsubmit=e=>{
  e.preventDefault();const f=e.currentTarget,name=String(f.elements.name.value||'').trim(),start=String(f.elements.start.value||''),end=String(f.elements.end.value||'');
@@ -1043,8 +1099,8 @@ window.studentAction=(el,id)=>{
     go('documents');const form=$('#docForm');form.elements.type.value='استدعاء ولي';form.elements.student.value=id;form.elements.date.value=today();form.elements.reason.focus();
   }
 };
-window.delStudent=id=>{if(!confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.'))return;const old=db.students;db.students=old.filter(s=>s.id!==id);if(!save()){db.students=old;render();alert('تعذر حفظ الحذف؛ أُعيد ملف التلميذ إلى القائمة.');}};
-window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل؟'))return;const old=db[kind];db[kind]=old.filter(x=>x.id!==id);if(!save()){db[kind]=old;render();return;}if(kind==='documents'&&window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));};
+window.delStudent=id=>{if(!confirm('حذف ملف التلميذ؟ لن تُحذف سجلاته السابقة تلقائياً.'))return;if(!saveUndoSnapshot('حذف بطاقة تلميذ'))return;const old=db.students;db.students=old.filter(s=>s.id!==id);if(!save()){db.students=old;clearStoredRecoverySnapshot();refreshUndoPanel();render();alert('تعذر حفظ الحذف؛ أُعيد ملف التلميذ إلى القائمة.');}};
+window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل؟'))return;const titles={attendance:'سجل غياب أو تأخر',documents:'إشعار أو استدعاء',violations:'سجل مخالفة'};if(!Array.isArray(db[kind])||!db[kind].some(x=>String(x.id)===String(id)))return;if(!saveUndoSnapshot('حذف '+(titles[kind]||'سجل')))return;const old=db[kind];db[kind]=old.filter(x=>x.id!==id);if(!save()){db[kind]=old;clearStoredRecoverySnapshot();refreshUndoPanel();render();return;}if(kind==='documents'&&window.AndroidBridge&&typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(id));};
 
 window.editDocument=id=>{
  const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;
@@ -1263,8 +1319,9 @@ function restorePendingBackup(){
  if(!pendingBackupData)return;
  if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
  if(!confirm('تأكيد أخير: هل توافق على استبدال بيانات الهاتف بالنسخة التي تمت معاينتها؟'))return;
+ if(!saveUndoSnapshot('استبدال البيانات عند استعادة نسخة احتياطية'))return;
  const oldDb=db;db=pendingBackupData;
- if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
+ if(!save()){db=oldDb;clearStoredRecoverySnapshot();refreshUndoPanel();render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
@@ -1304,13 +1361,14 @@ $('#clearStudents').onclick=()=>{
   if(!confirm('تحذير: سيتم حذف ملفات '+count+' تلميذاً من القائمة نهائياً على هذا الجهاز. ستبقى سجلات الغياب والتأخر والمخالفات والوثائق كما هي، لكن قد تظهر فيها أسماء غير معروفة لأن ملفات التلاميذ حُذفت. سيتم تنزيل نسخة احتياطية كاملة أولاً. هل تريد المتابعة؟'))return;
   const approval=prompt('للتأكيد النهائي، اكتب العبارة التالية كما هي: أوافق على حذف قائمة التلاميذ');
   if(approval!=='أوافق على حذف قائمة التلاميذ'){status.textContent='تم إلغاء الحذف؛ لم تتغير قائمة التلاميذ.';return;}
+  if(!saveUndoSnapshot('حذف قائمة التلاميذ كاملة'))return;
   const backup=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const link=document.createElement('a');const url=URL.createObjectURL(backup);link.href=url;link.download='mushrifi-backup-before-clear-students-'+new Date().toISOString().slice(0,10)+'.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);
   const oldStudents=db.students,changedNames=[];
   const names=new Map(oldStudents.map(s=>[s.id,(String(s.last||'')+' '+String(s.first||'')).trim()]));
   for(const kind of ['attendance','documents','violations'])for(const record of db[kind]){if(!record.studentName&&names.has(record.student)){changedNames.push([record,record.studentName]);record.studentName=names.get(record.student);}}
   db.students=[];
-  if(!save()){db.students=oldStudents;for(const [record,oldName] of changedNames){if(oldName===undefined)delete record.studentName;else record.studentName=oldName;}render();status.textContent='تعذر حفظ العملية؛ لم تُحذف قائمة التلاميذ.';alert(status.textContent);return;}
+  if(!save()){db.students=oldStudents;for(const [record,oldName] of changedNames){if(oldName===undefined)delete record.studentName;else record.studentName=oldName;}clearStoredRecoverySnapshot();refreshUndoPanel();render();status.textContent='تعذر حفظ العملية؛ لم تُحذف قائمة التلاميذ.';alert(status.textContent);return;}
   status.textContent='تم حذف قائمة التلاميذ ('+count+' تلميذاً). بقيت سجلات الغياب والتأخر والمخالفات والوثائق.';
   alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية لاسترجاع القائمة عند الحاجة.');
 };
@@ -1457,7 +1515,7 @@ $('#csvImport').onchange=async e=>{
   finally{input.value='';}
 };
 
-render();
+render();refreshUndoPanel();
 
 function refreshLicenseStatus(){
  const box=$('#licenseStatusText');if(!box)return;
