@@ -1734,6 +1734,7 @@ function parseCSV(text, delimiter){
 }
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+function isCompatibleImportIdentity(existingValue,incomingValue){const normalize=value=>String(value??'').normalize('NFKC').replace(/[\u0640\u064B-\u065F\u0670]/g,'').replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/[\s.-]/g,'').trim().toLocaleLowerCase('ar');const existing=normalize(existingValue),incoming=normalize(incomingValue);return !existing||!!incoming&&existing===incoming;}
 $('#clearStudents').onclick=()=>{
   const status=$('#clearStudentsStatus');
   if(!db.students.length){status.textContent='قائمة التلاميذ فارغة بالفعل.';alert(status.textContent);return;}
@@ -1853,7 +1854,8 @@ $('#csvImport').onchange=async e=>{
           const sectionMatch=normalizeClass(cls)===normalizeClass(data.sectionNumber||data.class);
           const yearMatch=!data.schoolYear||!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear);
           const branchMatch=!data.branch||!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch);
-          return nameMatch&&sectionMatch&&yearMatch&&branchMatch;
+          const identityCompatible=isCompatibleImportIdentity(st.identityNumber,data.identityNumber);
+          return identityCompatible&&nameMatch&&sectionMatch&&yearMatch&&branchMatch;
         });
         // عند تكرار الاسم والقسم، استعمل السنة والشعبة للتفريق ولا تخمّن.
         if(fallback.length>1&&data.schoolYear){
@@ -1884,8 +1886,8 @@ $('#csvImport').onchange=async e=>{
       }else{
         const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
         db.students.push(record);
-        if(!existingById.has(data.identityNumber))existingById.set(data.identityNumber,[]);
-        existingById.get(data.identityNumber).push(record);
+        if(!existingById.has(incomingId))existingById.set(incomingId,[]);
+        existingById.get(incomingId).push(record);
         added++;
       }
     }
