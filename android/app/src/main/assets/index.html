@@ -475,7 +475,9 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
 /* Mobile performance: keep the author's name and signature static on phones. */
 @media(max-width:700px){
  header .credit-wrap{animation:none!important;perspective:none!important;transform:none!important;transform-style:flat!important}
- header .credit-name-glint,header .credit-signature-glint{display:none!important}
+ /* Preserve the animated sparkle paths; remove costly SVG filter passes instead. */
+ header .credit-name-glint,header .credit-signature-glint{display:block!important;filter:none!important}
+ header .credit-signature-glint .signature-glint-point{filter:none!important}
  header .credit-signature,header p.credit{filter:none!important;transform:none!important}
 }
 </style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}
