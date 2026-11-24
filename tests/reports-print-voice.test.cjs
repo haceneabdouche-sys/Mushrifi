@@ -12,7 +12,7 @@ const checks = [
   ['name glint travels along its own SVG lettering track', /id="mushrifi-name-trace"[\s\S]*?<animateMotion dur="4\.8s" repeatCount="indefinite"[\s\S]*?<mpath href="#mushrifi-name-trace"\/>/],
   ['signature image remains fixed in place', /header \.credit-signature\{[\s\S]*?transform:none/],
   ['signature glint overlays the exact square image bounds', /<span class="credit-signature-wrap"><img class="credit-signature"[\s\S]*?<svg class="credit-signature-glint" viewBox="0 0 512 512"/],
-  ['ten luminous points travel in sequence along the signature stroke', /id="mushrifi-signature-trace" d="M 118 446[\s\S]*?data-glint="1"[\s\S]*?animateMotion dur="6\.2s" begin="0s" repeatCount="indefinite"[\s\S]*?mpath href="#mushrifi-signature-trace"\/>[\s\S]*?data-glint="10"[\s\S]*?animateMotion dur="6\.2s" begin="-5\.58s" repeatCount="indefinite"[\s\S]*?mpath href="#mushrifi-signature-trace"\/>/],
+  ['ten luminous points glow across four signature stroke paths', /id="mushrifi-signature-upper"[\s\S]*?id="mushrifi-signature-left"[\s\S]*?id="mushrifi-signature-middle"[\s\S]*?id="mushrifi-signature-sweep"[\s\S]*?data-glint="10"[\s\S]*?mushrifi-signature-glow[\s\S]*?mushrifi-signature-halo/],
   ['old free-floating rectangle sparkle animation is removed', /^(?![\s\S]*mushrifi-signature-only-star)(?![\s\S]*signature-light)/],
   ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
   ['home keeps all detailed metrics available in the expandable statistics panel', /class="[^"]*home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
@@ -119,6 +119,14 @@ for (const [label, pattern] of checks) {
   const ok = pattern.test(html);
   process.stdout.write((ok ? 'PASS ' : 'FAIL ') + label + '\n');
   if (!ok) failed++;
+}
+
+const signatureGlintCount = (html.match(/class="glint-point signature-glint-point" data-glint="/g) || []).length;
+if (signatureGlintCount !== 10) {
+  process.stderr.write('FAIL signature has exactly ten individually animated glints\\n');
+  failed++;
+} else {
+  process.stdout.write('PASS signature has exactly ten individually animated glints\\n');
 }
 
 const navStart = html.indexOf('<nav');
