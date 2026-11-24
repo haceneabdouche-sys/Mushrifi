@@ -501,26 +501,30 @@ header .credit-signature{
 header .credit-wrap::after{
   content:"";
   position:absolute;
-  top:-8%;
-  bottom:-8%;
   left:0;
-  width:8%;
+  top:16%;
+  width:10px;
+  height:10px;
   z-index:4;
   pointer-events:none;
-  background:linear-gradient(105deg,transparent 0%,rgba(214,180,107,.10) 24%,rgba(255,252,229,.98) 48%,rgba(255,216,130,.72) 60%,transparent 100%);
-  filter:drop-shadow(0 0 5px rgba(255,224,150,.58));
+  border-radius:50%;
+  background:radial-gradient(circle,#fff 0 32%,#fffde9 48%,rgba(255,255,255,.72) 68%,rgba(255,255,255,0) 100%);
+  box-shadow:0 0 3px 1px rgba(255,255,255,.98),0 0 8px 3px rgba(255,255,255,.84),0 0 16px 5px rgba(214,180,107,.78);
+  filter:brightness(1.2);
   mix-blend-mode:screen;
-  transform:translateX(1150%) skewX(-18deg);
-  animation:mushrifi-gold-glint 4.8s linear infinite;
+  animation:mushrifi-signature-star 5.2s ease-in-out infinite;
 }
-@keyframes mushrifi-gold-glint{
-  0%{transform:translateX(1150%) skewX(-18deg);opacity:0}
-  8%{opacity:.96}
-  92%{opacity:.96}
-  100%{transform:translateX(-1200%) skewX(-18deg);opacity:0}
+@keyframes mushrifi-signature-star{
+  0%{left:0;top:16%;opacity:0}
+  5%{opacity:1}
+  42%{left:calc(100% - 10px);top:16%;opacity:1}
+  48%{left:calc(100% - 10px);top:72%;opacity:1}
+  90%{left:0;top:72%;opacity:1}
+  96%{left:0;top:72%;opacity:0}
+  100%{left:0;top:16%;opacity:0}
 }
 @media(prefers-reduced-motion:reduce){
-  header .credit-wrap::after{animation:mushrifi-gold-glint 8s linear infinite;opacity:.7}
+  header .credit-wrap::after{animation:mushrifi-signature-star 9s ease-in-out infinite;opacity:.9}
 }
 
 </style>
