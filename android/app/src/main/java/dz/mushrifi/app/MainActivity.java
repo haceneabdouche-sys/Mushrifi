@@ -255,6 +255,19 @@ public class MainActivity extends Activity {
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + reminderMillis + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
+        @JavascriptInterface public boolean hasNotificationPermission() {
+            return Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+        }
+        @JavascriptInterface public void requestNotificationPermission() {
+            runOnUiThread(() -> {
+                if (hasNotificationPermission()) {
+                    Toast.makeText(MainActivity.this, "صلاحية الإشعارات مفعلة بالفعل.", Toast.LENGTH_SHORT).show();
+                    notifyNotificationPermissionState(true);
+                } else if (Build.VERSION.SDK_INT >= 33) {
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
+                }
+            });
+        }
         @JavascriptInterface public boolean hasExactAlarmAccess() {
             if (Build.VERSION.SDK_INT < 31) return true;
             AlarmManager alarms = (AlarmManager) getSystemService(ALARM_SERVICE);
@@ -444,6 +457,20 @@ public class MainActivity extends Activity {
             String script = "window.onMushrifiLicenseAutoCheck && window.onMushrifiLicenseAutoCheck(" + result.toString() + ");";
             runOnUiThread(() -> { if (web != null) web.evaluateJavascript(script, null); });
         });
+    }
+
+    private void notifyNotificationPermissionState(boolean granted) {
+        if (web == null) return;
+        web.evaluateJavascript("window.onMushrifiNotificationPermissionChanged && window.onMushrifiNotificationPermissionChanged(" + granted + ");", null);
+    }
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION) {
+            boolean granted = hasNotificationPermission();
+            notifyNotificationPermissionState(granted);
+            Toast.makeText(this, granted ? "تم تفعيل صلاحية الإشعارات." : "لم تُفعّل صلاحية الإشعارات؛ لن تصل التذكيرات حتى السماح بها.", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
