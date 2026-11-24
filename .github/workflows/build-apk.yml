@@ -107,6 +107,8 @@ jobs:
         run: node tests/student-profile-bulk-messaging.test.cjs
       - name: Run notification permission and summons reminder integrity tests
         run: node tests/summons-notification-permissions.test.cjs
+      - name: Run mobile performance regression tests
+        run: node tests/mobile-performance.test.cjs
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \
