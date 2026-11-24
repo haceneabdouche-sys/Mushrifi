@@ -501,24 +501,26 @@ header .credit-signature{
 header .credit-wrap{overflow:visible}
 header .signature-light{
  position:absolute;
- left:0;top:24px;
- width:14px;height:14px;
+ left:calc(50% - 65px);
+ top:82px;
+ width:9px;height:9px;
  border-radius:50%;
  z-index:20;pointer-events:none;
- background:radial-gradient(circle,#fff 0 25%,#fff 35%,rgba(255,255,255,.92) 48%,rgba(255,255,255,.28) 68%,transparent 76%);
- box-shadow:0 0 5px 2px #fff,0 0 12px 5px rgba(255,255,255,.92),0 0 23px 8px rgba(255,229,165,.85);
- animation:mushrifi-visible-star 5.5s ease-in-out infinite;
+ background:radial-gradient(circle,#fff 0 38%,#fff 48%,rgba(255,255,255,.75) 65%,transparent 78%);
+ box-shadow:0 0 3px 1px #fff,0 0 7px 3px rgba(255,255,255,.96),0 0 13px 4px rgba(255,240,190,.92);
+ animation:mushrifi-signature-only-star 3.8s ease-in-out infinite;
 }
-@keyframes mushrifi-visible-star{
- 0%{left:0;top:24px;opacity:0}
- 6%{opacity:1}
- 43%{left:calc(100% - 14px);top:24px;opacity:1}
- 49%{left:calc(100% - 14px);top:155px;opacity:1}
- 91%{left:0;top:155px;opacity:1}
- 97%,100%{left:0;top:24px;opacity:0}
+@keyframes mushrifi-signature-only-star{
+ 0%{left:calc(50% - 65px);top:82px;opacity:0}
+ 8%{opacity:1}
+ 25%{left:calc(50% - 28px);top:111px;opacity:1}
+ 50%{left:calc(50% + 55px);top:96px;opacity:1}
+ 73%{left:calc(50% + 10px);top:174px;opacity:1}
+ 92%{left:calc(50% - 60px);top:138px;opacity:1}
+ 100%{left:calc(50% - 65px);top:82px;opacity:0}
 }
 @media(prefers-reduced-motion:reduce){
- header .signature-light{animation:mushrifi-visible-star 9s ease-in-out infinite}
+ header .signature-light{animation:mushrifi-signature-only-star 7s ease-in-out infinite}
 }
 </style>
 </head>
