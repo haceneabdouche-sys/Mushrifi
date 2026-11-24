@@ -33,6 +33,7 @@ jobs:
           npm run check
           npm run test:rate-limit
           npm run test:rate-limit-behavior
+          npm run test:device-identity-binding
 
       - name: Deploy Worker to Staging only (no D1 migration)
         uses: cloudflare/wrangler-action@v4
