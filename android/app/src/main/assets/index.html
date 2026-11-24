@@ -764,7 +764,7 @@ catch(error){
  throw new Error('Mushrifi database validation failed; original data was not overwritten.');
 }
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
-const $=s=>document.querySelector(s), $=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const sectionNorm=v=>String(v??"").trim().replace(/\s+/g," ").toLocaleLowerCase("ar");
 const sectionNames=()=>db.settings.sectionNames&&typeof db.settings.sectionNames==="object"?db.settings.sectionNames:(db.settings.sectionNames={});
 const sectionLabel=code=>{const map=sectionNames(),key=Object.keys(map).find(k=>sectionNorm(k)===sectionNorm(code));return key?String(map[key]):String(code||"—");};
@@ -854,10 +854,10 @@ function applyLicenseAccess(state){
  document.body.classList.toggle('license-readonly',licenseReadOnly);
  const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn']);
  if(licenseReadOnly){
-  $('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
-  $('select').forEach(el=>setLicenseControlDisabled(el,true));
-  $('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>setLicenseControlDisabled(el,true));
-  $('button').forEach(el=>{
+  $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
+  $$('select').forEach(el=>setLicenseControlDisabled(el,true));
+  $$('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>setLicenseControlDisabled(el,true));
+  $$('button').forEach(el=>{
    const action=el.getAttribute('onclick')||'';
    const keep=allowed.has(el.id)||!!el.closest('nav')||el.matches('[data-settings-tab],.student-name')||action.includes('studentHistory')||action.includes('window.print')||action.includes('goPreviousPage');
    setLicenseControlDisabled(el,!keep);
@@ -888,8 +888,8 @@ try{history.replaceState({mushrifiPage:document.querySelector('.page:not(.hidden
 window.addEventListener('popstate',event=>{if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(true);return;}const page=event.state?.mushrifiPage;go(page&&document.getElementById(page)?page:'home',false);});
 function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data','license'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
 window.setSettingsTab=setSettingsTab;
-$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
-$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+$$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
+$$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function renderStudentDirectory(){
 let q=($('#studentSearch')?.value||'').trim().toLocaleLowerCase('ar');
 $('#studentCount').textContent=db.students.filter(s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).length+' تلميذ';
@@ -1002,7 +1002,7 @@ function voiceStudentMatches(nameText){return voiceStudentRanked(nameText).map(x
 function showVoiceStudentChoices(matches,title,choose){
  $('#voiceStatus').textContent=title;$('#voiceConfirm').classList.remove('hidden');
  $('#voiceConfirm').innerHTML='<h3>اختر التلميذ الصحيح</h3>'+matches.map(x=>{const st=x.student||x;return '<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc((st.last+' '+st.first).trim()+' – '+st.class)+'</button>';}).join(' ');
- $('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st)choose(st);});
+ $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st)choose(st);});
 }
 function showVoiceSuggestedActions(st){
  const fullName=(st.last+' '+st.first).trim()||st.name||st.fullName||'التلميذ';
@@ -1117,8 +1117,8 @@ function loadDailyRoster(){
 }
 $('#loadDailyRoster').onclick=loadDailyRoster;
 $('#dailyRosterSearch').addEventListener('input',()=>{const q=$('#dailyRosterSearch').value.trim().toLocaleLowerCase('ar');$('#dailyRoster .daily-student').forEach(card=>card.classList.toggle('is-hidden',!card.textContent.toLocaleLowerCase('ar').includes(q)));});
-$('#selectAllAbsent').onclick=()=>{$('#dailyRoster .daily-absent:not(:disabled)').forEach(c=>c.checked=true);};
-$('#clearAllAbsent').onclick=()=>{$('#dailyRoster .daily-absent:not(:disabled)').forEach(c=>c.checked=false);};
+$('#selectAllAbsent').onclick=()=>{$$('#dailyRoster .daily-absent:not(:disabled)').forEach(c=>c.checked=true);};
+$('#clearAllAbsent').onclick=()=>{$$('#dailyRoster .daily-absent:not(:disabled)').forEach(c=>c.checked=false);};
 $('#dailyClass').addEventListener('change',loadDailyRoster);
 $('#dailyDate').addEventListener('change',()=>{if($('#dailyClass').value)loadDailyRoster();});
 $('#dailyPeriod').addEventListener('change',()=>{
@@ -1128,7 +1128,7 @@ $('#dailyPeriod').addEventListener('change',()=>{
  else{$('#dailyHours').value='1';$('#dailyHours').readOnly=false;$('#dailyHours').placeholder='عدد الساعات';}
  if($('#dailyClass').value)loadDailyRoster();
 });
-$('#dailyHours').addEventListener('input',()=>{$('#dailyRoster .daily-absent:checked').forEach(c=>{const h=c.closest('.daily-student')?.querySelector('.daily-hours');if(h&&!h.disabled&&!h.readOnly)h.value=$('#dailyHours').value;});});
+$('#dailyHours').addEventListener('input',()=>{$$('#dailyRoster .daily-absent:checked').forEach(c=>{const h=c.closest('.daily-student')?.querySelector('.daily-hours');if(h&&!h.disabled&&!h.readOnly)h.value=$('#dailyHours').value;});});
 $('#saveDailyAbsences').onclick=()=>{
  const selected=$('.daily-absent:checked');const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),date=$('#dailyDate').value,period=$('#dailyPeriod').value,justified=$('#dailyJustified').value;if(!date){alert('حدد تاريخ الغياب.');return;}const records=[];
  for(const check of selected){const card=check.closest('.daily-student'),st=db.students.find(x=>String(x.id)===check.dataset.id);let hours=period==='اليوم كاملاً'?scheduledHoursForGroupDate(group,date):parseHours(card.querySelector('.daily-hours').value);if(!st||hours===null||hours===''||Number.isNaN(Number(hours))||Number(hours)<=0||Number(hours)>24){alert(period==='اليوم كاملاً'?'لا يمكن تسجيل يوم كامل: أدخل توقيت القسم وتأكد من وجود ساعات دراسة في هذا اليوم.':'تحقق من عدد ساعات الغياب لكل تلميذ محدد.');return;}records.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'غياب',period,hours:Number(hours),fullDay:period==='اليوم كاملاً',justified,notes:card.querySelector('.daily-note').value.trim()});}
