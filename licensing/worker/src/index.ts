@@ -379,7 +379,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (request.method === "OPTIONS") return json({ ok: true });
-    if (request.method === "GET" && url.pathname === "/health") return json({ ok: true, service: "mushrifi-license-api" });
+    if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) return json({ ok: true, service: "mushrifi-license-api" });
 
     // Harmless integration probe. It is enabled only when the Staging-only
     // TEST_RATE_LIMITER binding is present and never touches the D1 database.
