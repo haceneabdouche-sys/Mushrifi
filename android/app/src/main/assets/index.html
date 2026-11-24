@@ -425,6 +425,7 @@ header .credit-signature{width:72px;height:72px;margin-top:2px}
 .voice-panel p{margin:4px 0;line-height:1.6}
 .voice-panel #startVoiceBtn{flex:0 0 auto;min-height:46px;padding-inline:18px}
 .voice-panel #voiceTranscript,.voice-panel #voiceConfirm{flex:1 1 100%;margin:4px 0 0}
+.daily-tasks-panel{margin-top:12px;border-right:4px solid #d6b46b}.daily-tasks-list{display:grid;gap:8px}.daily-task-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfd}.daily-task-item .task-copy{min-width:0}.daily-task-item strong{display:block;overflow-wrap:anywhere}.daily-task-item small{display:block;color:var(--muted);line-height:1.7}.daily-task-item .btn{flex:0 0 auto}.daily-task-kind{display:inline-block;font-size:11px;font-weight:700;color:#805b11;background:#fff5d9;border-radius:20px;padding:3px 8px;margin-bottom:4px}@media(max-width:560px){.daily-task-item{align-items:flex-start;flex-direction:column}.daily-task-item .btn{width:100%}}
 .home-feature-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:stretch}
 .home-feature-grid>.panel{min-width:0;margin-top:0}
 .panel-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -583,6 +584,8 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 
 <div class="home-kpis grid">
   <div class="stat"><small>إجمالي التلاميذ</small><strong id="sStudents">0</strong></div>
+<section class="panel daily-tasks-panel" aria-labelledby="dailyTasksHeading"><div class="panel-title-row"><h2 id="dailyTasksHeading">مهامي اليوم</h2><span class="pill" id="dailyTasksCount">0 متابعة</span></div><p class="muted">ملخص عملي للاستدعاءات القريبة وسجلات الغياب أو التأخر التي ما زالت قيد التبرير.</p><div id="dailyTasksList" class="daily-tasks-list"><p class="empty">جارٍ تحديث المهام...</p></div></section>
+
   <div class="stat"><small>غيابات اليوم</small><strong id="todayAbs">0</strong></div>
   <div class="stat"><small>تأخرات اليوم</small><strong id="todayLate">0</strong></div>
   <div class="stat"><small>استدعاءات اليوم</small><strong id="todaySummons">0</strong></div>
@@ -888,6 +891,7 @@ const searchable=s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.
 $('#studentsRows').innerHTML=db.students.filter(s=>searchable(s).includes(q)).slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')"><span class="student-value student-name-value">${esc(((s.last||'')+' '+(s.first||'')).trim()||'—')}</span></button></td><td data-label="المستوى"><span class="student-value">${esc(p.schoolYear||'—')}</span></td><td data-label="الشعبة"><span class="student-value branch-value">${esc(shortBranch(p.branch))}</span></td><td data-label="القسم"><span class="student-value">${esc(p.sectionNumber||s.class||'—')}</span></td><td data-label="الصفة"><span class="student-value">${esc(s.attribute||s.status||'—')}</span></td><td data-label="تاريخ الميلاد"><span class="student-value date-value" dir="ltr">${esc(s.birthDate||'—')}</span></td><td data-label="اسم الولي"><span class="student-value">${esc(s.guardian||'—')}</span></td><td data-label="رقم الهاتف"><span class="student-value date-value" dir="ltr">${esc(s.phone||'—')}</span></td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="empty">لا يوجد تلاميذ.</td></tr>';
 }
 
+window.openTaskPage=page=>{const target=$('#nav button[data-page="'+String(page||'')+'"]');if(target)target.click();};
 function render(){
 refreshStudentSectionOptions();
 const schoolName=String(db.settings.school||'ثانوية الشيخ بوعمامة'),schoolLocation=String(db.settings.location||'بوسكن – ولاية المدية');
@@ -904,6 +908,16 @@ $('#todayAbs').textContent=todayAbs;$('#todayLate').textContent=todayLate;$('#to
 const upcoming=db.documents.filter(x=>normType(x.type).includes('استدعاء')&&x.appointment&&String(x.appointment).slice(0,16)>=today+'T00:00').slice().sort((a,b)=>String(a.appointment).localeCompare(String(b.appointment))).slice(0,5);
 $('#upcomingSummons').className=upcoming.length?'upcoming-list':'empty';
 $('#upcomingSummons').innerHTML=upcoming.length?upcoming.map(x=>{const ap=String(x.appointment),day=ap.slice(0,10),clock=ap.slice(11,16);return '<div class="upcoming-item"><div><strong>'+esc(name(x.student))+'</strong><small>'+esc(x.reason||'استدعاء ولي')+'</small></div><div class="when">'+esc(day)+' · '+esc(clock)+'</div></div>';}).join(''):'لا توجد استدعاءات قادمة.';
+const nowMs=Date.now(),nextDayMs=nowMs+24*60*60*1000;
+const tomorrowDate=new Date(nowMs);tomorrowDate.setDate(tomorrowDate.getDate()+1);const padDate=n=>String(n).padStart(2,'0');const tomorrow=tomorrowDate.getFullYear()+'-'+padDate(tomorrowDate.getMonth()+1)+'-'+padDate(tomorrowDate.getDate());
+const dueSummons=db.documents.filter(x=>normType(x.type).includes('استدعاء')&&x.appointment&&Number.isFinite(new Date(x.appointment).getTime())&&new Date(x.appointment).getTime()>=nowMs&&new Date(x.appointment).getTime()<=nextDayMs).sort((a,b)=>String(a.appointment).localeCompare(String(b.appointment)));
+const pendingReasons=db.attendance.filter(x=>(normType(x.type)==='غياب'||normType(x.type)==='تأخر')&&String(x.justified||'').trim()==='قيد التبرير').sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+const taskTotal=dueSummons.length+pendingReasons.length;$('#dailyTasksCount').textContent=taskTotal+' متابعة';
+const taskMarkup=[];
+dueSummons.slice(0,6).forEach(x=>{const ap=String(x.appointment),clock=ap.slice(11,16);taskMarkup.push('<div class="daily-task-item"><div class="task-copy"><span class="daily-task-kind">موعد ولي خلال 24 ساعة</span><strong>'+esc(name(x.student))+'</strong><small>'+esc(x.reason||'استدعاء ولي')+' · '+esc(ap.slice(0,10))+' · '+esc(clock||'الوقت غير محدد')+'</small></div><button type="button" class="btn small" onclick="openTaskPage(\'documents\')">عرض الاستدعاءات</button></div>');});
+pendingReasons.slice(0,6).forEach(x=>{taskMarkup.push('<div class="daily-task-item"><div class="task-copy"><span class="daily-task-kind">قيد التبرير</span><strong>'+esc(x.studentName||name(x.student))+'</strong><small>'+esc(x.type||'غياب')+' · '+esc(x.date||'تاريخ غير محدد')+' · القسم '+esc(x.class||'—')+'</small></div><button type="button" class="btn small" onclick="openTaskPage(\'attendance\')">مراجعة السجل</button></div>');});
+$('#dailyTasksList').innerHTML=taskMarkup.length?taskMarkup.join(''):'<p class="empty">لا توجد متابعة عاجلة خلال الساعات القادمة.</p>';
+
 
 renderStudentDirectory();
 $$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';const q=sel.name==='student'&&sel.form?.id==='attForm'?($('#attStudentSearch')?.value||'').trim().toLocaleLowerCase('ar'):(sel.id==='reportStudent'?($('#reportStudentSearch')?.value||'').trim().toLocaleLowerCase('ar'):'');sel.innerHTML=first+db.students.filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(studentAcademicLabel(s))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
