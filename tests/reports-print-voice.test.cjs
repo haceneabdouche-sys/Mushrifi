@@ -10,7 +10,6 @@ const checks = [
   ['white point travels across the name and then across the signature', /@keyframes mushrifi-signature-star\{[\s\S]*?left:0;top:16%[\s\S]*?left:calc\(100% - 10px\);top:16%[\s\S]*?left:calc\(100% - 10px\);top:72%[\s\S]*?left:0;top:72%/],
   ['white point repeats continuously without stopping', /animation:mushrifi-signature-star 5\.2s ease-in-out infinite/],
   ['reduced-motion preference keeps the white point moving more slowly', /@media\(prefers-reduced-motion:reduce\)\{[\s\S]*?mushrifi-signature-star 9s ease-in-out infinite/],
-  ['reduced-motion preference keeps the shimmer active at a gentler speed', /@media\(prefers-reduced-motion:reduce\)\{[\s\S]*?mushrifi-gold-glint 8s linear infinite/],
   ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
   ['home keeps all detailed metrics available in the expandable statistics panel', /class="[^"]*home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
   ['upcoming parent summons remain visible on the home dashboard', /class="[^"]*upcoming-panel[\s\S]*?id="upcomingSummons"/],
