@@ -111,6 +111,12 @@ function canonicalDeviceJwk(value: unknown): JsonWebKey {
   return { kty: "EC", crv: "P-256", x: jwk.x, y: jwk.y, ext: true };
 }
 
+export function deviceIdentityMatches(storedIdentityHash: string | null, providedIdentityHash: string | null): boolean {
+  // Legacy licenses without a stored installation identity remain compatible.
+  // Once an identity is recorded, omission or mismatch must not bypass the binding.
+  return storedIdentityHash === null || (typeof providedIdentityHash === "string" && storedIdentityHash === providedIdentityHash);
+}
+
 async function deviceThumbprint(jwk: JsonWebKey): Promise<string> {
   const canonical = JSON.stringify({ crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y });
   return sha256Hex(canonical);
@@ -211,15 +217,16 @@ async function createChallenge(env: Env, body: Record<string, unknown>): Promise
       if (typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash)) identityHash = body.deviceIdentityHash;
     } else {
       if (typeof body.licenseId !== "string" || !body.licenseId) return fail("معرّف الترخيص مطلوب");
+      if (typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash)) identityHash = body.deviceIdentityHash;
       const license = await env.DB.prepare(
-        "SELECT id, status, device_public_key_json, device_thumbprint FROM licenses WHERE id = ?"
-      ).bind(body.licenseId).first<{id:string;status:string;device_public_key_json:string|null;device_thumbprint:string|null}>();
+        "SELECT id, status, device_public_key_json, device_thumbprint, device_identity_hash FROM licenses WHERE id = ?"
+      ).bind(body.licenseId).first<{id:string;status:string;device_public_key_json:string|null;device_thumbprint:string|null;device_identity_hash:string|null}>();
       if (!license || license.status !== "active" || !license.device_public_key_json || !license.device_thumbprint) {
         return fail("الترخيص غير نشط أو غير موجود", 403);
       }
+      if (!deviceIdentityMatches(license.device_identity_hash, identityHash)) return fail("هوية الهاتف لا تطابق الترخيص", 403);
       licenseId = license.id;
       thumbprint = license.device_thumbprint;
-      if (typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash)) identityHash = body.deviceIdentityHash;
     }
     // Remove expired one-time challenges opportunistically to keep the D1 table bounded.
     await env.DB.prepare("DELETE FROM challenges WHERE expires_at <= ?").bind(now).run();
@@ -305,7 +312,7 @@ async function validateLicense(env: Env, body: Record<string, unknown>): Promise
     }
     const jwk = JSON.parse(license.device_public_key_json) as JsonWebKey;
     const identityHash = typeof body.deviceIdentityHash === "string" && /^[a-f0-9]{64}$/.test(body.deviceIdentityHash) ? body.deviceIdentityHash : null;
-    if (license.device_identity_hash && identityHash && license.device_identity_hash !== identityHash) return fail("هوية الهاتف لا تطابق الترخيص", 403);
+    if (!deviceIdentityMatches(license.device_identity_hash, identityHash)) return fail("هوية الهاتف لا تطابق الترخيص", 403);
     const challenge = await env.DB.prepare(
       "UPDATE challenges SET consumed_at = ? WHERE nonce = ? AND purpose = 'validate' AND license_id = ? AND device_thumbprint = ? AND device_identity_hash IS ? AND consumed_at IS NULL AND expires_at > ? RETURNING nonce"
     ).bind(now, body.nonce, license.id, license.device_thumbprint, identityHash, now).first();
