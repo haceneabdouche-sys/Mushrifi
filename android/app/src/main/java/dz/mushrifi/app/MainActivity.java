@@ -218,6 +218,9 @@ public class MainActivity extends Activity {
             if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
             return localDb.write(json);
         }
+        @JavascriptInterface public long getLastVerifiedBackupTime() {
+            return getSharedPreferences("mushrifi_backup_status", MODE_PRIVATE).getLong("last_verified_backup", 0L);
+        }
         @JavascriptInterface public String getDatabaseError() { return localDb.getLastError(); }
         @JavascriptInterface public boolean saveRecoverySnapshot(String json) {
             if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
@@ -475,7 +478,22 @@ public class MainActivity extends Activity {
                         while ((n = in.read(buffer)) != -1) written += n;
                     }
                     if (written != bytes.length) throw new IOException("حجم الملف المحفوظ لا يطابق البيانات المصدّرة");
-                    Toast.makeText(this, "تم حفظ النسخة الاحتياطية والتحقق منها (" + written + " بايت)", Toast.LENGTH_LONG).show();
+                    byte[] savedBytes;
+                    try (java.io.InputStream verify = getContentResolver().openInputStream(data.getData());
+                         java.io.ByteArrayOutputStream verified = new java.io.ByteArrayOutputStream()) {
+                        if (verify == null) throw new IOException("تعذر إعادة قراءة النسخة للتحقق من محتواها");
+                        byte[] verifyBuffer = new byte[8192]; int verifyCount;
+                        while ((verifyCount = verify.read(verifyBuffer)) != -1) verified.write(verifyBuffer, 0, verifyCount);
+                        savedBytes = verified.toByteArray();
+                    }
+                    byte[] expectedDigest = java.security.MessageDigest.getInstance("SHA-256").digest(bytes);
+                    byte[] actualDigest = java.security.MessageDigest.getInstance("SHA-256").digest(savedBytes);
+                    if (!java.security.MessageDigest.isEqual(expectedDigest, actualDigest))
+                        throw new IOException("محتوى الملف بعد الحفظ لا يطابق النسخة الأصلية؛ لم يُسجل نجاح النسخ");
+                    getSharedPreferences("mushrifi_backup_status", MODE_PRIVATE).edit()
+                        .putLong("last_verified_backup", System.currentTimeMillis()).commit();
+                    web.evaluateJavascript("window.onMushrifiBackupVerified && window.onMushrifiBackupVerified(" + System.currentTimeMillis() + ");", null);
+                    Toast.makeText(this, "تم حفظ النسخة الاحتياطية والتحقق من محتواها (" + written + " بايت)", Toast.LENGTH_LONG).show();
                 } catch (Exception e) { Toast.makeText(this, "فشل حفظ النسخة الاحتياطية: " + e.getMessage(), Toast.LENGTH_LONG).show(); }
             } else if (resultCode != RESULT_OK) {
                 Toast.makeText(this, "تم إلغاء حفظ النسخة الاحتياطية", Toast.LENGTH_SHORT).show();
