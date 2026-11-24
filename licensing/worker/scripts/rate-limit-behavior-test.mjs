@@ -142,16 +142,20 @@ async function probeRequest(env, ip = "203.0.113.30") {
     "Unauthorized admin requests must never access D1");
 }
 
-// Health checks remain available and do not consume either rate-limit bucket.
+// Root and dedicated health checks remain available without consuming limiters or accessing D1.
 {
   const publicLimiter = makeLimiter(2);
   const adminLimiter = makeLimiter(2);
   const { env, getDbCalls } = makeEnv({ publicLimiter, adminLimiter });
-  const response = await worker.fetch(new Request("https://unit.test/health"), env);
-  assert(response.status === 200, "Health endpoint should remain available");
-  assert((await body(response)).service === "mushrifi-license-api", "Health endpoint should identify the license API");
+  for (const path of ["/health", "/"]) {
+    const response = await worker.fetch(new Request("https://unit.test" + path), env);
+    assert(response.status === 200, `Health endpoint ${path} should remain available`);
+    const payload = await body(response);
+    assert(payload.ok === true && payload.service === "mushrifi-license-api",
+      `Health endpoint ${path} should identify the license API`);
+  }
   assert(publicLimiter.calls.length === 0 && adminLimiter.calls.length === 0,
-    "Health endpoint must not consume rate-limit requests");
+    "Health endpoints must not consume rate-limit requests");
   assert(getDbCalls() === 0, "Health behavior test must not access D1");
 }
 
