@@ -36,7 +36,7 @@ assert.match(fallback,/isCompatibleImportIdentity\(st\.identityNumber,data\.iden
   'fallback matching must reject a different existing identity number');
 assert.match(fallback,/return identityCompatible&&nameMatch&&sectionMatch&&yearMatch&&branchMatch/,
   'identity compatibility must be enforced together with name, section, year and branch matching');
-assert.match(html,/existingById\.set\(incomingId,record\)/,
+assert.match(html,/if\(!existingById\.has\(incomingId\)\)existingById\.set\(incomingId,\[\]\);\s*existingById\.get\(incomingId\)\.push\(record\)/,
   'the in-memory identity index must use the normalized incoming identity key');
 
 console.log('PASS: CSV import cannot merge same-name, same-section students with different identity numbers.');
