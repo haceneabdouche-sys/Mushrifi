@@ -501,26 +501,26 @@ header .credit-signature{
 header .credit-wrap::after{
   content:"";
   position:absolute;
-  top:-12%;
-  bottom:-12%;
+  top:-8%;
+  bottom:-8%;
   left:0;
-  width:32%;
+  width:8%;
   z-index:4;
   pointer-events:none;
-  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.12) 25%,rgba(255,249,220,.72) 48%,rgba(214,180,107,.32) 66%,transparent 100%);
-  filter:blur(.4px);
+  background:linear-gradient(105deg,transparent 0%,rgba(214,180,107,.10) 24%,rgba(255,252,229,.98) 48%,rgba(255,216,130,.72) 60%,transparent 100%);
+  filter:drop-shadow(0 0 5px rgba(255,224,150,.58));
   mix-blend-mode:screen;
-  transform:translateX(380%) skewX(-22deg);
-  animation:mushrifi-gold-glint 4.2s ease-in-out .25s infinite;
+  transform:translateX(1150%) skewX(-18deg);
+  animation:mushrifi-gold-glint 4.8s linear infinite;
 }
 @keyframes mushrifi-gold-glint{
-  0%{transform:translateX(380%) skewX(-22deg);opacity:0}
-  12%{opacity:.78}
-  88%{opacity:.78}
-  100%{transform:translateX(-430%) skewX(-22deg);opacity:0}
+  0%{transform:translateX(1150%) skewX(-18deg);opacity:0}
+  8%{opacity:.96}
+  92%{opacity:.96}
+  100%{transform:translateX(-1200%) skewX(-18deg);opacity:0}
 }
 @media(prefers-reduced-motion:reduce){
-  header .credit-wrap::after{animation:mushrifi-gold-glint 8s ease-in-out .25s infinite;opacity:.5}
+  header .credit-wrap::after{animation:mushrifi-gold-glint 8s linear infinite;opacity:.7}
 }
 
 </style>
