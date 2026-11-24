@@ -174,6 +174,21 @@ public class MainActivity extends Activity {
     private android.content.SharedPreferences securityPrefs;
     private static String derive(String password, byte[] salt) throws Exception { PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 150000, 256); try { return Base64.encodeToString(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded(), Base64.NO_WRAP); } finally { spec.clearPassword(); } }
     public class AndroidBridge {
+        @JavascriptInterface public boolean openGuardianWhatsApp(String phone, String message) {
+            String digits = phone == null ? "" : phone.replaceAll("[^0-9]", "");
+            if (digits.startsWith("00")) digits = digits.substring(2);
+            if (digits.startsWith("0")) digits = "213" + digits.substring(1);
+            else if (digits.length() == 9) digits = "213" + digits;
+            if (!digits.matches("[0-9]{8,15}") || message == null || message.trim().isEmpty() || message.length() > 1000) {
+                Toast.makeText(MainActivity.this, "رقم هاتف الولي أو نص الرسالة غير صالح.", Toast.LENGTH_LONG).show(); return false;
+            }
+            final String safePhone = digits, safeMessage = message;
+            runOnUiThread(() -> {
+                try { Uri uri = new Uri.Builder().scheme("https").authority("wa.me").appendPath(safePhone).appendQueryParameter("text", safeMessage).build();
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                } catch (Exception e) { Toast.makeText(MainActivity.this, "تعذر فتح واتساب. تحقق من تثبيته أو افتح الرابط في المتصفح.", Toast.LENGTH_LONG).show(); }
+            }); return true;
+        }
         @JavascriptInterface public void openWhatsAppSupport() {
             try { Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/213699251551")); startActivity(intent); }
             catch (Exception e) { Toast.makeText(MainActivity.this, "تعذر فتح واتساب. تحقق من تثبيته أو افتح الرابط في المتصفح.", Toast.LENGTH_LONG).show(); }
