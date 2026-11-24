@@ -2,9 +2,11 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
-const scriptMatch = html.match(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/i);
-assert.ok(scriptMatch, 'Mushrifi has an inline application script');
-const js = scriptMatch[1];
+const scriptStart = html.indexOf('<script');
+const scriptOpenEnd = html.indexOf('>', scriptStart);
+const scriptEnd = html.indexOf('</script>', scriptOpenEnd);
+assert.ok(scriptStart >= 0 && scriptOpenEnd > scriptStart && scriptEnd > scriptOpenEnd, 'Mushrifi has an inline application script');
+const js = html.slice(scriptOpenEnd + 1, scriptEnd);
 
 assert.ok(html.includes('header .credit-wrap{animation:none!important'), 'phone header animation is disabled');
 assert.ok(html.includes('header .credit-name-glint,header .credit-signature-glint{display:none!important'), 'expensive animated SVG glints are hidden on phones');
