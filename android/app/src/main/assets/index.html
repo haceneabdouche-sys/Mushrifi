@@ -498,39 +498,32 @@ header .credit-signature{
   transform:none;
   backface-visibility:visible;
 }
-header .credit-wrap::after{
-  content:"";
-  position:absolute;
-  left:0;
-  top:16%;
-  width:10px;
-  height:10px;
-  z-index:4;
-  pointer-events:none;
-  border-radius:50%;
-  background:radial-gradient(circle,#fff 0 32%,#fffde9 48%,rgba(255,255,255,.72) 68%,rgba(255,255,255,0) 100%);
-  box-shadow:0 0 3px 1px rgba(255,255,255,.98),0 0 8px 3px rgba(255,255,255,.84),0 0 16px 5px rgba(214,180,107,.78);
-  filter:brightness(1.2);
-  mix-blend-mode:screen;
-  animation:mushrifi-signature-star 5.2s ease-in-out infinite;
+header .credit-wrap{overflow:visible}
+header .signature-light{
+ position:absolute;
+ left:0;top:24px;
+ width:14px;height:14px;
+ border-radius:50%;
+ z-index:20;pointer-events:none;
+ background:radial-gradient(circle,#fff 0 25%,#fff 35%,rgba(255,255,255,.92) 48%,rgba(255,255,255,.28) 68%,transparent 76%);
+ box-shadow:0 0 5px 2px #fff,0 0 12px 5px rgba(255,255,255,.92),0 0 23px 8px rgba(255,229,165,.85);
+ animation:mushrifi-visible-star 5.5s ease-in-out infinite;
 }
-@keyframes mushrifi-signature-star{
-  0%{left:0;top:16%;opacity:0}
-  5%{opacity:1}
-  42%{left:calc(100% - 10px);top:16%;opacity:1}
-  48%{left:calc(100% - 10px);top:72%;opacity:1}
-  90%{left:0;top:72%;opacity:1}
-  96%{left:0;top:72%;opacity:0}
-  100%{left:0;top:16%;opacity:0}
+@keyframes mushrifi-visible-star{
+ 0%{left:0;top:24px;opacity:0}
+ 6%{opacity:1}
+ 43%{left:calc(100% - 14px);top:24px;opacity:1}
+ 49%{left:calc(100% - 14px);top:155px;opacity:1}
+ 91%{left:0;top:155px;opacity:1}
+ 97%,100%{left:0;top:24px;opacity:0}
 }
 @media(prefers-reduced-motion:reduce){
-  header .credit-wrap::after{animation:mushrifi-signature-star 9s ease-in-out infinite;opacity:.9}
+ header .signature-light{animation:mushrifi-visible-star 9s ease-in-out infinite}
 }
-
 </style>
 </head>
 <body>
-<header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><span class="credit-rule" aria-hidden="true"></span><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"></div>
+<header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><span class="credit-rule" aria-hidden="true"></span><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"><span class="signature-light" aria-hidden="true"></span></div>
 </div></header>
 <div class="wrap">
 <div class="notice"><b>نسخة مستقلة تعمل محلياً:</b> تُحفظ سجلات التلاميذ على هذا الهاتف فقط، ولا تحتاج إلى حسابات أو مواقع خارجية.</div>
