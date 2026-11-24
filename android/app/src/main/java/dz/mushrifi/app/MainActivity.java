@@ -467,7 +467,7 @@ public class MainActivity extends Activity {
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == NOTIFICATION_PERMISSION) {
-            boolean granted = hasNotificationPermission();
+            boolean granted = Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
             notifyNotificationPermissionState(granted);
             Toast.makeText(this, granted ? "تم تفعيل صلاحية الإشعارات." : "لم تُفعّل صلاحية الإشعارات؛ لن تصل التذكيرات حتى السماح بها.", Toast.LENGTH_LONG).show();
         }
