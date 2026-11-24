@@ -8,8 +8,9 @@ const scriptEnd = html.indexOf('</script>', scriptOpenEnd);
 assert.ok(scriptStart >= 0 && scriptOpenEnd > scriptStart && scriptEnd > scriptOpenEnd, 'Mushrifi has an inline application script');
 const js = html.slice(scriptOpenEnd + 1, scriptEnd);
 
-assert.ok(html.includes('header .credit-wrap{animation:none!important'), 'phone header animation is disabled');
-assert.ok(html.includes('header .credit-name-glint,header .credit-signature-glint{display:none!important'), 'expensive animated SVG glints are hidden on phones');
+assert.ok(html.includes('header .credit-wrap{animation:none!important'), 'phone header 3D animation is disabled');
+assert.ok(html.includes('header .credit-name-glint,header .credit-signature-glint{display:block!important;filter:none!important}'), 'lightweight signature and name sparkle remain visible without SVG filters');
+assert.ok(html.includes('header .credit-signature-glint .signature-glint-point{filter:none!important}'), 'sparkle points avoid expensive filter passes');
 assert.ok(html.includes('header .credit-signature,header p.credit{filter:none!important;transform:none!important}'), 'phone header avoids expensive filters and transforms');
 assert.ok(html.includes('class="credit-signature"'), 'static signature image remains in the interface');
 
@@ -25,4 +26,4 @@ assert.ok(js.includes("if(typeof render==='function')render();"), 'navigation re
 assert.ok(js.includes('AndroidBridge.saveDatabase(json)'), 'native database save path remains intact');
 assert.ok(js.includes('preserveUndoOnNextSave'), 'delete recovery snapshot handling remains intact');
 
-console.log('PASS: mobile rendering avoids continuous decorative animation and rebuilds only the active page without changing database persistence.');
+console.log('PASS: mobile rendering preserves lightweight sparkle while avoiding continuous 3D animation, filter passes, and inactive-page rebuilds.');
