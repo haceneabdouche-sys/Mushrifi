@@ -22,6 +22,7 @@ assert.ok(html.includes('student.phone'));
 assert.ok(html.includes('encodeURIComponent(message)'));
 assert.ok(html.includes('AndroidBridge.openGuardianWhatsApp(phone,message)'));
 assert.ok(html.includes('مراسلة الولي عبر واتساب'));
+assert.ok(html.includes("onclick=\"openGuardianWhatsApp('${s.id}')\""), 'profile WhatsApp action must use the selected student ID, not a literal placeholder');
 assert.ok(java.includes('openGuardianWhatsApp(String phone, String message)'));
 assert.ok(java.includes('Intent.ACTION_VIEW'));
 assert.ok(java.includes('appendQueryParameter("text", safeMessage)'));
