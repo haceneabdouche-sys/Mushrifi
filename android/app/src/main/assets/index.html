@@ -785,6 +785,8 @@ function parseMushrifiDatabase(raw){
  }
  if(Object.prototype.hasOwnProperty.call(parsed,'settings')&&(!parsed.settings||typeof parsed.settings!=='object'||Array.isArray(parsed.settings)))throw new Error('إعدادات التطبيق تالفة.');
  parsed.settings=parsed.settings&&typeof parsed.settings==='object'?parsed.settings:{};
+ if(Object.prototype.hasOwnProperty.call(parsed,'auditLog')&&!Array.isArray(parsed.auditLog))throw new Error('سجل العمليات تالف أو ليس قائمة صالحة.');
+ if(!Array.isArray(parsed.auditLog))parsed.auditLog=[];
  return parsed;
 }
 let db;
@@ -815,8 +817,183 @@ $("#studentYearSelect")?.addEventListener("change",()=>refreshStudentSectionOpti
 $("#studentBranchSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:$("#studentBranchSelect").value,sectionNumber:""}));
 $("#studentClassSelect")?.addEventListener("change",updateStudentClassValue);
 let licenseReadOnly=false;
+const AUDIT_LOG_LIMIT=500;
+const AUDIT_FIELD_DEFINITIONS={
+ students:[['last','اللقب'],['first','الاسم'],['schoolYear','المستوى'],['branch','الشعبة'],['class','القسم'],['attribute','الصفة'],['status','الحالة']],
+ attendance:[['class','القسم'],['date','التاريخ'],['type','نوع المتابعة'],['period','الفترة'],['hours','ساعات الغياب'],['minutes','دقائق التأخر'],['justified','حالة التبرير'],['fullDay','غياب يوم كامل'],['schoolYear','المستوى'],['branch','الشعبة'],['sectionLabel','وصف القسم'],['studentClass','القسم']],
+ documents:[['date','تاريخ الوثيقة'],['type','نوع الوثيقة'],['appointment','موعد حضور الولي'],['reminderAt','موعد التنبيه'],['absenceStage','مرحلة التبليغ'],['deliveryDate','تاريخ التبليغ']],
+ violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']]
+};
+const AUDIT_PRIVATE_FIELDS={
+ students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',notes:'ملاحظات خاصة'},
+ attendance:{student:'ارتباط السجل بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',notes:'الملاحظات'},
+ documents:{student:'ارتباط الوثيقة بملف التلميذ',reason:'موضوع الوثيقة وتفاصيلها',photo:'صورة الوثيقة',deliveryProof:'إثبات التبليغ'},
+ violations:{student:'ارتباط الواقعة بملف التلميذ',description:'تفاصيل الواقعة',photo:'صورة التقرير'}
+};
+const AUDIT_REVERSIBLE_FIELDS={
+ students:['last','first','schoolYear','branch','class','attribute','status'],
+ attendance:['class','date','type','period','hours','minutes','justified','fullDay','schoolYear','branch','sectionLabel','studentClass'],
+ documents:['date','type','appointment','reminderAt','absenceStage','deliveryDate'],
+ violations:['date','type','action']
+};
+const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة'};
+function auditComparableDatabase(source){
+ const copy=JSON.parse(JSON.stringify(source||{}));
+ delete copy.auditLog;
+ return copy;
+}
+function auditValuesEqual(a,b){
+ if(a===b)return true;
+ if(a===undefined||b===undefined||a===null||b===null)return false;
+ if(typeof a!=='object'||typeof b!=='object')return false;
+ try{return JSON.stringify(a)===JSON.stringify(b);}catch(_){return false;}
+}
+function auditRecordStudentName(record,snapshot){
+ const id=String(record&&record.student||'');
+ const matched=(snapshot&&Array.isArray(snapshot.students)?snapshot.students:[]).find(st=>String(st.id)===id);
+ if(matched)return (String(matched.last||'')+' '+String(matched.first||'')).trim()||String(matched.name||matched.fullName||'');
+ return String(record&&record.studentName||'').trim();
+}
+function auditRecordLabel(entity,record,snapshot){
+ if(!record)return '';
+ if(entity==='students')return (String(record.last||'')+' '+String(record.first||'')).trim()||String(record.name||record.fullName||'تلميذ');
+ return auditRecordStudentName(record,snapshot)||'تلميذ غير محدد';
+}
+function auditValueForChange(value){
+ if(value===undefined)return null;
+ if(value===null||typeof value==='string'||typeof value==='number'||typeof value==='boolean')return value;
+ try{return JSON.stringify(value).slice(0,160);}catch(_){return '[قيمة محفوظة]';}
+}
+function auditFieldDiff(entity,beforeRecord,afterRecord){
+ const fields=AUDIT_FIELD_DEFINITIONS[entity]||[],safeKeys=new Set(fields.map(x=>x[0]));
+ const changes=[],restricted=new Set(),before=beforeRecord||{},after=afterRecord||{};
+ for(const [key,label] of fields){
+  const beforeMissing=!Object.prototype.hasOwnProperty.call(before,key),afterMissing=!Object.prototype.hasOwnProperty.call(after,key);
+  const oldValue=before[key],newValue=after[key];
+  if(beforeMissing===afterMissing&&auditValuesEqual(oldValue,newValue))continue;
+  changes.push({key,label,before:auditValueForChange(oldValue),after:auditValueForChange(newValue),beforeMissing,afterMissing});
+ }
+ const privateMap=AUDIT_PRIVATE_FIELDS[entity]||{};
+ const keys=new Set([...Object.keys(before),...Object.keys(after)]);
+ keys.forEach(key=>{
+  if(key==='id'||safeKeys.has(key))return;
+  const oldValue=before[key],newValue=after[key];
+  if(auditValuesEqual(oldValue,newValue))return;
+  const label=privateMap[key]||'بيانات إضافية غير معروضة';
+  const hasMeaningfulValue=value=>value!==undefined&&value!==null&&value!==''&&value!==false;
+  if(!hasMeaningfulValue(oldValue)&&!hasMeaningfulValue(newValue))return;
+  restricted.add(label);
+ });
+ return {changes,restrictedFields:[...restricted].slice(0,12)};
+}
+function auditRecordIdentity(record,index){
+ const id=record&&record.id!==undefined&&record.id!==null?String(record.id).trim():'';
+ if(id)return 'id:'+id;
+ return 'legacy:'+String(index);
+}
+function auditActionLabel(action){
+ return action==='add'?'إضافة':action==='delete'?'حذف':action==='revert'?'استرجاع تعديل':action==='bulk'?'تغيير جماعي':'تعديل';
+}
+function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
+ const before=beforeSnapshot||{},after=auditComparableDatabase(afterDatabase),makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2);
+ const opts=options||{},events=[];
+ for(const collection of ['students','attendance','documents','violations']){
+  const oldList=Array.isArray(before[collection])?before[collection]:[],newList=Array.isArray(after[collection])?after[collection]:[];
+  const oldMap=new Map(),newMap=new Map();
+  oldList.forEach((record,index)=>oldMap.set(auditRecordIdentity(record,index),record));
+  newList.forEach((record,index)=>newMap.set(auditRecordIdentity(record,index),record));
+  const operations=[];
+  oldMap.forEach((oldRecord,key)=>{
+   if(!newMap.has(key)){operations.push({action:'delete',before:oldRecord,after:null});return;}
+   const newRecord=newMap.get(key),diff=auditFieldDiff(collection,oldRecord,newRecord);
+   if(diff.changes.length||diff.restrictedFields.length)operations.push({action:'update',before:oldRecord,after:newRecord,diff});
+  });
+  newMap.forEach((newRecord,key)=>{if(!oldMap.has(key))operations.push({action:'add',before:null,after:newRecord});});
+  if(!operations.length)continue;
+  if(operations.length>12){
+   const totals={added:0,updated:0,deleted:0};
+   operations.forEach(op=>{if(op.action==='add')totals.added++;else if(op.action==='delete')totals.deleted++;else totals.updated++;});
+   const title=AUDIT_ENTITY_LABELS[collection]||'سجل';
+   const parts=[];
+   if(totals.added)parts.push('إضافة '+totals.added);
+   if(totals.updated)parts.push('تعديل '+totals.updated);
+   if(totals.deleted)parts.push('حذف '+totals.deleted);
+   const event={id:String(makeId()),at,action:'bulk',entity:collection,entityId:'',entityLabel:'عملية جماعية',summary:'تغيير جماعي في '+title+': '+parts.join(' · '),changes:[],restrictedFields:[],totals,actor:'مستخدم التطبيق على هذا الجهاز',source:'واجهة التطبيق'};
+   if(opts.revertsId)event.revertsId=String(opts.revertsId);
+   events.push(event);
+   continue;
+  }
+  operations.forEach(op=>{
+   const item=op.after||op.before,diff=op.diff||auditFieldDiff(collection,null,null);
+   let changes=diff.changes||[],restrictedFields=diff.restrictedFields||[];
+   if(op.action==='add')diff=auditFieldDiff(collection,null,item),changes=diff.changes,restrictedFields=diff.restrictedFields;
+   if(op.action==='delete')diff=auditFieldDiff(collection,item,null),changes=diff.changes,restrictedFields=diff.restrictedFields;
+   const entityLabel=auditRecordLabel(collection,item,op.after?after:before);
+   const title=AUDIT_ENTITY_LABELS[collection]||'سجل';
+   const verb=opts.revertsId?'revert':op.action;
+   const summary=auditActionLabel(verb)+' '+title+(entityLabel?': '+entityLabel:'');
+   const event={id:String(makeId()),at,action:verb,entity:collection,entityId:String(item&&item.id||''),entityLabel,summary,changes,restrictedFields,actor:'مستخدم التطبيق على هذا الجهاز',source:'واجهة التطبيق'};
+   if(opts.revertsId)event.revertsId=String(opts.revertsId);
+   events.push(event);
+  });
+ }
+ const oldSettings=before.settings&&typeof before.settings==='object'?before.settings:{},newSettings=after.settings&&typeof after.settings==='object'?after.settings:{};
+ const changedSettings=[...new Set([...Object.keys(oldSettings),...Object.keys(newSettings)])].filter(key=>!auditValuesEqual(oldSettings[key],newSettings[key]));
+ if(changedSettings.length){
+  const names={school:'اسم المؤسسة',location:'موقع المؤسسة',timetables:'جداول التوقيت',schoolHolidays:'العطل المدرسية',summonsReminderTime:'وقت تنبيه الاستدعاءات',sectionNames:'تسميات الأقسام',academicStructure:'الهيكل الدراسي'};
+  const changes=changedSettings.slice(0,20).map(key=>({key,label:names[key]||'إعدادات أخرى',before:'قيمة محفوظة',after:'تم تحديث الإعداد',beforeMissing:!Object.prototype.hasOwnProperty.call(oldSettings,key),afterMissing:!Object.prototype.hasOwnProperty.call(newSettings,key)}));
+  const event={id:String(makeId()),at,action:opts.revertsId?'revert':'update',entity:'settings',entityId:'',entityLabel:'إعدادات التطبيق',summary:(opts.revertsId?'استرجاع تعديل سابق في':'تعديل')+' إعدادات التطبيق',changes,restrictedFields:changedSettings.length>20?['تغييرات إعدادات إضافية']:[],actor:'مستخدم التطبيق على هذا الجهاز',source:'واجهة التطبيق'};
+  if(opts.revertsId)event.revertsId=String(opts.revertsId);
+  events.push(event);
+ }
+ return events;
+}
+function auditCanRevert(entry,record){
+ if(!entry||!record||!['update','revert'].includes(entry.action)||!Array.isArray(entry.changes)||!entry.changes.length)return false;
+ const allowed=new Set(AUDIT_REVERSIBLE_FIELDS[entry.entity]||[]);
+ return entry.changes.every(change=>allowed.has(change.key)&&
+  (change.afterMissing? !Object.prototype.hasOwnProperty.call(record,change.key):Object.prototype.hasOwnProperty.call(record,change.key)&&auditValuesEqual(record[change.key],change.after)));
+}
+function auditApplyRevert(entry,record){
+ if(!auditCanRevert(entry,record))return false;
+ entry.changes.forEach(change=>{if(change.beforeMissing)delete record[change.key];else record[change.key]=change.before;});
+ return true;
+}
+function auditEntryValue(value,missing){
+ if(missing)return 'غير مسجل';
+ if(value===null||value===undefined||value==='')return 'فارغ';
+ if(typeof value==='boolean')return value?'نعم':'لا';
+ return String(value);
+}
+let auditBaselineJson=JSON.stringify(auditComparableDatabase(db));
+let auditNextRevertsId='';
+let licenseReadOnly=false;
 let preserveUndoOnNextSave=false;
-const save=()=>{if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}const clearUndoAfterSave=!preserveUndoOnNextSave;preserveUndoOnNextSave=false;let json;try{json=JSON.stringify(db);if(isAndroidApp){if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}try{localStorage.removeItem(DBKEY);}catch(_){}}else localStorage.setItem(DBKEY,json);}catch(e){alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;}if(clearUndoAfterSave){try{clearStoredRecoverySnapshot();}catch(e){console.warn('Mushrifi recovery cleanup failed',e);}}try{render();refreshUndoPanel();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}return true};
+const save=()=>{
+ if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}
+ const clearUndoAfterSave=!preserveUndoOnNextSave;preserveUndoOnNextSave=false;
+ const previousAuditLog=Array.isArray(db.auditLog)?db.auditLog.slice():[];
+ let json;
+ try{
+  const baseline=JSON.parse(auditBaselineJson||JSON.stringify(auditComparableDatabase(db)));
+  const newEntries=buildAuditEvents(baseline,db,new Date().toISOString(),()=>crypto.randomUUID(),auditNextRevertsId?{revertsId:auditNextRevertsId}:{});
+  if(newEntries.length)db.auditLog=previousAuditLog.concat(newEntries).slice(-AUDIT_LOG_LIMIT);
+  else db.auditLog=previousAuditLog;
+  json=JSON.stringify(db);
+  if(isAndroidApp){
+   if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}
+   try{localStorage.removeItem(DBKEY);}catch(_){}
+  }else localStorage.setItem(DBKEY,json);
+ }catch(e){
+  db.auditLog=previousAuditLog;
+  alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;
+ }
+ auditBaselineJson=JSON.stringify(auditComparableDatabase(db));
+ auditNextRevertsId='';
+ if(clearUndoAfterSave){try{clearStoredRecoverySnapshot();}catch(e){console.warn('Mushrifi recovery cleanup failed',e);}}
+ try{render();refreshUndoPanel();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}
+ return true;
+};
 function readStoredRecoverySnapshot(){
  try{let raw=null;if(isAndroidApp&&typeof AndroidBridge.loadRecoverySnapshot==='function')raw=AndroidBridge.loadRecoverySnapshot();else raw=localStorage.getItem('mushrifi_last_delete_v1');return raw?String(raw):null;}
  catch(e){console.warn('Mushrifi recovery read failed',e);return null;}
