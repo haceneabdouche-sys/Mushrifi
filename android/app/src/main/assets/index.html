@@ -674,6 +674,64 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
  @page{size:A4 portrait;margin:12mm}
 }
 
+
+/* Mushrifi supervisor agenda — compact calendar views */
+.agenda-heading{border-top:3px solid #286b91}
+.agenda-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.agenda-summary-grid .stat{min-width:0;padding:10px}
+.agenda-summary-grid .stat strong{font-size:clamp(20px,4vw,27px)}
+.agenda-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:13px}
+.agenda-view-controls,.agenda-date-controls,.agenda-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.agenda-view-controls .btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.agenda-date-controls input{min-height:38px;max-width:155px}
+.agenda-actions select{min-height:38px;max-width:180px}
+.agenda-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;direction:rtl}
+.agenda-weekday{text-align:center;padding:7px 2px;background:#edf3f7;border-radius:6px;color:#496273;font-weight:800;font-size:11px}
+.agenda-month-day{min-width:0;min-height:88px;max-height:120px;overflow:hidden;display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:5px 4px;border:1px solid #dce5eb;border-radius:7px;background:#fff;color:var(--ink);text-align:right;font:inherit;cursor:pointer}
+.agenda-month-day>b{font-size:12px}
+.agenda-month-day.outside-month{opacity:.48;background:#f6f8fa}
+.agenda-month-day.selected-day,.agenda-week-day.selected-day{border:2px solid #286b91;background:#f2f8fc}
+.agenda-month-day.is-today,.agenda-week-day.is-today{box-shadow:inset 0 0 0 1px #d6b46b}
+.agenda-day-chip{display:block;max-width:100%;padding:2px 4px;border-radius:4px;background:#eaf1f6;color:#264a62;font-size:9px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agenda-more-count,.agenda-day-empty{font-size:9px;color:#7b8991}
+.agenda-week-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;direction:rtl}
+.agenda-week-day{min-width:0;padding:7px;border:1px solid #dce5eb;border-radius:9px;background:#fff}
+.agenda-week-day-title{display:flex;justify-content:space-between;align-items:center;gap:4px;width:100%;padding:5px 2px 8px;border:0;border-bottom:1px solid #e4eaee;background:transparent;color:var(--navy);font:inherit;font-size:11px;cursor:pointer}
+.agenda-week-day-title span{color:var(--muted)}
+.agenda-day-focus{padding:12px;border-radius:9px;background:#f4f8fa;border-right:3px solid var(--gold);margin-bottom:10px}
+.agenda-day-focus h3{margin:3px 0}
+.agenda-event{min-width:0;margin:7px 0;padding:9px;border:1px solid #dce5eb;border-right:3px solid #397da4;border-radius:8px;background:#fff}
+.agenda-event.agenda-done{border-right-color:#5b9876;background:#f8fbf9}
+.agenda-event-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.agenda-event-top strong{font-size:13px;overflow-wrap:anywhere}
+.agenda-event-time{white-space:nowrap;direction:ltr;color:#536b7b;font-size:11px;font-weight:800}
+.agenda-event-meta{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+.agenda-type,.agenda-priority,.agenda-status{display:inline-block;padding:2px 6px;border-radius:20px;background:#edf3f7;color:#425e71;font-size:10px}
+.agenda-type-summons{background:#fff1df;color:#8a5b1d}
+.agenda-type-meeting{background:#edf0fc;color:#515d98}
+.agenda-type-task{background:#e9f5ed;color:#35714c}
+.agenda-type-followup{background:#f4edf9;color:#704f88}
+.agenda-priority-high,.agenda-priority-urgent{background:#fff0e9;color:#a14e2d}
+.agenda-item-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.agenda-event-extra{display:grid;gap:4px;margin-top:6px;color:#5e7180;font-size:11px;overflow-wrap:anywhere}
+.agenda-event-extra p{margin:2px 0;white-space:pre-wrap}
+.agenda-selected-panel .agenda-event{margin:9px 0}
+.agenda-form-panel{border-top:3px solid var(--gold)}
+.agenda-form-panel form{display:grid;gap:10px}
+.agenda-form-panel label{display:block;margin-bottom:4px;font-size:12px;font-weight:800}
+.agenda-form-panel input,.agenda-form-panel select,.agenda-form-panel textarea{width:100%;min-width:0}
+.agenda-form-panel textarea{resize:vertical}
+.agenda-home-panel{border-right:3px solid #286b91}
+.agenda-home-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 3px;border:0;border-bottom:1px solid #e6edf1;background:transparent;text-align:right;color:var(--ink);font:inherit;cursor:pointer}
+.agenda-home-item:last-child{border-bottom:0}
+.agenda-home-item span{display:grid;gap:3px;min-width:0}
+.agenda-home-item b{font-size:12px;overflow:hidden;text-overflow:ellipsis}
+.agenda-home-item small{color:var(--muted);font-size:10px}
+.agenda-integrity-warning{margin-top:10px;font-size:11px}
+@media(max-width:760px){.agenda-week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.agenda-weekday{font-size:9px}.agenda-month-day{min-height:68px;padding:3px 2px}.agenda-day-chip{font-size:8px;padding:2px}.agenda-controls{align-items:stretch}.agenda-view-controls,.agenda-date-controls,.agenda-actions{width:100%;justify-content:space-between}.agenda-actions select{flex:1;max-width:none}.agenda-date-controls input{flex:1;max-width:none}}
+@media(max-width:420px){.agenda-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.agenda-week-grid{grid-template-columns:1fr}.agenda-month-grid{gap:2px}.agenda-month-day{min-height:59px}.agenda-month-day>b{font-size:10px}.agenda-day-chip{font-size:7px}.agenda-event-top{flex-wrap:wrap}}
+@media print{.agenda-controls,.agenda-form-panel,.agenda-item-actions,.agenda-event button{display:none!important}.agenda-week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.agenda-month-day{min-height:70px}}
+
 </style>
 </head>
 <body>
@@ -1394,7 +1452,7 @@ function renderAgenda(){
   for(let i=0;i<42;i++){const date=agendaShiftDate(grid.start,i),items=byDate.get(date)||[];out+='<button type="button" class="agenda-month-day '+(date.slice(0,7)!==grid.month?'outside-month ':'')+(date===agendaSelectedDate?'selected-day ':'')+(date===today?'is-today':'')+'" data-agenda-select-date="'+date+'"><b>'+Number(date.slice(8,10))+'</b>'+(items.length?items.slice(0,2).map(x=>'<span class="agenda-day-chip">'+esc(x.startTime?x.startTime+' ':'')+esc(x.title)+'</span>').join(''):'<small class="agenda-day-empty">—</small>')+(items.length>2?'<small class="agenda-more-count">+'+(items.length-2)+'</small>':'')+'</button>';}calendar.innerHTML=out+'</div>';
  }else if(agendaCurrentView==='week'){
   let out='<div class="agenda-week-grid">';for(let i=0;i<7;i++){const date=agendaShiftDate(range.from,i),items=byDate.get(date)||[];out+='<section class="agenda-week-day '+(date===agendaSelectedDate?'selected-day ':'')+(date===today?'is-today':'')+'"><button type="button" class="agenda-week-day-title" data-agenda-select-date="'+date+'"><b>'+weekdays[i]+'</b><span>'+date.slice(8,10)+'/'+date.slice(5,7)+'</span></button>'+(items.length?items.map(x=>agendaEventMarkup(x,true)).join(''):'<p class="agenda-day-empty">لا توجد مواعيد</p>')+'</section>';}calendar.innerHTML=out+'</div>';
- }else calendar.innerHTML='<div class="agenda-day-focus"><span class="home-eyebrow">العرض اليومي</span><h3>'+esc(agendaFormatDate(agendaSelectedDate))+'</h3></div>';
+ }else calendar.innerHTML='<div class="agenda-day-focus"><span class="home-eyebrow">العرض اليومي</span><h3>'+esc(agendaFormatDate(agendaSelectedDate))+'</h3></div>'+(byDate.get(agendaSelectedDate)||[]).map(x=>agendaEventMarkup(x,false)).join('');
  const selectedItems=snapshot.items.filter(x=>x.date===agendaSelectedDate);
  $('#agendaSelectedHeading').textContent='مواعيد '+agendaFormatDate(agendaSelectedDate);$('#agendaSelectedCount').textContent=selectedItems.length.toLocaleString('ar-DZ');
  selected.innerHTML=selectedItems.length?selectedItems.map(x=>agendaEventMarkup(x)).join(''):'<p class="empty">لا توجد مواعيد أو مهام في هذا اليوم.</p>';
@@ -1436,16 +1494,6 @@ function agendaHandleSubmit(e){
 function agendaToggleStatus(id){const item=db.agenda.find(x=>String(x.id)===String(id));if(!item||licenseReadOnly)return;const old=item.status;item.status=old==='done'?'planned':'done';item.updatedAt=new Date().toISOString();if(!save()){item.status=old;return;}renderAgenda();}
 function agendaDelete(id){if(licenseReadOnly)return;const i=db.agenda.findIndex(x=>String(x.id)===String(id));if(i<0)return;const item=db.agenda[i];if(!confirm('هل تريد حذف الموعد «'+String(item.title||'')+'»؟ لن يتأثر الاستدعاء الأصلي في قسم الوثائق.'))return;db.agenda.splice(i,1);if(!save()){db.agenda.splice(i,0,item);return;}renderAgenda();}
 function openAgendaSummons(id){if(!db.documents.some(x=>String(x.id)===String(id)))return;go('documents');if(typeof window.editDocument==='function')window.editDocument(String(id));}
-function initAgendaControls(){
- document.querySelectorAll('[data-agenda-view]').forEach(b=>b.addEventListener('click',()=>{agendaCurrentView=b.dataset.agendaView;renderAgenda();}));
- $('#agendaPrev')?.addEventListener('click',()=>{if(agendaCurrentView==='month'){const [y,m]=agendaSelectedDate.split('-').map(Number),x=new Date(y,m-2,1,12);agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-01';}else agendaSelectedDate=agendaShiftDate(agendaSelectedDate,agendaCurrentView==='week'?-7:-1);renderAgenda();});
- $('#agendaNext')?.addEventListener('click',()=>{if(agendaCurrentView==='month'){const [y,m]=agendaSelectedDate.split('-').map(Number),x=new Date(y,m,1,12);agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-01';}else agendaSelectedDate=agendaShiftDate(agendaSelectedDate,agendaCurrentView==='week'?7:1);renderAgenda();});
- $('#agendaToday')?.addEventListener('click',()=>{const x=new Date();agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');renderAgenda();});
- $('#agendaSelectedDate')?.addEventListener('change',e=>{if(agendaValidDate(e.target.value)){agendaSelectedDate=e.target.value;renderAgenda();}});
- $('#agendaTypeFilter')?.addEventListener('change',e=>{agendaCurrentTypeFilter=e.target.value||'all';renderAgenda();});
- $('#agendaAdd')?.addEventListener('click',()=>showAgendaForm(''));$('#agendaCancel')?.addEventListener('click',closeAgendaForm);$('#agendaCancelBottom')?.addEventListener('click',closeAgendaForm);
- $('#agendaForm')?.addEventListener('submit',agendaHandleSubmit);
-}
 function renderAgendaHome(today){
  const output=$('#upcomingAgenda');if(!output)return;const to=agendaShiftDate(today,6),snapshot=buildAgendaSnapshot(db.agenda,db.documents,today,to,id=>student(id));
  const items=snapshot.items.filter(x=>x.status!=='done'&&x.status!=='cancelled').slice(0,5);
