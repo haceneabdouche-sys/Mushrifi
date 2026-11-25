@@ -16,12 +16,12 @@ assert.ok(html.includes('class="credit-signature"'), 'static signature image rem
 
 assert.ok(js.includes("const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';"), 'rendering detects the active page');
 assert.ok(js.includes("if(activePage==='students')renderStudentDirectory();"), 'student directory is refreshed only on its page');
-assert.ok(js.includes("if(activePage==='attendance'){"), 'attendance history is refreshed only on its page');
+assert.ok(js.includes("if(activePage==='attendance'&&activeFollowupView==='attendance'){"), 'attendance history is refreshed only while its tab is active');
 assert.ok(js.includes("if(activePage==='documents'){"), 'documents are refreshed only on their page');
-assert.ok(js.includes("if(activePage==='violations'){"), 'violations are refreshed only on their page');
+assert.ok(js.includes("if(activePage==='attendance'&&activeFollowupView==='violations'){"), 'violations are refreshed only while their tab is active');
 assert.ok(js.includes("if(activePage==='home'){"), 'dashboard-only content is isolated from data pages');
 assert.ok(js.includes("$$('.studentSelect').filter(sel=>sel.closest('.page')?.id===activePage)"), 'student selectors are populated only for the active page');
-assert.ok(js.includes("if(activePage==='attendance'||activePage==='settings'){refreshAttendanceClassOptions();renderAttendanceWorkspace();}"), 'attendance and settings summaries update only when needed');
+assert.ok(js.includes("if((activePage==='attendance'&&activeFollowupView==='attendance')||activePage==='settings'){refreshAttendanceClassOptions();renderAttendanceWorkspace();}"), 'attendance and settings summaries update only when needed');
 assert.ok(js.includes("if(typeof render==='function')render();"), 'navigation refreshes the newly opened page');
 assert.ok(js.includes('AndroidBridge.saveDatabase(json)'), 'native database save path remains intact');
 assert.ok(js.includes('preserveUndoOnNextSave'), 'delete recovery snapshot handling remains intact');
