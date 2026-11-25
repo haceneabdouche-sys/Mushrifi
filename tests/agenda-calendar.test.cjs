@@ -59,7 +59,7 @@ const snap=agendaSandbox.buildAgendaSnapshot(manual,documents,'2026-11-24','2026
 assert.equal(snap.valid,true,'valid selected range is accepted');
 assert.equal(snap.manualCount,2,'only valid manual appointments in range are counted');
 assert.equal(snap.summonsCount,1,'guardian summons are included from documents exactly once');
-assert.equal(snap.invalidManual,2,'invalid manual entries and duplicate manual IDs are flagged');
+assert.equal(snap.invalidManual,3,'invalid manual dates, missing IDs and duplicate IDs are flagged');
 assert.equal(snap.invalidSummons,1,'summons with invalid dates are flagged without being copied');
 assert.deepEqual(
  JSON.parse(JSON.stringify(snap.items.map(x=>({id:x.id,date:x.date,type:x.type,source:x.source})))),
