@@ -99,6 +99,8 @@ assert.ok(html.includes("db.auditLog=previousAuditLog;"),'a failed database save
 assert.ok(html.includes("auditBaselineJson=JSON.stringify(auditComparableDatabase(db));"),'the audit baseline moves only after the database save succeeds');
 assert.ok(html.includes('id="audit" class="page hidden"'),'a dedicated audit history page exists');
 assert.ok(html.includes('id="auditSearch"')&&html.includes('id="auditEntityFilter"')&&html.includes('id="auditActionFilter"'),'audit history supports search and category filters');
+assert.ok(html.includes("filtered.length>120?'عرض أحدث 120 من '"),'audit page clearly indicates when the visible result list is capped');
+assert.ok(html.includes('التصدير فيشمل جميع العمليات المحتفظ بها'),'audit export is documented as including the full retained history');
 assert.ok(html.includes("list.querySelectorAll('[data-audit-revert]')"),'revert actions are wired to guarded rollback');
 assert.ok(html.includes("const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit"),'backup restore preserves local audit history or imports history when local history is empty');
 assert.ok(html.includes("db={...data,auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]}"),'undo recovery preserves the current audit history instead of rewinding the log');
