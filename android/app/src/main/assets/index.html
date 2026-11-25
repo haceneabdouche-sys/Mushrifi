@@ -736,6 +736,24 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 .agenda-event-extra{display:grid;gap:4px;margin-top:6px;color:#5e7180;font-size:11px;overflow-wrap:anywhere}
 .agenda-event-extra p{margin:2px 0;white-space:pre-wrap}
 .agenda-selected-panel .agenda-event{margin:9px 0}
+
+.agenda-conflict-panel{border-right:3px solid #c58a4d}
+.agenda-conflict-panel.has-conflicts{border-right-color:#c06a5f}
+.agenda-conflict-panel.no-conflicts{border-right-color:#6e9c7c}
+.agenda-conflict-list{display:grid;gap:8px}
+.agenda-conflict-empty{padding:9px 11px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:12px}
+.agenda-conflict-item{padding:10px;border:1px solid #ead7c9;border-right:4px solid #c06a5f;border-radius:9px;background:#fffaf7}
+.agenda-conflict-time{font-size:11px;font-weight:800;color:#99553f}
+.agenda-conflict-pair{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;margin:7px 0}
+.agenda-conflict-event{min-width:0;display:grid;gap:3px}
+.agenda-conflict-event strong{font-size:12px;overflow-wrap:anywhere}
+.agenda-conflict-event small{font-size:10px;color:var(--muted)}
+.agenda-conflict-vs{font-size:11px;color:#a56b50;font-weight:800}
+.agenda-conflict-item .btn{margin-top:5px}
+.agenda-conflict-focus{outline:3px solid #d69b59!important;outline-offset:3px;background:#fff8e9!important}
+.agenda-conflict-count{color:#a04d3a}
+@media(max-width:480px){.agenda-conflict-pair{grid-template-columns:1fr;gap:5px}.agenda-conflict-vs{padding-inline-start:8px}}
+
 .agenda-form-panel{border-top:3px solid var(--gold)}
 .agenda-form-panel form{display:grid;gap:10px}
 .agenda-form-panel label{display:block;margin-bottom:4px;font-size:12px;font-weight:800}
@@ -929,6 +947,11 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
         <button type="button" class="btn primary" id="agendaAdd">＋ إضافة موعد أو مهمة</button>
       </div>
     </div>
+  </div>
+  <div class="panel agenda-conflict-panel" id="agendaConflictPanel">
+    <div class="panel-title-row"><h3>كشف تعارض المواعيد</h3><span class="pill" id="agendaConflictCount">جارٍ الفحص</span></div>
+    <p class="muted" id="agendaConflictHint" role="status" aria-live="polite">يفحص مُشرِفي تداخل الأوقات في الفترة المعروضة، بما فيها المواعيد المتكررة واستدعاءات الأولياء.</p>
+    <div id="agendaConflictList" class="agenda-conflict-list"><p class="empty">جارٍ فحص المواعيد...</p></div>
   </div>
   <div class="panel agenda-calendar-panel"><div class="panel-title-row"><h3 id="agendaRangeHeading">التقويم الشهري</h3><span class="pill">التاريخ المحدد</span></div><div id="agendaCalendar" aria-live="polite"><p class="empty">جارٍ إعداد الأجندة...</p></div></div>
   <div class="panel agenda-selected-panel"><div class="panel-title-row"><h3 id="agendaSelectedHeading">مواعيد اليوم المحدد</h3><span class="pill" id="agendaSelectedCount">0</span></div><div id="agendaSelectedItems"><p class="empty">لا توجد مواعيد في هذا اليوم.</p></div></div>
@@ -1552,6 +1575,65 @@ function agendaExpandOccurrences(items,from,to,limit=1500){
  }
  out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.startTime||'99:99').localeCompare(String(b.startTime||'99:99'))||String(a.title||'').localeCompare(String(b.title||''),'ar'));
  return {items:out,invalid,truncated};
+}
+
+
+function agendaConflictTimeMinutes(value){
+ const match=String(value??'').trim().match(/^([01]\d|2[0-3]):([0-5]\d)$/);
+ return match?Number(match[1])*60+Number(match[2]):null;
+}
+function agendaConflictWindow(item){
+ if(!item||!agendaValidDate(item.date))return null;
+ const start=agendaConflictTimeMinutes(item.startTime);
+ if(start===null)return null;
+ const rawEnd=String(item.endTime??'').trim();
+ if(!rawEnd)return {start,end:start,point:true};
+ const end=agendaConflictTimeMinutes(rawEnd);
+ if(end===null||end<=start)return null;
+ return {start,end,point:false};
+}
+function agendaConflictPair(first,second){
+ if(!first||!second||String(first.id)===String(second.id)||first.date!==second.date)return null;
+ if(['done','cancelled'].includes(String(first.status||'').toLowerCase())||['done','cancelled'].includes(String(second.status||'').toLowerCase()))return null;
+ const a=agendaConflictWindow(first),b=agendaConflictWindow(second);
+ if(!a||!b)return null;
+ let overlaps=false,from=0,to=0,point=false;
+ if(a.point&&b.point){
+  overlaps=a.start===b.start;from=a.start;to=a.start;point=true;
+ }else if(a.point){
+  overlaps=a.start>=b.start&&a.start<b.end;from=a.start;to=a.start;point=true;
+ }else if(b.point){
+  overlaps=b.start>=a.start&&b.start<a.end;from=b.start;to=b.start;point=true;
+ }else{
+  from=Math.max(a.start,b.start);to=Math.min(a.end,b.end);overlaps=from<to;
+ }
+ if(!overlaps)return null;
+ const pad=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+ const ids=[String(first.id),String(second.id)].sort();
+ return {id:first.date+'|'+ids.join('|'),date:first.date,startTime:pad(from),endTime:pad(to),minutes:point?0:to-from,point,first,second};
+}
+function buildAgendaConflictSnapshot(items){
+ const source=Array.isArray(items)?items:[],byDate=new Map(),conflicts=[],seen=new Set();
+ let ignoredWithoutTime=0,ignoredInvalidTime=0;
+ source.forEach(item=>{
+  if(!item||!agendaValidDate(item.date)||['done','cancelled'].includes(String(item.status||'').toLowerCase()))return;
+  const rawStart=String(item.startTime??'').trim(),rawEnd=String(item.endTime??'').trim();
+  if(!rawStart){ignoredWithoutTime++;return;}
+  if(agendaConflictTimeMinutes(rawStart)===null||(rawEnd&&(agendaConflictTimeMinutes(rawEnd)===null||agendaConflictTimeMinutes(rawEnd)<=agendaConflictTimeMinutes(rawStart)))){ignoredInvalidTime++;return;}
+  if(!byDate.has(item.date))byDate.set(item.date,[]);
+  byDate.get(item.date).push(item);
+ });
+ for(const [date,events] of byDate){
+  for(let i=0;i<events.length;i++)for(let j=i+1;j<events.length;j++){
+   const pair=agendaConflictPair(events[i],events[j]);if(!pair||seen.has(pair.id))continue;
+   seen.add(pair.id);conflicts.push(pair);
+  }
+ }
+ conflicts.sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime)||String(a.first.title||'').localeCompare(String(b.first.title||''),'ar'));
+ return {conflicts,total:conflicts.length,ignoredWithoutTime,ignoredInvalidTime};
+}
+function agendaConflictTimeLabel(conflict){
+ return conflict.point?'تعارض عند الساعة '+conflict.startTime:'تداخل من '+conflict.startTime+' إلى '+conflict.endTime+' ('+conflict.minutes+' دقيقة)';
 }
 
 function agendaReminderLeadLabel(lead){return Number(lead)===1440?'قبل الموعد بيوم':Number(lead)===60?'قبل الموعد بساعة':'عند الموعد';}
