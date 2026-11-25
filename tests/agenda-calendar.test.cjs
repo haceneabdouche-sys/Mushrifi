@@ -137,7 +137,7 @@ assert.ok(html.includes('function renderAgenda()')&&html.includes("if(activePage
 assert.ok(html.includes("renderAgendaHome(today);")&&html.includes('id="upcomingAgenda"'),'upcoming agenda items are surfaced on the home dashboard');
 assert.ok(html.includes("function openAgendaSummons(id)")&&html.includes("go('documents')"),'summons in agenda open their original document rather than a duplicate record');
 assert.ok(html.includes("||endTime&&!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(endTime)")&&html.includes('endTime<=startTime'),'invalid or reversed appointment times are rejected');
-assert.ok(html.includes("db.agenda.push({id:crypto.randomUUID()")&&html.includes("db.agenda.splice(index,0,item)"),'agenda CRUD uses saved records and restores in-memory data when a save fails');
+assert.ok(html.includes("db.agenda.push({id:crypto.randomUUID()")&&html.includes("db.agenda.splice(i,0,item)"),'agenda CRUD uses saved records and restores in-memory data when a save fails');
 assert.ok(html.includes('agenda:Array.isArray(data.agenda)?data.agenda:')&&html.includes('agendaMissingInBackup'),'older backup files without an agenda do not erase current phone appointments');
 assert.ok(html.includes('if(data.agenda!==undefined&&(!Array.isArray(data.agenda)'),'backup and recovery readers validate agenda structure when present');
 assert.ok(html.includes('agenda:[[')&&html.includes("'agenda'")&&html.includes('AUDIT_ENTITY_LABELS={'),'agenda is included in the audit log model');
