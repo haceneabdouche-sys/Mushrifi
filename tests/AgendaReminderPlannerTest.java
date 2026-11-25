@@ -62,14 +62,14 @@ public final class AgendaReminderPlannerTest {
                 "events without a clock use 08:00 local time");
 
             TimeZone paris = TimeZone.getTimeZone("Europe/Paris");
-            long dstAppointment = AgendaReminderPlanner.appointmentMillis("2027-03-29", "10:00", paris);
-            long dstReminder = AgendaReminderPlanner.reminderMillis("2027-03-29", "10:00", 1440, paris);
+            long dstAppointment = AgendaReminderPlanner.appointmentMillis("2027-03-28", "10:00", paris);
+            long dstReminder = AgendaReminderPlanner.reminderMillis("2027-03-28", "10:00", 1440, paris);
             Calendar dst = local(dstReminder, paris);
             check(dst.get(Calendar.YEAR) == 2027 && dst.get(Calendar.MONTH) == Calendar.MARCH
-                && dst.get(Calendar.DAY_OF_MONTH) == 28 && dst.get(Calendar.HOUR_OF_DAY) == 10,
-                "one-day reminder preserves local clock across daylight-saving transition");
+                && dst.get(Calendar.DAY_OF_MONTH) == 27 && dst.get(Calendar.HOUR_OF_DAY) == 10,
+                "one-day reminder preserves local clock on the day before daylight-saving transition");
             check(dstAppointment - dstReminder == 23L * 60L * 60L * 1000L,
-                "DST transition produces the correct local day interval rather than a fixed 24-hour shift");
+                "DST transition produces the correct 23-hour local-day interval rather than a fixed 24-hour shift");
 
             expectInvalid(() -> AgendaReminderPlanner.appointmentMillis("2026-02-29", "09:00", algiers),
                 "invalid non-leap date must be rejected");
