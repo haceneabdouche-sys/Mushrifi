@@ -703,6 +703,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
     <div class="panel-title-row"><h2>سجل العمليات والتعديلات</h2><span class="pill" id="auditLogCount">0 عملية</span></div>
     <p class="muted">يسجل التطبيق عمليات إضافة وتعديل وحذف واستيراد واسترجاع البيانات، مع وقت العملية والحقول التي تغيرت. يبدأ التسجيل من تثبيت هذه النسخة؛ لا يمكنه إنشاء تاريخ سابق لم يكن محفوظاً من قبل.</p>
     <p class="muted">يُحفظ السجل ضمن بيانات التطبيق المحلية ويُضمّن في النسخ الاحتياطية. تستخدم نسخة Android التخزين المحلي المشفّر الموجود في التطبيق.</p>
+    <p class="muted">تعرض الشاشة أحدث 120 نتيجة بعد التصفية للمحافظة على سرعة الهاتف؛ أما التصدير فيشمل جميع العمليات المحتفظ بها.</p>
     <p class="notice">لأن التطبيق لا يطلب حساب مستخدم مستقلًا، يحدد السجل أن العملية تمت من التطبيق على هذا الجهاز ولا يدّعي معرفة الشخص الذي ضغط الزر. لا تُعرض أرقام الهواتف أو بيانات الولي أو محتوى الصور والملاحظات الخاصة.</p>
     <div class="audit-toolbar" id="auditLogFilters">
       <input id="auditSearch" type="search" placeholder="ابحث باسم التلميذ أو نوع العملية" aria-label="البحث في سجل العمليات">
@@ -1204,7 +1205,7 @@ function renderAuditLog(){
   const hay=[entry.summary,entry.entityLabel,entry.actor,entry.source,...(entry.changes||[]).map(x=>x.label),...(entry.restrictedFields||[])].join(' ');
   return !query||normalizeDirectorySearch(hay).includes(query);
  });
- $('#auditLogCount').textContent=filtered.length.toLocaleString('ar-DZ')+' من '+all.length.toLocaleString('ar-DZ')+' عملية';
+ $('#auditLogCount').textContent=(filtered.length>120?'عرض أحدث 120 من '+filtered.length.toLocaleString('ar-DZ')+' نتيجة':'عرض '+filtered.length.toLocaleString('ar-DZ')+' نتيجة')+' · إجمالي السجل '+all.length.toLocaleString('ar-DZ');
  const list=$('#auditLogEntries');
  list.innerHTML=filtered.length?filtered.slice(0,120).map(entry=>{
   const details=Array.isArray(entry.changes)?entry.changes:[];
