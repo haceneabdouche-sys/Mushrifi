@@ -24,10 +24,10 @@ const attendance=[
  {id:'att7',student:'a',date:'2026-02-31',type:'غياب',justified:'قيد التبرير'}
 ];
 const documents=[
- {id:'doc1',student:'a',type:'استدعاء ولي',appointment:'2026-11-25T16:00+01:00',reason:'حضور الولي'},
- {id:'doc2',student:'missing',type:'استدعاء ولي',appointment:'2026-11-26T09:00+01:00',reason:'سجل قديم غير مرتبط'},
- {id:'doc3',student:'a',type:'استدعاء ولي',appointment:'2026-11-26T11:01+01:00',reason:'خارج 24 ساعة'},
- {id:'doc4',student:'a',type:'استدعاء ولي',appointment:'2026-11-25T13:00+01:00',status:'cancelled'},
+ {id:'doc1',student:'a',type:'استدعاء ولي',appointment:'2026-11-25T16:00:00+01:00',reason:'حضور الولي'},
+ {id:'doc2',student:'missing',type:'استدعاء ولي',appointment:'2026-11-26T09:00:00+01:00',reason:'سجل قديم غير مرتبط'},
+ {id:'doc3',student:'a',type:'استدعاء ولي',appointment:'2026-11-26T11:01:00+01:00',reason:'خارج 24 ساعة'},
+ {id:'doc4',student:'a',type:'استدعاء ولي',appointment:'2026-11-25T13:00:00+01:00',status:'cancelled'},
  {id:'doc5',student:'a',type:'وثيقة أخرى',appointment:'2026-11-25T14:00'}
 ];
 const agenda=[
