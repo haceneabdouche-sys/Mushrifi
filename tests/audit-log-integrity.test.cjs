@@ -93,12 +93,82 @@ for(const privateValue of ['0555000000','0555999999','PERSONAL-123','PERSONAL-45
 }
 assert.ok(compactText.includes('__auditFingerprint'),'private values are represented by compact change fingerprints');
 
+const settingsBefore={
+ students:[],attendance:[],documents:[],violations:[],
+ settings:{school:'ثانوية الشيخ بوعمامة',location:'بوسكن',summonsReminderTime:'18:00',timetables:{'1':{sun:6}},internalToken:'DO-NOT-EXPORT-SETTING'}
+};
+const settingsAfter=JSON.parse(JSON.stringify(settingsBefore));
+settingsAfter.settings.school='ثانوية جديدة';
+settingsAfter.settings.location='المدية';
+settingsAfter.settings.summonsReminderTime='19:30';
+settingsAfter.settings.timetables['1'].sun=5;
+settingsAfter.settings.internalToken='NEW-PRIVATE-SETTING';
+const settingsBaseline=sandbox.auditComparableDatabase(settingsBefore);
+assert.equal(settingsBaseline.settings.school,'ثانوية الشيخ بوعمامة','institution name is retained as a safe searchable setting value');
+assert.equal(settingsBaseline.settings.location,'بوسكن','school location is retained as a safe setting value');
+assert.equal(settingsBaseline.settings.summonsReminderTime,'18:00','reminder time is retained as a safe setting value');
+assert.ok(!JSON.stringify(settingsBaseline).includes('sun'),'timetable details remain fingerprinted rather than copied into the audit baseline');
+assert.ok(!JSON.stringify(settingsBaseline).includes('DO-NOT-EXPORT-SETTING'),'unknown/private setting values remain fingerprinted');
+const settingsEvents=sandbox.buildAuditEvents(settingsBaseline,settingsAfter,'2026-11-25T12:00:00.000Z',()=>('settings-'+(++sequence)));
+const settingsEvent=settingsEvents.find(x=>x.entity==='settings');
+assert.ok(settingsEvent,'settings changes generate a dedicated event');
+const schoolChange=settingsEvent.changes.find(x=>x.key==='school');
+const locationChange=settingsEvent.changes.find(x=>x.key==='location');
+const reminderChange=settingsEvent.changes.find(x=>x.key==='summonsReminderTime');
+assert.deepEqual(
+ [schoolChange.before,schoolChange.after,locationChange.before,locationChange.after,reminderChange.before,reminderChange.after],
+ ['ثانوية الشيخ بوعمامة','ثانوية جديدة','بوسكن','المدية','18:00','19:30'],
+ 'approved scalar settings expose precise old and new values'
+);
+assert.ok(settingsEvent.changes.find(x=>x.key==='timetables').before==='قيمة محفوظة','complex timetable change reveals no timetable content');
+const settingsEventJson=JSON.stringify(settingsEvents);
+for(const privateSetting of ['DO-NOT-EXPORT-SETTING','NEW-PRIVATE-SETTING','sun']){
+ assert.ok(!settingsEventJson.includes(privateSetting),'private or complex settings are never exposed in audit events: '+privateSetting);
+}
+const safeSettings={...settingsAfter.settings};
+assert.equal(sandbox.auditCanRevertSettings(
+ {entity:'settings',action:'update',changes:[
+  {key:'school',after:'ثانوية جديدة',before:'ثانوية الشيخ بوعمامة'},
+  {key:'location',after:'المدية',before:'بوسكن'},
+  {key:'summonsReminderTime',after:'19:30',before:'18:00'}
+ ]},safeSettings),true,'approved scalar settings can be restored while their latest values remain unchanged');
+const safeSettingsEntry={entity:'settings',action:'update',changes:[
+ {key:'school',after:'ثانوية جديدة',before:'ثانوية الشيخ بوعمامة'},
+ {key:'location',after:'المدية',before:'بوسكن'},
+ {key:'summonsReminderTime',after:'19:30',before:'18:00'}
+]};
+assert.equal(sandbox.auditApplyRevertSettings(safeSettingsEntry,safeSettings),true,'guarded settings rollback applies only approved scalar fields');
+assert.equal(safeSettings.school,'ثانوية الشيخ بوعمامة','settings rollback restores the previous institution name');
+assert.equal(safeSettings.location,'بوسكن','settings rollback restores the previous school location');
+assert.equal(safeSettings.summonsReminderTime,'18:00','settings rollback restores the previous reminder time');
+assert.equal(sandbox.auditCanRevertSettings(safeSettingsEntry,{...settingsAfter.settings,school:'تم تغييرها لاحقاً'}),false,'settings rollback refuses to overwrite a newer unrelated change');
+assert.equal(sandbox.auditCanRevertSettings({entity:'settings',action:'update',changes:[{key:'timetables',before:{},after:{}}]},settingsAfter.settings),false,'complex timetable settings are never auto-restored from the audit log');
+
+const displaySource=html.slice(html.indexOf('function auditEntriesForDisplay(entries){'),html.indexOf('function renderAuditLog(){'));
+const displaySandbox={};vm.createContext(displaySandbox);vm.runInContext(displaySource,displaySandbox);
+const mixedEntries=[
+ {id:'old-compatible',summary:'سجل قديم'},
+ {id:'safe',changes:[{key:'school',before:'أ',after:'ب'}],restrictedFields:[],totals:{added:1}},
+ {id:'bad-changes',changes:'not-an-array'},
+ {id:'bad-restricted',restrictedFields:{secret:true}},
+ {id:'bad-totals',totals:[]},
+ null,[],42
+];
+const visible=displaySandbox.auditEntriesForDisplay(mixedEntries);
+assert.deepEqual(JSON.parse(JSON.stringify(visible.map(x=>x.id))),['old-compatible','safe'],'malformed imported history is excluded from display without deleting valid or older compatible entries');
+
+
 assert.ok(html.includes("const AUDIT_LOG_LIMIT=500;"),'audit history is capped to a bounded size');
 assert.ok(html.includes("previousAuditLog.concat(newEntries).slice(-AUDIT_LOG_LIMIT)"),'only the most recent audit entries are retained');
 assert.ok(html.includes("db.auditLog=previousAuditLog;"),'a failed database save discards the uncommitted audit event');
 assert.ok(html.includes("auditBaselineJson=JSON.stringify(auditComparableDatabase(db));"),'the audit baseline moves only after the database save succeeds');
 assert.ok(html.includes('id="audit" class="page hidden"'),'a dedicated audit history page exists');
 assert.ok(html.includes('id="auditSearch"')&&html.includes('id="auditEntityFilter"')&&html.includes('id="auditActionFilter"'),'audit history supports search and category filters');
+assert.ok(html.includes('AUDIT_SAFE_SETTING_FIELDS')&&html.includes('summonsReminderTime'),'audit history stores readable values only for approved non-sensitive scalar settings');
+assert.ok(html.includes('function auditCanRevertSettings')&&html.includes('auditApplyRevertSettings(entry,record)'),'safe scalar settings have concurrency-guarded rollback');
+assert.ok(html.includes('function auditEntriesForDisplay(entries)')&&html.includes('تم تجاهل عرض'),'malformed imported audit records cannot crash the history page and remain stored');
+assert.ok(html.includes('...searchableChanges'),'search includes safe old and new values to find a field update');
+assert.ok(html.includes('entry.revertsId?all.find'),'reverted operations link back to the original audit entry');
 assert.ok(html.includes("filtered.length>120?'عرض أحدث 120 من '"),'audit page clearly indicates when the visible result list is capped');
 assert.ok(html.includes('التصدير فيشمل جميع العمليات المحتفظ بها'),'audit export is documented as including the full retained history');
 assert.ok(html.includes("list.querySelectorAll('[data-audit-revert]')"),'revert actions are wired to guarded rollback');
