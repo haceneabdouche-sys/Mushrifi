@@ -276,6 +276,17 @@ public class MainActivity extends Activity {
                 return result.toString();
             }
         }
+        @JavascriptInterface public String syncStudentFollowupReminders(String payload) {
+            try {
+                return StudentFollowupReminderScheduler.sync(MainActivity.this, payload).toString();
+            } catch (Exception error) {
+                android.util.Log.e("MushrifiFollowup", "Educational follow-up reminder sync failed", error);
+                org.json.JSONObject result = new org.json.JSONObject();
+                try { result.put("ok", false).put("error", error.getMessage() == null ? "تعذر مزامنة مواعيد المراجعة التربوية" : error.getMessage()); }
+                catch (org.json.JSONException ignored) {}
+                return result.toString();
+            }
+        }
         @JavascriptInterface public void testAgendaNotification() {
             runOnUiThread(() -> {
                 if (!hasNotificationPermission()) {
@@ -485,6 +496,7 @@ public class MainActivity extends Activity {
         super.onResume();
         rescheduleStoredReminders();
         AgendaReminderScheduler.rescheduleAll(this);
+        StudentFollowupReminderScheduler.rescheduleAll(this);
         notifyExactAlarmPermissionState();
         notifyNotificationPermissionState(Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED);
         checkLicenseWhenDue();
@@ -548,6 +560,8 @@ public class MainActivity extends Activity {
             if (granted) {
                 AgendaReminderScheduler.rescheduleAll(this);
                 AgendaReminderScheduler.deliverDue(this, null);
+                StudentFollowupReminderScheduler.rescheduleAll(this);
+                StudentFollowupReminderScheduler.deliverDue(this, null);
             }
             Toast.makeText(this, granted ? "تم تفعيل صلاحية الإشعارات." : "لم تُفعّل صلاحية الإشعارات؛ لن تصل التذكيرات حتى السماح بها.", Toast.LENGTH_LONG).show();
         }
