@@ -4,7 +4,7 @@ const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
 const java = fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/MainActivity.java', 'utf8');
 
 assert.ok(html.includes('الملف الفردي'));
-assert.ok(html.includes('window.studentHistory=id=>'));
+assert.ok(html.includes('window.studentHistory=(id,focusFollowupId)=>{'));
 assert.ok(html.includes("go('reports')"));
 for (const label of ['تفصيل الغيابات','تفصيل التأخرات','المخالفات','الاستدعاءات','غيابات مبررة','غيابات غير مبررة','قيد التبرير']) assert.ok(html.includes(label), 'student profile includes ' + label);
 
