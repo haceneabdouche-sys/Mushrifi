@@ -867,7 +867,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 <section id="agenda" class="page hidden">
   <div class="panel agenda-heading">
     <div class="panel-title-row"><h2>أجندة المشرف التربوي</h2><span class="pill" id="agendaStoredCount">0 موعد محفوظ</span></div>
-    <div class="agenda-notification-permission" id="agendaNotificationPanel"><p id="agendaNotificationStatus" class="muted" role="status" aria-live="polite">جارٍ التحقق من صلاحيات تنبيهات الأجندة...</p><div class="agenda-permission-actions"><button type="button" class="btn small" id="agendaRequestNotificationPermission">السماح بالإشعارات</button><button type="button" class="btn small" id="agendaRequestExactAlarmPermission">تفعيل التوقيت الدقيق</button><button type="button" class="btn small" id="agendaTestNotification">اختبار التنبيه</button></div><small class="muted">عند عدم السماح بالتنبيهات الدقيقة، قد يؤخر Android وصول الإشعار. وتؤثر إعدادات توفير البطارية الخاصة بالهاتف في توقيت بعض التنبيهات.</small></div>
+    <div class="agenda-notification-permission" id="agendaNotificationPanel"><p id="agendaNotificationStatus" class="muted" role="status" aria-live="polite">جارٍ التحقق من صلاحيات تنبيهات الأجندة...</p><div class="agenda-permission-actions"><button type="button" class="btn small" id="agendaRequestNotificationPermission">السماح بالإشعارات</button><button type="button" class="btn small" id="agendaRequestExactAlarmPermission">تفعيل التوقيت الدقيق</button><button type="button" class="btn small" id="agendaTestNotification">اختبار التنبيه</button><button type="button" class="btn small" id="agendaOpenNotificationSettings">إعدادات إشعارات الهاتف</button></div><small class="muted">عند عدم السماح بالتنبيهات الدقيقة، قد يؤخر Android وصول الإشعار. وتؤثر إعدادات توفير البطارية الخاصة بالهاتف في توقيت بعض التنبيهات.</small></div>
     <p class="muted">نظّم الاجتماعات والمهام اليومية ومواعيد المتابعة. تظهر استدعاءات الأولياء المسجلة في قسم الوثائق هنا تلقائياً دون إنشاء نسخة مكررة منها.</p>
     <p class="notice">المواعيد والمهام تحفظ محلياً ضمن بيانات مُشرِفي وتدخل في النسخ الاحتياطية. تظهر تذكيرات الأجندة داخل التطبيق ولوحة الرئيسية؛ أما تنبيهات استدعاءات الأولياء فتبقى مرتبطة بنظام التذكير الموجود في الوثائق.</p>
     <div class="agenda-summary-grid" id="agendaSummary">
@@ -1474,13 +1474,13 @@ function renderAgendaNotificationStatus(plan,result){
  if(!window.AndroidBridge||typeof AndroidBridge.hasNotificationPermission!=='function'){
   status.textContent='تنبيهات الهاتف تعمل في نسخة Android المثبتة فقط.';status.classList.add('status-warn');return;
  }
- const notifications=!!AndroidBridge.hasNotificationPermission(),exact=!!AndroidBridge.hasExactAlarmAccess();
- let message=notifications?(exact?'إشعارات الأجندة مسموحة والتوقيت الدقيق متاح.':'إشعارات الأجندة مسموحة، لكن التوقيت قد يكون تقريبياً حتى تفعيل التنبيهات الدقيقة.'):'إشعارات الهاتف غير مسموحة؛ فعّل صلاحيتها حتى تصل تنبيهات المواعيد.';
+ const notifications=!!AndroidBridge.hasNotificationPermission(),channelEnabled=typeof AndroidBridge.hasAgendaNotificationChannelEnabled==='function'?!!AndroidBridge.hasAgendaNotificationChannelEnabled():true,exact=!!AndroidBridge.hasExactAlarmAccess();
+ let message=!notifications?'إذن إشعارات Android غير ممنوح؛ فعّله حتى تصل تنبيهات المواعيد.':!channelEnabled?'إشعارات التطبيق أو قناة أجندة المشرف معطّلة من إعدادات Android؛ افتح إعدادات القناة وفعّلها.':exact?'إشعارات الأجندة مسموحة والتوقيت الدقيق متاح.':'إشعارات الأجندة مسموحة، لكن التوقيت قد يكون تقريبياً حتى تفعيل التنبيهات الدقيقة.';
  if(result&&result.ok===false)message+=' تعذرت مزامنة جدول التنبيهات: '+String(result.error||'خطأ غير معروف');
  else if(result&&Number(result.failedToSchedule||0)>0)message+=' تعذر ضبط '+Number(result.failedToSchedule).toLocaleString('ar-DZ')+' تنبيهات؛ راجع صلاحيات الهاتف ثم أعد فتح الأجندة.';
  else if(plan&&plan.expired)message+=' لم تُجدول '+plan.expired+' مواعيد لأن وقت تذكيرها أصبح في الماضي.';
  else if(result&&result.active!==undefined)message+=' التنبيهات المحفوظة: '+Number(result.active).toLocaleString('ar-DZ')+'.';
- status.textContent=message;status.classList.toggle('status-ok',notifications&&exact&&!(result&&result.ok===false));status.classList.toggle('status-warn',!notifications||!exact||!!(result&&result.ok===false));
+ status.textContent=message;status.classList.toggle('status-ok',notifications&&channelEnabled&&exact&&!(result&&result.ok===false));status.classList.toggle('status-warn',!notifications||!channelEnabled||!exact||!!(result&&result.ok===false));
 }
 function refreshAgendaNotificationStatus(){
  const plan=buildAgendaReminderPlan(db.agenda,Date.now());
@@ -2235,6 +2235,7 @@ $('#testSummonsNotification').onclick=()=>{if(window.AndroidBridge&&typeof Andro
 $('#agendaRequestNotificationPermission')?.addEventListener('click',()=>{if(window.AndroidBridge&&typeof AndroidBridge.requestNotificationPermission==='function')AndroidBridge.requestNotificationPermission();else alert('تفعيل الإشعارات متاح في نسخة Android المثبتة فقط.');});
 $('#agendaRequestExactAlarmPermission')?.addEventListener('click',()=>{if(window.AndroidBridge&&typeof AndroidBridge.requestExactAlarmAccess==='function')AndroidBridge.requestExactAlarmAccess();else alert('التنبيهات الدقيقة متاحة في نسخة Android المثبتة فقط.');});
 $('#agendaTestNotification')?.addEventListener('click',()=>{if(window.AndroidBridge&&typeof AndroidBridge.testAgendaNotification==='function')AndroidBridge.testAgendaNotification();else alert('اختبار إشعارات الأجندة متاح في نسخة Android المثبتة فقط.');});
+$('#agendaOpenNotificationSettings')?.addEventListener('click',()=>{if(window.AndroidBridge&&typeof AndroidBridge.openAgendaNotificationSettings==='function')AndroidBridge.openAgendaNotificationSettings();else alert('إعدادات إشعارات Android متاحة في نسخة التطبيق المثبتة فقط.');});
 window.addEventListener('load',()=>{refreshNotificationPermissionStatus();refreshExactAlarmPermissionStatus();refreshAgendaNotificationStatus();if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function'){db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}if(window.AndroidBridge&&typeof AndroidBridge.syncAgendaReminders==='function')syncAgendaRemindersWithAndroid(true);});
 window.studentAction=(source,id)=>{
   const action=typeof source==='string'?source:String(source?.value||'');
