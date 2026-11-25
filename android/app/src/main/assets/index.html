@@ -781,8 +781,54 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
       <div class="tile" data-go="settings">⚙️<b>الإعدادات والترخيص</b><small>النسخ الاحتياطي والبيانات والتفعيل</small></div>
       <div class="tile" data-go="documents">📨<b>الإشعارات والاستدعاءات</b><small>متابعة مواعيد الأولياء</small></div>
       <div class="tile" data-go="attendance">📋<b>سجل الغياب والتأخر</b><small>المراجعة والتبرير والتعديل</small></div>
+      <div class="tile" data-go="agenda">🗓️<b>أجندة المشرف التربوي</b><small>مواعيد الأولياء والاجتماعات والمهام</small></div>
       <div class="tile" data-go="audit">🧾<b>سجل العمليات والتعديلات</b><small>من أضاف أو عدّل أو حذف ومتى</small></div>
     </div>
+  </div>
+</section>
+<section id="agenda" class="page hidden">
+  <div class="panel agenda-heading">
+    <div class="panel-title-row"><h2>أجندة المشرف التربوي</h2><span class="pill" id="agendaStoredCount">0 موعد محفوظ</span></div>
+    <p class="muted">نظّم الاجتماعات والمهام اليومية ومواعيد المتابعة. تظهر استدعاءات الأولياء المسجلة في قسم الوثائق هنا تلقائياً دون إنشاء نسخة مكررة منها.</p>
+    <p class="notice">المواعيد والمهام تحفظ محلياً ضمن بيانات مُشرِفي وتدخل في النسخ الاحتياطية. تظهر تذكيرات الأجندة داخل التطبيق ولوحة الرئيسية؛ أما تنبيهات استدعاءات الأولياء فتبقى مرتبطة بنظام التذكير الموجود في الوثائق.</p>
+    <div class="agenda-summary-grid" id="agendaSummary">
+      <div class="stat"><small>مواعيد اليوم</small><strong id="agendaTodayCount">0</strong></div>
+      <div class="stat"><small>مواعيد هذا الأسبوع</small><strong id="agendaWeekCount">0</strong></div>
+      <div class="stat"><small>مهام مفتوحة</small><strong id="agendaOpenCount">0</strong></div>
+      <div class="stat"><small>مهام منجزة</small><strong id="agendaDoneCount">0</strong></div>
+    </div>
+    <div class="agenda-controls">
+      <div class="agenda-view-controls" role="group" aria-label="طريقة عرض الأجندة">
+        <button type="button" class="btn small agenda-read-only-control" data-agenda-view="day">يومي</button>
+        <button type="button" class="btn small agenda-read-only-control" data-agenda-view="week">أسبوعي</button>
+        <button type="button" class="btn small agenda-read-only-control active" data-agenda-view="month">شهري</button>
+      </div>
+      <div class="agenda-date-controls">
+        <button type="button" class="btn small agenda-read-only-control" id="agendaPrev" aria-label="الفترة السابقة">‹</button>
+        <button type="button" class="btn small agenda-read-only-control" id="agendaToday">اليوم</button>
+        <button type="button" class="btn small agenda-read-only-control" id="agendaNext" aria-label="الفترة التالية">›</button>
+        <input type="date" id="agendaSelectedDate" aria-label="التاريخ المحدد">
+      </div>
+      <div class="agenda-actions">
+        <select id="agendaTypeFilter" aria-label="تصفية نوع الموعد">
+          <option value="all">كل المواعيد</option><option value="summons">استدعاءات الأولياء</option><option value="meeting">اجتماعات</option><option value="task">مهام يومية</option><option value="followup">متابعة تلاميذ</option><option value="personal">مهام أخرى</option>
+        </select>
+        <button type="button" class="btn primary" id="agendaAdd">＋ إضافة موعد أو مهمة</button>
+      </div>
+    </div>
+  </div>
+  <div class="panel agenda-calendar-panel"><div id="agendaCalendar" aria-live="polite"><p class="empty">جارٍ إعداد الأجندة...</p></div></div>
+  <div class="panel agenda-selected-panel"><div class="panel-title-row"><h3 id="agendaSelectedHeading">مواعيد اليوم المحدد</h3><span class="pill" id="agendaSelectedCount">0</span></div><div id="agendaSelectedItems"><p class="empty">لا توجد مواعيد في هذا اليوم.</p></div></div>
+  <div class="panel agenda-form-panel hidden" id="agendaFormPanel">
+    <div class="panel-title-row"><h3 id="agendaFormHeading">إضافة موعد أو مهمة</h3><button type="button" class="btn small" id="agendaCancel">إغلاق</button></div>
+    <form id="agendaForm">
+      <input type="hidden" name="id" id="agendaFormId">
+      <div class="row"><div><label for="agendaTitle">عنوان الموعد أو المهمة</label><input id="agendaTitle" name="title" maxlength="100" required placeholder="مثال: اجتماع مجلس التربية"></div><div><label for="agendaType">النوع</label><select id="agendaType" name="type" required><option value="meeting">اجتماع</option><option value="task">مهمة يومية</option><option value="followup">متابعة تلميذ</option><option value="personal">موعد آخر</option></select></div></div>
+      <div class="row"><div><label for="agendaDate">التاريخ</label><input type="date" id="agendaDate" name="date" required></div><div><label for="agendaStartTime">وقت البداية</label><input type="time" id="agendaStartTime" name="startTime"></div><div><label for="agendaEndTime">وقت النهاية</label><input type="time" id="agendaEndTime" name="endTime"></div></div>
+      <div class="row"><div><label for="agendaLocation">المكان</label><input id="agendaLocation" name="location" maxlength="100" placeholder="قاعة الاجتماعات أو المكتب"></div><div><label for="agendaStudent">التلميذ المرتبط بالمتابعة (اختياري)</label><select id="agendaStudent" name="studentId"><option value="">لا يوجد تلميذ محدد</option></select></div></div>
+      <div class="row"><div><label for="agendaPriority">الأولوية</label><select id="agendaPriority" name="priority"><option value="normal">عادية</option><option value="high">مرتفعة</option><option value="urgent">عاجلة</option></select></div><div><label for="agendaNotes">ملاحظات خاصة (تبقى داخل بيانات التطبيق)</label><textarea id="agendaNotes" name="notes" rows="2" maxlength="1200" placeholder="ملاحظات المتابعة أو التحضير"></textarea></div></div>
+      <div class="actions"><button type="submit" class="btn primary">حفظ الموعد</button><button type="button" class="btn" id="agendaCancelBottom">إلغاء</button></div>
+    </form>
   </div>
 </section>
 <section id="audit" class="page hidden">
@@ -794,7 +840,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
     <p class="notice">لأن التطبيق لا يطلب حساب مستخدم مستقلًا، يحدد السجل أن العملية تمت من التطبيق على هذا الجهاز ولا يدّعي معرفة الشخص الذي ضغط الزر. لا تُعرض أرقام الهواتف أو بيانات الولي أو محتوى الصور والملاحظات الخاصة.</p>
     <div class="audit-toolbar" id="auditLogFilters">
       <input id="auditSearch" type="search" placeholder="ابحث باسم التلميذ أو نوع العملية" aria-label="البحث في سجل العمليات">
-      <select id="auditEntityFilter" aria-label="تصفية حسب نوع السجل"><option value="">كل السجلات</option><option value="students">بطاقات التلاميذ</option><option value="attendance">الغياب والتأخر</option><option value="documents">الوثائق والاستدعاءات</option><option value="violations">المخالفات</option><option value="settings">الإعدادات</option></select>
+      <select id="auditEntityFilter" aria-label="تصفية حسب نوع السجل"><option value="">كل السجلات</option><option value="students">بطاقات التلاميذ</option><option value="attendance">الغياب والتأخر</option><option value="documents">الوثائق والاستدعاءات</option><option value="violations">المخالفات</option><option value="agenda">الأجندة والمواعيد</option><option value="settings">الإعدادات</option></select>
       <select id="auditActionFilter" aria-label="تصفية حسب العملية"><option value="">كل العمليات</option><option value="add">إضافة</option><option value="update">تعديل</option><option value="revert">استرجاع تعديل</option><option value="delete">حذف</option><option value="bulk">عملية جماعية</option></select>
       <input id="auditDateFrom" type="date" aria-label="من تاريخ">
       <input id="auditDateTo" type="date" aria-label="إلى تاريخ">
@@ -897,7 +943,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
   });
 })();
 const DBKEY='mushrifi_v1';
-const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}';
+const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"agenda":[],"settings":{}}';
 const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase==='function');
 const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
 if(nativeJson==='!MUSHRIFI_DB_ERROR!'){document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2"><h2>تعذر فتح قاعدة بيانات مُشرفي</h2><p>لم يتم عرض قائمة فارغة حتى لا تُستبدل بياناتك. لا تحذف التطبيق. احتفظ بنسخة احتياطية إن كانت لديك، ثم تواصل مع الدعم.</p></main>';throw new Error('Mushrifi encrypted database could not be read');}
@@ -905,7 +951,7 @@ const legacyJson=localStorage.getItem(DBKEY);
 function parseMushrifiDatabase(raw){
  const parsed=JSON.parse(raw);
  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('صيغة قاعدة البيانات ليست كائناً صالحاً.');
- for(const key of ['students','attendance','documents','violations']){
+ for(const key of ['students','attendance','documents','violations','agenda']){
   if(Object.prototype.hasOwnProperty.call(parsed,key)&&!Array.isArray(parsed[key]))throw new Error('حقل '+key+' تالف أو ليس قائمة صالحة.');
   if(!Array.isArray(parsed[key]))parsed[key]=[];
  }
@@ -913,6 +959,7 @@ function parseMushrifiDatabase(raw){
  parsed.settings=parsed.settings&&typeof parsed.settings==='object'?parsed.settings:{};
  if(Object.prototype.hasOwnProperty.call(parsed,'auditLog')&&!Array.isArray(parsed.auditLog))throw new Error('سجل العمليات تالف أو ليس قائمة صالحة.');
  if(!Array.isArray(parsed.auditLog))parsed.auditLog=[];
+ if(!parsed.agenda.every(item=>item&&typeof item==='object'&&!Array.isArray(item)))throw new Error('تحتوي أجندة المشرف على عنصر غير صالح. لم تُعدّل قاعدة البيانات الأصلية.');
  if(!parsed.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry)))throw new Error('يحتوي سجل العمليات على عنصر غير صالح.');
  return parsed;
 }
@@ -949,21 +996,24 @@ const AUDIT_FIELD_DEFINITIONS={
  students:[['last','اللقب'],['first','الاسم'],['schoolYear','المستوى'],['branch','الشعبة'],['class','القسم'],['attribute','الصفة'],['status','الحالة']],
  attendance:[['class','القسم'],['date','التاريخ'],['type','نوع المتابعة'],['period','الفترة'],['hours','ساعات الغياب'],['minutes','دقائق التأخر'],['justified','حالة التبرير'],['fullDay','غياب يوم كامل'],['schoolYear','المستوى'],['branch','الشعبة'],['sectionLabel','وصف القسم'],['studentClass','القسم']],
  documents:[['date','تاريخ الوثيقة'],['type','نوع الوثيقة'],['appointment','موعد حضور الولي'],['reminderAt','موعد التنبيه'],['absenceStage','مرحلة التبليغ'],['deliveryDate','تاريخ التبليغ']],
- violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']]
+ violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']],
+ agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة']]
 };
 const AUDIT_PRIVATE_FIELDS={
  students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',notes:'ملاحظات خاصة'},
  attendance:{student:'ارتباط السجل بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',notes:'الملاحظات'},
  documents:{student:'ارتباط الوثيقة بملف التلميذ',reason:'موضوع الوثيقة وتفاصيلها',photo:'صورة الوثيقة',deliveryProof:'إثبات التبليغ'},
- violations:{student:'ارتباط الواقعة بملف التلميذ',description:'تفاصيل الواقعة',photo:'صورة التقرير'}
+ violations:{student:'ارتباط الواقعة بملف التلميذ',description:'تفاصيل الواقعة',photo:'صورة التقرير'},
+ agenda:{studentId:'ارتباط الموعد بملف التلميذ',notes:'ملاحظات الأجندة',details:'تفاصيل الموعد'}
 };
 const AUDIT_REVERSIBLE_FIELDS={
  students:['last','first','schoolYear','branch','class','attribute','status'],
  attendance:['class','date','type','period','hours','minutes','justified','fullDay','schoolYear','branch','sectionLabel','studentClass'],
  documents:['date','type','appointment','reminderAt','absenceStage','deliveryDate'],
- violations:['date','type','action']
+ violations:['date','type','action'],
+ agenda:['title','type','date','startTime','endTime','location','priority','status']
 };
-const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة',settings:'إعدادات التطبيق'};
+const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة',agenda:'موعد في أجندة المشرف',settings:'إعدادات التطبيق'};
 const AUDIT_SAFE_SETTING_FIELDS={school:'اسم المؤسسة',location:'موقع المؤسسة',summonsReminderTime:'وقت تنبيه الاستدعاءات'};
 const AUDIT_REVERSIBLE_SETTINGS=new Set(Object.keys(AUDIT_SAFE_SETTING_FIELDS));
 const AUDIT_SETTING_LABELS={...AUDIT_SAFE_SETTING_FIELDS,timetables:'جداول التوقيت',schoolHolidays:'العطل المدرسية',sectionNames:'تسميات الأقسام',academicStructure:'الهيكل الدراسي'};
@@ -978,9 +1028,9 @@ function auditFingerprintValue(value){
 }
 function auditComparableDatabase(source){
  const input=source&&typeof source==='object'?source:{};
- const result={students:[],attendance:[],documents:[],violations:[],settings:{}};
- const auxiliary={students:['name','fullName'],attendance:['student','studentName'],documents:['student','studentName'],violations:['student','studentName']};
- for(const collection of ['students','attendance','documents','violations']){
+ const result={students:[],attendance:[],documents:[],violations:[],agenda:[],settings:{}};
+ const auxiliary={students:['name','fullName'],attendance:['student','studentName'],documents:['student','studentName'],violations:['student','studentName'],agenda:[]};
+ for(const collection of ['students','attendance','documents','violations','agenda']){
   const safe=new Set(['id',...(AUDIT_FIELD_DEFINITIONS[collection]||[]).map(field=>field[0]),...(auxiliary[collection]||[])]);
   const records=Array.isArray(input[collection])?input[collection]:[];
   result[collection]=records.map(record=>{
@@ -1017,6 +1067,7 @@ function auditRecordStudentName(record,snapshot){
 function auditRecordLabel(entity,record,snapshot){
  if(!record)return '';
  if(entity==='students')return (String(record.last||'')+' '+String(record.first||'')).trim()||String(record.name||record.fullName||'تلميذ');
+ if(entity==='agenda')return String(record.title||'موعد دون عنوان');
  return auditRecordStudentName(record,snapshot)||'تلميذ غير محدد';
 }
 function auditValueForChange(value){
@@ -1057,7 +1108,7 @@ function auditActionLabel(action){
 function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
  const before=auditComparableDatabase(beforeSnapshot||{}),after=auditComparableDatabase(afterDatabase),makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2);
  const opts=options||{},events=[];
- for(const collection of ['students','attendance','documents','violations']){
+ for(const collection of ['students','attendance','documents','violations','agenda']){
   const oldList=Array.isArray(before[collection])?before[collection]:[],newList=Array.isArray(after[collection])?after[collection]:[];
   const oldMap=new Map(),newMap=new Map();
   oldList.forEach((record,index)=>oldMap.set(auditRecordIdentity(record,index),record));
@@ -1274,7 +1325,7 @@ return String(value??'').normalize('NFKC').toLocaleLowerCase('ar')
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
 const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.name||s.fullName||'—';for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>normalizeStudentKey(x.student)===normalizeStudentKey(id)&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
-let previousAppPage='home';const appPageStack=['home'];function go(page,addHistory=true){if(!document.getElementById(page)||!document.getElementById(page).classList.contains('page'))return;const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current!==page&&addHistory){previousAppPage=current;appPageStack.push(page);try{history.pushState({mushrifiPage:page},'');}catch(err){console.warn('Mushrifi: browser history unavailable; using in-page navigation',err);}}document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page||(x.dataset.page==='more'&&['violations','reports','settings','audit'].includes(page))));if(typeof render==='function')render();}function goPreviousPage(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;let index=appPageStack.lastIndexOf(current);let target=index>0?appPageStack[index-1]:previousAppPage;if(!target||target===current||!document.getElementById(target)||!document.getElementById(target).classList.contains('page'))target='home';if(index>0)appPageStack.splice(index);if(!appPageStack.length)appPageStack.push('home');go(target,false);previousAppPage=appPageStack.length>1?appPageStack[appPageStack.length-2]:'home';return true;}window.handleMushrifiAndroidBack=function(){if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(false);return true;}const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;return goPreviousPage();};
+let previousAppPage='home';const appPageStack=['home'];function go(page,addHistory=true){if(!document.getElementById(page)||!document.getElementById(page).classList.contains('page'))return;const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current!==page&&addHistory){previousAppPage=current;appPageStack.push(page);try{history.pushState({mushrifiPage:page},'');}catch(err){console.warn('Mushrifi: browser history unavailable; using in-page navigation',err);}}document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page||(x.dataset.page==='more'&&['violations','reports','settings','audit','agenda'].includes(page))));if(typeof render==='function')render();}function goPreviousPage(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;let index=appPageStack.lastIndexOf(current);let target=index>0?appPageStack[index-1]:previousAppPage;if(!target||target===current||!document.getElementById(target)||!document.getElementById(target).classList.contains('page'))target='home';if(index>0)appPageStack.splice(index);if(!appPageStack.length)appPageStack.push('home');go(target,false);previousAppPage=appPageStack.length>1?appPageStack[appPageStack.length-2]:'home';return true;}window.handleMushrifiAndroidBack=function(){if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(false);return true;}const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;return goPreviousPage();};
 try{history.replaceState({mushrifiPage:document.querySelector('.page:not(.hidden)')?.id||'home'},'');}catch(err){console.warn('Mushrifi: initial browser history unavailable; navigation remains enabled',err);}
 window.addEventListener('popstate',event=>{if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(true);return;}const page=event.state?.mushrifiPage;go(page&&document.getElementById(page)?page:'home',false);});
 function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data','license'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
