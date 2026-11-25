@@ -58,10 +58,10 @@ assert.equal(JSON.stringify(records),original,'payload planning does not mutate 
 const empty=sandbox.buildStudentFollowupReminderPayload(null,null);
 assert.deepEqual(JSON.parse(JSON.stringify(empty)),{reminders:[],unlinked:0,invalid:0,overflow:false},'missing legacy follow-up and student lists are backward compatible');
 
-const huge=Array.from({length:2001},(_,i)=>({id:'r-'+i,student:'s3',status:'قيد المتابعة',nextDate:'2026-12-01'}));
+const huge=Array.from({length:2001},(_,i)=>({id:'r-'+i,student:'s3',status:'قيد المتابعة',nextDate:new Date(Date.UTC(2030,0,1+i)).toISOString().slice(0,10)}));
 const overflow=sandbox.buildStudentFollowupReminderPayload(huge,students);
 assert.equal(overflow.overflow,true,'oversized schedules are rejected instead of silently truncating and cancelling valid reminders');
-assert.equal(overflow.reminders.length,2001,'overflow detection preserves the complete calculated set');
+assert.equal(overflow.reminders.length,2001,'overflow detection preserves the complete set of distinct review days');
 
 const javaScheduler=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/StudentFollowupReminderScheduler.java','utf8');
 const javaReceiver=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/StudentFollowupReminderReceiver.java','utf8');
