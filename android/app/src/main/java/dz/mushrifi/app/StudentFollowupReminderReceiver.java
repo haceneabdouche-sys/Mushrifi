@@ -14,7 +14,7 @@ import org.json.JSONObject;
 public final class StudentFollowupReminderReceiver extends android.content.BroadcastReceiver {
     @Override public void onReceive(Context context, Intent intent) {
         if (intent == null || !StudentFollowupReminderScheduler.ACTION.equals(intent.getAction())) return;
-        String id = intent.getStringExtra("followup_id");
+        String id = intent.getStringExtra("followup_date");
         if (id == null || id.trim().isEmpty()) return;
         StudentFollowupReminderScheduler.deliverDue(context, id);
     }
