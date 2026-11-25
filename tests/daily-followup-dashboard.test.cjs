@@ -50,7 +50,7 @@ assert.ok(snapshot.tasks.some(x=>x.agendaDate===today&&x.kind==='agenda'),'today
 assert.equal(snapshot.totalTasks,snapshot.tasks.length,'task count equals complete task list before UI display limit');
 assert.equal(sandbox.buildDailyFollowupSnapshot(attendance,documents,agenda,'bad-date',now,resolve).totalTasks,0,'invalid dashboard date safely returns an empty snapshot');
 assert.equal(sandbox.buildDailyFollowupSnapshot(attendance,documents,agenda,today,NaN,resolve).totalTasks,0,'invalid clock input safely returns an empty snapshot');
-assert.ok(html.includes('id="dailyTodayAbsences"')&&html.includes('id="dailyTodayUnjustified"')&&html.includes('id="dailyPendingReasons"'),'dashboard displays today's attendance and pending justification indicators');
+assert.ok(html.includes('id="dailyTodayAbsences"')&&html.includes('id="dailyTodayUnjustified"')&&html.includes('id="dailyPendingReasons"'),'dashboard displays same-day attendance and pending justification indicators');
 assert.ok(html.includes('id="dailySectionBreakdown"')&&html.includes('data-daily-record-id'),'section breakdown and record-specific follow-up actions are wired');
 assert.ok(html.includes('function openDailyDashboardTask')&&html.includes('row.scrollIntoView'),'attendance action navigates to and highlights the exact record');
 assert.ok(html.includes('renderDailyFollowupDashboard(today,Date.now());'),'smart daily dashboard refreshes with the home screen');
