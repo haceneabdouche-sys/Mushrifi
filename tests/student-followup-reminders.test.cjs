@@ -31,6 +31,7 @@ const students=[
 ];
 const records=[
  {id:'r-id',student:'s3',studentName:'أحمد أمين',class:'1',status:'قيد المتابعة',nextDate:'2026-11-28',observation:'نص خاص',actionTaken:'إجراء خاص',result:'نتيجة خاصة'},
+ {id:'r-id-2',student:'s3',studentName:'أحمد أمين',class:'1',status:'قيد المتابعة',nextDate:'2026-11-28',observation:'ملاحظة ثانية'},
  {id:'r-legacy-safe',student:'old-unknown',studentName:'وائل عيسو',class:'٣',status:'قيد المتابعة',nextDate:'2026-11-26',observation:'ملاحظة لا ترسل'},
  {id:'r-ambiguous',student:'old-unknown',studentName:'وائل عيسو',class:'',status:'قيد المتابعة',nextDate:'2026-11-27'},
  {id:'r-no-match',student:'old-unknown',studentName:'اسم غير موجود',class:'9',status:'قيد المتابعة',nextDate:'2026-11-27'},
@@ -42,15 +43,15 @@ const records=[
 const original=JSON.stringify(records);
 const plan=sandbox.buildStudentFollowupReminderPayload(records,students);
 assert.deepEqual(JSON.parse(JSON.stringify(plan.reminders)),[
- {id:'r-legacy-safe',status:'قيد المتابعة',nextDate:'2026-11-26'},
- {id:'r-id',status:'قيد المتابعة',nextDate:'2026-11-28'}
+ {reviewDate:'2026-11-26',count:1},
+ {reviewDate:'2026-11-28',count:2}
 ],'only active reviews with one verified student identity are scheduled in date order');
 assert.equal(plan.unlinked,2,'ambiguous and unmatched legacy follow-ups are not assigned to a student');
 assert.equal(plan.invalid,2,'invalid date and missing date do not create native alarms');
 assert.equal(plan.overflow,false,'normal reminder count stays within the native bound');
 const nativePayload=JSON.stringify(plan.reminders);
-for(const privateText of ['وائل','أحمد','نص خاص','إجراء خاص','نتيجة خاصة','ملاحظة لا ترسل','studentName','observation','actionTaken','result','phone']){
- assert.ok(!nativePayload.includes(privateText),'native reminder payload omits private student data: '+privateText);
+for(const privateText of ['وائل','أحمد','نص خاص','إجراء خاص','نتيجة خاصة','ملاحظة لا ترسل','studentName','observation','actionTaken','result','phone','r-id','r-legacy-safe']){
+ assert.ok(!nativePayload.includes(privateText),'native reminder payload contains only daily aggregate dates and counts; no private data or record IDs: '+privateText);
 }
 assert.equal(JSON.stringify(records),original,'payload planning does not mutate existing follow-up records');
 
@@ -68,6 +69,8 @@ const boot=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/ReminderBo
 const manifest=fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
 const main=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/MainActivity.java','utf8');
 assert.ok(javaScheduler.includes('StudentFollowupReminderPlanner.MAX_LATE_DELIVERY_MS'),'native scheduler discards stale reminders after the recovery window');
+assert.ok(javaScheduler.includes('raw.optString("reviewDate", "")')&&javaScheduler.includes('raw.optInt("count", 0)'),'native scheduler accepts only one date and a grouped count, not individual record IDs');
+assert.ok(javaReceiver.includes('يوجد سجل متابعة تربوية يحتاج إلى المراجعة')&&!javaReceiver.includes('item.optInt("count"'),'one generic notification is posted per review day without displaying student data');
 assert.ok(javaScheduler.includes('old.optBoolean("delivered", false)')&&javaScheduler.includes('item.put("delivered", true)'),'native scheduler persists delivered state to prevent duplicate notifications');
 assert.ok(javaScheduler.includes('cancel(context, id)')&&javaScheduler.includes('cancelKeys'),'removed, completed or rescheduled reviews cancel the old alarm and notification');
 assert.ok(javaScheduler.includes('waitingForPermission')&&javaScheduler.includes('waitingForScheduling'),'permission and scheduling failures remain recoverable');
