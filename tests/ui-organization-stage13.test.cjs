@@ -65,8 +65,8 @@ const studentEditorScriptStart = html.indexOf('function resetStudentEditor(){');
 const studentEditorScriptEnd = html.indexOf("$('#sectionForm').onsubmit", studentEditorScriptStart);
 assert.ok(studentEditorScriptStart >= 0 && studentEditorScriptEnd > studentEditorScriptStart, 'student editor logic is available');
 const studentEditorScript = html.slice(studentEditorScriptStart, studentEditorScriptEnd);
-assert.match(studentEditorScript, /if\\(editor\\)editor\\.open=false/, 'saving or cancelling closes the student editor');
-assert.match(studentEditorScript, /if\\(editor\\)editor\\.open=true/, 'editing an existing student opens the form before scrolling');
+assert.ok(studentEditorScript.includes('if(editor)editor.open=false'), 'saving or cancelling closes the student editor');
+assert.ok(studentEditorScript.includes('if(editor)editor.open=true'), 'editing an existing student opens the form before scrolling');
 
 // Less-frequent summaries start collapsed; core daily work and speech access remain visible.
 const smartDetailsStart = html.indexOf('<details class="panel attendance-log home-advanced-panel">');
