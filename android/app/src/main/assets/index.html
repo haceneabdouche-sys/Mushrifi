@@ -989,7 +989,6 @@ function auditEntryValue(value,missing){
 }
 let auditBaselineJson=JSON.stringify(auditComparableDatabase(db));
 let auditNextRevertsId='';
-let licenseReadOnly=false;
 let preserveUndoOnNextSave=false;
 const save=()=>{
  if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}
