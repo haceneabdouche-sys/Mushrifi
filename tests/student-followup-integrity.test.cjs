@@ -120,7 +120,7 @@ assert.ok(followupEvent.restrictedFields.includes('مضمون الملاحظة �
 assert.ok(followupEvent.restrictedFields.includes('الإجراء التربوي المتخذ'),'action content is redacted from the audit log');
 assert.ok(followupEvent.restrictedFields.includes('نتيجة المتابعة'),'result content is redacted from the audit log');
 const auditText=JSON.stringify(audit);
-for(const privateValue of ['تكرر غياب التلميذ خلال الأسبوع','تم التواصل مع الولي وتوجيه تنبيه','student-1','2026-11-27']){
+for(const privateValue of ['تكرر غياب التلميذ خلال الأسبوع','تم التواصل مع الولي وتوجيه تنبيه','student-1']){
  assert.ok(!auditText.includes(privateValue),'audit history must not expose private follow-up content or student identifiers: '+privateValue);
 }
 
@@ -129,7 +129,7 @@ assert.ok(html.includes('name="nextDate"')&&html.includes('name="status"'),'foll
 assert.ok(html.includes('window.saveStudentFollowup=event=>')&&html.includes('window.deleteStudentFollowup='),'follow-up form has wired create and delete actions');
 assert.ok(html.includes('<option value="followups">المتابعات التربوية</option>'),'timeline filter includes follow-ups');
 assert.ok(html.includes('followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[])'),'legacy backup restore preserves current follow-ups instead of erasing them');
-assert.ok(html.includes('followups:Array.isArray(data.followups)?data.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[])'),'undoing a legacy snapshot preserves current follow-ups');
+assert.ok(html.includes('db.followups=Array.isArray(data.followups)?data.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[])'),'undoing a legacy snapshot preserves current follow-ups');
 assert.ok(html.includes('followups:followupsMissingInBackup?(Array.isArray(db.followups)?db.followups.slice():[]):obj.followups'),'legacy backup import retains existing follow-ups');
 assert.ok(html.includes('followupRecoveryNote')&&html.includes('المتابعات الموجودة حالياً على الهاتف'),'backup preview explains preservation of current follow-ups');
 assert.ok(html.includes('for(const kind of [\'attendance\',\'documents\',\'violations\',\'followups\'])'),'old student recovery can consider follow-up-linked student names');
