@@ -56,7 +56,7 @@ assert.equal(snapshot.previous.lateness,1,'previous week lateness comparison use
 assert.equal(snapshot.previous.violations,1,'previous week violation comparison uses the immediately preceding seven days');
 
 const followupIds=snapshot.followups.map(item=>item.student.id);
-assert.deepEqual(followupIds,['s1','s3'],'only students with three distinct days of unjustified absence or lateness are flagged');
+assert.equal(followupIds.join(','),'s1,s3','only students with three distinct days of unjustified absence or lateness are flagged');
 assert.equal(snapshot.followups.find(item=>item.student.id==='s1').absenceDays,3,'multiple records on the same day count as one day for repeated absence');
 assert.equal(snapshot.followups.find(item=>item.student.id==='s3').latenessDays,3,'justified lateness does not count toward repeated lateness');
 assert.ok(!followupIds.includes('s2'),'two separate days do not trigger a repeated-absence indicator');
