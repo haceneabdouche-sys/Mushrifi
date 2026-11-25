@@ -1459,7 +1459,8 @@ window.undoLastDelete=()=>{
  if(!confirm(summary))return;
  const oldDb=db;
  if(!clearStoredRecoverySnapshot()){alert('تعذر إغلاق نقطة التراجع بأمان. لم تتغير البيانات.');return;}
- db={...data,agenda:Array.isArray(data.agenda)?data.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),followups:Array.isArray(data.followups)?data.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]),auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]};
+ db={...data,agenda:Array.isArray(data.agenda)?data.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]};
+ db.followups=Array.isArray(data.followups)?data.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]);
  if(!save()){
   db=oldDb;try{writeStoredRecoverySnapshot(raw);}catch(_){}render();refreshUndoPanel();
   alert('تعذر حفظ الاسترجاع؛ بقيت البيانات السابقة كما هي، وأُعيدت نقطة التراجع للمحاولة لاحقاً.');return;
