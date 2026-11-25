@@ -1864,7 +1864,6 @@ function renderAgendaConflicts(result,range){
  const ignored=Number(result.ignoredWithoutTime||0);
  if(ignored)alternatives.insertAdjacentHTML('beforeend','<p class="agenda-alternative-empty">تنبيه: توجد '+ignored.toLocaleString('ar-DZ')+' مهام أو مواعيد بلا وقت بداية؛ لم تدخل في حساب الفترات الخالية.</p>');
 }
-}
 function agendaFocusConflict(date,firstId,secondId){
  if(!agendaValidDate(date))return;
  agendaSelectedDate=date;agendaCurrentView='day';agendaCurrentTypeFilter='all';
