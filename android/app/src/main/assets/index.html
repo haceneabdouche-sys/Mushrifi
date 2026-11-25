@@ -1569,6 +1569,7 @@ function buildAgendaReminderPlan(items,nowValue){
   if(rule.frequency!=='none'&&!occurrences.length&&rule.until<todayDate){expired++;return;}
   if(rule.frequency==='none'&&item.date<todayDate){expired++;return;}
   occurrences.forEach(occurrence=>{
+   if(occurrence.status==='done'||occurrence.status==='cancelled'){completed++;return;}
    const lead=Number(item.reminderLeadMinutes??1440);
    if(![0,60,1440].includes(lead)){invalid++;return;}
    const rawTime=String(item.startTime||''),time=rawTime||'08:00';
@@ -1731,7 +1732,7 @@ function agendaHandleSubmit(e){
  const previous=item?{...item}:null,reminderLeadMinutes=Number(d.get('reminderLeadMinutes')||1440);
  const repeatFrequency=String(d.get('repeatFrequency')||'none'),repeatInterval=Number(d.get('repeatInterval')||1),repeatUntil=String(d.get('repeatUntil')||''),repeatRule=agendaRepeatRule({date,repeatFrequency,repeatInterval,repeatUntil});
  if(!repeatRule.valid){alert('إعدادات التكرار غير صحيحة. اختر تكراراً وفترة من 1 إلى 12 وحدد تاريخ انتهاء صحيحاً بعد تاريخ البداية، وفي حدود خمس سنوات.');return;}
- const sameRepeat=!!item&&String(item.repeatFrequency||'none')===repeatFrequency&&Number(item.repeatInterval||1)===(repeatFrequency==='none'?1:repeatInterval)&&String(item.repeatUntil||'')===(repeatFrequency==='none'?'':repeatUntil)&&String(item.date||'')===date;
+ const sameRepeat=!!item&&String(item.repeatFrequency||'none')===repeatFrequency&&Number(item.repeatInterval||1)===(repeatFrequency==='none'?1:repeatInterval)&&String(item.date||'')===date;
  if(![0,60,1440].includes(reminderLeadMinutes)){alert('اختر مدة تنبيه صحيحة.');return;}
  const values={title,type,date,startTime,endTime,location:String(d.get('location')||'').trim().slice(0,100),studentId:String(d.get('studentId')||''),priority:['normal','high','urgent'].includes(String(d.get('priority')))?String(d.get('priority')):'normal',notes:String(d.get('notes')||'').trim().slice(0,1200),reminderEnabled:$('#agendaReminderEnabled').checked===true,reminderLeadMinutes,repeatFrequency,repeatInterval:repeatFrequency==='none'?1:repeatInterval,repeatUntil:repeatFrequency==='none'?'':repeatUntil,repeatCompletedDates:sameRepeat&&Array.isArray(item.repeatCompletedDates)?item.repeatCompletedDates.slice():[],repeatSkippedDates:sameRepeat&&Array.isArray(item.repeatSkippedDates)?item.repeatSkippedDates.slice():[],updatedAt:new Date().toISOString()};
  if(item)Object.assign(item,values);else db.agenda.push({id:crypto.randomUUID(),...values,status:'planned',createdAt:new Date().toISOString()});
