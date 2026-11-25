@@ -1337,7 +1337,7 @@ function renderStudentAnalytics(){
  const violRows=snap.topViolators.length?snap.topViolators.map((x,i)=>'<tr><td>'+(i+1)+'</td><td><button type="button" class="student-name analytics-student-open" data-student-id="'+esc(x.id)+'">'+esc(x.label)+'</button></td><td><b>'+analyticsFormatCount(x.count)+'</b></td><td>'+analyticsFormatCount(x.distinctDays)+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">لا توجد مخالفات مرتبطة بملفات تلاميذ معروفة ضمن الفترة.</td></tr>';
  output.innerHTML='<div class="analytics-summary-grid">'+cards.map(([label,value])=>'<div class="analytics-summary-card"><small>'+label+'</small><strong>'+esc(value)+'</strong></div>').join('')+'</div>'+
  '<div class="analytics-justification">'+justified+' · '+unjustified+' · '+pending+' · '+unknownJustification+'</div>'+
- '<div class="analytics-two-charts">'+analyticsChartMarkup('الاتجاه الأسبوعي — أسابيع الفترة المحددة',snap.weekly)+analyticsChartMarkup('الاتجاه الشهري — أشهر الفترة المحددة',snap.monthly)+'</div>'+
+ '<div class="analytics-two-charts">'+analyticsChartMarkup('الاتجاه الأسبوعي — آخر 12 أسبوعاً ضمن الفترة المحددة',snap.weekly)+analyticsChartMarkup('الاتجاه الشهري — آخر 12 شهراً ضمن الفترة المحددة',snap.monthly)+'</div>'+
  '<section class="analytics-ranking"><div class="panel-title-row"><h3>مقارنة الأقسام</h3><span class="pill">الترتيب حسب عدد الغيابات</span></div><p class="muted">الأعداد سجلات وليست نسباً مئوية. ساعات الغياب ودقائق التأخر تُعرض كلٌّ بوحدتها، ويُحسب عدد التلاميذ من القائمة الحالية لكل قسم.</p><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>القسم</th><th>التلاميذ</th><th>غيابات</th><th>ساعات غياب</th><th>تأخرات</th><th>دقائق تأخر</th><th>مخالفات</th></tr></thead><tbody>'+sectionRows+'</tbody></table></div></section>'+
  '<section class="analytics-ranking"><div class="panel-title-row"><h3>ترتيب الأقسام حسب التأخر</h3><span class="pill">الأعلى أولاً</span></div><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>القسم</th><th>سجلات التأخر</th><th>دقائق التأخر</th><th>غيابات</th><th>مخالفات</th></tr></thead><tbody>'+lateSectionRows+'</tbody></table></div></section>'+
  '<section class="analytics-ranking"><div class="panel-title-row"><h3>التلاميذ الأكثر تكراراً للمخالفات</h3><span class="pill">أعلى 10</span></div><p class="muted">الترتيب حسب عدد سجلات المخالفات، مع عدد الأيام المختلفة. اضغط اسم التلميذ لفتح ملفه. لا تُنسب السجلات مجهولة الهوية إلى تلميذ بالتخمين.</p><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>التلميذ</th><th>عدد المخالفات</th><th>أيام مختلفة</th></tr></thead><tbody>'+violRows+'</tbody></table></div></section>'+
@@ -2092,7 +2092,7 @@ function buildStudentAnalyticsSnapshot(input={}){
  const groups=new Map();
  students.forEach(st=>{
   if(!st||st.id===undefined||st.id===null)return;
-  const key=String(groupKey(st)||'');if(!key)return;
+  const key=String(groupKey(st)||'');if(!key||!String(st.class??'').trim())return;
   if(!groups.has(key))groups.set(key,{key,label:String(groupLabel(st)||'قسم غير محدد'),roster:0,absences:0,justifiedAbsences:0,unjustifiedAbsences:0,pendingAbsences:0,absenceHours:0,unknownAbsenceHours:0,lateness:0,latenessMinutes:0,unknownLatenessMinutes:0,violations:0});
   groups.get(key).roster++;
  });
@@ -2125,7 +2125,7 @@ function buildStudentAnalyticsSnapshot(input={}){
    else if(status.includes('مبرر')&&!status.includes('غير')){summary.justifiedAbsences++;if(group)group.justifiedAbsences++;}
    else if(status.includes('غير')){summary.unjustifiedAbsences++;if(group)group.unjustifiedAbsences++;}
    else summary.unknownAbsenceJustification++;
-   const hours=Number(parseHoursValue(r.hours));
+   const parsedHours=parseHoursValue(r.hours),hours=parsedHours===''||parsedHours===null||parsedHours===undefined?NaN:Number(parsedHours);
    if(Number.isFinite(hours)&&hours>=0){summary.absenceHours+=hours;if(group)group.absenceHours+=hours;}
    else{summary.unknownAbsenceHours++;if(group)group.unknownAbsenceHours++;}
   }else if(kind==='lateness'){
@@ -2135,7 +2135,7 @@ function buildStudentAnalyticsSnapshot(input={}){
     const raw=String(r.minutes).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٫،]/g,'.').trim();
     minutes=Number(raw);
    }else{
-    const hours=Number(parseHoursValue(r.hours));if(Number.isFinite(hours)&&hours>=0)minutes=hours*60;
+    const parsedHours=parseHoursValue(r.hours),hours=parsedHours===''||parsedHours===null||parsedHours===undefined?NaN:Number(parsedHours);if(Number.isFinite(hours)&&hours>=0)minutes=hours*60;
    }
    if(Number.isFinite(minutes)&&minutes>=0){summary.latenessMinutes+=minutes;if(group)group.latenessMinutes+=minutes;}
    else{summary.unknownLatenessMinutes++;if(group)group.unknownLatenessMinutes++;}
@@ -2153,19 +2153,17 @@ function buildStudentAnalyticsSnapshot(input={}){
  const sections=[...groups.values()].sort((a,b)=>b.absences-a.absences||b.lateness-a.lateness||b.violations-a.violations||a.label.localeCompare(b.label,'ar',{numeric:true}));
  const sectionsByLateness=sections.slice().sort((a,b)=>b.lateness-a.lateness||b.latenessMinutes-a.latenessMinutes||a.label.localeCompare(b.label,'ar',{numeric:true}));
  const topViolators=[...studentViolationMap.values()].map(x=>({id:x.id,label:x.label,count:x.count,distinctDays:x.days.size})).sort((a,b)=>b.count-a.count||b.distinctDays-a.distinctDays||a.label.localeCompare(b.label,'ar')).slice(0,10);
- const weekStarts=[];
- let cursor=from;
- const firstDow=new Date(Date.UTC(...from.split('-').map((v,i)=>i===1?Number(v)-1:Number(v)))).getUTCDay();
- cursor=analyticsShiftISODate(from,-firstDow);
- while(cursor<=to){const next=analyticsShiftISODate(cursor,7);weekStarts.push(cursor);cursor=next;}
- const visibleWeeks=weekStarts.slice(-12);
+ const endWeekStart=analyticsShiftISODate(to,-new Date(Date.UTC(...to.split('-').map((v,i)=>i===1?Number(v)-1:Number(v)))).getUTCDay());
+ const rangeWeekStart=analyticsShiftISODate(from,-new Date(Date.UTC(...from.split('-').map((v,i)=>i===1?Number(v)-1:Number(v)))).getUTCDay());
+ const twelveWeekStart=analyticsShiftISODate(endWeekStart,-77),firstVisibleWeek=rangeWeekStart<twelveWeekStart?twelveWeekStart:rangeWeekStart;
+ const visibleWeeks=[];for(let cursor=firstVisibleWeek;cursor<=endWeekStart;cursor=analyticsShiftISODate(cursor,7))visibleWeeks.push(cursor);
  const weekly=visibleWeeks.map(start=>{
-  const end=analyticsShiftISODate(start,6),bucket={label:start+' – '+(end>to?to:end),absences:0,lateness:0,violations:0};
-  return bucket;
+  const end=analyticsShiftISODate(start,6),visibleStart=start<from?from:start,visibleEnd=end>to?to:end;
+  return {label:visibleStart+' – '+visibleEnd,absences:0,lateness:0,violations:0};
  });
- const monthKeys=[];let monthCursor=analyticsMonthShift(from,0),lastMonth=analyticsMonthShift(to,0);
- while(monthCursor&&monthCursor<=lastMonth&&monthKeys.length<240){monthKeys.push(monthCursor);monthCursor=analyticsMonthShift(monthCursor+'-01',1);}
- const visibleMonths=monthKeys.slice(-12),monthly=visibleMonths.map(month=>({label:month,absences:0,lateness:0,violations:0}));
+ const lastMonth=analyticsMonthShift(to,0),rangeMonth=analyticsMonthShift(from,0),twelveMonthStart=analyticsMonthShift(to,-11),firstVisibleMonth=rangeMonth<twelveMonthStart?twelveMonthStart:rangeMonth;
+ const visibleMonths=[];for(let monthCursor=firstVisibleMonth;monthCursor&&monthCursor<=lastMonth;monthCursor=analyticsMonthShift(monthCursor+'-01',1))visibleMonths.push(monthCursor);
+ const monthly=visibleMonths.map(month=>({label:month,absences:0,lateness:0,violations:0}));
  const addBucket=(bucket,date,kind)=>{const prop=kind==='absence'?'absences':kind==='lateness'?'lateness':'violations';bucket[prop]++;};
  events.forEach(event=>{
   const day=event.date,kind=event.kind;
