@@ -115,6 +115,8 @@ jobs:
         run: node tests/smart-daily-dashboard.test.cjs
       - name: Run actionable daily follow-up dashboard integrity tests
         run: node tests/daily-followup-dashboard.test.cjs
+      - name: Run educational follow-up review dashboard safety tests
+        run: node tests/educational-followup-review.test.cjs
       - name: Run agenda calendar, backup and audit integrity tests
         run: node tests/agenda-calendar.test.cjs
       - name: Run recurring agenda integrity and reminder regression tests
