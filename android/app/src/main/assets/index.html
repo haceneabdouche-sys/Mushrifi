@@ -785,6 +785,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 <div class="stat"><small>تأخرات اليوم</small><strong id="dailyTodayLateness">0</strong></div>
 <div class="stat"><small>غير مبرر اليوم</small><strong id="dailyTodayUnjustified">0</strong></div>
 <div class="stat"><small>قيد التبرير</small><strong id="dailyPendingReasons">0</strong></div>
+<div class="stat"><small>مخالفات اليوم</small><strong id="dailyTodayViolations">0</strong></div>
 </div>
 <div class="daily-section-summary"><strong>ملخص الأقسام اليوم</strong><div id="dailySectionBreakdown" class="daily-section-chips"><span class="muted">لا توجد حركة مسجلة اليوم.</span></div></div>
 <div class="smart-followup-head"><h3>المهام التي تحتاج إجراءً</h3><span class="muted" id="dailyTasksSubCount">—</span></div>
@@ -1619,21 +1620,25 @@ function buildSmartDashboardSnapshot(attendance,violations,today,resolveStudent)
  return {current,previous,followups};
 }
 function smartDashboardTrend(a,b){const n=Number(a||0)-Number(b||0);return n===0?'مثل الأسبوع السابق':(n>0?'زيادة ':'انخفاض ')+Math.abs(n)+' عن الأسبوع السابق';}
-function buildDailyFollowupSnapshot(attendance,documents,agenda,today,nowValue,resolveStudent){
- const empty={today:{absences:0,lateness:0,unjustified:0,pending:0},summonsNext24h:0,unlinkedSummons:0,agendaToday:0,unlinkedPending:0,sections:[],tasks:[],totalTasks:0};
+function buildDailyFollowupSnapshot(attendance,documents,agenda,violations,today,nowValue,resolveStudent){
+ const empty={today:{absences:0,lateness:0,unjustified:0,pending:0,violations:0},summonsNext24h:0,unlinkedSummons:0,agendaToday:0,unlinkedPending:0,sections:[],tasks:[],totalTasks:0};
  if(!smartDashboardValidDate(today))return empty;
- const A=Array.isArray(attendance)?attendance:[],D=Array.isArray(documents)?documents:[],G=Array.isArray(agenda)?agenda:[],now=Number(nowValue),end=Number.isFinite(now)?now+86400000:NaN;
+ const A=Array.isArray(attendance)?attendance:[],D=Array.isArray(documents)?documents:[],G=Array.isArray(agenda)?agenda:[],V=Array.isArray(violations)?violations:[],now=Number(nowValue),end=Number.isFinite(now)?now+86400000:NaN;
  if(!Number.isFinite(now)||!Number.isFinite(end))return empty;
  const resolve=typeof resolveStudent==='function'?resolveStudent:()=>null,linked=(id,record)=>{try{const st=resolve(String(id||''),record);return st&&st.id!==undefined&&st.id!==null&&String(st.id).trim()?st:null;}catch(_){return null;}};
  const typeOf=x=>String(x?.type??'').trim().replace(/\s+/g,''),todayRows=A.filter(x=>x&&x.date===today&&(typeOf(x)==='غياب'||typeOf(x)==='تأخر'));
- const sections=new Map(),tasks=[],safeDate=v=>smartDashboardValidDate(v),safeRecordId=x=>String(x?.id??'').trim();
- let absences=0,lateness=0,unjustified=0,pending=0;
+ const sections=new Map(),tasks=[],safeDate=v=>smartDashboardValidDate(v),safeRecordId=x=>String(x?.id??'').trim(),sectionKey=st=>[st?.schoolYear||'',st?.branch||'',st?.class||''].map(v=>String(v).normalize('NFKC').trim().toLocaleLowerCase('ar')).join('¦');
+ let absences=0,lateness=0,unjustified=0,pending=0,violationsToday=0;
  todayRows.forEach(x=>{
   const type=typeOf(x),st=linked(x.student,x);if(type==='غياب')absences++;else lateness++;
   if(String(x.justified||'').trim()==='غير مبرر')unjustified++;
   const section=st?[st.schoolYear||'',st.branch||'',st.class||''].filter(Boolean).join(' — ')||'قسم غير محدد':'غير مصنف (هوية غير مؤكدة)';
-  const key=st?String(st.id):'__unknown__';if(!sections.has(key))sections.set(key,{label:section,absences:0,lateness:0,classified:!!st});
-  const row=sections.get(key);if(type==='غياب')row.absences++;else row.lateness++;
+  const key=st?sectionKey(st):'__unknown__';if(!sections.has(key))sections.set(key,{label:section,absences:0,lateness:0,students:new Set(),classified:!!st});
+  const row=sections.get(key);if(st)row.students.add(String(st.id));if(type==='غياب')row.absences++;else row.lateness++;
+ });
+ violationsToday=V.filter(x=>x&&x.date===today).length;
+ const sectionSummary=[...sections.values()].map(x=>({label:x.label,absences:x.absences,lateness:x.lateness,students:x.students.size,classified:x.classified}));
+ // The loop above closes here after every attendance record has been grouped once.
  });
  const pendingAll=A.filter(x=>x&&safeDate(x.date)&&(typeOf(x)==='غياب'||typeOf(x)==='تأخر')&&String(x.justified||'').trim()==='قيد التبرير'),pendingRows=pendingAll.filter(x=>linked(x.student,x));
  pending=pendingAll.length;const unlinkedPending=pendingAll.length-pendingRows.length;
@@ -1651,9 +1656,10 @@ function buildDailyFollowupSnapshot(attendance,documents,agenda,today,nowValue,r
   const st=linked(x.student,x);tasks.push({kind:'today',priority:'high',title:'غياب أو تأخر غير مبرر اليوم',detail:typeOf(x)+' · '+String(x.period||'')+' · '+String(x.class||x.studentClass||st?.class||'قسم غير محدد')+(st?'':' · سجل غير مربوط ببطاقة مؤكدة'),studentId:st?String(st.id):'',recordId:safeRecordId(x),page:'attendance'});
  });
  const todayAgenda=G.filter(x=>x&&x.date===today&&!['done','cancelled'].includes(String(x.status||'').toLowerCase())&&String(x.title||'').trim());
- todayAgenda.slice().sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||''))).forEach(x=>tasks.push({kind:'agenda',priority:x.priority==='urgent'?'urgent':x.priority==='high'?'high':'normal',title:String(x.title).slice(0,120),detail:(String(x.startTime||'').trim()||'الوقت غير محدد')+(x.location?' · '+String(x.location).slice(0,100):''),studentId:String(x.studentId||''),agendaDate:today,page:'agenda'}));
+ todayAgenda.slice().sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||''))).forEach(x=>tasks.push({kind:'agenda',priority:x.priority==='urgent'?'urgent':x.priority==='high'?'high':'normal',title:String(x.title).slice(0,120),detail:(String(x.startTime||'').trim()||'الوقت غير محدد')+(x.location?' · '+String(x.location).slice(0,100):''),studentId:linked(x.studentId,x)?String(linked(x.studentId,x).id):'',agendaDate:today,page:'agenda'}));
  const priorityRank={urgent:0,high:1,normal:2},kindRank={pending:0,unlinked:1,summons:2,today:3,agenda:4};tasks.sort((a,b)=>priorityRank[a.priority]-priorityRank[b.priority]||kindRank[a.kind]-kindRank[b.kind]);
- return {today:{absences,lateness,unjustified,pending},summonsNext24h:summons.length,unlinkedSummons:summons.filter(x=>!linked(x.student,x)).length,unlinkedPending,agendaToday:todayAgenda.length,sections:[...sections.values()].sort((a,b)=>b.absences+b.lateness-(a.absences+a.lateness)||a.label.localeCompare(b.label,'ar')),tasks,totalTasks:tasks.length};
+ const orderedSections=sectionSummary.sort((a,b)=>b.absences+b.lateness-(a.absences+a.lateness)||a.label.localeCompare(b.label,'ar'));
+ return {today:{absences,lateness,unjustified,pending,violations:violationsToday},summonsNext24h:summons.length,unlinkedSummons:summons.filter(x=>!linked(x.student,x)).length,agendaToday:todayAgenda.length,unlinkedPending,sections:orderedSections,tasks,totalTasks:tasks.length};
 }
 function openDailyDashboardTask(button){
  const studentId=String(button?.dataset?.dailyStudentId||''),recordId=String(button?.dataset?.dailyRecordId||''),documentId=String(button?.dataset?.dailyDocumentId||''),page=String(button?.dataset?.dailyPage||'');
@@ -1664,13 +1670,14 @@ function openDailyDashboardTask(button){
  if(page)go(page);
 }
 function renderDailyFollowupDashboard(today,nowValue){
- const s=buildDailyFollowupSnapshot(db.attendance,db.documents,db.agenda,today,nowValue,id=>student(id));
+ const s=buildDailyFollowupSnapshot(db.attendance,db.documents,db.agenda,db.violations,today,nowValue,id=>student(id));
  const put=(id,value)=>{const el=$('#'+id);if(el)el.textContent=Number(value||0).toLocaleString('ar-DZ');};
- put('dailyTodayAbsences',s.today.absences);put('dailyTodayLateness',s.today.lateness);put('dailyTodayUnjustified',s.today.unjustified);put('dailyPendingReasons',s.today.pending);
+ put('dailyTodayAbsences',s.today.absences);put('dailyTodayLateness',s.today.lateness);put('dailyTodayUnjustified',s.today.unjustified);put('dailyPendingReasons',s.today.pending);put('dailyTodayViolations',s.today.violations);
  $('#dailyTasksCount').textContent=s.totalTasks.toLocaleString('ar-DZ')+' متابعة';$('#dailyTasksSubCount').textContent='استدعاءات قريبة: '+s.summonsNext24h.toLocaleString('ar-DZ')+' · مواعيد اليوم: '+s.agendaToday.toLocaleString('ar-DZ')+(s.unlinkedPending||s.unlinkedSummons?' · سجلات تحتاج تحقق هوية: '+(s.unlinkedPending+s.unlinkedSummons).toLocaleString('ar-DZ'):'');
- const chips=$('#dailySectionBreakdown');chips.innerHTML=s.sections.length?s.sections.slice(0,8).map(x=>'<span class="daily-section-chip">'+esc(x.label)+'<b>غياب '+x.absences+' · تأخر '+x.lateness+'</b></span>').join(''):'<span class="muted">لا توجد حركة مسجلة اليوم.</span>';
+ const chips=$('#dailySectionBreakdown');chips.innerHTML=s.sections.length?s.sections.slice(0,8).map(x=>'<span class="daily-section-chip">'+esc(x.label)+'<b>غياب '+x.absences+' · تأخر '+x.lateness+' · '+x.students+' تلميذ</b></span>').join('')+'<span class="muted">'+(s.sections.length>8?'عرض 8 من '+s.sections.length+' أقسام. ':'')+'عدد الأقسام ذات الحركة: '+s.sections.length+'</span>':'<span class="muted">لا توجد حركة مسجلة اليوم.</span>';
  const list=$('#dailyTasksList');list.innerHTML=s.tasks.length?s.tasks.slice(0,10).map(x=>'<div class="daily-task-item" data-task-priority="'+esc(x.priority)+'"><div class="task-copy"><span class="daily-task-kind">'+esc(x.kind==='pending'?'قيد التبرير':x.kind==='unlinked'?'تحقق من الهوية':x.kind==='summons'?'استدعاء قريب':x.kind==='today'?'متابعة اليوم':'مهمة أجندة')+'</span><strong>'+esc(x.title)+'</strong><small>'+esc(x.studentId?name(x.studentId):'')+(x.studentId?' · ':'')+esc(x.detail)+'</small></div><div class="task-actions">'+(x.studentId?'<button type="button" class="btn small" data-daily-student-id="'+esc(x.studentId)+'">فتح ملفه</button>':'')+'<button type="button" class="btn small primary" data-daily-page="'+esc(x.page)+'" data-daily-record-id="'+esc(x.recordId||'')+'" data-daily-document-id="'+esc(x.documentId||'')+'" data-daily-agenda-date="'+esc(x.agendaDate||today)+'">'+esc(x.page==='documents'?'فتح الاستدعاء':x.page==='attendance'?'مراجعة السجل':x.page==='agenda'?'فتح الأجندة':'عرض')+'</button></div></div>').join(''):'<p class="empty">لا توجد مهام تحتاج إجراءً اليوم. أحسنت، المتابعة مكتملة.</p>';
  list.querySelectorAll('[data-daily-page],[data-daily-student-id]').forEach(b=>b.addEventListener('click',()=>openDailyDashboardTask(b)));
+ if(s.totalTasks>10)list.insertAdjacentHTML('beforeend','<p class="muted daily-task-overflow">يُعرض أعلى 10 إجراءات حسب الأولوية من أصل '+s.totalTasks.toLocaleString('ar-DZ')+'؛ بقية السجلات ما زالت محفوظة في صفحاتها الأصلية.</p>');
 }
 function renderSmartDashboard(today){
  const s=buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
