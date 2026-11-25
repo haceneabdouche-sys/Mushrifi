@@ -103,7 +103,13 @@ public final class AgendaReminderScheduler {
         int scheduled = 0;
         int failedToSchedule = 0;
         for (String id : scheduleKeys) {
-            if (schedule(context, nextStored.get(id))) {
+            JSONObject item = nextStored.get(id);
+            if (item.optLong("reminderAt", 0L) <= now) {
+                // The reminder time has passed but its appointment is still upcoming.
+                // Keep it stored and let deliverDue post it now or wait for notification permission.
+                continue;
+            }
+            if (schedule(context, item)) {
                 scheduled++;
             } else {
                 failedToSchedule++;
