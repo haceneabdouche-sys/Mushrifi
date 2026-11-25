@@ -13,7 +13,7 @@ assert.ok(html.includes('function renderNotificationPermissionStatus(granted)'),
 assert.ok(html.includes("AndroidBridge.hasNotificationPermission()"), 'permission state is read from the native bridge');
 assert.ok(html.includes('window.onMushrifiNotificationPermissionChanged=granted=>renderNotificationPermissionStatus(!!granted)'), 'native permission result refreshes the status');
 assert.ok(html.includes("AndroidBridge.requestNotificationPermission()"), 'settings button calls the native permission request');
-assert.ok(html.includes("refreshNotificationPermissionStatus();if(window.AndroidBridge"), 'permission state is refreshed when the dashboard loads');
+assert.ok(html.includes("refreshNotificationPermissionStatus();refreshExactAlarmPermissionStatus();if(window.AndroidBridge"), 'notification and exact-alarm permission states are refreshed when the dashboard loads');
 
 assert.ok(java.includes('@JavascriptInterface public boolean hasNotificationPermission()'), 'native bridge reports notification permission');
 assert.ok(java.includes('Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED'), 'pre-Android 13 devices do not require the runtime permission');
