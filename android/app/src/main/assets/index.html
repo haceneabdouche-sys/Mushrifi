@@ -1788,21 +1788,21 @@ function syncAgendaRemindersWithAndroid(force){
 }
 function buildStudentFollowupReminderPayload(followups,students){
  const F=Array.isArray(followups)?followups:[],S=Array.isArray(students)?students:[];
- const reminders=[];let unlinked=0,invalid=0;
+ const groups=new Map();let unlinked=0,invalid=0;
  F.forEach(record=>{
   if(!record||typeof record!=='object'||String(record.status||'').trim()!=='قيد المتابعة')return;
-  const id=String(record.id??'').trim(),nextDate=String(record.nextDate??'').trim();
-  if(!id||!nextDate||typeof profileTimelineValidDate!=='function'||!profileTimelineValidDate(nextDate)){invalid++;return;}
+  const nextDate=String(record.nextDate??'').trim();
+  if(!nextDate||typeof profileTimelineValidDate!=='function'||!profileTimelineValidDate(nextDate)){invalid++;return;}
   const matches=S.filter(target=>{
    try{return typeof profileRecordBelongsToStudent==='function'&&profileRecordBelongsToStudent(record,target,S);}
    catch(_){return false;}
   });
   if(matches.length!==1){unlinked++;return;}
-  // Deliberately send only opaque record ID, state and date to Android.
-  // Student name, section, observation, action and result never enter native reminder storage.
-  reminders.push({id,status:'قيد المتابعة',nextDate});
+  // Group by local review date. No student, record ID or private text is sent to Android.
+  groups.set(nextDate,(groups.get(nextDate)||0)+1);
  });
- reminders.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)||a.id.localeCompare(b.id));
+ const reminders=[...groups.entries()].map(([reviewDate,count])=>({reviewDate,count}))
+  .sort((a,b)=>a.reviewDate.localeCompare(b.reviewDate));
  return {reminders,unlinked,invalid,overflow:reminders.length>2000};
 }
 let lastStudentFollowupReminderPayload='';
