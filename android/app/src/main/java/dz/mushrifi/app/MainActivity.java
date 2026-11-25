@@ -56,6 +56,9 @@ public class MainActivity extends Activity {
     private String pendingBackup;
     private boolean speechPending;
     private WebView web;
+    private boolean webPageReady;
+    private String pendingAgendaNotificationId;
+    private String pendingAgendaNotificationDate;
     private final ExecutorService licenseExecutor = Executors.newSingleThreadExecutor();
 
     @Override public void onCreate(Bundle state) {
@@ -72,7 +75,14 @@ public class MainActivity extends Activity {
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         web.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
-        web.setWebViewClient(new WebViewClient());
+        captureAgendaNotificationIntent(getIntent());
+        web.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                webPageReady = true;
+                dispatchPendingAgendaNotification();
+            }
+        });
         web.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, JsPromptResult result) {
                 EditText input = new EditText(MainActivity.this);
@@ -255,6 +265,28 @@ public class MainActivity extends Activity {
             getSharedPreferences("summons_reminders", MODE_PRIVATE).edit().putString(id, studentName + "|" + reminderMillis + "|" + appointmentMillis).apply();
             scheduleReminder(MainActivity.this, id, studentName, reminderMillis);
         }
+        @JavascriptInterface public String syncAgendaReminders(String payload) {
+            try {
+                return AgendaReminderScheduler.sync(MainActivity.this, payload).toString();
+            } catch (Exception error) {
+                android.util.Log.e("MushrifiAgenda", "Agenda reminder sync failed", error);
+                org.json.JSONObject result = new org.json.JSONObject();
+                try { result.put("ok", false).put("error", error.getMessage() == null ? "تعذر حفظ جدول التنبيهات" : error.getMessage()); }
+                catch (org.json.JSONException ignored) {}
+                return result.toString();
+            }
+        }
+        @JavascriptInterface public void testAgendaNotification() {
+            runOnUiThread(() -> {
+                if (!hasNotificationPermission()) {
+                    if (Build.VERSION.SDK_INT >= 33) requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, NOTIFICATION_PERMISSION);
+                    Toast.makeText(MainActivity.this, "اسمح بإشعارات مُشرِفي ثم اضغط اختبار الأجندة مرة أخرى.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                boolean posted = AgendaReminderReceiver.postTestNotification(MainActivity.this);
+                Toast.makeText(MainActivity.this, posted ? "أُرسل إشعار اختبار الأجندة. تحقق من شريط الإشعارات." : "تعذر إرسال اختبار الأجندة؛ تحقق من إعدادات قناة الإشعارات.", Toast.LENGTH_LONG).show();
+            });
+        }
         @JavascriptInterface public boolean hasNotificationPermission() {
             return Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         }
@@ -369,6 +401,12 @@ public class MainActivity extends Activity {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "إشعارات مُشرِفي", NotificationManager.IMPORTANCE_HIGH);
             channel.setDescription("تذكيرات استدعاء الأولياء ومراحل متابعة الغياب");
             getSystemService(NotificationManager.class).createNotificationChannel(channel);
+            NotificationChannel agendaChannel = new NotificationChannel(
+                AgendaReminderScheduler.CHANNEL_ID, "تنبيهات أجندة المشرف", NotificationManager.IMPORTANCE_HIGH
+            );
+            agendaChannel.setDescription("تنبيهات الاجتماعات والمهام ومواعيد المتابعة في أجندة مُشرِفي");
+            agendaChannel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PRIVATE);
+            getSystemService(NotificationManager.class).createNotificationChannel(agendaChannel);
         }
     }
 
@@ -422,7 +460,9 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         rescheduleStoredReminders();
+        AgendaReminderScheduler.rescheduleAll(this);
         notifyExactAlarmPermissionState();
+        notifyNotificationPermissionState(Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED);
         checkLicenseWhenDue();
     }
 
@@ -481,6 +521,10 @@ public class MainActivity extends Activity {
         if (requestCode == NOTIFICATION_PERMISSION) {
             boolean granted = Build.VERSION.SDK_INT < 33 || checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
             notifyNotificationPermissionState(granted);
+            if (granted) {
+                AgendaReminderScheduler.rescheduleAll(this);
+                AgendaReminderScheduler.deliverDue(this, null);
+            }
             Toast.makeText(this, granted ? "تم تفعيل صلاحية الإشعارات." : "لم تُفعّل صلاحية الإشعارات؛ لن تصل التذكيرات حتى السماح بها.", Toast.LENGTH_LONG).show();
         }
     }
@@ -554,6 +598,34 @@ public class MainActivity extends Activity {
             }
             pendingBackup = null;
         }
+    }
+
+    private void captureAgendaNotificationIntent(Intent intent) {
+        if (intent == null) return;
+        String id = intent.getStringExtra("agenda_notification_id");
+        String date = intent.getStringExtra("agenda_notification_date");
+        if (id != null && !id.trim().isEmpty()) {
+            pendingAgendaNotificationId = id;
+            pendingAgendaNotificationDate = date == null ? "" : date;
+        }
+    }
+
+    private void dispatchPendingAgendaNotification() {
+        if (!webPageReady || web == null || pendingAgendaNotificationId == null) return;
+        String id = pendingAgendaNotificationId;
+        String date = pendingAgendaNotificationDate == null ? "" : pendingAgendaNotificationDate;
+        pendingAgendaNotificationId = null;
+        pendingAgendaNotificationDate = null;
+        String script = "window.openAgendaFromNotification && window.openAgendaFromNotification(" +
+            org.json.JSONObject.quote(id) + "," + org.json.JSONObject.quote(date) + ");";
+        web.evaluateJavascript(script, null);
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        captureAgendaNotificationIntent(intent);
+        dispatchPendingAgendaNotification();
     }
 
     @Override protected void onStop() { super.onStop(); }
