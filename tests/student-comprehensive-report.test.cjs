@@ -80,7 +80,7 @@ assert.ok(!markup.includes('0550000000'),'PDF omits guardian phone number to lim
 assert.ok(!markup.includes('<button'),'printable PDF contains no editing controls');
 
 const profileStart=html.indexOf('window.studentHistory=id=>{');
-const profileEnd=html.indexOf('\n};\n\nwindow.closeMushrifiPrintPreview',profileStart);
+const profileEnd=html.indexOf('\n};\nwindow.closeMushrifiPrintPreview',profileStart);
 assert.ok(profileStart>=0&&profileEnd>profileStart,'student profile renderer exists');
 const profile=html.slice(profileStart,profileEnd);
 assert.ok(profile.includes("dataset.reportKind='student'")&&profile.includes('dataset.studentReportId=sid'),'individual profile marks its report for the dedicated export flow');
