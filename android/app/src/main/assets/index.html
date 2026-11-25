@@ -2050,18 +2050,6 @@ function profileRecordBelongsToStudent(record,target,students){
  });
  return sameNameStudents.length===1;
 }
-function profileAbsenceHours(record){
- let hours=parseHours(record.hours);
- if(hours===''||Number.isNaN(hours))hours=parseHours(record.period);
- return typeof hours==='number'&&Number.isFinite(hours)&&hours>=0?hours:0;
-}
-function profileLatenessMinutes(record){
- const stored=Number(record.minutes);
- if(record.minutes!==null&&record.minutes!==undefined&&record.minutes!==''&&Number.isFinite(stored)&&stored>=0)return stored;
- let hours=parseHours(record.hours);
- if(hours===''||Number.isNaN(hours))hours=parseHours(record.period);
- return typeof hours==='number'&&Number.isFinite(hours)&&hours>=0?Math.round(hours*60):0;
-}
 
 function profileJustificationCategory(record){
  const value=String(record?.justified??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/\s+/g,'').trim();
