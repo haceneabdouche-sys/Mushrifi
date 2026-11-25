@@ -3453,18 +3453,19 @@ $('#exportData').onclick=()=>{if(!licenseReadOnly&&!save()){alert('تعذر تج
 let pendingBackupData=null;
 let pendingBackupInfo=null;
 function showBackupPreview(data,bytes){
- const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[],agenda=Array.isArray(data.agenda)?data.agenda:[];
+ const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[],agenda=Array.isArray(data.agenda)?data.agenda:[],followups=Array.isArray(data.followups)?data.followups:[];
  const classes={},attributes={};
  students.forEach(st=>{const c=String(st.class||st.section||'غير محدد');classes[c]=(classes[c]||0)+1;const a=String(st.attribute||st.status||'غير محدد');attributes[a]=(attributes[a]||0)+1;});
  const abs=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='غياب').length;
  const late=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='تأخر').length;
  const summons=documents.filter(x=>String(x.type||'').includes('استدعاء')).length;
- const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length,agenda:Array.isArray(db.agenda)?db.agenda.length:0};
- const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length,agenda:Array.isArray(data.agenda)?data.agenda.length:(Array.isArray(db.agenda)?db.agenda.length:0)};
+ const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length,agenda:Array.isArray(db.agenda)?db.agenda.length:0,followups:Array.isArray(db.followups)?db.followups.length:0};
+ const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length,agenda:Array.isArray(data.agenda)?data.agenda.length:(Array.isArray(db.agenda)?db.agenda.length:0),followups:Array.isArray(data.followups)?data.followups.length:(Array.isArray(db.followups)?db.followups.length:0)};
  const reducedKeys=Object.keys(currentCounts).filter(k=>incomingCounts[k]<currentCounts[k]);
- const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations} · الأجندة: ${currentCounts.agenda}`;
+ const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations} · الأجندة: ${currentCounts.agenda} · المتابعات التربوية: ${currentCounts.followups}`;
  const reducedWarning=reducedKeys.length?'<p class="notice"><b>تنبيه مهم:</b> تحتوي النسخة المختارة على سجلات أقل من الموجودة حالياً في الهاتف في بعض الأقسام. راجع الأعداد أدناه وتأكد من أنك اخترت النسخة الصحيحة قبل الاستعادة.</p>':'';
  const agendaRecoveryNote=pendingBackupInfo&&pendingBackupInfo.agendaMissingInBackup?'<p class="notice"><b>الأجندة:</b> النسخة المختارة قديمة ولا تحتوي على قسم الأجندة؛ احتفظ التطبيق بمواعيد الأجندة الموجودة حالياً على هذا الهاتف بدلاً من حذفها.</p>':'';
+ const followupRecoveryNote=pendingBackupInfo&&pendingBackupInfo.followupsMissingInBackup?'<p class="notice"><b>سجل المتابعة التربوية:</b> النسخة المختارة لا تحتوي على هذا السجل؛ سيحتفظ التطبيق بالمتابعات الموجودة حالياً على الهاتف بدلاً من حذفها.</p>':'';
  const recoveryNote=pendingBackupInfo&&pendingBackupInfo.recoveredCount?'<p class="notice"><b>استعادة الأسماء:</b> لم تكن قائمة التلاميذ موجودة في الملف؛ أُعيد تكوين '+pendingBackupInfo.recoveredCount+' ملفاً من الأسماء المحفوظة داخل سجلات المتابعة. '+(pendingBackupInfo.missingClassCount?'قسم '+pendingBackupInfo.missingClassCount+' تلميذاً غير محفوظ في السجلات، لذلك سيبقى حقل القسم فارغاً. ':'')+'قد لا تشمل هذه الأسماء تلاميذ لم تكن لهم سجلات متابعة.</p>':'';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
  const classText=Object.keys(classes).sort((a,b)=>a.localeCompare(b,'ar',{numeric:true})).map(k=>'القسم '+esc(k)+': '+classes[k]).join('، ');
@@ -3475,8 +3476,9 @@ function showBackupPreview(data,bytes){
  '<div class="stat"><small>سجلات الغياب والتأخر</small><strong>'+attendance.length+'</strong></div>'+
  '<div class="stat"><small>الوثائق والاستدعاءات</small><strong>'+documents.length+'</strong></div>'+
  '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div>'+
- '<div class="stat"><small>مواعيد الأجندة</small><strong>'+agenda.length+'</strong></div></div>'+
- '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+agendaRecoveryNote+recoveryNote+
+ '<div class="stat"><small>مواعيد الأجندة</small><strong>'+agenda.length+'</strong></div>'+
+ '<div class="stat"><small>المتابعات التربوية</small><strong>'+followups.length+'</strong></div></div>'+
+ '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+agendaRecoveryNote+followupRecoveryNote+recoveryNote+
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
