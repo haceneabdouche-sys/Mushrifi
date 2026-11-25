@@ -21,6 +21,7 @@ const before={
 const after=JSON.parse(JSON.stringify(before));
 after.students[0].class='2';
 after.students[0].parentPhone='0555999999';
+after.students[0].identityNumber='PERSONAL-456';
 after.students.push({id:'stu-2',last:'أحمد',first:'أمين',class:'3',schoolYear:'أولى',branch:'متوسط',phone:'0555111111'});
 after.attendance[0].hours=4;
 after.attendance[0].notes='ملاحظة خاصة بعد';
@@ -41,7 +42,7 @@ assert.ok(event('violations','delete'),'deleting a violation creates a delete ev
 assert.ok(event('settings','update'),'settings changes create an event');
 
 const serialized=JSON.stringify(events);
-for(const privateValue of ['0555000000','0555999999','PERSONAL-123','ملاحظة خاصة قبل','ملاحظة خاصة بعد','سبب خاص وسري','PRIVATEIMAGE','تفاصيل خاصة لا يجب نسخها']){
+for(const privateValue of ['0555000000','0555999999','PERSONAL-123','PERSONAL-456','ملاحظة خاصة قبل','ملاحظة خاصة بعد','سبب خاص وسري','PRIVATEIMAGE','تفاصيل خاصة لا يجب نسخها']){
  assert.ok(!serialized.includes(privateValue),'sensitive value must not appear in the audit log: '+privateValue);
 }
 const studentUpdate=event('students','update');
