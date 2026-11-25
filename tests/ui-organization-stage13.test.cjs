@@ -15,7 +15,7 @@ assert.deepEqual(navPages, ['home', 'students', 'attendance', 'documents', 'more
 
 // More is for secondary tools only; the main workflows must not be duplicated there.
 const moreStart = html.indexOf('<section id="more" class="page hidden">');
-const moreEnd = html.indexOf('</section>', moreStart);
+const moreEnd = html.indexOf('<section id="agenda" class="page hidden">', moreStart);
 assert.ok(moreStart >= 0 && moreEnd > moreStart, 'More page exists');
 const more = html.slice(moreStart, moreEnd);
 for (const duplicate of ['students', 'attendance', 'documents', 'violations']) {
