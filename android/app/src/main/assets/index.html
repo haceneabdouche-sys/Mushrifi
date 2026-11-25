@@ -587,6 +587,43 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 @media(prefers-reduced-motion:reduce){
   header .glint-point{opacity:.9}
 }
+
+/* Student analytics — evidence-based comparisons and trend charts */
+.student-analytics-panel{border-top:3px solid #286b91}
+.analytics-toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.analytics-toolbar .btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.analytics-date-controls{display:flex;align-items:end;gap:10px;flex-wrap:wrap;padding:10px;background:#f7fafc;border:1px solid var(--line);border-radius:11px}
+.analytics-date-controls>div{flex:1 1 145px;min-width:0}
+.analytics-date-controls label{display:block;margin-bottom:5px;font-size:12px;font-weight:700}
+.analytics-date-controls input{width:100%;min-height:40px}
+.analytics-summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.analytics-summary-card{min-width:0;padding:12px;border:1px solid var(--line);border-radius:11px;background:#f8fafc}
+.analytics-summary-card small{display:block;color:var(--muted);font-size:11px;line-height:1.5}
+.analytics-summary-card strong{display:block;margin-top:5px;color:var(--navy);font-size:clamp(19px,3.8vw,25px);overflow-wrap:anywhere}
+.analytics-justification{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:9px 11px;margin-bottom:12px;background:#fbfcfd;border:1px solid var(--line);border-radius:9px;font-size:12px}
+.analytics-status-ok{color:#21734f;font-weight:700}.analytics-status-warn{color:#a24b28;font-weight:700}.analytics-status-pending{color:#75621e;font-weight:700}
+.analytics-two-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.analytics-chart,.analytics-ranking{min-width:0;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;margin:12px 0}
+.analytics-chart h3,.analytics-ranking h3{margin:0 0 10px;font-size:15px}
+.analytics-chart-list{display:grid;gap:10px}
+.analytics-bucket{padding:9px;border:1px solid #e6edf1;border-radius:9px;background:#fbfcfd;min-width:0}
+.analytics-bucket>strong{display:block;margin-bottom:7px;font-size:12px;direction:ltr;text-align:right}
+.analytics-bar-row{display:grid;grid-template-columns:62px minmax(0,1fr) 28px;align-items:center;gap:6px;margin:5px 0;font-size:10px}
+.analytics-bar-track{height:8px;border-radius:20px;background:#e9eef2;overflow:hidden}
+.analytics-bar-track i{display:block;height:100%;border-radius:20px;background:#397da4;min-width:0}
+.analytics-bar-row:nth-child(2) .analytics-bar-track i{background:#d39b42}
+.analytics-bar-row:nth-child(3) .analytics-bar-track i{background:#a96b82}
+.analytics-bar-row b{text-align:left;font-size:10px}
+.analytics-ranking .tablewrap{overflow-x:auto}
+.analytics-ranking table{width:100%;min-width:650px;border-collapse:collapse;font-size:12px}
+.analytics-ranking th,.analytics-ranking td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:normal}
+.analytics-ranking th{background:#f3f7fa;color:#28475d}
+.analytics-ranking tbody tr:nth-child(even){background:#fbfcfd}
+.analytics-student-open{border:0;background:transparent;color:#1d6590;text-decoration:underline;font:inherit;font-weight:700;cursor:pointer;padding:3px}
+.analytics-integrity-note{margin:12px 0 0;padding:10px;border-right:3px solid #d6b46b;border-radius:6px;background:#fbf8ef;color:#67562e;font-size:11px;line-height:1.8}
+@media(max-width:680px){.analytics-two-charts{grid-template-columns:1fr}.analytics-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-date-controls{align-items:stretch}.analytics-date-controls>button{width:100%}.analytics-bar-row{grid-template-columns:58px minmax(0,1fr) 24px}}
+@media print{.student-analytics-panel .no-print{display:none!important}.analytics-two-charts{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-ranking table{min-width:0!important;font-size:8pt!important}}
+
 </style>
 </head>
 <body>
@@ -744,6 +781,22 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 <div class="panel"><h2>سجل المخالفات</h2><div class="tablewrap"><table class="violations-table"><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody id="violRows"></tbody></table></div></div></section>
 <section id="reports" class="page hidden">
 <div class="no-print" style="margin:0 0 12px"><button type="button" class="btn" onclick="goPreviousPage()">↩ العودة إلى الصفحة السابقة</button></div>
+<section id="studentAnalyticsPanel" class="panel student-analytics-panel" aria-labelledby="studentAnalyticsHeading">
+  <div class="panel-title-row"><h2 id="studentAnalyticsHeading">إحصائيات وتحليلات التلاميذ</h2><span class="pill">تحليل السجلات الفعلية</span></div>
+  <p class="muted">قارن الأقسام، راجع التلاميذ الأكثر تكراراً للمخالفات، وتابع التغير الأسبوعي والشهري. كل الأعداد تمثل سجلات محفوظة وليست أحكاماً إدارية.</p>
+  <div class="analytics-toolbar no-print" role="group" aria-label="الفترة الزمنية للتحليل">
+    <button type="button" class="btn small" data-analytics-range="7">آخر 7 أيام</button>
+    <button type="button" class="btn small" data-analytics-range="30">آخر 30 يوماً</button>
+    <button type="button" class="btn small" data-analytics-range="month">هذا الشهر</button>
+    <button type="button" class="btn small active" data-analytics-range="6months">آخر 6 أشهر</button>
+  </div>
+  <div class="analytics-date-controls no-print">
+    <div><label for="analyticsFromDate">من تاريخ</label><input id="analyticsFromDate" type="date"></div>
+    <div><label for="analyticsToDate">إلى تاريخ</label><input id="analyticsToDate" type="date"></div>
+    <button type="button" class="btn primary" id="applyStudentAnalytics">تحديث التحليل</button>
+  </div>
+  <div id="studentAnalyticsOutput" aria-live="polite"><p class="empty">جارٍ إعداد التحليل...</p></div>
+</section>
 <div class="panel"><h2>التقارير والطباعة</h2><div class="row"><div><label for="reportStudentSearch">البحث عن تلميذ</label><input id="reportStudentSearch" type="search" placeholder="اكتب الاسم أو اللقب أو القسم..." autocomplete="off"></div><div><label>من تاريخ</label><input id="fromDate" type="date"></div><div><label>إلى تاريخ</label><input id="toDate" type="date"></div></div><div class="row report-actions"><button class="btn primary" id="makeReport">عرض التقرير</button><button class="btn" type="button" id="printReportBtn" onclick="window.printReport()">معاينة الطباعة / حفظ PDF</button></div><p class="muted">يتضمن التقرير ملخصاً إحصائياً مفصولاً للغيابات المبررة وغير المبررة، وساعات الغياب، ودقائق التأخر، والمخالفات والاستدعاءات.</p><div id="reportOutput" class="panel"><p class="muted">ابحث عن تلميذ أو اترك البحث فارغاً لعرض الجميع، ثم اضغط عرض التقرير.</p></div></div>
 </section>
 <section id="settings" class="page hidden">
@@ -1257,9 +1310,56 @@ window.restoreAuditEdit=eventId=>{
 ['auditSearch','auditEntityFilter','auditActionFilter','auditDateFrom','auditDateTo'].forEach(id=>{const control=document.getElementById(id);if(control)control.addEventListener('input',renderAuditLog);});
 $('#exportAuditLog')?.addEventListener('click',exportAuditLog);
 
+
+function analyticsFormatCount(value){return Number(value||0).toLocaleString('ar-DZ');}
+function analyticsBarsMarkup(bucket,maxima){
+ const rows=[['absences','الغياب'],['lateness','التأخر'],['violations','المخالفات']];
+ return rows.map(([key,label])=>{const n=Number(bucket[key]||0),max=Math.max(1,Number(maxima[key]||0)),width=Math.min(100,Math.max(0,n/max*100));return '<div class="analytics-bar-row"><span>'+label+'</span><div class="analytics-bar-track" role="progressbar" aria-label="'+label+'" aria-valuemin="0" aria-valuemax="'+max+'" aria-valuenow="'+n+'"><i style="width:'+width.toFixed(1)+'%"></i></div><b>'+analyticsFormatCount(n)+'</b></div>';}).join('');
+}
+function analyticsChartMarkup(title,items){
+ if(!items.length)return '<section class="analytics-chart"><h3>'+title+'</h3><p class="empty">لا توجد سجلات خلال هذه الفترة.</p></section>';
+ const maxima={absences:Math.max(1,...items.map(x=>x.absences)),lateness:Math.max(1,...items.map(x=>x.lateness)),violations:Math.max(1,...items.map(x=>x.violations))};
+ return '<section class="analytics-chart"><h3>'+title+'</h3><div class="analytics-chart-list">'+items.map(x=>'<div class="analytics-bucket"><strong>'+esc(x.label)+'</strong>'+analyticsBarsMarkup(x,maxima)+'</div>').join('')+'</div></section>';
+}
+function renderStudentAnalytics(){
+ const output=$('#studentAnalyticsOutput');if(!output)return;
+ const from=$('#analyticsFromDate')?.value||'',to=$('#analyticsToDate')?.value||'';
+ if(!analyticsDateValid(from)||!analyticsDateValid(to)||from>to){output.innerHTML='<p class="notice">تحقق من التاريخين؛ يجب أن يكون تاريخ البداية صحيحاً وألا يتجاوز تاريخ النهاية.</p>';return;}
+ const snap=buildStudentAnalyticsSnapshot({attendance:db.attendance,violations:db.violations,students:db.students,from,to,resolveStudent:id=>student(id),groupKey:st=>attendanceGroupKey(st),recordGroupKey:r=>attendanceRecordGroupKey(r),groupLabel:st=>attendanceGroupLabel(st),studentLabel:st=>name(st.id),parseHours:v=>parseHours(v)});
+ const s=snap.summary;
+ const cards=[['الغيابات',s.absences],['ساعات الغياب',Number(s.absenceHours.toFixed(2)).toLocaleString('ar-DZ')],['التأخرات',s.lateness],['دقائق التأخر',Number(s.latenessMinutes.toFixed(0)).toLocaleString('ar-DZ')],['المخالفات',s.violations],['التلاميذ ذوو السجلات',s.studentsWithActivity]];
+ const justified='<span class="analytics-status-ok">مبرر: '+analyticsFormatCount(s.justifiedAbsences)+'</span>';
+ const unjustified='<span class="analytics-status-warn">غير مبرر: '+analyticsFormatCount(s.unjustifiedAbsences)+'</span>';
+ const pending='<span class="analytics-status-pending">قيد التبرير: '+analyticsFormatCount(s.pendingAbsences)+'</span>';
+ const sectionRows=snap.sections.length?snap.sections.map((g,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(g.label)+'</td><td>'+analyticsFormatCount(g.roster)+'</td><td><b>'+analyticsFormatCount(g.absences)+'</b></td><td>'+analyticsFormatCount(g.absenceHours.toFixed(2))+'</td><td>'+analyticsFormatCount(g.lateness)+'</td><td>'+analyticsFormatCount(g.latenessMinutes.toFixed(0))+'</td><td>'+analyticsFormatCount(g.violations)+'</td></tr>').join(''):'<tr><td colspan="8" class="empty">لا توجد أقسام أو تلاميذ مسجلون.</td></tr>';
+ const violRows=snap.topViolators.length?snap.topViolators.map((x,i)=>'<tr><td>'+(i+1)+'</td><td><button type="button" class="student-name analytics-student-open" data-student-id="'+esc(x.id)+'">'+esc(x.label)+'</button></td><td><b>'+analyticsFormatCount(x.count)+'</b></td><td>'+analyticsFormatCount(x.distinctDays)+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">لا توجد مخالفات مرتبطة بملفات تلاميذ معروفة ضمن الفترة.</td></tr>';
+ output.innerHTML='<div class="analytics-summary-grid">'+cards.map(([label,value])=>'<div class="analytics-summary-card"><small>'+label+'</small><strong>'+esc(value)+'</strong></div>').join('')+'</div>'+
+ '<div class="analytics-justification">'+justified+' · '+unjustified+' · '+pending+'</div>'+
+ '<div class="analytics-two-charts">'+analyticsChartMarkup('الاتجاه الأسبوعي — أسابيع الفترة المحددة',snap.weekly)+analyticsChartMarkup('الاتجاه الشهري — أشهر الفترة المحددة',snap.monthly)+'</div>'+
+ '<section class="analytics-ranking"><div class="panel-title-row"><h3>مقارنة الأقسام</h3><span class="pill">الترتيب حسب عدد الغيابات</span></div><p class="muted">الأعداد سجلات وليست نسباً مئوية. ساعات الغياب ودقائق التأخر تُعرض كلٌّ بوحدتها، ويُحسب عدد التلاميذ من القائمة الحالية لكل قسم.</p><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>القسم</th><th>التلاميذ</th><th>غيابات</th><th>ساعات غياب</th><th>تأخرات</th><th>دقائق تأخر</th><th>مخالفات</th></tr></thead><tbody>'+sectionRows+'</tbody></table></div></section>'+
+ '<section class="analytics-ranking"><div class="panel-title-row"><h3>التلاميذ الأكثر تكراراً للمخالفات</h3><span class="pill">أعلى 10</span></div><p class="muted">الترتيب حسب عدد سجلات المخالفات، مع عدد الأيام المختلفة. اضغط اسم التلميذ لفتح ملفه. لا تُنسب السجلات مجهولة الهوية إلى تلميذ بالتخمين.</p><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>التلميذ</th><th>عدد المخالفات</th><th>أيام مختلفة</th></tr></thead><tbody>'+violRows+'</tbody></table></div></section>'+
+ '<p class="analytics-integrity-note">حالة اكتمال الربط: '+analyticsFormatCount(s.unclassifiedAttendance)+' سجل غياب/تأخر و'+analyticsFormatCount(s.unclassifiedViolations)+' سجل مخالفة لم يمكن ربطها بقسم معروف؛ أُبقيت ضمن إجماليات المؤسسة ولم تُنسب إلى قسم أو تلميذ. '+(s.unknownAbsenceHours?'تعذر قراءة مدة '+analyticsFormatCount(s.unknownAbsenceHours)+' غياباً. ':'')+(s.unknownLatenessMinutes?'تعذر قراءة مدة '+analyticsFormatCount(s.unknownLatenessMinutes)+' تأخراً.':'')+'</p>';
+ output.querySelectorAll('.analytics-student-open').forEach(button=>button.addEventListener('click',()=>window.studentHistory(button.dataset.studentId)));
+}
+function setStudentAnalyticsRange(preset){
+ const today=dateISO();let from=today;
+ if(preset==='7')from=analyticsShiftISODate(today,-6);
+ else if(preset==='30')from=analyticsShiftISODate(today,-29);
+ else if(preset==='month')from=today.slice(0,8)+'01';
+ else if(preset==='6months')from=analyticsMonthShift(today,-5)+'-01';
+ else return;
+ $('#analyticsFromDate').value=from;$('#analyticsToDate').value=today;
+ document.querySelectorAll('[data-analytics-range]').forEach(button=>button.classList.toggle('active',button.dataset.analyticsRange===preset));
+ renderStudentAnalytics();
+}
+document.querySelectorAll('[data-analytics-range]').forEach(button=>button.addEventListener('click',()=>setStudentAnalyticsRange(button.dataset.analyticsRange)));
+$('#applyStudentAnalytics')?.addEventListener('click',()=>{document.querySelectorAll('[data-analytics-range]').forEach(button=>button.classList.remove('active'));renderStudentAnalytics();});
+function ensureStudentAnalyticsDates(){if(!$('#analyticsFromDate')?.value||!$('#analyticsToDate')?.value)setStudentAnalyticsRange('6months');}
+
 function render(){
 const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';
 if(activePage==='audit')renderAuditLog();
+if(activePage==='reports'){ensureStudentAnalyticsDates();renderStudentAnalytics();}
 if(activePage==='students')refreshStudentSectionOptions();
 const schoolName=String(db.settings.school||'ثانوية الشيخ بوعمامة'),schoolLocation=String(db.settings.location||'بوسكن – ولاية المدية');
 $('#schoolHeaderName').textContent=schoolName;$('#schoolHeaderLocation').textContent=schoolLocation;$('#schoolHeaderLocation').classList.toggle('hidden',!schoolLocation.trim());
@@ -1958,6 +2058,119 @@ window.printReport=()=>{
  document.body.appendChild(preview);window.mushrifiPrintOpen=true;try{history.pushState({mushrifiPrintPreview:true,mushrifiPage:'reports'},'');}catch(e){}
  $('#mushrifiPrintNow').onclick=()=>window.print();$('#mushrifiPrintBack').onclick=()=>window.closeMushrifiPrintPreview(false);
 };
+
+function analyticsDateValid(value){
+ const s=String(value||''),m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return false;
+ const y=Number(m[1]),month=Number(m[2]),day=Number(m[3]),d=new Date(Date.UTC(y,month-1,day));
+ return d.getUTCFullYear()===y&&d.getUTCMonth()===month-1&&d.getUTCDate()===day;
+}
+function analyticsShiftISODate(value,offset){
+ if(!analyticsDateValid(value))return '';
+ const [y,m,d]=String(value).split('-').map(Number),date=new Date(Date.UTC(y,m-1,d));
+ date.setUTCDate(date.getUTCDate()+Number(offset||0));
+ return date.getUTCFullYear()+'-'+String(date.getUTCMonth()+1).padStart(2,'0')+'-'+String(date.getUTCDate()).padStart(2,'0');
+}
+function analyticsMonthShift(value,offset){
+ if(!analyticsDateValid(value))return '';
+ const [y,m]=String(value).split('-').map(Number),date=new Date(Date.UTC(y,m-1+Number(offset||0),1));
+ return date.getUTCFullYear()+'-'+String(date.getUTCMonth()+1).padStart(2,'0');
+}
+function buildStudentAnalyticsSnapshot(input={}){
+ const attendance=Array.isArray(input.attendance)?input.attendance:[],violations=Array.isArray(input.violations)?input.violations:[],students=Array.isArray(input.students)?input.students:[];
+ const from=String(input.from||''),to=String(input.to||'');
+ const empty={valid:false,summary:{absences:0,justifiedAbsences:0,unjustifiedAbsences:0,pendingAbsences:0,absenceHours:0,unknownAbsenceHours:0,lateness:0,latenessMinutes:0,unknownLatenessMinutes:0,violations:0,studentsWithActivity:0,unclassifiedAttendance:0,unclassifiedViolations:0},sections:[],topViolators:[],weekly:[],monthly:[]};
+ if(!analyticsDateValid(from)||!analyticsDateValid(to)||from>to)return empty;
+ const resolveStudent=typeof input.resolveStudent==='function'?input.resolveStudent:()=>null;
+ const groupKey=typeof input.groupKey==='function'?input.groupKey:st=>String(st?.class||'');
+ const recordGroupKey=typeof input.recordGroupKey==='function'?input.recordGroupKey:()=>''; 
+ const groupLabel=typeof input.groupLabel==='function'?input.groupLabel:st=>String(st?.class||'قسم غير محدد');
+ const studentLabel=typeof input.studentLabel==='function'?input.studentLabel:st=>[st?.last,st?.first].filter(Boolean).join(' ').trim()||'تلميذ';
+ const parseHoursValue=typeof input.parseHours==='function'?input.parseHours:v=>{const n=Number(v);return Number.isFinite(n)?n:NaN;};
+ const groups=new Map();
+ students.forEach(st=>{
+  if(!st||st.id===undefined||st.id===null)return;
+  const key=String(groupKey(st)||'');if(!key)return;
+  if(!groups.has(key))groups.set(key,{key,label:String(groupLabel(st)||'قسم غير محدد'),roster:0,absences:0,justifiedAbsences:0,unjustifiedAbsences:0,pendingAbsences:0,absenceHours:0,unknownAbsenceHours:0,lateness:0,latenessMinutes:0,unknownLatenessMinutes:0,violations:0});
+  groups.get(key).roster++;
+ });
+ const summary={...empty.summary};
+ const activeStudentDays=new Set(),studentViolationMap=new Map(),events=[];
+ const dedupe=(items,kind)=>{
+  const seen=new Set();
+  return items.filter(r=>{
+   if(!r||typeof r!=='object'||Array.isArray(r))return false;
+   const id=String(r.id??'').trim();if(!id)return true;
+   const key=kind+'|'+id;if(seen.has(key))return false;seen.add(key);return true;
+  });
+ };
+ const inRange=r=>analyticsDateValid(r?.date)&&String(r.date)>=from&&String(r.date)<=to;
+ const safeResolve=r=>{try{return resolveStudent(r?.student,r)||null;}catch(e){return null;}};
+ const safeGroupKey=(r,st)=>{
+  let key='';
+  try{key=st?String(groupKey(st)||''):String(recordGroupKey(r)||'');}catch(e){key='';}
+  return groups.has(key)?key:'';
+ };
+ const normType=r=>String(r?.type??'').trim().replace(/\s+/g,'');
+ const countRecord=(kind,r,st)=>{
+  const date=String(r.date),gKey=safeGroupKey(r,st),group=gKey?groups.get(gKey):null;
+  events.push({date,kind});
+  if(st&&st.id!==undefined&&st.id!==null)activeStudentDays.add(String(st.id));
+  if(kind==='absence'){
+   summary.absences++;if(group)group.absences++;else summary.unclassifiedAttendance++;
+   const status=String(r.justified??'').normalize('NFKC').replace(/\s+/g,'').replace(/[أإآ]/g,'ا');
+   if(status.includes('قيد')){summary.pendingAbsences++;if(group)group.pendingAbsences++;}
+   else if(status.includes('مبرر')&&!status.includes('غير')){summary.justifiedAbsences++;if(group)group.justifiedAbsences++;}
+   else{summary.unjustifiedAbsences++;if(group)group.unjustifiedAbsences++;}
+   const hours=Number(parseHoursValue(r.hours));
+   if(Number.isFinite(hours)&&hours>=0){summary.absenceHours+=hours;if(group)group.absenceHours+=hours;}
+   else{summary.unknownAbsenceHours++;if(group)group.unknownAbsenceHours++;}
+  }else if(kind==='lateness'){
+   summary.lateness++;if(group)group.lateness++;else summary.unclassifiedAttendance++;
+   let minutes=NaN;
+   if(r.minutes!==undefined&&r.minutes!==null&&String(r.minutes).trim()!==''){
+    const raw=String(r.minutes).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٫،]/g,'.').trim();
+    minutes=Number(raw);
+   }else{
+    const hours=Number(parseHoursValue(r.hours));if(Number.isFinite(hours)&&hours>=0)minutes=hours*60;
+   }
+   if(Number.isFinite(minutes)&&minutes>=0){summary.latenessMinutes+=minutes;if(group)group.latenessMinutes+=minutes;}
+   else{summary.unknownLatenessMinutes++;if(group)group.unknownLatenessMinutes++;}
+  }else if(kind==='violation'){
+   summary.violations++;if(group)group.violations++;else summary.unclassifiedViolations++;
+   if(st&&st.id!==undefined&&st.id!==null){
+    const id=String(st.id);if(!studentViolationMap.has(id))studentViolationMap.set(id,{id,label:String(studentLabel(st)||'تلميذ'),count:0,days:new Set()});
+    const item=studentViolationMap.get(id);item.count++;item.days.add(date);
+   }
+  }
+ };
+ dedupe(attendance,'attendance').filter(inRange).forEach(r=>{const type=normType(r);if(type!=='غياب'&&type!=='تأخر')return;countRecord(type==='غياب'?'absence':'lateness',r,safeResolve(r));});
+ dedupe(violations,'violation').filter(inRange).forEach(r=>countRecord('violation',r,safeResolve(r)));
+ summary.studentsWithActivity=activeStudentDays.size;
+ const sections=[...groups.values()].sort((a,b)=>b.absences-a.absences||b.lateness-a.lateness||b.violations-a.violations||a.label.localeCompare(b.label,'ar',{numeric:true}));
+ const topViolators=[...studentViolationMap.values()].map(x=>({id:x.id,label:x.label,count:x.count,distinctDays:x.days.size})).sort((a,b)=>b.count-a.count||b.distinctDays-a.distinctDays||a.label.localeCompare(b.label,'ar')).slice(0,10);
+ const weekStarts=[];
+ let cursor=from;
+ const firstDow=new Date(Date.UTC(...from.split('-').map((v,i)=>i===1?Number(v)-1:Number(v)))).getUTCDay();
+ cursor=analyticsShiftISODate(from,-firstDow);
+ while(cursor<=to){const next=analyticsShiftISODate(cursor,7);weekStarts.push(cursor);cursor=next;}
+ const visibleWeeks=weekStarts.slice(-12);
+ const weekly=visibleWeeks.map(start=>{
+  const end=analyticsShiftISODate(start,6),bucket={label:start+' – '+(end>to?to:end),absences:0,lateness:0,violations:0};
+  return bucket;
+ });
+ const monthKeys=[];let monthCursor=analyticsMonthShift(from,0),lastMonth=analyticsMonthShift(to,0);
+ while(monthCursor&&monthCursor<=lastMonth&&monthKeys.length<240){monthKeys.push(monthCursor);monthCursor=analyticsMonthShift(monthCursor+'-01',1);}
+ const visibleMonths=monthKeys.slice(-12),monthly=visibleMonths.map(month=>({label:month,absences:0,lateness:0,violations:0}));
+ const addBucket=(bucket,date,kind)=>{const prop=kind==='absence'?'absences':kind==='lateness'?'lateness':'violations';bucket[prop]++;};
+ events.forEach(event=>{
+  const day=event.date,kind=event.kind;
+  const [y,m,d]=day.split('-').map(Number),weekStart=analyticsShiftISODate(day,-new Date(Date.UTC(y,m-1,d)).getUTCDay());
+  const wi=visibleWeeks.lastIndexOf(weekStart);if(wi>=0)addBucket(weekly[wi],day,kind);
+  const mi=visibleMonths.indexOf(day.slice(0,7));if(mi>=0)addBucket(monthly[mi],day,kind);
+ });
+ return {valid:true,from,to,summary,sections,topViolators,weekly,monthly};
+}
+
 $('#makeReport').onclick=()=>{
  const query=$('#reportStudentSearch').value.trim(),matches=reportStudentMatches();
  if(query&&!matches.length){alert('لم يتم العثور على تلميذ بهذا البحث.');$('#reportStudentSearch').focus();return;}
