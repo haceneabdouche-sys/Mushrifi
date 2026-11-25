@@ -3504,7 +3504,7 @@ function recoverStudentsFromHistory(data){
  });
  let recoveredCount=0,missingClassCount=0;
  for(const kind of ['attendance','documents','violations','followups']){
-  for(const record of data[kind]){
+  for(const record of (Array.isArray(data[kind])?data[kind]:[])){
    if(!record||typeof record!=='object')continue;
    const fullName=String(record.studentName||record.student_name||record.studentFullName||record.fullName||record.name||'').trim();
    if(!fullName)continue;
