@@ -67,26 +67,41 @@ public final class AgendaReminderScheduler {
         Map<String, ?> current = prefs.getAll();
         Set<String> cancelKeys = new HashSet<>();
         Set<String> scheduleKeys = new HashSet<>();
+        Map<String, JSONObject> nextStored = new LinkedHashMap<>();
         for (Map.Entry<String, ?> entry : current.entrySet()) {
             String id = entry.getKey();
             JSONObject next = desired.get(id);
-            String oldJson = entry.getValue() instanceof String ? (String) entry.getValue() : "";
-            if (next == null || !next.toString().equals(oldJson)) cancelKeys.add(id);
+            JSONObject old = readItem(prefs, id);
+            if (next == null || old == null || !sameSchedule(old, next)) cancelKeys.add(id);
         }
         for (Map.Entry<String, JSONObject> entry : desired.entrySet()) {
-            String old = prefs.getString(entry.getKey(), "");
-            if (!entry.getValue().toString().equals(old)) scheduleKeys.add(entry.getKey());
+            String id = entry.getKey();
+            JSONObject next = entry.getValue();
+            JSONObject old = readItem(prefs, id);
+            if (old != null && sameSchedule(old, next) && old.optBoolean("delivered", false)) {
+                // The reminder has already been posted for this exact date/time/lead.
+                // A title edit must not make it fire for a second time.
+                next.put("delivered", true);
+            } else {
+                scheduleKeys.add(id);
+                if (old != null && sameSchedule(old, next) && old.optBoolean("waitingForPermission", false)) {
+                    next.put("waitingForPermission", true);
+                }
+            }
+            nextStored.put(id, next);
         }
 
         SharedPreferences.Editor editor = prefs.edit();
         for (String id : cancelKeys) editor.remove(id);
-        for (String id : scheduleKeys) editor.putString(id, desired.get(id).toString());
+        for (Map.Entry<String, JSONObject> entry : nextStored.entrySet()) {
+            editor.putString(entry.getKey(), entry.getValue().toString());
+        }
         if (!editor.commit()) throw new IllegalStateException("تعذر حفظ جدول تنبيهات الأجندة في الهاتف.");
 
         for (String id : cancelKeys) cancel(context, id);
         int scheduled = 0;
         for (String id : scheduleKeys) {
-            if (schedule(context, desired.get(id))) scheduled++;
+            if (schedule(context, nextStored.get(id))) scheduled++;
         }
         deliverDue(context, null);
         JSONObject result = new JSONObject();
@@ -97,6 +112,16 @@ public final class AgendaReminderScheduler {
         result.put("expired", expired);
         result.put("exact", hasExactAlarmAccess(context));
         return result;
+    }
+
+    private static boolean sameSchedule(JSONObject current, JSONObject desired) {
+        return current != null && desired != null
+            && current.optString("id", "").equals(desired.optString("id", ""))
+            && current.optString("eventDate", "").equals(desired.optString("eventDate", ""))
+            && current.optString("eventTime", "").equals(desired.optString("eventTime", ""))
+            && current.optInt("leadMinutes", -1) == desired.optInt("leadMinutes", -2)
+            && current.optLong("appointmentAt", -1L) == desired.optLong("appointmentAt", -2L)
+            && current.optLong("reminderAt", -1L) == desired.optLong("reminderAt", -2L);
     }
 
     private static String safeText(String value, int maximum) {
@@ -117,6 +142,18 @@ public final class AgendaReminderScheduler {
     }
 
     static synchronized void cancel(Context context, String id) {
+        if (context == null || id == null || id.isEmpty()) return;
+        AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        PendingIntent pending = pendingIntent(context, id, PendingIntent.FLAG_NO_CREATE);
+        if (pending != null) {
+            if (manager != null) manager.cancel(pending);
+            pending.cancel();
+        }
+        NotificationManager notifications = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (notifications != null) notifications.cancel(("agenda:" + id).hashCode());
+    }
+
+    private static void cancelAlarmOnly(Context context, String id) {
         if (context == null || id == null || id.isEmpty()) return;
         AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         PendingIntent pending = pendingIntent(context, id, PendingIntent.FLAG_NO_CREATE);
@@ -194,14 +231,14 @@ public final class AgendaReminderScheduler {
                     item.getInt("leadMinutes"), null
                 );
                 if (appointmentAt <= now || reminderAt <= now - MAX_LATE_DELIVERY_MS) {
-                    cancel(context, id);
+                    cancelAlarmOnly(context, id);
                     prefs.edit().remove(id).apply();
                     continue;
                 }
                 item.put("appointmentAt", appointmentAt);
                 item.put("reminderAt", reminderAt);
                 prefs.edit().putString(id, item.toString()).apply();
-                if (reminderAt > now) schedule(context, item);
+                if (!item.optBoolean("delivered", false) && reminderAt > now) schedule(context, item);
             } catch (Exception invalid) {
                 cancel(context, id);
                 prefs.edit().remove(id).apply();
@@ -223,7 +260,7 @@ public final class AgendaReminderScheduler {
             }
             long appointmentAt = item.optLong("appointmentAt", 0L);
             long reminderAt = item.optLong("reminderAt", 0L);
-            if (appointmentAt <= now || reminderAt > now) continue;
+            if (item.optBoolean("delivered", false) || appointmentAt <= now || reminderAt > now) continue;
             if (now - reminderAt > MAX_LATE_DELIVERY_MS) {
                 prefs.edit().remove(id).apply();
                 continue;
@@ -235,7 +272,14 @@ public final class AgendaReminderScheduler {
             }
             boolean posted = AgendaReminderReceiver.postNotification(context, item);
             if (posted) {
-                prefs.edit().remove(id).apply();
+                try {
+                    item.put("delivered", true);
+                    item.remove("waitingForPermission");
+                    prefs.edit().putString(id, item.toString()).commit();
+                    cancelAlarmOnly(context, id);
+                } catch (JSONException error) {
+                    android.util.Log.e("MushrifiAgenda", "Could not mark agenda reminder as delivered", error);
+                }
             }
         }
     }
