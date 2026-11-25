@@ -3152,6 +3152,7 @@ window.deleteStudentFollowup=(studentId,recordId)=>{
  const record=(Array.isArray(db.followups)?db.followups:[]).find(x=>String(x.id)===id);
  if(!target||!record||!profileRecordBelongsToStudent(record,target,db.students)){alert('لم يتم العثور على سجل المتابعة المطلوب.');return;}
  if(!confirm('هل تريد حذف سجل المتابعة التربوية هذا؟ سيُسجّل الحذف في سجل العمليات.'))return;
+ if(!saveUndoSnapshot('حذف سجل متابعة تربوية'))return;
  const previous=db.followups.slice();db.followups=db.followups.filter(x=>String(x.id)!==id);
  if(!save()){db.followups=previous;return;}
  window.studentHistory(sid);
