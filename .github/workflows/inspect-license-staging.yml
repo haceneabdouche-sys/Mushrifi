@@ -22,11 +22,14 @@ jobs:
         with:
           ref: feature/device-license-foundation
 
-      - name: Verify TypeScript and install Wrangler
+      - name: Verify Worker code and security regression tests
         working-directory: licensing/worker
         run: |
           npm install
           npm run check
+          npm run test:rate-limit
+          npm run test:rate-limit-behavior
+          npm run test:device-identity-binding
 
       - name: Print Staging license tables and indexes (read-only)
         working-directory: licensing/worker
