@@ -13,7 +13,7 @@ const agendaEnd=html.indexOf('let agendaCurrentView=',agendaStart);
 assert.ok(agendaStart>=0&&agendaEnd>agendaStart,'agenda occurrence expansion helpers exist before the daily dashboard');
 const sandbox={Date,Map,Set,Number,String,Array,Math,window:{},document:{querySelectorAll:()=>[]}};
 vm.createContext(sandbox);
-vm.runInContext(html.slice(agendaStart,agendaEnd)+'\\n'+html.slice(dailyStart,dailyEnd),sandbox);
+vm.runInContext(html.slice(agendaStart,agendaEnd)+'\n'+html.slice(dailyStart,dailyEnd),sandbox);
 const today='2026-11-25';
 const now=Date.parse('2026-11-25T08:00:00+01:00');
 
