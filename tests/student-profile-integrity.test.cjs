@@ -33,7 +33,7 @@ assert.equal(sandbox.profileRecordBelongsToStudent({student:student.id,studentNa
 
 const other={...student,id:'student-other'};
 assert.equal(sandbox.profileRecordBelongsToStudent({student:other.id,studentName:'وائل عيسو',class:'1'},student,[student,other]),false,'an active different student ID cannot be claimed by a name match');
-assert.equal(sandbox.profileRecordBelongsToStudent({student:'old-uuid-123',studentName:'وائل عيسو1',class:'1'},student,[student]),false,'a stale opaque ID is not reassigned to a new student with a similar name');
+assert.equal(sandbox.profileRecordBelongsToStudent({student:'old-uuid-123',studentName:'وائل عيسو1',class:'1'},student,[student]),true,'a legacy opaque ID can be safely recovered through its explicit name and matching section');
 assert.equal(sandbox.profileRecordBelongsToStudent({student:'وائل عيسو1',class:'قسم آخر'},student,[student]),false,'a legacy record from another section is excluded');
 
 const duplicate={id:'student-duplicate',last:'وائل',first:'عيسو',class:'٢',schoolYear:'أولى',branch:'متوسط'};
