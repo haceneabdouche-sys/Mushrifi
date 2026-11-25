@@ -705,6 +705,11 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
   <div class="stat"><small>استدعاءات اليوم</small><strong id="todaySummons">0</strong></div>
 </div>
 <section class="panel daily-tasks-panel" aria-labelledby="dailyTasksHeading"><div class="panel-title-row"><h2 id="dailyTasksHeading">مهامي اليوم</h2><span class="pill" id="dailyTasksCount">0 متابعة</span></div><p class="muted">ملخص عملي للاستدعاءات القريبة وسجلات الغياب أو التأخر التي ما زالت قيد التبرير.</p><div id="dailyTasksList" class="daily-tasks-list"><p class="empty">جارٍ تحديث المهام...</p></div></section>
+<section class="panel agenda-home-panel" aria-labelledby="upcomingAgendaHeading">
+ <div class="panel-title-row"><h2 id="upcomingAgendaHeading">مواعيدي ومهامي القادمة</h2><button type="button" class="btn small" data-go="agenda">فتح الأجندة</button></div>
+ <p class="muted">مواعيد الأيام السبعة القادمة، بما فيها استدعاءات الأولياء المحفوظة في الوثائق.</p>
+ <div id="upcomingAgenda"><p class="empty">جارٍ تحديث المواعيد...</p></div>
+</section>
 
 <section class="panel smart-dashboard-panel" aria-labelledby="smartDashboardHeading">
 <div class="panel-title-row"><h2 id="smartDashboardHeading">ملخص الأسبوع ومؤشرات المتابعة</h2><span class="pill">آخر 7 أيام</span></div>
@@ -1620,6 +1625,7 @@ function ensureStudentAnalyticsDates(){if(!$('#analyticsFromDate')?.value||!$('#
 function render(){
 const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';
 if(activePage==='audit')renderAuditLog();
+if(activePage==='agenda')renderAgenda();
 if(activePage==='reports'){ensureStudentAnalyticsDates();renderStudentAnalytics();}
 if(activePage==='students')refreshStudentSectionOptions();
 const schoolName=String(db.settings.school||'ثانوية الشيخ بوعمامة'),schoolLocation=String(db.settings.location||'بوسكن – ولاية المدية');
@@ -1647,6 +1653,7 @@ dueSummons.slice(0,6).forEach(x=>{const ap=String(x.appointment),clock=ap.slice(
 pendingReasons.slice(0,6).forEach(x=>{taskMarkup.push('<div class="daily-task-item"><div class="task-copy"><span class="daily-task-kind">قيد التبرير</span><strong>'+esc(x.studentName||name(x.student))+'</strong><small>'+esc(x.type||'غياب')+' · '+esc(x.date||'تاريخ غير محدد')+' · القسم '+esc(x.class||'—')+'</small></div><button type="button" class="btn small" onclick="openTaskPage(\'attendance\')">مراجعة السجل</button></div>');});
 $('#dailyTasksList').innerHTML=taskMarkup.length?taskMarkup.join(''):'<p class="empty">لا توجد متابعة عاجلة خلال الساعات القادمة.</p>';
 renderSmartDashboard(today);
+renderAgendaHome(today);
 }
 
 
