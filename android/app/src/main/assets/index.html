@@ -1545,11 +1545,9 @@ function profileRecordBelongsToStudent(record,target,students){
  const sid=String(target.id),recordId=String(record.student??'').trim();
  if(recordId===sid)return true;
  if(recordId&&students.some(other=>String(other.id)===recordId))return false;
+ // إذا كان المعرّف القديم لم يعد موجوداً، نستخدم الاسم والقسم الصريحين في السجل القديم.
  const storedName=normalizeProfileStudentName(record.studentName||'');
- const legacyStudentName=normalizeProfileStudentName(recordId);
- // لا نُلحق سجلاً يحمل معرّفاً مختلفاً باسم مشابه؛ نسمح بالمطابقة القديمة عندما يكون حقل الطالب نفسه اسماً.
- if(recordId&&storedName&&legacyStudentName!==storedName)return false;
- const recordName=storedName||legacyStudentName;
+ const recordName=storedName||normalizeProfileStudentName(recordId);
  const targetName=normalizeProfileStudentName(String(target.last||'')+' '+String(target.first||''))||normalizeProfileStudentName(target.name||target.fullName||'');
  if(!recordName||recordName!==targetName)return false;
  const recordSection=normalizeProfileStudentSection(record.class||record.studentClass||record.sectionLabel||record.section||'');
