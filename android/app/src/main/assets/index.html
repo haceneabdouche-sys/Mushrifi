@@ -1643,7 +1643,7 @@ function buildDailyFollowupSnapshot(attendance,documents,agenda,today,nowValue,r
   tasks.push({kind:'pending',priority:'high',title:'تبرير ينتظر المراجعة',detail:(typeOf(x)==='تأخر'?'تأخر':'غياب')+' · '+x.date+' · '+String(x.class||x.studentClass||st.class||'قسم غير محدد'),studentId:String(st.id),recordId:id,page:'attendance'});
  });
  const summons=D.filter(x=>{
-  if(!x||!typeOf(x.type).includes('استدعاء')||!x.appointment||['done','completed','cancelled'].includes(String(x.status||'').toLowerCase()))return false;
+  if(!x||!String(x.type||'').trim().replace(/\\s+/g,'').includes('استدعاء')||!x.appointment||['done','completed','cancelled'].includes(String(x.status||'').toLowerCase()))return false;
   const t=new Date(x.appointment).getTime();return Number.isFinite(t)&&t>=now&&t<=end;
  }).slice().sort((a,b)=>new Date(a.appointment).getTime()-new Date(b.appointment).getTime());
  summons.forEach(x=>{const st=linked(x.student,x);tasks.push({kind:'summons',priority:'urgent',title:'موعد استدعاء ولي خلال 24 ساعة',detail:String(x.reason||'استدعاء ولي')+' · '+String(x.appointment).replace('T',' ')+(st?'':' · هوية غير مرتبطة ببطاقة مؤكدة'),studentId:st?String(st.id):'',documentId:safeRecordId(x),page:'documents'});});
