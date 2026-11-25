@@ -300,6 +300,30 @@ public class MainActivity extends Activity {
                 }
             });
         }
+        @JavascriptInterface public boolean hasAgendaNotificationChannelEnabled() {
+            return AgendaReminderScheduler.areAgendaNotificationsEnabled(MainActivity.this);
+        }
+        @JavascriptInterface public void openAgendaNotificationSettings() {
+            runOnUiThread(() -> {
+                Intent intent;
+                if (Build.VERSION.SDK_INT >= 26) {
+                    intent = new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS);
+                    intent.putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+                    intent.putExtra(Settings.EXTRA_CHANNEL_ID, AgendaReminderScheduler.CHANNEL_ID);
+                } else {
+                    intent = new Intent("android.settings.APP_NOTIFICATION_SETTINGS");
+                    intent.putExtra("app_package", getPackageName());
+                    intent.putExtra("app_uid", getApplicationInfo().uid);
+                }
+                try {
+                    startActivity(intent);
+                } catch (Exception unavailable) {
+                    Intent fallback = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        android.net.Uri.parse("package:" + getPackageName()));
+                    startActivity(fallback);
+                }
+            });
+        }
         @JavascriptInterface public boolean hasExactAlarmAccess() {
             return exactAlarmAccessGranted();
         }
