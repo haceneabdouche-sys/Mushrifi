@@ -105,6 +105,8 @@ jobs:
         run: node tests/reports-print-voice.test.cjs
       - name: Run student profile, bulk attendance and guardian messaging integrity tests
         run: node tests/student-profile-bulk-messaging.test.cjs
+      - name: Run student profile history and duration integrity tests
+        run: node tests/student-profile-integrity.test.cjs
       - name: Run notification permission and summons reminder integrity tests
         run: node tests/summons-notification-permissions.test.cjs
       - name: Run CSV import identity safety regression tests
