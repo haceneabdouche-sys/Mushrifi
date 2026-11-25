@@ -137,6 +137,19 @@ assert.ok(html.includes('db.followups=Array.isArray(data.followups)?data.followu
 assert.ok(html.includes('followups:followupsMissingInBackup?(Array.isArray(db.followups)?db.followups.slice():[]):obj.followups'),'legacy backup import retains existing follow-ups');
 assert.ok(html.includes('followupRecoveryNote')&&html.includes('المتابعات الموجودة حالياً على الهاتف'),'backup preview explains preservation of current follow-ups');
 assert.ok(html.includes('for(const kind of [\'attendance\',\'documents\',\'violations\',\'followups\'])'),'old student recovery can consider follow-up-linked student names');
+assert.ok(html.includes('for(const record of (Array.isArray(data[kind])?data[kind]:[])){'),'old backups without the optional follow-up list remain importable');
+const recoveryStudentsStart=html.indexOf('function recoverStudentsFromHistory(data){');
+const recoveryStudentsEnd=html.indexOf('async function importBackupText',recoveryStudentsStart);
+assert.ok(recoveryStudentsStart>=0&&recoveryStudentsEnd>recoveryStudentsStart,'student recovery function can be isolated for legacy backup tests');
+const recoveryStudentsSandbox={normalizeStudentKey:value=>String(value??'').trim().toLowerCase().replace(/\\s+/g,' '),makeStudentImportId:()=> 'generated-student-id'};
+vm.createContext(recoveryStudentsSandbox);
+vm.runInContext(html.slice(recoveryStudentsStart,recoveryStudentsEnd),recoveryStudentsSandbox);
+const oldBackupHistory={students:[target],attendance:[],documents:[],violations:[]};
+assert.equal(recoveryStudentsSandbox.recoverStudentsFromHistory(oldBackupHistory).recoveredCount,0,'legacy backup without followups is handled without throwing or changing student count');
+const followupOnlyHistory={students:[],attendance:[],documents:[],violations:[],followups:[{id:'old-followup',student:'old-student-id',studentName:'وائل عيسو',class:'1'}]};
+const recoveredFollowup=recoveryStudentsSandbox.recoverStudentsFromHistory(followupOnlyHistory);
+assert.equal(recoveredFollowup.recoveredCount,1,'student names can be recovered safely from follow-up records when necessary');
+assert.equal(recoveredFollowup.students[0].id,'old-student-id','follow-up-linked student identity remains stable');
 assert.ok(html.includes("for(const collection of ['students','attendance','documents','violations','followups','agenda']){"),'audit snapshot and audit event logic include follow-ups');
 
 console.log('PASS: follow-up validation, student identity and section safety, timeline/report inclusion, audit redaction, legacy database/backup/undo compatibility, and profile UI wiring.');
