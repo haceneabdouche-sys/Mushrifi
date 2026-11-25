@@ -261,7 +261,7 @@ public final class AgendaReminderScheduler {
                 android.util.Log.w("MushrifiAgenda", "Removed invalid stored reminder " + id, invalid);
             }
         }
-        deliverDue(context);
+        deliverDue(context, null);
     }
 
     static synchronized void deliverDue(Context context, String onlyId) {
