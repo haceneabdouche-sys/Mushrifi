@@ -113,6 +113,8 @@ jobs:
         run: node tests/exact-alarm-permission-status.test.cjs
       - name: Run smart daily dashboard regression tests
         run: node tests/smart-daily-dashboard.test.cjs
+      - name: Run actionable daily follow-up dashboard integrity tests
+        run: node tests/daily-followup-dashboard.test.cjs
       - name: Run agenda calendar, backup and audit integrity tests
         run: node tests/agenda-calendar.test.cjs
       - name: Run agenda Android notification scheduling regression tests
