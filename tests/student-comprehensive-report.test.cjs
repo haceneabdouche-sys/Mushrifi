@@ -63,7 +63,7 @@ assert.equal(data.summary.absenceHours,13,'only known absence hours are added');
 assert.equal(data.summary.unknownAbsenceHours,1,'missing or unreadable absence duration is shown separately');
 assert.equal(data.summary.latenessMinutes,27,'Arabic explicit minutes and legacy decimal hours are handled separately');
 assert.equal(data.summary.unknownLatenessMinutes,0,'both lateness durations are known');
-assert.equal(data.summary.notes,5,'attendance, violation and document notes are included');
+assert.equal(data.summary.notes,6,'attendance, violation and document notes are included');
 assert.equal(data.notes[0].date,'2026-10-09','notes are ordered newest first');
 assert.equal(data.summary.summons,1,'summons count is correct');
 assert.equal(data.summary.absenceNotices,1,'absence notice count is correct');
