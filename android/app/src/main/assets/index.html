@@ -2162,11 +2162,25 @@ window.printDoc=id=>{const d=db.documents.find(x=>String(x.id)===String(id));if(
 document.body.appendChild(preview);window.mushrifiPrintOpen=true;try{history.pushState({mushrifiPrintPreview:true,mushrifiPage:document.querySelector('.page:not(.hidden)')?.id||'documents'},'');}catch(e){}$('#mushrifiPrintNow').onclick=()=>window.print();$('#mushrifiPrintBack').onclick=()=>window.closeMushrifiPrintPreview(false);};
 const reportStudentMatches=()=>{const q=$('#reportStudentSearch').value.trim().toLocaleLowerCase('ar');return q?db.students.filter(st=>[st.first,st.last,st.class,st.schoolYear,st.branch].join(' ').toLocaleLowerCase('ar').includes(q)):db.students;};
 window.printReport=()=>{
- const output=$('#reportOutput');if(!output||!output.textContent.trim()||output.querySelector('.muted')){alert('اعرض التقرير أولاً قبل الطباعة.');return;}
+ const output=$('#reportOutput');
+ if(!output||!output.textContent.trim()||(!output.dataset.studentReportId&&output.querySelector('.muted'))){alert('اعرض التقرير أولاً قبل الطباعة.');return;}
+ const studentReport=output.dataset.reportKind==='student'&&!!output.dataset.studentReportId;
+ let bodyMarkup=output.innerHTML,brandTitle='مُشرِفي – تقرير الحياة المدرسية',backLabel='عودة إلى التقارير';
+ if(studentReport){
+  const target=db.students.find(item=>String(item.id)===String(output.dataset.studentReportId));
+  if(!target){alert('تعذر العثور على بطاقة التلميذ؛ لم يُنشأ التقرير.');return;}
+  const data=buildStudentReportData(target,db);
+  bodyMarkup=buildStudentPrintableReportMarkup(data);
+  brandTitle='مُشرِفي – التقرير الشامل للتلميذ';
+  backLabel='عودة إلى الملف الفردي';
+ }
  window.closeMushrifiPrintPreview(true);
  const preview=document.createElement('section');preview.id='mushrifiPrintPreview';preview.className='print-preview-overlay';
- const now=new Date().toLocaleDateString('ar-DZ');
- preview.innerHTML='<div class="print-preview-tools no-print"><button type="button" class="btn primary" id="mushrifiPrintNow">طباعة / حفظ PDF</button><button type="button" class="btn" id="mushrifiPrintBack">عودة إلى التقارير</button></div><article class="print-preview-paper report-print-paper" dir="rtl"><div class="report-heading"><h2>'+esc(db.settings.school||'ثانوية الشيخ بوعمامة')+'</h2><p>'+esc(db.settings.location||'بوسكن – ولاية المدية')+'</p><p>مُشرفي – تقرير الحياة المدرسية</p></div>'+output.innerHTML+'<div class="report-print-meta"><span>تاريخ استخراج التقرير: '+esc(now)+'</span><span>عدد التلاميذ المسجلين: '+db.students.length+'</span></div><div class="report-print-signatures"><span>إعداد التقرير</span><span>مدير المؤسسة / ختم الإدارة</span></div></article>';
+ const now=new Date().toLocaleString('ar-DZ');
+ const schoolHeading='<div class="report-heading"><h2>'+esc(db.settings.school||'ثانوية الشيخ بوعمامة')+'</h2><p>'+esc(db.settings.location||'بوسكن – ولاية المدية')+'</p><p>'+esc(brandTitle)+'</p></div>';
+ const signatureMarkup='<div class="report-print-signatures">'+(studentReport?'<span>إعداد التقرير<br>المشرف التربوي</span><span>اطلاع الولي / إمضاؤه</span><span>مدير المؤسسة / ختم الإدارة</span>':'<span>إعداد التقرير</span><span>مدير المؤسسة / ختم الإدارة</span>')+'</div>';
+ const metadata='<div class="report-print-meta"><span>تاريخ استخراج التقرير: '+esc(now)+'</span>'+(studentReport?'<span>نطاق التقرير: جميع السجلات المرتبطة بملف التلميذ</span>':'<span>عدد التلاميذ المسجلين: '+db.students.length+'</span>')+'</div>';
+ preview.innerHTML='<div class="print-preview-tools no-print"><button type="button" class="btn primary" id="mushrifiPrintNow">طباعة / حفظ PDF</button><button type="button" class="btn" id="mushrifiPrintBack">'+backLabel+'</button></div><article class="print-preview-paper report-print-paper" dir="rtl">'+schoolHeading+bodyMarkup+metadata+signatureMarkup+'</article>';
  document.body.appendChild(preview);window.mushrifiPrintOpen=true;try{history.pushState({mushrifiPrintPreview:true,mushrifiPage:'reports'},'');}catch(e){}
  $('#mushrifiPrintNow').onclick=()=>window.print();$('#mushrifiPrintBack').onclick=()=>window.closeMushrifiPrintPreview(false);
 };
