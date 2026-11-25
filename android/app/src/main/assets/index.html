@@ -1744,10 +1744,44 @@ function agendaEventMarkup(x,compact=false){
  return '<article class="agenda-event '+(x.status==='done'?'agenda-done':'')+'" data-agenda-event-id="'+esc(x.id)+'" data-agenda-base-id="'+esc(baseId)+'" data-repeat-occurrence="'+(isRepeat?'true':'false')+'"><div class="agenda-event-top"><strong>'+esc(x.title)+'</strong><span class="agenda-event-time">'+esc(time)+'</span></div><div class="agenda-event-meta"><span class="agenda-type agenda-type-'+esc(x.type)+'">'+esc(agendaTypeLabel(x.type))+'</span><span class="agenda-priority agenda-priority-'+esc(x.priority)+'">'+esc(agendaPriorityLabel(x.priority))+'</span><span>'+esc(x.source==='summons'?'من الوثائق':(x.status==='done'?'منجز':'مجدول'))+'</span>'+(x.repeatLabel?'<span class="agenda-repeat-chip">'+esc(x.repeatLabel)+'</span>':'')+'</div>'+(compact?'':'<div class="agenda-event-extra">'+(x.location?'<span>المكان: '+esc(x.location)+'</span>':'')+(studentName?'<span>التلميذ: '+esc(studentName)+'</span>':'')+(x.notes?'<p>'+esc(x.notes)+'</p>':'')+(x.repeatOccurrence?'<small class="muted">هذه مرة من سلسلة متكررة؛ تعديل أو حذف السلسلة يؤثر في مواعيدها الأخرى.</small>':'')+'</div>')+actions+'</article>';
 }
 
+
+function renderAgendaConflicts(result,range){
+ const panel=$('#agendaConflictPanel'),count=$('#agendaConflictCount'),hint=$('#agendaConflictHint'),list=$('#agendaConflictList');
+ if(!panel||!count||!hint||!list)return;
+ const conflicts=Array.isArray(result?.conflicts)?result.conflicts:[],total=conflicts.length;
+ panel.classList.toggle('has-conflicts',total>0);panel.classList.toggle('no-conflicts',total===0);
+ count.textContent=total.toLocaleString('ar-DZ')+' تعارض';
+ count.classList.toggle('agenda-conflict-count',total>0);
+ const scope=range&&range.from===range.to?agendaFormatDate(range.from):range?agendaFormatDate(range.from)+' — '+agendaFormatDate(range.to):'الفترة المعروضة';
+ hint.textContent='نتيجة فحص '+scope+'. تُقارن المواعيد التي لها ساعة بداية؛ الموعد ذو ساعة واحدة بلا نهاية يُعامل كنقطة زمنية. لا تُحسب المهام طوال اليوم أو السجلات ذات الوقت غير الصالح.';
+ if(result?.ignoredWithoutTime)hint.textContent+=' تم استبعاد '+Number(result.ignoredWithoutTime).toLocaleString('ar-DZ')+' مهام بلا ساعة بداية.';
+ if(result?.ignoredInvalidTime)hint.textContent+=' تم استبعاد '+Number(result.ignoredInvalidTime).toLocaleString('ar-DZ')+' سجلات ذات أوقات غير صالحة.';
+ if(!total){list.innerHTML='<p class="agenda-conflict-empty">لا توجد تعارضات زمنية مؤكدة في الفترة المعروضة.</p>';return;}
+ list.innerHTML=conflicts.map(conflict=>{
+  const first=conflict.first,second=conflict.second;
+  const sourceLabel=event=>event.source==='summons'?'استدعاء ولي':'أجندة';
+  const timeLabel=event=>String(event.startTime||'وقت غير محدد')+(event.endTime?' — '+String(event.endTime):'');
+  return '<article class="agenda-conflict-item" data-agenda-conflict-id="'+esc(conflict.id)+'"><div class="agenda-conflict-time">'+esc(agendaFormatDate(conflict.date))+' · '+esc(agendaConflictTimeLabel(conflict))+'</div><div class="agenda-conflict-pair"><div class="agenda-conflict-event"><strong>'+esc(first.title||'موعد دون عنوان')+'</strong><small>'+esc(sourceLabel(first))+' · '+esc(timeLabel(first))+'</small></div><span class="agenda-conflict-vs">يتعارض مع</span><div class="agenda-conflict-event"><strong>'+esc(second.title||'موعد دون عنوان')+'</strong><small>'+esc(sourceLabel(second))+' · '+esc(timeLabel(second))+'</small></div></div><button type="button" class="btn small" data-agenda-conflict-focus="true" data-conflict-date="'+esc(conflict.date)+'" data-conflict-first-id="'+esc(first.id)+'" data-conflict-second-id="'+esc(second.id)+'">عرض الموعدين في التقويم</button></article>';
+ }).join('');
+}
+function agendaFocusConflict(date,firstId,secondId){
+ if(!agendaValidDate(date))return;
+ agendaSelectedDate=date;agendaCurrentView='day';agendaCurrentTypeFilter='all';
+ if($('#agendaTypeFilter'))$('#agendaTypeFilter').value='all';
+ renderAgenda();
+ const wanted=new Set([String(firstId||''),String(secondId||'')].filter(Boolean));
+ const matches=[...document.querySelectorAll('[data-agenda-event-id]')].filter(node=>wanted.has(String(node.getAttribute('data-agenda-event-id'))));
+ matches.forEach(node=>node.classList.add('agenda-conflict-focus'));
+ if(matches[0]&&typeof matches[0].scrollIntoView==='function')matches[0].scrollIntoView({behavior:'smooth',block:'center'});
+}
+
 function renderAgenda(){
  const calendar=$('#agendaCalendar'),selected=$('#agendaSelectedItems');if(!calendar||!selected)return;
  const range=agendaRange();if(!range)return;
  const snapshot=agendaGetEvents(range.from,range.to),manual=Array.isArray(db.agenda)?db.agenda:[];
+ const conflictSource=buildAgendaSnapshot(manual,db.documents,range.from,range.to,id=>student(id));
+ const conflictResult=buildAgendaConflictSnapshot(conflictSource.items);
+ renderAgendaConflicts(conflictResult,range);
  refreshAgendaNotificationStatus();
  const d=new Date(),today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),week=agendaDateRange('week',today);
  const todaySnapshot=buildAgendaSnapshot(manual,db.documents,today,today,id=>student(id));
@@ -1779,6 +1813,7 @@ function renderAgenda(){
   box.querySelectorAll('[data-agenda-edit]').forEach(b=>b.addEventListener('click',()=>showAgendaForm(b.dataset.agendaEdit)));
   box.querySelectorAll('[data-agenda-delete]').forEach(b=>b.addEventListener('click',()=>agendaDelete(b.dataset.agendaDelete)));
   box.querySelectorAll('[data-agenda-open-doc]').forEach(b=>b.addEventListener('click',()=>openAgendaSummons(b.dataset.agendaOpenDoc)));
+  box.querySelectorAll('[data-agenda-conflict-focus]').forEach(b=>b.addEventListener('click',()=>agendaFocusConflict(b.dataset.conflictDate,b.dataset.conflictFirstId,b.dataset.conflictSecondId)));
  });
 }
 
