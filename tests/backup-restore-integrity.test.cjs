@@ -25,6 +25,8 @@ assert.equal(result.ok, true, 'a valid backup passes the identity scan');
 assert.equal(result.duplicateStudentIds.length, 0);
 assert.equal(result.duplicateRecordIds.length, 0);
 assert.equal(result.unresolvedStudentReferences, 1, 'a historical orphan reference is reported without being rewritten');
+assert.equal(result.unresolvedStudentReferencesByCollection.attendance, 1,
+  'orphaned historical links are localized to their source collection');
 assert.equal(result.legacyRecordsWithoutIds, 1, 'legacy records without independent IDs are reported');
 assert.equal(JSON.stringify(valid), original, 'the integrity scan never mutates backup content');
 
@@ -65,6 +67,8 @@ assert.match(html, /فحص سلامة المعرّفات/,
 const restoreStart = html.indexOf('function restorePendingBackup(){');
 const restoreEnd = html.indexOf('window.onNativeBackupLoaded=importBackupText;', restoreStart);
 assert.ok(restoreStart >= 0 && restoreEnd > restoreStart, 'restore handler can be isolated');
+const restoreSource = html.slice(restoreStart, restoreEnd);
+
 const restoreContext = {
   pendingBackupData: { students: [{ id: 'new' }], attendance: [], documents: [], violations: [], agenda: [], followups: [], settings: {} },
   pendingBackupInfo: {},
@@ -83,7 +87,7 @@ const restoreContext = {
   window: {}
 };
 vm.createContext(restoreContext);
-vm.runInContext(html.slice(restoreStart, restoreEnd), restoreContext);
+vm.runInContext(restoreSource, restoreContext);
 const oldDatabase = restoreContext.db;
 restoreContext.restorePendingBackup();
 assert.equal(restoreContext.db, oldDatabase, 'failed restore returns the in-memory database to its original state');
@@ -94,4 +98,31 @@ assert.equal(restoreContext.restoreInProgress, false, 'a failed restore releases
 assert.match(restoreContext.alertMessage, /الإبقاء على نقطة الاسترجاع المشفّرة/,
   'the user is told that the recovery point remains available');
 
-console.log('PASS: duplicate/missing stable identities are blocked, legacy orphan records are preserved and disclosed, and failed restore keeps its encrypted recovery point.');
+// Successful restore must explicitly select the native transactional path.
+let observedSaveOptions = null;
+const previewElement = { classList: { add() {} }, innerHTML: '' };
+const successContext = {
+  pendingBackupData: { students: [{ id: 'new' }], attendance: [], documents: [], violations: [], agenda: [], followups: [], settings: {} },
+  pendingBackupInfo: {},
+  db: { students: [{ id: 'old' }], attendance: [], documents: [], violations: [], agenda: [], followups: [], settings: {} },
+  AUDIT_LOG_LIMIT: 500,
+  restoreInProgress: false,
+  $: selector => selector === '#backupPreview' ? previewElement : null,
+  confirm: () => true,
+  saveUndoSnapshot: () => true,
+  save: options => { observedSaveOptions = options; return true; },
+  refreshUndoPanel: () => {},
+  render: () => {},
+  alert: message => { successContext.alertMessage = message; },
+  window: {}
+};
+vm.createContext(successContext);
+vm.runInContext(restoreSource, successContext);
+successContext.restorePendingBackup();
+assert.equal(observedSaveOptions.restore, true, 'restore uses the transaction-only save mode');
+assert.equal(successContext.db.students[0].id, 'new', 'successful restore adopts the staged backup');
+assert.equal(successContext.pendingBackupData, null, 'successful restore clears staged import data');
+assert.equal(successContext.restoreInProgress, false, 'successful restore releases its in-progress guard');
+assert.match(successContext.alertMessage, /تمت استعادة النسخة الاحتياطية بنجاح/);
+
+console.log('PASS: duplicate/missing stable identities are blocked, orphan history is disclosed by collection, and restore selects transaction mode while preserving rollback behavior.');
