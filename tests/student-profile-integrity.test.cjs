@@ -46,7 +46,7 @@ assert.equal(sandbox.profileLatenessMinutes({minutes:12,hours:0.2}),12,'explicit
 assert.equal(sandbox.profileLatenessMinutes({hours:0.25}),15,'legacy lateness hours convert to minutes');
 assert.equal(sandbox.profileLatenessMinutes({minutes:0,hours:1}),0,'an explicitly stored zero-minute value is preserved');
 
-const profileStart=html.indexOf('window.studentHistory=id=>{');
+const profileStart=html.indexOf('window.studentHistory=(id,focusFollowupId)=>{');
 const profileEnd=html.indexOf('window.closeMushrifiPrintPreview',profileStart);
 assert.ok(profileStart>=0&&profileEnd>profileStart,'student profile renderer exists');
 const profile=html.slice(profileStart,profileEnd);
