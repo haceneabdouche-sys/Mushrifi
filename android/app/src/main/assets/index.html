@@ -859,10 +859,36 @@ const AUDIT_REVERSIBLE_FIELDS={
  violations:['date','type','action']
 };
 const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة'};
+function auditFingerprintValue(value){
+ if(value&&typeof value==='object'&&Object.prototype.hasOwnProperty.call(value,'__auditFingerprint'))return value;
+ let text;
+ try{text=typeof value==='string'?value:JSON.stringify(value);}catch(_){text=String(value);}
+ if(text===undefined)text=String(value);
+ let hashA=2166136261,hashB=5381;
+ for(let i=0;i<text.length;i++){const code=text.charCodeAt(i);hashA=Math.imul(hashA^code,16777619);hashB=(Math.imul(hashB,33)^code)>>>0;}
+ return {__auditFingerprint:typeof value+':'+text.length+':'+(hashA>>>0).toString(16)+':'+hashB.toString(16)};
+}
 function auditComparableDatabase(source){
- const copy=JSON.parse(JSON.stringify(source||{}));
- delete copy.auditLog;
- return copy;
+ const input=source&&typeof source==='object'?source:{};
+ const result={students:[],attendance:[],documents:[],violations:[],settings:{}};
+ const auxiliary={students:['name','fullName'],attendance:['student','studentName'],documents:['student','studentName'],violations:['student','studentName']};
+ for(const collection of ['students','attendance','documents','violations']){
+  const safe=new Set(['id',...(AUDIT_FIELD_DEFINITIONS[collection]||[]).map(field=>field[0]),...(auxiliary[collection]||[])]);
+  const records=Array.isArray(input[collection])?input[collection]:[];
+  result[collection]=records.map(record=>{
+   const projected={};
+   Object.keys(record||{}).forEach(key=>{
+    const value=record[key];
+    if(safe.has(key)){projected[key]=value;return;}
+    if(value!==undefined&&value!==null&&value!==''&&value!==false)projected[key]=auditFingerprintValue(value);
+    else if(Object.prototype.hasOwnProperty.call(record,key))projected[key]=value;
+   });
+   return projected;
+  });
+ }
+ const settings=input.settings&&typeof input.settings==='object'?input.settings:{};
+ Object.keys(settings).forEach(key=>{result.settings[key]=auditFingerprintValue(settings[key]);});
+ return result;
 }
 function auditValuesEqual(a,b){
  if(a===b)return true;
@@ -917,7 +943,7 @@ function auditActionLabel(action){
  return action==='add'?'إضافة':action==='delete'?'حذف':action==='revert'?'استرجاع تعديل':action==='bulk'?'تغيير جماعي':'تعديل';
 }
 function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
- const before=beforeSnapshot||{},after=auditComparableDatabase(afterDatabase),makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2);
+ const before=auditComparableDatabase(beforeSnapshot||{}),after=auditComparableDatabase(afterDatabase),makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2);
  const opts=options||{},events=[];
  for(const collection of ['students','attendance','documents','violations']){
   const oldList=Array.isArray(before[collection])?before[collection]:[],newList=Array.isArray(after[collection])?after[collection]:[];
