@@ -1,57 +1,121 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
+
+process.env.TZ='Africa/Algiers';
 const html=fs.readFileSync('android/app/src/main/assets/index.html','utf8');
-const start=html.indexOf('function smartDashboardDateShift(');
-const end=html.indexOf('function openDailyDashboardTask(',start);
-assert.ok(start>=0&&end>start,'daily dashboard pure date and snapshot helpers are present');
-const sandbox={};
+const dailyStart=html.indexOf('function smartDashboardDateShift(');
+const dailyEnd=html.indexOf('function openDailyDashboardTask(',dailyStart);
+assert.ok(dailyStart>=0&&dailyEnd>dailyStart,'daily dashboard pure helpers exist before navigation actions');
+
+const sandbox={Date,Map,Set,Number,String,Array,Math};
 vm.createContext(sandbox);
-vm.runInContext(html.slice(start,end),sandbox);
+vm.runInContext(html.slice(dailyStart,dailyEnd),sandbox);
+const today='2026-11-25';
+const now=Date.parse('2026-11-25T08:00:00+01:00');
+
 const students={
- a:{id:'a',last:'عيسو',first:'وائل',schoolYear:'الأولى متوسط',class:'1'},
- b:{id:'b',last:'سارة',first:'ليلى',schoolYear:'الأولى متوسط',class:'2'}
+ s1:{id:'s1',last:'أحمد',first:'أمين',schoolYear:'السنة الأولى متوسط',class:'1',branch:''},
+ s2:{id:'s2',last:'ليلى',first:'سارة',schoolYear:'السنة الأولى متوسط',class:'1',branch:''},
+ s3:{id:'s3',last:'يوسف',first:'علي',schoolYear:'السنة الثانية متوسط',class:'2',branch:''}
 };
 const resolve=id=>students[String(id)]||null;
-const today='2026-11-25',now=Date.parse('2026-11-25T10:00:00+01:00');
 const attendance=[
- {id:'att1',student:'a',date:today,type:'غياب',justified:'غير مبرر',class:'1'},
- {id:'att2',student:'a',date:today,type:'تأخر',justified:'قيد التبرير',class:'1'},
- {id:'att3',student:'b',date:today,type:'غياب',justified:'مبرر',class:'2'},
- {id:'att4',student:'unknown',date:today,type:'غياب',justified:'غير مبرر',class:'X'},
- {id:'att5',student:'b',date:'2026-11-20',type:'تأخر',justified:'قيد التبرير',class:'2'},
- {id:'att6',student:'unknown',date:'2026-11-19',type:'غياب',justified:'قيد التبرير',class:'X'},
- {id:'att7',student:'a',date:'2026-02-31',type:'غياب',justified:'قيد التبرير'}
+ {id:'a1',student:'s1',date:today,type:'غياب',justified:'غير مبرر',class:'1'},
+ {id:'a2',student:'s1',date:today,type:' غياب ',justified:'مبرر',class:'1'},
+ {id:'a3',student:'s2',date:today,type:'غياب',justified:'مبرر',class:'1'},
+ {id:'a4',student:'s3',date:today,type:'تأخر',justified:'غير مبرر',class:'2'},
+ {id:'a5',student:'orphan',date:today,type:'غياب',justified:'غير مبرر',class:'?'},
+ {id:'a6',student:'s2',date:today,type:'تأخر',justified:'قيد التبرير',class:'1'},
+ {id:'a7',student:'s1',date:'2026-11-20',type:'غياب',justified:'قيد التبرير',class:'1'},
+ {id:'a8',student:'orphan',date:'2026-11-21',type:'تأخر',justified:'قيد التبرير',class:'?'},
+ {id:'old',student:'s1',date:'2026-11-18',type:'غياب',justified:'غير مبرر',class:'1'}
 ];
 const documents=[
- {id:'doc1',student:'a',type:'استدعاء ولي',appointment:'2026-11-25T16:00:00+01:00',reason:'حضور الولي'},
- {id:'doc2',student:'missing',type:'استدعاء ولي',appointment:'2026-11-26T09:00:00+01:00',reason:'سجل قديم غير مرتبط'},
- {id:'doc3',student:'a',type:'استدعاء ولي',appointment:'2026-11-26T11:01:00+01:00',reason:'خارج 24 ساعة'},
- {id:'doc4',student:'a',type:'استدعاء ولي',appointment:'2026-11-25T13:00:00+01:00',status:'cancelled'},
- {id:'doc5',student:'a',type:'وثيقة أخرى',appointment:'2026-11-25T14:00'}
+ {id:'d1',student:'s1',type:'استدعاء ولي',reason:'مراجعة الغياب',appointment:'2026-11-26T07:30:00+01:00'},
+ {id:'d2',student:'missing',type:'استدعاء ولي',reason:'ملف غير مرتبط',appointment:'2026-11-25T23:00:00+01:00'},
+ {id:'d3',student:'s2',type:'استدعاء ولي',appointment:'2026-11-26T09:01:00+01:00'},
+ {id:'d4',student:'s3',type:'استدعاء ولي',appointment:'2026-11-25T21:00:00+01:00',status:'cancelled'},
+ {id:'d5',student:'s1',type:'إشعار غياب',appointment:'2026-11-25T12:00:00+01:00'}
 ];
 const agenda=[
- {id:'ag1',title:'اجتماع الفريق',date:today,startTime:'12:30',status:'planned',priority:'high'},
- {id:'ag2',title:'مهمة منجزة',date:today,status:'done'},
- {id:'ag3',title:'غدًا',date:'2026-11-26',status:'planned'}
+ {id:'g1',title:'اجتماع مجلس التربية',date:today,startTime:'10:00',priority:'high',status:'planned',studentId:'s3'},
+ {id:'g2',title:'مهمة منجزة',date:today,startTime:'09:00',priority:'normal',status:'done'},
+ {id:'g3',title:'موعد الغد',date:'2026-11-26',startTime:'11:00',priority:'urgent',status:'planned'}
 ];
-const snapshot=sandbox.buildDailyFollowupSnapshot(attendance,documents,agenda,today,now,resolve);
-assert.deepEqual(JSON.parse(JSON.stringify(snapshot.today)),{absences:3,lateness:1,unjustified:2,pending:3},'daily metrics count records and keep pending justification separate');
-assert.equal(snapshot.summonsNext24h,2,'two upcoming summons fall within the next 24 hours; cancelled and later appointments are excluded');
-assert.equal(snapshot.unlinkedSummons,1,'an upcoming summons with unverified student identity remains visible without being linked');
-assert.equal(snapshot.unlinkedPending,1,'pending record with unsafe student link is counted for identity review');
-assert.equal(snapshot.agendaToday,1,'only open agenda tasks scheduled for today are counted');
-assert.equal(snapshot.sections.find(x=>x.label.includes('الأولى متوسط')&&x.label.endsWith('1')).absences,1,'known attendance is grouped by its verified section');
-assert.ok(snapshot.sections.some(x=>x.classified===false&&x.absences===1),'unlinked daily records are shown in an unclassified bucket, not assigned to a class');
-assert.ok(snapshot.tasks.some(x=>x.documentId==='doc2'&&!x.studentId),'unlinked summons remains actionable via documents but has no guessed student profile');
-assert.ok(snapshot.tasks.some(x=>x.recordId==='att6'&&x.kind==='unlinked'),'unlinked pending attendance remains actionable for data review');
-assert.ok(snapshot.tasks.some(x=>x.recordId==='att1'&&x.kind==='today'),'today unexcused record is included as an actionable task');
-assert.ok(snapshot.tasks.some(x=>x.agendaDate===today&&x.kind==='agenda'),'today agenda item is actionable');
-assert.equal(snapshot.totalTasks,snapshot.tasks.length,'task count equals complete task list before UI display limit');
-assert.equal(sandbox.buildDailyFollowupSnapshot(attendance,documents,agenda,'bad-date',now,resolve).totalTasks,0,'invalid dashboard date safely returns an empty snapshot');
-assert.equal(sandbox.buildDailyFollowupSnapshot(attendance,documents,agenda,today,NaN,resolve).totalTasks,0,'invalid clock input safely returns an empty snapshot');
-assert.ok(html.includes('id="dailyTodayAbsences"')&&html.includes('id="dailyTodayUnjustified"')&&html.includes('id="dailyPendingReasons"'),'dashboard displays same-day attendance and pending justification indicators');
-assert.ok(html.includes('id="dailySectionBreakdown"')&&html.includes('data-daily-record-id'),'section breakdown and record-specific follow-up actions are wired');
-assert.ok(html.includes('function openDailyDashboardTask')&&html.includes('row.scrollIntoView'),'attendance action navigates to and highlights the exact record');
-assert.ok(html.includes('renderDailyFollowupDashboard(today,Date.now());'),'smart daily dashboard refreshes with the home screen');
-console.log('PASS: smart daily follow-up metrics, due summons, pending justifications, section grouping, safe unlinked records, agenda tasks and exact-record navigation.');
+const violations=[
+ {id:'v1',student:'s1',date:today,type:'مشاجرة'},
+ {id:'v2',student:'s3',date:today,type:'تأخر عن النظام'},
+ {id:'v3',student:'s2',date:'2026-11-24',type:'أخرى'}
+];
+
+const snap=sandbox.buildDailyFollowupSnapshot(attendance,documents,agenda,violations,today,now,resolve);
+assert.deepEqual(JSON.parse(JSON.stringify(snap.today)),{absences:4,lateness:2,unjustified:3,pending:3,violations:2},'today cards count individual records and include current pending justifications');
+assert.equal(snap.summonsNext24h,2,'summons are limited to the upcoming rolling 24-hour window');
+assert.equal(snap.unlinkedSummons,1,'unlinked summons stay visible without inventing a student');
+assert.equal(snap.agendaToday,1,'completed appointments and future-day appointments are excluded from today agenda count');
+assert.equal(snap.unlinkedPending,1,'pending records with unknown identity are counted separately');
+assert.equal(snap.sections.length,3,'section breakdown groups students by school year and class, plus one unclassified bucket');
+const classOne=snap.sections.find(x=>x.label.includes('السنة الأولى متوسط'));
+assert.deepEqual(JSON.parse(JSON.stringify(classOne)),{label:'السنة الأولى متوسط — 1',absences:3,lateness:1,students:2,classified:true},'multiple students in the same section are aggregated together with record and student counts');
+const classTwo=snap.sections.find(x=>x.label.includes('السنة الثانية متوسط'));
+assert.deepEqual(JSON.parse(JSON.stringify(classTwo)),{label:'السنة الثانية متوسط — 2',absences:0,lateness:1,students:1,classified:true},'a separate class remains a separate section');
+const unclassified=snap.sections.find(x=>!x.classified);
+assert.deepEqual(JSON.parse(JSON.stringify(unclassified)),{label:'غير مصنف (هوية غير مؤكدة)',absences:1,lateness:0,students:0,classified:false},'unlinked student records remain visible as unclassified instead of being assigned by guess');
+assert.equal(snap.totalTasks,snap.tasks.length,'task total matches all actionable tasks before the UI display limit');
+assert.equal(snap.tasks[0].kind,'summons','urgent guardian visits sort before normal follow-ups');
+assert.equal(snap.tasks[1].kind,'summons','both upcoming guardian visits remain in the task list');
+assert.ok(snap.tasks.some(x=>x.kind==='unlinked'&&x.recordId==='a8'),'unlinked pending justification is surfaced for identity verification');
+assert.ok(snap.tasks.some(x=>x.kind==='summons'&&x.documentId==='d2'&&!x.studentId),'unlinked summons retains the original document action without an unsafe student link');
+assert.ok(snap.tasks.some(x=>x.kind==='agenda'&&x.title==='اجتماع مجلس التربية'&&x.studentId==='s3'),'today agenda tasks retain safe student linkage');
+assert.ok(!snap.tasks.some(x=>x.title==='مهمة منجزة'||x.title==='موعد الغد'),'completed and non-today appointments are excluded');
+
+const empty=sandbox.buildDailyFollowupSnapshot(null,null,null,null,'invalid',now,resolve);
+assert.equal(empty.totalTasks,0,'invalid date gives a safe empty dashboard');
+const noData=sandbox.buildDailyFollowupSnapshot([],[],[],[],today,now,resolve);
+assert.equal(noData.today.violations,0,'empty collections produce zero counts without throwing');
+
+const navSandbox={
+ window:{studentHistory:id=>navSandbox.actions.push(['profile',id])},
+ actions:[],
+ document:{querySelectorAll:()=>[]},
+ dateISO:()=>today,
+ agendaSelectedDate:'',
+ agendaCurrentView:'month',
+ go:page=>navSandbox.actions.push(['go',page]),
+ openAgendaSummons:id=>navSandbox.actions.push(['document',id])
+};
+vm.createContext(navSandbox);
+const navStart=html.indexOf('function openDailyDashboardTask(button){');
+const navEnd=html.indexOf('function renderDailyFollowupDashboard(',navStart);
+assert.ok(navStart>=0&&navEnd>navStart,'daily dashboard action router exists');
+vm.runInContext(html.slice(navStart,navEnd),navSandbox);
+navSandbox.openDailyDashboardTask({dataset:{dailyStudentId:'s1'}});
+assert.deepEqual(navSandbox.actions.pop(),['profile','s1'],'explicit student action opens the linked profile');
+navSandbox.openDailyDashboardTask({dataset:{dailyPage:'documents',dailyDocumentId:'d1'}});
+assert.deepEqual(navSandbox.actions.pop(),['document','d1'],'summons action opens the original document, not only the student profile');
+navSandbox.openDailyDashboardTask({dataset:{dailyPage:'agenda',dailyAgendaDate:today}});
+assert.deepEqual(navSandbox.actions.pop(),['go','agenda'],'agenda task opens agenda directly');
+assert.equal(navSandbox.agendaSelectedDate,today,'agenda action selects the exact appointment day');
+assert.equal(navSandbox.agendaCurrentView,'day','agenda action opens a focused day view');
+let focused=false,scrolled=false;
+const row={scrollIntoView:()=>{scrolled=true;},classList:{add:c=>{focused=c==='daily-task-focus';}},getAttribute:()=> 'a7'};
+navSandbox.document.querySelectorAll=()=>[row];
+navSandbox.openDailyDashboardTask({dataset:{dailyPage:'attendance',dailyRecordId:'a7'}});
+assert.deepEqual(navSandbox.actions.pop(),['go','attendance'],'pending justification action navigates to attendance records');
+assert.equal(scrolled,true,'matching attendance record is brought into view');
+assert.equal(focused,true,'matching attendance record receives a visible focus highlight');
+
+for(const id of ['dailyTodayAbsences','dailyTodayLateness','dailyTodayUnjustified','dailyPendingReasons','dailyTodayViolations','dailyTasksSubCount','dailySectionBreakdown','dailyTasksList']){
+ assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,'daily dashboard element ID is unique: '+id);
+}
+assert.ok(html.includes('لوحة المتابعة اليومية الذكية'),'dedicated smart daily dashboard heading is visible');
+assert.ok(html.includes('function renderDailyFollowupDashboard(today,nowValue)'),'daily dashboard has a dedicated renderer');
+assert.ok(html.includes('renderDailyFollowupDashboard(today,Date.now());'),'dashboard refreshes from saved current database on home view');
+assert.ok(html.includes("list.querySelectorAll('[data-daily-page],[data-daily-student-id]')"),'all task and profile buttons are wired after rendering');
+assert.ok(html.includes("if(s.totalTasks>10)"),'task list explains when more than ten tasks are available');
+assert.ok(html.includes("replace(/\\s+/g,'').includes('استدعاء')"),'summons type matching tolerates spaces in Arabic labels');
+assert.ok(html.includes('x.students.size'),'section aggregation counts distinct known students per section');
+assert.ok(html.includes('dailyTodayViolations'),'today violations are displayed in their own KPI');
+
+console.log('PASS: smart daily dashboard record counts, section aggregation, unlinked identity protection, rolling summons window, agenda status, task prioritization, action routing and mobile dashboard controls.');
