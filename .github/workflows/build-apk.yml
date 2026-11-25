@@ -138,6 +138,8 @@ jobs:
         run: node tests/student-comprehensive-report.test.cjs
       - name: Run comprehensive student timeline regression tests
         run: node tests/student-timeline.test.cjs
+      - name: Run student educational follow-up record integrity tests
+        run: node tests/student-followup-integrity.test.cjs
       - name: Run CSV import identity safety regression tests
         run: node tests/csv-import-identity-safety.test.cjs
       - name: Run easy navigation layout regression tests
