@@ -82,9 +82,9 @@ assert.ok(homeVoice > 0 && homeAgenda > homeVoice,
 assert.ok(html.includes('id="quickVoiceAccess"'), 'the optional quick voice shortcut is preserved');
 
 // Mobile navigation is pinned at the bottom and respects Android safe-area insets.
-assert.match(html, /#nav\{position:fixed;left:0;right:0;bottom:0;top:auto[\s\S]*?grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
 assert.ok(html.includes('#nav{position:fixed;left:0!important;right:0!important;bottom:0;top:auto;width:100%!important;max-width:none!important;transform:none!important;'),
-  'mobile navigation resets the centered desktop width and horizontal translation');
+  'mobile navigation overrides the centered desktop frame and fills the phone width');
+
 assert.ok(html.includes('grid-template-columns:repeat(5,minmax(0,1fr))'),
   'the full-width mobile navigation keeps five equal destinations');
 assert.match(html, /env\(safe-area-inset-bottom\)/);
