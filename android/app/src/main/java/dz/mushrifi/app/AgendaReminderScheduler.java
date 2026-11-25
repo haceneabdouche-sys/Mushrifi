@@ -282,8 +282,12 @@ public final class AgendaReminderScheduler {
                 continue;
             }
             if (!hasNotificationPermission(context)) {
-                item.put("waitingForPermission", true);
-                prefs.edit().putString(id, item.toString()).apply();
+                try {
+                    item.put("waitingForPermission", true);
+                    prefs.edit().putString(id, item.toString()).apply();
+                } catch (JSONException error) {
+                    android.util.Log.e("MushrifiAgenda", "Could not persist permission-waiting agenda reminder", error);
+                }
                 continue;
             }
             boolean posted = AgendaReminderReceiver.postNotification(context, item);
