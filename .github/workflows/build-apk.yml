@@ -105,6 +105,13 @@ jobs:
         run: node tests/backup-restore-integrity.test.cjs
       - name: Run backup manifest integrity and legacy compatibility tests
         run: node tests/backup-manifest-integrity.test.cjs
+      - name: Run native SHA-256 test vectors
+        run: |
+          mkdir -p /tmp/mushrifi-backup-integrity
+          javac -d /tmp/mushrifi-backup-integrity android/app/src/main/java/dz/mushrifi/app/BackupIntegrity.java tests/BackupIntegrityTest.java
+          java -cp /tmp/mushrifi-backup-integrity dz.mushrifi.app.BackupIntegrityTest
+      - name: Run native transactional restore contract tests
+        run: node tests/backup-native-transaction.test.cjs
       - name: Run reports, print and voice shortcut regression tests
         run: node tests/reports-print-voice.test.cjs
       - name: Run student profile, bulk attendance and guardian messaging integrity tests
