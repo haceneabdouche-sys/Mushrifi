@@ -686,7 +686,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 <div class="row"><div><label>اسم الولي</label><input name="guardian"></div><div><label>رقم الهاتف</label><input name="phone" type="tel" inputmode="tel" autocomplete="tel"></div></div>
 <div class="actions"><button class="btn primary" id="studentSubmit" type="submit">حفظ بطاقة التلميذ</button><button class="btn hidden" id="cancelStudentEdit" type="button">إلغاء التعديل</button></div></form></div>
 <details class="panel attendance-log section-setup"><summary><strong>إعداد المستويات والشعب والأقسام</strong><span class="muted">إضافة أو مراجعة القوائم الدراسية</span></summary><div class="section-setup-content"><p class="muted">أضف تركيبة جديدة عند الحاجة، وسيُدرج المستوى والشعبة والقسم تلقائيًا في القوائم المتدرجة.</p><form id="sectionForm"><div class="row"><div><label>المستوى</label><input name="schoolYear" placeholder="مثال: أولى" required></div><div><label>الشعبة</label><input name="branch" placeholder="مثال: علوم تجريبية" required></div><div><label>رقم القسم</label><input name="sectionNumber" placeholder="مثال: 2" required></div></div><button class="btn primary" type="submit">إضافة إلى القوائم</button></form><div id="sectionList" class="muted"></div></div></details>
-<div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count">0 تلميذ</span></div><input id="studentSearch" class="student-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="بحث في ملفات التلاميذ" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>اللقب والاسم</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+<div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count" role="status" aria-live="polite">0 تلميذ</span></div><input id="studentSearch" class="student-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="بحث في ملفات التلاميذ" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>اللقب والاسم</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
 <section id="attendance" class="page hidden">
  <div class="panel attendance-workspace"><h2>تسجيل الغياب اليومي للقسم</h2><p class="muted">اختر القسم والتاريخ، ثم حدّد الغائبين فقط. تُحفظ السجلات دفعة واحدة مع ساعات الغياب والتبرير والملاحظات.</p>
@@ -898,14 +898,15 @@ function resolveIndividualAbsenceHours(period,enteredHours,timetableHours){
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function normalizeDirectorySearch(value){
 return String(value??'').normalize('NFKC').toLocaleLowerCase('ar')
-.replace(/[\\u064B-\\u065F\\u0670\\u06D6-\\u06ED]/g,'')
-.replace(/\\u0640/g,'')
+.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g,'')
+.replace(/\u0640/g,'')
 .replace(/[أإآٱ]/g,'ا')
 .replace(/ى/g,'ي')
 .replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))
 .replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
-.replace(/\\s+/g,' ').trim();
+.replace(/\s+/g,' ').trim();
 }
+
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
 const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.name||s.fullName||'—';for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>normalizeStudentKey(x.student)===normalizeStudentKey(id)&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
