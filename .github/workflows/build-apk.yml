@@ -111,6 +111,8 @@ jobs:
         run: node tests/summons-notification-permissions.test.cjs
       - name: Run exact alarm permission status regression tests
         run: node tests/exact-alarm-permission-status.test.cjs
+      - name: Run smart daily dashboard regression tests
+        run: node tests/smart-daily-dashboard.test.cjs
       - name: Run CSV import identity safety regression tests
         run: node tests/csv-import-identity-safety.test.cjs
       - name: Run easy navigation layout regression tests
