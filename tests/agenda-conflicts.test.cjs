@@ -72,7 +72,7 @@ assert.equal(recurrentConflicts.conflicts[0].second.id,'daily-meeting','one-off 
 
 const docs=[
  {id:'summons-1',student:'s1',type:'استدعاء ولي',appointment:day+'T09:45',reason:'مراجعة الغياب'},
- {id:'summons-duplicate',student:'s1',type:'استدعاء ولي',appointment:day+'T09:45'},
+ {id:'summons-1',student:'s1',type:'استدعاء ولي',appointment:day+'T09:45'},
  {id:'summons-no-time',student:'s1',type:'استدعاء ولي',appointment:day},
 ];
 const before=JSON.stringify(docs);
