@@ -68,6 +68,7 @@ assert.ok(html.includes('id="quickVoiceAccess"'), 'the optional quick voice shor
 // Mobile navigation is pinned at the bottom and respects Android safe-area insets.
 assert.match(html, /#nav\{position:fixed;left:0;right:0;bottom:0;top:auto[\s\S]*?grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
 assert.match(html, /env\(safe-area-inset-bottom\)/);
+assert.match(html, /header \.credit-signature-wrap\{width:58px;height:58px/);
 assert.match(html, /header \.credit-signature\{width:58px;height:58px/);
 assert.match(html, /\.page-context-bar/);
 assert.match(html, /\.followup-tabs/);
