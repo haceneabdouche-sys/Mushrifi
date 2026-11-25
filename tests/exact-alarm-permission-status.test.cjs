@@ -15,7 +15,7 @@ assert.ok(java.includes('alarms != null && alarms.canScheduleExactAlarms()'), 'A
 assert.ok(java.includes('@JavascriptInterface public boolean hasExactAlarmAccess() {\n            return exactAlarmAccessGranted();'), 'the web bridge uses the native permission result');
 assert.ok(java.includes('private void notifyExactAlarmPermissionState()'), 'native layer exposes a permission-state callback');
 assert.ok(java.includes('window.onMushrifiExactAlarmPermissionChanged && window.onMushrifiExactAlarmPermissionChanged('), 'native callback sends exact-alarm state');
-assert.ok(java.includes('rescheduleStoredReminders();\n        AgendaReminderScheduler.rescheduleAll(this);\n        notifyExactAlarmPermissionState();'), 'returning from Android settings refreshes permission status and rebuilds agenda alarms');
+assert.ok(java.includes('rescheduleStoredReminders();\n        AgendaReminderScheduler.rescheduleAll(this);\n        StudentFollowupReminderScheduler.rescheduleAll(this);\n        notifyExactAlarmPermissionState();'), 'returning from Android settings refreshes permission status and rebuilds agenda alarms');
 assert.ok(java.includes('alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending)'), 'exact alarms are used when Android grants access');
 assert.ok(java.includes('alarms.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminderMillis, pending)'), 'safe inexact fallback remains when exact alarms are unavailable');
 assert.ok(java.includes('Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM'), 'user can open Android exact-alarm access settings');
