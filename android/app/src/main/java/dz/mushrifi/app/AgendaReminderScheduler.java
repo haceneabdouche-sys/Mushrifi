@@ -78,15 +78,16 @@ public final class AgendaReminderScheduler {
             String id = entry.getKey();
             JSONObject next = entry.getValue();
             JSONObject old = readItem(prefs, id);
-            if (old != null && sameSchedule(old, next) && old.optBoolean("delivered", false)) {
-                // The reminder has already been posted for this exact date/time/lead.
-                // A title edit must not make it fire for a second time.
-                next.put("delivered", true);
-            } else {
-                scheduleKeys.add(id);
-                if (old != null && sameSchedule(old, next) && old.optBoolean("waitingForPermission", false)) {
+            if (old != null && sameSchedule(old, next)) {
+                if (old.optBoolean("delivered", false)) {
+                    // The reminder has already been posted for this exact date/time/lead.
+                    // A title edit must not make it fire for a second time.
+                    next.put("delivered", true);
+                } else if (old.optBoolean("waitingForPermission", false)) {
                     next.put("waitingForPermission", true);
                 }
+            } else {
+                scheduleKeys.add(id);
             }
             nextStored.put(id, next);
         }
@@ -100,17 +101,26 @@ public final class AgendaReminderScheduler {
 
         for (String id : cancelKeys) cancel(context, id);
         int scheduled = 0;
+        int failedToSchedule = 0;
         for (String id : scheduleKeys) {
-            if (schedule(context, nextStored.get(id))) scheduled++;
+            if (schedule(context, nextStored.get(id))) {
+                scheduled++;
+            } else {
+                failedToSchedule++;
+                cancelAlarmOnly(context, id);
+                prefs.edit().remove(id).commit();
+            }
         }
         deliverDue(context, null);
         JSONObject result = new JSONObject();
-        result.put("ok", true);
-        result.put("active", desired.size());
+        result.put("ok", failedToSchedule == 0);
+        result.put("active", desired.size() - failedToSchedule);
         result.put("updated", scheduled);
+        result.put("failedToSchedule", failedToSchedule);
         result.put("cancelled", cancelKeys.size());
         result.put("expired", expired);
         result.put("exact", hasExactAlarmAccess(context));
+        if (failedToSchedule > 0) result.put("error", "تعذر جدولة " + failedToSchedule + " تنبيه(ات)؛ أعد فتح الأجندة بعد مراجعة صلاحيات الهاتف.");
         return result;
     }
 
@@ -275,8 +285,13 @@ public final class AgendaReminderScheduler {
                 try {
                     item.put("delivered", true);
                     item.remove("waitingForPermission");
-                    prefs.edit().putString(id, item.toString()).commit();
-                    cancelAlarmOnly(context, id);
+                    if (prefs.edit().putString(id, item.toString()).commit()) {
+                        cancelAlarmOnly(context, id);
+                    } else {
+                        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+                        if (manager != null) manager.cancel(("agenda:" + id).hashCode());
+                        android.util.Log.e("MushrifiAgenda", "Could not persist delivered state; notification withdrawn to avoid duplicates");
+                    }
                 } catch (JSONException error) {
                     android.util.Log.e("MushrifiAgenda", "Could not mark agenda reminder as delivered", error);
                 }
