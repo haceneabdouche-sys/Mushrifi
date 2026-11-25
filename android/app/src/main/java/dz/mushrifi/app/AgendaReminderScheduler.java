@@ -51,7 +51,7 @@ public final class AgendaReminderScheduler {
             if (!AgendaReminderPlanner.isAllowedLeadMinutes(lead)) throw new IllegalArgumentException("خيار التذكير للموعد «" + title + "» غير صالح.");
             long appointmentAt = AgendaReminderPlanner.appointmentMillis(eventDate, eventTime, null);
             long reminderAt = AgendaReminderPlanner.reminderMillis(eventDate, eventTime, lead, null);
-            if (appointmentAt <= now || reminderAt <= now) { expired++; continue; }
+            if (appointmentAt <= now || reminderAt <= now - MAX_LATE_DELIVERY_MS) { expired++; continue; }
             JSONObject stored = new JSONObject();
             stored.put("id", id);
             stored.put("title", title);
@@ -88,6 +88,7 @@ public final class AgendaReminderScheduler {
         for (String id : scheduleKeys) {
             if (schedule(context, desired.get(id))) scheduled++;
         }
+        deliverDue(context, null);
         JSONObject result = new JSONObject();
         result.put("ok", true);
         result.put("active", desired.size());
@@ -162,10 +163,9 @@ public final class AgendaReminderScheduler {
         intent.setAction(ACTION);
         intent.setData(Uri.parse("mushrifi://agenda-reminder/" + Uri.encode(id)));
         intent.putExtra("agenda_id", id);
-        return PendingIntent.getBroadcast(
-            context, id.hashCode(), intent,
-            extraFlags | PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
+        int flags = PendingIntent.FLAG_IMMUTABLE | extraFlags;
+        if ((extraFlags & PendingIntent.FLAG_NO_CREATE) == 0) flags |= PendingIntent.FLAG_UPDATE_CURRENT;
+        return PendingIntent.getBroadcast(context, id.hashCode(), intent, flags);
     }
 
     public static synchronized void cancelAll(Context context) {
