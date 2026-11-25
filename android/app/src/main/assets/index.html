@@ -924,10 +924,10 @@ function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
    continue;
   }
   operations.forEach(op=>{
-   const item=op.after||op.before,diff=op.diff||auditFieldDiff(collection,null,null);
-   let changes=diff.changes||[],restrictedFields=diff.restrictedFields||[];
-   if(op.action==='add')diff=auditFieldDiff(collection,null,item),changes=diff.changes,restrictedFields=diff.restrictedFields;
-   if(op.action==='delete')diff=auditFieldDiff(collection,item,null),changes=diff.changes,restrictedFields=diff.restrictedFields;
+   const item=op.after||op.before;
+   let diff=op.diff||auditFieldDiff(collection,null,null),changes=diff.changes||[],restrictedFields=diff.restrictedFields||[];
+   if(op.action==='add'){diff=auditFieldDiff(collection,null,item);changes=diff.changes;restrictedFields=diff.restrictedFields;}
+   if(op.action==='delete'){diff=auditFieldDiff(collection,item,null);changes=diff.changes;restrictedFields=diff.restrictedFields;}
    const entityLabel=auditRecordLabel(collection,item,op.after?after:before);
    const title=AUDIT_ENTITY_LABELS[collection]||'سجل';
    const verb=opts.revertsId?'revert':op.action;
