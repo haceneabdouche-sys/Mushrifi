@@ -8,7 +8,7 @@ const html=fs.readFileSync('android/app/src/main/assets/index.html','utf8');
 const agendaStart=html.indexOf('function agendaValidDate(v){');
 const agendaEnd=html.indexOf('let agendaCurrentView=',agendaStart);
 assert.ok(agendaStart>=0&&agendaEnd>agendaStart,'agenda date and aggregation helpers exist before UI state');
-const agendaSandbox={Date,String};
+const agendaSandbox={Date,String,window:{},document:{querySelectorAll:()=>[]}};
 vm.createContext(agendaSandbox);
 vm.runInContext(html.slice(agendaStart,agendaEnd),agendaSandbox);
 
