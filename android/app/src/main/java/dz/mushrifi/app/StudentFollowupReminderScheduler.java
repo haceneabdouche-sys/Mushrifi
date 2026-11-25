@@ -92,7 +92,10 @@ public final class StudentFollowupReminderScheduler {
             if (old != null && sameSchedule(old, next)) {
                 if (old.optBoolean("delivered", false)) next.put("delivered", true);
                 if (old.optBoolean("waitingForPermission", false)) next.put("waitingForPermission", true);
-                if (old.optBoolean("waitingForScheduling", false)) next.put("waitingForScheduling", true);
+                if (old.optBoolean("waitingForScheduling", false)) {
+                    next.put("waitingForScheduling", true);
+                    scheduleKeys.add(id);
+                }
             } else {
                 scheduleKeys.add(id);
             }
@@ -115,6 +118,10 @@ public final class StudentFollowupReminderScheduler {
             if (item.optLong("reminderAt", 0L) <= now) continue;
             if (schedule(context, item)) {
                 scheduled++;
+                if (item.optBoolean("waitingForScheduling", false)) {
+                    item.remove("waitingForScheduling");
+                    prefs.edit().putString(id, item.toString()).apply();
+                }
             } else {
                 failedToSchedule++;
                 cancelAlarmOnly(context, id);
