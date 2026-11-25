@@ -1542,20 +1542,28 @@ function agendaRange(){if(agendaCurrentView==='month'){const x=agendaMonthGrid(a
 function agendaGetEvents(from,to){const s=buildAgendaSnapshot(db.agenda,db.documents,from,to,id=>student(id));s.items=agendaCurrentTypeFilter==='all'?s.items:s.items.filter(x=>x.type===agendaCurrentTypeFilter);return s;}
 function agendaEventMarkup(x,compact=false){
  const time=x.startTime?(x.endTime?x.startTime+'–'+x.endTime:x.startTime):'طوال اليوم',studentName=x.student?(String(x.student.last||'')+' '+String(x.student.first||'')).trim():'';
- const actions=x.source==='summons'?'<button type="button" class="btn small" data-agenda-open-doc="'+esc(x.documentId)+'">فتح وثيقة الاستدعاء</button>':'<div class="agenda-item-actions"><button type="button" class="btn small" data-agenda-toggle="'+esc(x.id)+'">'+(x.status==='done'?'إعادة فتح':'تم الإنجاز')+'</button><button type="button" class="btn small" data-agenda-edit="'+esc(x.id)+'">تعديل</button><button type="button" class="btn small danger" data-agenda-delete="'+esc(x.id)+'">حذف</button></div>';
- return '<article class="agenda-event '+(x.status==='done'?'agenda-done':'')+'" data-agenda-event-id="'+esc(x.id)+'"><div class="agenda-event-top"><strong>'+esc(x.title)+'</strong><span class="agenda-event-time">'+esc(time)+'</span></div><div class="agenda-event-meta"><span class="agenda-type agenda-type-'+esc(x.type)+'">'+esc(agendaTypeLabel(x.type))+'</span><span class="agenda-priority agenda-priority-'+esc(x.priority)+'">'+esc(agendaPriorityLabel(x.priority))+'</span><span>'+esc(x.source==='summons'?'من الوثائق':(x.status==='done'?'منجز':'مجدول'))+'</span></div>'+(compact?'':'<div class="agenda-event-extra">'+(x.location?'<span>المكان: '+esc(x.location)+'</span>':'')+(studentName?'<span>التلميذ: '+esc(studentName)+'</span>':'')+(x.notes?'<p>'+esc(x.notes)+'</p>':'')+'</div>')+actions+'</article>';
+ const baseId=String(x.baseId||x.id),occurrenceDate=String(x.occurrenceDate||x.date),isRepeat=!!x.repeatOccurrence;
+ const actions=x.source==='summons'?'<button type="button" class="btn small" data-agenda-open-doc="'+esc(x.documentId)+'">فتح وثيقة الاستدعاء</button>':
+  '<div class="agenda-item-actions"><button type="button" class="btn small" data-agenda-toggle="'+esc(baseId)+'" data-agenda-occurrence-date="'+esc(occurrenceDate)+'">'+(x.status==='done'?'إعادة فتح':'تم الإنجاز')+'</button>'+
+  (isRepeat&&x.status!=='done'?'<button type="button" class="btn small" data-agenda-skip="'+esc(baseId)+'" data-agenda-occurrence-date="'+esc(occurrenceDate)+'">تخطي هذه المرة</button>':'')+
+  '<button type="button" class="btn small" data-agenda-edit="'+esc(baseId)+'">تعديل'+(isRepeat?' السلسلة':'')+'</button><button type="button" class="btn small danger" data-agenda-delete="'+esc(baseId)+'">حذف'+(isRepeat?' السلسلة':'')+'</button></div>';
+ return '<article class="agenda-event '+(x.status==='done'?'agenda-done':'')+'" data-agenda-event-id="'+esc(x.id)+'" data-agenda-base-id="'+esc(baseId)+'"><div class="agenda-event-top"><strong>'+esc(x.title)+'</strong><span class="agenda-event-time">'+esc(time)+'</span></div><div class="agenda-event-meta"><span class="agenda-type agenda-type-'+esc(x.type)+'">'+esc(agendaTypeLabel(x.type))+'</span><span class="agenda-priority agenda-priority-'+esc(x.priority)+'">'+esc(agendaPriorityLabel(x.priority))+'</span><span>'+esc(x.source==='summons'?'من الوثائق':(x.status==='done'?'منجز':'مجدول'))+'</span>'+(x.repeatLabel?'<span class="agenda-repeat-chip">'+esc(x.repeatLabel)+'</span>':'')+'</div>'+(compact?'':'<div class="agenda-event-extra">'+(x.location?'<span>المكان: '+esc(x.location)+'</span>':'')+(studentName?'<span>التلميذ: '+esc(studentName)+'</span>':'')+(x.notes?'<p>'+esc(x.notes)+'</p>':'')+(x.repeatOccurrence?'<small class="muted">هذه مرة من سلسلة متكررة؛ تعديل أو حذف السلسلة يؤثر في مواعيدها الأخرى.</small>':'')+'</div>')+actions+'</article>';
 }
+
 function renderAgenda(){
  const calendar=$('#agendaCalendar'),selected=$('#agendaSelectedItems');if(!calendar||!selected)return;
  const range=agendaRange();if(!range)return;
- const snapshot=agendaGetEvents(range.from,range.to),all=buildAgendaSnapshot(db.agenda,db.documents,'0001-01-01','9999-12-31',id=>student(id));
+ const snapshot=agendaGetEvents(range.from,range.to),manual=Array.isArray(db.agenda)?db.agenda:[];
  refreshAgendaNotificationStatus();
  const d=new Date(),today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),week=agendaDateRange('week',today);
- const weekEvents=week?buildAgendaSnapshot(db.agenda,db.documents,week.from,week.to,id=>student(id)).items:[];
- const todayEvents=all.items.filter(x=>x.date===today),manual=Array.isArray(db.agenda)?db.agenda:[];
- $('#agendaStoredCount').textContent=manual.length.toLocaleString('ar-DZ')+' موعد محفوظ';
+ const todaySnapshot=buildAgendaSnapshot(manual,db.documents,today,today,id=>student(id));
+ const weekEvents=week?buildAgendaSnapshot(manual,db.documents,week.from,week.to,id=>student(id)).items:[];
+ const todayEvents=todaySnapshot.items;
+ $('#agendaStoredCount').textContent=manual.length.toLocaleString('ar-DZ')+' موعد أو سلسلة محفوظة';
  $('#agendaTodayCount').textContent=todayEvents.length.toLocaleString('ar-DZ');$('#agendaWeekCount').textContent=weekEvents.length.toLocaleString('ar-DZ');
- $('#agendaOpenCount').textContent=manual.filter(x=>x.status!=='done'&&x.status!=='cancelled').length.toLocaleString('ar-DZ');$('#agendaDoneCount').textContent=manual.filter(x=>x.status==='done').length.toLocaleString('ar-DZ');
+ $('#agendaOpenCount').textContent=manual.filter(x=>x.status!=='done'&&x.status!=='cancelled').length.toLocaleString('ar-DZ');
+ const doneCount=manual.reduce((total,item)=>total+(item.status==='done'?1:(Array.isArray(item.repeatCompletedDates)?new Set(item.repeatCompletedDates.filter(agendaValidDate)).size:0)),0);
+ $('#agendaDoneCount').textContent=doneCount.toLocaleString('ar-DZ');
  $('#agendaSelectedDate').value=agendaSelectedDate;document.querySelectorAll('[data-agenda-view]').forEach(b=>b.classList.toggle('active',b.dataset.agendaView===agendaCurrentView));
  const weekdays=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],byDate=new Map();snapshot.items.forEach(x=>{if(!byDate.has(x.date))byDate.set(x.date,[]);byDate.get(x.date).push(x);});
  $('#agendaRangeHeading').textContent=agendaCurrentView==='month'?'أجندة شهر '+agendaFormatDate(agendaSelectedDate,{year:'numeric',month:'long'}):agendaCurrentView==='week'?'أسبوع '+agendaFormatDate(agendaSelectedDate,{year:'numeric',month:'short',day:'numeric'}):'عرض يوم '+agendaFormatDate(agendaSelectedDate);
@@ -1569,15 +1577,17 @@ function renderAgenda(){
  $('#agendaSelectedHeading').textContent='مواعيد '+agendaFormatDate(agendaSelectedDate);$('#agendaSelectedCount').textContent=selectedItems.length.toLocaleString('ar-DZ');
  selected.innerHTML=selectedItems.length?selectedItems.map(x=>agendaEventMarkup(x)).join(''):'<p class="empty">لا توجد مواعيد أو مهام في هذا اليوم.</p>';
  $('#agendaSelectedItems').closest('.agenda-selected-panel')?.classList.toggle('hidden',agendaCurrentView==='day');
- if(snapshot.invalidManual||snapshot.invalidSummons)calendar.insertAdjacentHTML('beforeend','<p class="notice">تعذر عرض '+snapshot.invalidManual+' موعد يدوي و'+snapshot.invalidSummons+' استدعاء بسبب بيانات أو تاريخ غير صالح؛ لم تُحذف السجلات.</p>');
+ if(snapshot.invalidManual||snapshot.invalidSummons)calendar.insertAdjacentHTML('beforeend','<p class="notice">تعذر عرض '+snapshot.invalidManual+' موعد أو سلسلة و'+snapshot.invalidSummons+' استدعاء بسبب بيانات أو تاريخ غير صالح؛ لم تُحذف السجلات.</p>');
  [calendar,selected].forEach(box=>{
   box.querySelectorAll('[data-agenda-select-date]').forEach(b=>b.addEventListener('click',()=>{agendaSelectedDate=b.dataset.agendaSelectDate;renderAgenda();}));
-  box.querySelectorAll('[data-agenda-toggle]').forEach(b=>b.addEventListener('click',()=>agendaToggleStatus(b.dataset.agendaToggle)));
+  box.querySelectorAll('[data-agenda-toggle]').forEach(b=>b.addEventListener('click',()=>agendaToggleStatus(b.dataset.agendaToggle,b.dataset.agendaOccurrenceDate)));
+  box.querySelectorAll('[data-agenda-skip]').forEach(b=>b.addEventListener('click',()=>agendaSkipOccurrence(b.dataset.agendaSkip,b.dataset.agendaOccurrenceDate)));
   box.querySelectorAll('[data-agenda-edit]').forEach(b=>b.addEventListener('click',()=>showAgendaForm(b.dataset.agendaEdit)));
   box.querySelectorAll('[data-agenda-delete]').forEach(b=>b.addEventListener('click',()=>agendaDelete(b.dataset.agendaDelete)));
   box.querySelectorAll('[data-agenda-open-doc]').forEach(b=>b.addEventListener('click',()=>openAgendaSummons(b.dataset.agendaOpenDoc)));
  });
 }
+
 function showAgendaForm(id){
  if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن إضافة المواعيد قبل تفعيل الترخيص.');return;}
  const form=$('#agendaForm'),panel=$('#agendaFormPanel'),studentSelect=$('#agendaStudent');if(!form||!panel)return;
