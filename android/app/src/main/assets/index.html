@@ -624,6 +624,56 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 @media(max-width:680px){.analytics-two-charts{grid-template-columns:1fr}.analytics-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-date-controls{align-items:stretch}.analytics-date-controls>button{width:100%}.analytics-bar-row{grid-template-columns:58px minmax(0,1fr) 24px}}
 @media print{.student-analytics-panel .no-print{display:none!important}.analytics-two-charts{grid-template-columns:repeat(2,minmax(0,1fr))}.analytics-ranking table{min-width:0!important;font-size:8pt!important}}
 
+
+/* Comprehensive individual student report — print/PDF layout */
+.student-profile-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.student-profile-heading{padding:10px 0 12px;border-bottom:2px solid var(--gold);margin-bottom:12px}
+.student-profile-heading h2{margin:4px 0;text-align:center}
+.student-profile-heading h3{margin:4px 0;text-align:center;color:var(--navy)}
+.student-profile-info .stat{min-width:0}
+.student-report-method-note{padding:9px 11px;background:#f8f7f0;border-right:3px solid var(--gold);border-radius:7px;color:#6e5b2d;font-size:11px;line-height:1.8}
+.student-report-footnote{margin-top:16px;padding-top:9px;border-top:1px solid #cbd5dc;color:#586b78;font-size:10px;line-height:1.8}
+.student-report-document{color:#172b3a;line-height:1.75;font-size:10.5pt}
+.student-report-main-title{text-align:center;padding:0 0 10px;border-bottom:2px solid #d6b46b;margin-bottom:14px}
+.student-report-main-title h1{margin:0;font-size:21px;color:#173b58}
+.student-report-main-title p{margin:2px 0;color:#657987;font-size:11px}
+.student-report-section{margin:14px 0 17px;min-width:0}
+.student-report-section>h2{font-size:14px;margin:0 0 8px;padding:6px 9px;background:#edf3f7;border-right:3px solid #286b91;color:#173b58;break-after:avoid}
+.student-report-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.student-report-info-item{min-width:0;padding:8px 9px;border:1px solid #dce5eb;border-radius:7px;background:#fbfcfd}
+.student-report-info-item small{display:block;color:#607485;font-size:9px}
+.student-report-info-item strong{display:block;font-size:11px;overflow-wrap:anywhere}
+.student-report-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.student-report-kpi{min-width:0;border:1px solid #dce5eb;border-radius:7px;padding:8px;background:#f8fafc;break-inside:avoid}
+.student-report-kpi small{display:block;color:#607485;font-size:9px;line-height:1.5}
+.student-report-kpi strong{display:block;color:#173b58;font-size:17px;margin-top:3px;overflow-wrap:anywhere}
+.student-report-method-note{margin:9px 0 0;font-size:9px}
+.student-report-statuses{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 8px;padding:7px 9px;background:#f8fafb;border:1px solid #e1e8ed;border-radius:7px;font-size:9px}
+.student-report-statuses span{white-space:nowrap}
+.student-report-table-wrap{max-width:100%;overflow:visible}
+.student-report-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;margin:6px 0 11px}
+.student-report-table th,.student-report-table td{border:1px solid #cfd9e0;padding:5px 5px;text-align:right;vertical-align:top;overflow-wrap:anywhere;word-break:normal}
+.student-report-table th{background:#eef3f6;color:#29475b;font-weight:700}
+.student-report-table tbody tr:nth-child(even){background:#fbfcfd}
+.student-report-table thead{display:table-header-group}
+.student-report-table tr{break-inside:avoid;page-break-inside:avoid}
+.student-report-empty{padding:7px 9px;border:1px dashed #cbd5dc;border-radius:7px;color:#71808a;font-size:10px}
+@media(max-width:620px){.student-report-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.student-report-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media print{
+ .student-report-document{font-size:9pt}
+ .student-report-section{margin:10px 0 12px}
+ .student-report-section>h2{font-size:11pt}
+ .student-report-info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .student-report-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .student-report-table{font-size:7.4pt;table-layout:auto}
+ .student-report-table th,.student-report-table td{padding:4px}
+ .student-report-table-wrap{overflow:visible!important}
+ .student-report-main-title,.student-report-kpi,.student-report-info-item{break-inside:avoid;page-break-inside:avoid}
+ .student-report-section>h2{break-after:avoid;page-break-after:avoid}
+ .report-print-signatures{break-inside:avoid;page-break-inside:avoid;margin-top:28px}
+ @page{size:A4 portrait;margin:12mm}
+}
+
 </style>
 </head>
 <body>
@@ -2135,15 +2185,16 @@ window.studentHistory=id=>{
   const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
   const absHours=abs.reduce((sum,item)=>sum+profileAbsenceHours(item),0);
   const lateMinutes=late.reduce((sum,item)=>sum+profileLatenessMinutes(item),0);
-  const statusOf=x=>String(x.justified??'غير مبرر').trim();
-  const justified=items=>items.filter(x=>statusOf(x)==='مبرر').length;
-  const unjustified=items=>items.filter(x=>statusOf(x)==='غير مبرر'||statusOf(x)==='').length;
-  const pending=items=>items.filter(x=>statusOf(x)==='قيد التبرير').length;
+  const statusOf=x=>profileJustificationLabel(x);
+  const justified=items=>items.filter(x=>profileJustificationCategory(x)==='justified').length;
+  const unjustified=items=>items.filter(x=>profileJustificationCategory(x)==='unjustified').length;
+  const pending=items=>items.filter(x=>profileJustificationCategory(x)==='pending').length;
+  const unknown=items=>items.filter(x=>profileJustificationCategory(x)==='unknown').length;
   const v=db.violations.filter(belongsToStudent),d=db.documents.filter(belongsToStudent);
   const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
   const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));
-  const statusSummary=items=>`<p>مبررة: <b>${justified(items)}</b> · غير مبررة: <b>${unjustified(items)}</b> · قيد التبرير: <b>${pending(items)}</b></p>`;
+  const statusSummary=items=>`<p>مبررة: <b>${justified(items)}</b> · غير مبررة: <b>${unjustified(items)}</b> · قيد التبرير: <b>${pending(items)}</b> · غير محددة: <b>${unknown(items)}</b></p>`;
   const attendanceList=(items,isLate=false)=>items.length?'<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الفترة</th><th>المدة</th><th>حالة التبرير</th><th>ملاحظات</th><th class="no-print">الإجراء</th></tr></thead><tbody>'+items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>'<tr data-profile-att-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(isLate?profileLatenessMinutes(x)+' دقيقة':profileAbsenceHours(x)+' ساعة')+'</td><td>'+esc(statusOf(x))+'</td><td>'+esc(x.notes||'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileAttendanceEdit(this.dataset.id)">تعديل السجل</button></td></tr>').join('')+'</tbody></table></div>':'<p class="empty">لا توجد سجلات.</p>';
   const documentList=items=>items.length?'<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th><th class="no-print">الإجراءات</th></tr></thead><tbody>'+items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>'<tr data-profile-doc-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+(x.photo?'<img class="record-photo" src="'+esc(x.photo)+'" alt="صورة الوثيقة">':'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileDocumentEdit(this.dataset.id)">تعديل الوثيقة</button> <button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="printDoc(this.dataset.id)">طباعة</button></td></tr>').join('')+'</tbody></table></div>':'<p class="empty">لا توجد وثائق.</p>';
 
