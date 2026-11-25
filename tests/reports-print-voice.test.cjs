@@ -24,7 +24,7 @@ const checks = [
   ['the More page exposes only secondary tools and groups them by purpose', /<section id="more" class="page hidden">[\s\S]*?data-go="agenda"[\s\S]*?data-go="reports"[\s\S]*?data-go="settings"[\s\S]*?data-go="audit"/],
   ['violations are inside the Follow-up workspace rather than a separate More-page destination', /<section id="attendance" class="page hidden">[\s\S]*?data-followup-view="attendance"[\s\S]*?data-followup-view="violations"[\s\S]*?<div id="violations" class="followup-view hidden"/],
   ['bottom navigation is fixed and reserves space for mobile safe areas', /#nav\{position:fixed[\s\S]*?env\(safe-area-inset-bottom\)/],
-  ['navigation maps violations to Follow-up and reserves More for secondary destinations', /button\.dataset\.page==='more'&&secondary[\s\S]*?\['reports','settings','audit','agenda'\]\.includes\(route\)/],
+  ['navigation maps violations to Follow-up and reserves More for secondary destinations', /const secondary=\['reports','settings','audit','agenda'\]\.includes\(route\)[\s\S]*?button\.dataset\.page==='more'&&secondary/],
   ['quick voice action is present on the home screen', /id="quickVoiceAccess"[^>]*>🎙️<b>التحدث إلى مُشرِفي<\/b>/],
   ['quick voice action launches the Arabic speech button', /\$\('#quickVoiceAccess'\)\?\.addEventListener\('click',[\s\S]*?\$\('#startVoiceBtn'\)\?\.click\(\)/],
   ['report print uses a dedicated preview instead of printing the whole app', /window\.printReport\s*=\s*\(\)=>[\s\S]*?id='mushrifiPrintPreview'[\s\S]*?window\.print\(\)/],
