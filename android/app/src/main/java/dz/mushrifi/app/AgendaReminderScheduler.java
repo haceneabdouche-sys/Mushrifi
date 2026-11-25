@@ -157,6 +157,17 @@ public final class AgendaReminderScheduler {
             context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
     }
 
+    static boolean areAgendaNotificationsEnabled(Context context) {
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (manager == null) return false;
+        if (Build.VERSION.SDK_INT >= 24 && !manager.areNotificationsEnabled()) return false;
+        if (Build.VERSION.SDK_INT >= 26) {
+            android.app.NotificationChannel channel = manager.getNotificationChannel(CHANNEL_ID);
+            return channel != null && channel.getImportance() != NotificationManager.IMPORTANCE_NONE;
+        }
+        return true;
+    }
+
     static synchronized void cancel(Context context, String id) {
         if (context == null || id == null || id.isEmpty()) return;
         AlarmManager manager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
@@ -281,7 +292,7 @@ public final class AgendaReminderScheduler {
                 prefs.edit().remove(id).apply();
                 continue;
             }
-            if (!hasNotificationPermission(context)) {
+            if (!hasNotificationPermission(context) || !areAgendaNotificationsEnabled(context)) {
                 try {
                     item.put("waitingForPermission", true);
                     prefs.edit().putString(id, item.toString()).apply();
