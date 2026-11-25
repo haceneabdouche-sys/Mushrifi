@@ -1366,7 +1366,7 @@ function setLicenseControlDisabled(el,disabled){
 function applyLicenseAccess(state){
  licenseReadOnly=!!(!state||!state.hasLicense||!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
- const allowed=new Set(['exportData','exportAuditLog','makeReport','validateLicenseBtn','activateLicenseBtn','agendaRequestNotificationPermission','agendaRequestExactAlarmPermission','agendaTestNotification']);
+ const allowed=new Set(['exportData','exportAuditLog','makeReport','validateLicenseBtn','activateLicenseBtn','agendaRequestNotificationPermission','agendaRequestExactAlarmPermission','agendaTestNotification','agendaOpenNotificationSettings']);
  if(licenseReadOnly){
   $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
   document.querySelectorAll('select').forEach(el=>setLicenseControlDisabled(el,!el.closest('#auditLogFilters')&&el.id!=='agendaTypeFilter'));
