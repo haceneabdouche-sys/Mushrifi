@@ -634,6 +634,21 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 .student-report-method-note{padding:9px 11px;background:#f8f7f0;border-right:3px solid var(--gold);border-radius:7px;color:#6e5b2d;font-size:11px;line-height:1.8}
 .student-report-footnote{margin-top:16px;padding-top:9px;border-top:1px solid #cbd5dc;color:#586b78;font-size:10px;line-height:1.8}
 
+
+.student-followup-panel{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff)}
+.student-followup-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.student-followup-heading h3{margin:0}
+.student-followup-form{margin:12px 0;padding:12px;border:1px dashed var(--line);border-radius:9px;background:var(--card,#fbfcfd)}
+.student-followup-form h4{margin:0 0 10px}
+.student-followup-form textarea{min-height:68px;resize:vertical}
+.student-followup-list{display:grid;gap:9px;margin-top:12px}
+.student-followup-item{min-width:0;padding:10px 12px;border:1px solid var(--line);border-right:4px solid #91aebd;border-radius:9px;background:var(--card,#fbfcfd)}
+.student-followup-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}
+.student-followup-item p{margin:5px 0;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.student-followup-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+@media(max-width:560px){.student-followup-form .row>div{min-width:100%}.student-followup-actions .btn{flex:1}}
+@media print{.student-followup-form,.student-followup-actions{display:none!important}}
+
 .student-timeline-panel{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff)}
 .student-timeline-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .student-timeline-heading h3{margin:0}
@@ -3105,6 +3120,66 @@ function buildStudentPrintableReportMarkup(data){
  '</div>';
 }
 
+
+window.resetStudentFollowupForm=()=>{
+ const form=$('#studentFollowupForm');if(!form)return;
+ form.reset();form.elements.recordId.value='';
+ const d=new Date();form.elements.date.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+ $('#studentFollowupFormTitle').textContent='إضافة متابعة تربوية جديدة';
+ $('#studentFollowupSubmit').textContent='حفظ المتابعة';
+ $('#studentFollowupCancel').hidden=true;
+};
+window.editStudentFollowup=(studentId,recordId)=>{
+ const sid=String(studentId),id=String(recordId),target=db.students.find(x=>String(x.id)===sid);
+ const record=(Array.isArray(db.followups)?db.followups:[]).find(x=>String(x.id)===id);
+ if(!target||!record||!profileRecordBelongsToStudent(record,target,db.students)){alert('لم يتم العثور على سجل المتابعة في ملف هذا التلميذ.');return;}
+ const form=$('#studentFollowupForm');if(!form)return;
+ form.elements.recordId.value=id;form.elements.date.value=record.date||'';form.elements.category.value=record.category||'';
+ form.elements.status.value=record.status||'قيد المتابعة';form.elements.observation.value=record.observation||'';
+ form.elements.actionTaken.value=record.actionTaken||'';form.elements.result.value=record.result||'';
+ form.elements.nextDate.value=record.nextDate||'';
+ $('#studentFollowupFormTitle').textContent='تعديل متابعة تربوية';
+ $('#studentFollowupSubmit').textContent='حفظ التعديلات';
+ $('#studentFollowupCancel').hidden=false;
+ form.scrollIntoView?.({behavior:'smooth',block:'start'});
+};
+window.deleteStudentFollowup=(studentId,recordId)=>{
+ const sid=String(studentId),id=String(recordId),target=db.students.find(x=>String(x.id)===sid);
+ const record=(Array.isArray(db.followups)?db.followups:[]).find(x=>String(x.id)===id);
+ if(!target||!record||!profileRecordBelongsToStudent(record,target,db.students)){alert('لم يتم العثور على سجل المتابعة المطلوب.');return;}
+ if(!confirm('هل تريد حذف سجل المتابعة التربوية هذا؟ سيُسجّل الحذف في سجل العمليات.'))return;
+ const previous=db.followups.slice();db.followups=db.followups.filter(x=>String(x.id)!==id);
+ if(!save()){db.followups=previous;return;}
+ window.studentHistory(sid);
+};
+window.saveStudentFollowup=event=>{
+ if(event&&typeof event.preventDefault==='function')event.preventDefault();
+ const form=$('#studentFollowupForm');if(!form)return false;
+ const sid=String(form.dataset.studentId||''),target=db.students.find(x=>String(x.id)===sid);
+ if(!target){alert('تعذر تحديد ملف التلميذ. لم يتم حفظ المتابعة.');return false;}
+ const recordId=String(form.elements.recordId.value||'').trim();
+ const checked=validateStudentFollowupInput({
+  date:form.elements.date.value,category:form.elements.category.value,status:form.elements.status.value,
+  observation:form.elements.observation.value,actionTaken:form.elements.actionTaken.value,
+  result:form.elements.result.value,nextDate:form.elements.nextDate.value
+ });
+ if(!checked.valid){alert(checked.error);return false;}
+ const previous=db.followups.slice(),now=new Date().toISOString(),studentName=[target.last||'',target.first||''].join(' ').trim();
+ if(recordId){
+  const index=db.followups.findIndex(x=>String(x.id)===recordId);
+  if(index<0||!profileRecordBelongsToStudent(db.followups[index],target,db.students)){alert('تغير سجل المتابعة أو لم يعد مرتبطاً بهذا الملف. أعد فتح الملف قبل المحاولة.');return false;}
+  const current=db.followups[index];
+  db.followups[index]={...current,...checked.value,student:sid,studentName,class:target.class||'',schoolYear:target.schoolYear||'',branch:target.branch||'',updatedAt:now};
+ }else{
+  const id=crypto.randomUUID();
+  db.followups.push({id,student:sid,studentName,class:target.class||'',schoolYear:target.schoolYear||'',branch:target.branch||'',...checked.value,createdAt:now,updatedAt:now});
+ }
+ if(!save()){db.followups=previous;return false;}
+ window.studentHistory(sid);
+ alert(recordId?'تم تحديث سجل المتابعة التربوية.':'تم حفظ سجل المتابعة التربوية.');
+ return true;
+};
+
 window.openStudentProfileAttendanceEdit=id=>{
  go('attendance');
  if(typeof window.editAttendance==='function')window.editAttendance(String(id));
@@ -3133,6 +3208,8 @@ window.studentHistory=id=>{
   const pending=items=>items.filter(x=>profileJustificationCategory(x)==='pending').length;
   const unknown=items=>items.filter(x=>profileJustificationCategory(x)==='unknown').length;
   const v=db.violations.filter(belongsToStudent),d=db.documents.filter(belongsToStudent);
+  const followups=buildStudentFollowupRecords(s,db),followupView=profileStudentFollowupView(followups);
+  const followupToday=(()=>{const date=new Date();return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')})();
   const timeline=buildStudentTimeline(s,db);
   const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
@@ -3144,9 +3221,19 @@ window.studentHistory=id=>{
   go('reports');
   $('#reportOutput').dataset.reportKind='student';$('#reportOutput').dataset.studentReportId=sid;
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.printReport()">طباعة / حفظ التقرير الشامل PDF</button></div>
-  <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>الاسم</small><strong style="font-size:16px">${esc(s.first||'—')}</strong></div><div class="stat"><small>اللقب</small><strong style="font-size:16px">${esc(s.last||'—')}</strong></div><div class="stat"><small>المستوى</small><strong style="font-size:16px">${esc(studentAcademicParts(s).schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(studentAcademicParts(s).branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(studentAcademicParts(s).sectionNumber||s.class||'—')}</strong></div><div class="stat"><small>الصفة</small><strong style="font-size:16px">${esc(s.attribute||s.status||'—')}</strong></div><div class="stat"><small>تاريخ الميلاد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>رقم الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
+  <h2>الملف التربوي الشامل للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>الاسم</small><strong style="font-size:16px">${esc(s.first||'—')}</strong></div><div class="stat"><small>اللقب</small><strong style="font-size:16px">${esc(s.last||'—')}</strong></div><div class="stat"><small>المستوى</small><strong style="font-size:16px">${esc(studentAcademicParts(s).schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(studentAcademicParts(s).branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(studentAcademicParts(s).sectionNumber||s.class||'—')}</strong></div><div class="stat"><small>الصفة</small><strong style="font-size:16px">${esc(s.attribute||s.status||'—')}</strong></div><div class="stat"><small>تاريخ الميلاد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>رقم الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
   <div class="no-print"><button class="btn" onclick="editStudent('${s.id}')">تعديل بطاقة التلميذ</button> <button class="btn primary" onclick="openGuardianWhatsApp('${s.id}')">مراسلة الولي عبر واتساب</button></div>
-  <section class="panel student-timeline-panel" aria-labelledby="studentTimelineHeading"><div class="student-timeline-heading"><h3 id="studentTimelineHeading">الخط الزمني الشامل للتلميذ</h3><span class="pill" id="studentTimelineCount">عدد الأحداث: 0</span></div><p class="muted">جميع سجلات هذا التلميذ مرتبة من الأحدث إلى الأقدم، مع روابط إلى السجل الأصلي. لا تُدمج الأحداث المتشابهة ولا تُنسب السجلات غير المؤكدة إلى هذا الملف.</p><div class="student-timeline-controls no-print"><label for="studentTimelineFilter">تصفية الأحداث</label><select id="studentTimelineFilter"><option value="all">كل الأحداث</option><option value="attendance">الغياب والتأخر والحضور</option><option value="violations">المخالفات</option><option value="documents">الوثائق والاستدعاءات</option></select></div><div id="studentTimelineList" class="student-timeline-list" aria-live="polite"></div><div class="student-timeline-more-wrap no-print"><button type="button" id="studentTimelineMore" class="btn small" hidden>عرض المزيد</button></div></section>
+  <section class="panel student-followup-panel" aria-labelledby="studentFollowupHeading"><div class="student-followup-heading"><div><h3 id="studentFollowupHeading">سجل المتابعة التربوية</h3><p class="muted">سجل مستقل يوثق الملاحظة والإجراء والنتيجة وموعد المراجعة، دون تغيير سجلات الغياب أو المخالفات.</p></div><span class="pill">الإجمالي: ${followups.length} · قيد المتابعة: ${followupView.pending}</span></div>
+   <form id="studentFollowupForm" class="student-followup-form no-print" data-student-id="${esc(sid)}">
+    <h4 id="studentFollowupFormTitle">إضافة متابعة تربوية جديدة</h4><input type="hidden" name="recordId">
+    <div class="row"><div><label for="studentFollowupDate">تاريخ المتابعة</label><input id="studentFollowupDate" name="date" type="date" value="${followupToday}" required></div><div><label for="studentFollowupCategory">مجال المتابعة</label><select id="studentFollowupCategory" name="category" required><option value="">اختر المجال</option><option>المواظبة والحضور</option><option>السلوك والانضباط</option><option>التواصل مع الولي</option><option>متابعة تربوية عامة</option></select></div><div><label for="studentFollowupStatus">حالة المتابعة</label><select id="studentFollowupStatus" name="status" required><option>قيد المتابعة</option><option>تمت المتابعة</option><option>أغلقت الحالة</option></select></div></div>
+    <div class="row"><div><label for="studentFollowupObservation">الملاحظة أو سبب المتابعة</label><textarea id="studentFollowupObservation" name="observation" rows="3" maxlength="1200" required placeholder="اكتب الملاحظة بعبارات واضحة وموضوعية"></textarea></div><div><label for="studentFollowupAction">الإجراء المتخذ</label><textarea id="studentFollowupAction" name="actionTaken" rows="3" maxlength="1200" required placeholder="ما الإجراء الذي تم اتخاذه؟"></textarea></div></div>
+    <div class="row"><div><label for="studentFollowupNextDate">موعد المراجعة المقبلة (اختياري)</label><input id="studentFollowupNextDate" name="nextDate" type="date"></div><div><label for="studentFollowupResult">النتيجة أو تطور الحالة (اختياري)</label><textarea id="studentFollowupResult" name="result" rows="2" maxlength="1600" placeholder="أضف ما تحقق أو ما زال يحتاج إلى متابعة"></textarea></div></div>
+    <div class="actions"><button id="studentFollowupSubmit" class="btn primary" type="submit">حفظ المتابعة</button><button id="studentFollowupCancel" class="btn" type="button" onclick="resetStudentFollowupForm()" hidden>إلغاء التعديل</button></div>
+   </form>
+   <div id="studentFollowupList" class="student-followup-list" aria-live="polite">${followupView.html}</div>
+  </section>
+  <section class="panel student-timeline-panel" aria-labelledby="studentTimelineHeading"><div class="student-timeline-heading"><h3 id="studentTimelineHeading">الخط الزمني الشامل للتلميذ</h3><span class="pill" id="studentTimelineCount">عدد الأحداث: 0</span></div><p class="muted">جميع سجلات هذا التلميذ مرتبة من الأحدث إلى الأقدم، مع روابط إلى السجل الأصلي. لا تُدمج الأحداث المتشابهة ولا تُنسب السجلات غير المؤكدة إلى هذا الملف.</p><div class="student-timeline-controls no-print"><label for="studentTimelineFilter">تصفية الأحداث</label><select id="studentTimelineFilter"><option value="all">كل الأحداث</option><option value="attendance">الغياب والتأخر والحضور</option><option value="violations">المخالفات</option><option value="documents">الوثائق والاستدعاءات</option><option value="followups">المتابعات التربوية</option></select></div><div id="studentTimelineList" class="student-timeline-list" aria-live="polite"></div><div class="student-timeline-more-wrap no-print"><button type="button" id="studentTimelineMore" class="btn small" hidden>عرض المزيد</button></div></section>
   <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>غيابات قيد التبرير</small><strong>${pending(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>تأخرات قيد التبرير</small><strong>${pending(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب المعروفة</small><strong>${absHours}</strong><small>مدد غير مسجلة: ${unknownAbsenceHours}</small></div><div class="stat"><small>مجموع دقائق التأخر المعروفة</small><strong>${lateMinutes}</strong><small>مدد غير مسجلة: ${unknownLatenessMinutes}</small><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
   <h3>تفصيل الغيابات (${abs.length})</h3>${statusSummary(abs)}${attendanceList(abs,false)}
   <h3>تفصيل التأخرات (${late.length})</h3>${statusSummary(late)}${attendanceList(late,true)}
@@ -3177,6 +3264,15 @@ window.studentHistory=id=>{
    if(source==='attendance')window.openStudentProfileAttendanceEdit(id);
    else if(source==='documents')window.openStudentProfileDocumentEdit(id);
    else if(source==='violations')window.openStudentProfileViolation(id);
+   else if(source==='followups')window.editStudentFollowup(sid,id);
+  });
+  const followupForm=$('#studentFollowupForm'),followupList=$('#studentFollowupList');
+  followupForm.addEventListener('submit',window.saveStudentFollowup);
+  followupList.addEventListener('click',event=>{
+   const button=event.target.closest('[data-followup-action]');if(!button)return;
+   const id=String(button.dataset.followupId||''),action=String(button.dataset.followupAction||'');if(!id)return;
+   if(action==='edit')window.editStudentFollowup(sid,id);
+   else if(action==='delete')window.deleteStudentFollowup(sid,id);
   });
   refreshTimeline();
 };
@@ -3638,7 +3734,7 @@ $('#csvImport').onchange=async e=>{
         if(!target.id)target.id=makeStudentImportId();
         // حدّث الاسم المعروض في السجلات المرتبطة بمعرّف التلميذ، مع إبقاء تفاصيل الوقائع كما هي.
         const currentDisplayName=(target.last+' '+target.first).trim()||target.name||target.fullName||'';
-        for(const kind of ['attendance','documents','violations']){
+        for(const kind of ['attendance','documents','violations','followups']){
           for(const record of db[kind]){
             if(String(record.student)===String(target.id))record.studentName=currentDisplayName;
           }
