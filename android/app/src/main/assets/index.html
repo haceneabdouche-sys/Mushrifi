@@ -963,7 +963,10 @@ const AUDIT_REVERSIBLE_FIELDS={
  documents:['date','type','appointment','reminderAt','absenceStage','deliveryDate'],
  violations:['date','type','action']
 };
-const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة'};
+const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة',settings:'إعدادات التطبيق'};
+const AUDIT_SAFE_SETTING_FIELDS={school:'اسم المؤسسة',location:'موقع المؤسسة',summonsReminderTime:'وقت تنبيه الاستدعاءات'};
+const AUDIT_REVERSIBLE_SETTINGS=new Set(Object.keys(AUDIT_SAFE_SETTING_FIELDS));
+const AUDIT_SETTING_LABELS={...AUDIT_SAFE_SETTING_FIELDS,timetables:'جداول التوقيت',schoolHolidays:'العطل المدرسية',sectionNames:'تسميات الأقسام',academicStructure:'الهيكل الدراسي'};
 function auditFingerprintValue(value){
  if(value&&typeof value==='object'&&Object.prototype.hasOwnProperty.call(value,'__auditFingerprint'))return value;
  let text;
@@ -992,7 +995,11 @@ function auditComparableDatabase(source){
   });
  }
  const settings=input.settings&&typeof input.settings==='object'?input.settings:{};
- Object.keys(settings).forEach(key=>{result.settings[key]=auditFingerprintValue(settings[key]);});
+ Object.keys(settings).forEach(key=>{
+  const value=settings[key],safeField=Object.prototype.hasOwnProperty.call(AUDIT_SAFE_SETTING_FIELDS,key);
+  if(safeField&&(typeof value==='string'||typeof value==='number'||typeof value==='boolean')&&String(value).length<=120)result.settings[key]=value;
+  else result.settings[key]=auditFingerprintValue(value);
+ });
  return result;
 }
 function auditValuesEqual(a,b){
@@ -1093,8 +1100,10 @@ function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
  const oldSettings=before.settings&&typeof before.settings==='object'?before.settings:{},newSettings=after.settings&&typeof after.settings==='object'?after.settings:{};
  const changedSettings=[...new Set([...Object.keys(oldSettings),...Object.keys(newSettings)])].filter(key=>!auditValuesEqual(oldSettings[key],newSettings[key]));
  if(changedSettings.length){
-  const names={school:'اسم المؤسسة',location:'موقع المؤسسة',timetables:'جداول التوقيت',schoolHolidays:'العطل المدرسية',summonsReminderTime:'وقت تنبيه الاستدعاءات',sectionNames:'تسميات الأقسام',academicStructure:'الهيكل الدراسي'};
-  const changes=changedSettings.slice(0,20).map(key=>({key,label:names[key]||'إعدادات أخرى',before:'قيمة محفوظة',after:'تم تحديث الإعداد',beforeMissing:!Object.prototype.hasOwnProperty.call(oldSettings,key),afterMissing:!Object.prototype.hasOwnProperty.call(newSettings,key)}));
+  const changes=changedSettings.slice(0,20).map(key=>{
+   const beforeMissing=!Object.prototype.hasOwnProperty.call(oldSettings,key),afterMissing=!Object.prototype.hasOwnProperty.call(newSettings,key),safe=Object.prototype.hasOwnProperty.call(AUDIT_SAFE_SETTING_FIELDS,key);
+   return {key,label:AUDIT_SETTING_LABELS[key]||'إعدادات أخرى',before:safe?auditValueForChange(oldSettings[key]):beforeMissing?null:'قيمة محفوظة',after:safe?auditValueForChange(newSettings[key]):afterMissing?null:'تم تحديث الإعداد',beforeMissing,afterMissing};
+  });
   const event={id:String(makeId()),at,action:opts.revertsId?'revert':'update',entity:'settings',entityId:'',entityLabel:'إعدادات التطبيق',summary:(opts.revertsId?'استرجاع تعديل سابق في':'تعديل')+' إعدادات التطبيق',changes,restrictedFields:changedSettings.length>20?['تغييرات إعدادات إضافية']:[],actor:'مستخدم التطبيق على هذا الجهاز',source:'واجهة التطبيق'};
   if(opts.revertsId)event.revertsId=String(opts.revertsId);
   events.push(event);
@@ -1110,6 +1119,16 @@ function auditCanRevert(entry,record){
 function auditApplyRevert(entry,record){
  if(!auditCanRevert(entry,record))return false;
  entry.changes.forEach(change=>{if(change.beforeMissing)delete record[change.key];else record[change.key]=change.before;});
+ return true;
+}
+function auditCanRevertSettings(entry,settings){
+ if(!entry||entry.entity!=='settings'||!settings||typeof settings!=='object'||!['update','revert'].includes(entry.action)||!Array.isArray(entry.changes)||!entry.changes.length)return false;
+ return entry.changes.every(change=>AUDIT_REVERSIBLE_SETTINGS.has(change.key)&&
+  (change.afterMissing?!Object.prototype.hasOwnProperty.call(settings,change.key):Object.prototype.hasOwnProperty.call(settings,change.key)&&auditValuesEqual(settings[change.key],change.after)));
+}
+function auditApplyRevertSettings(entry,settings){
+ if(!auditCanRevertSettings(entry,settings))return false;
+ entry.changes.forEach(change=>{if(change.beforeMissing)delete settings[change.key];else settings[change.key]=change.before;});
  return true;
 }
 function auditEntryValue(value,missing){
@@ -1293,9 +1312,21 @@ function renderSmartDashboard(today){
 function auditActionText(action){return action==='add'?'إضافة':action==='update'?'تعديل':action==='revert'?'استرجاع تعديل':action==='delete'?'حذف':action==='bulk'?'عملية جماعية':'عملية';}
 function auditEntityText(entity){return ({students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'مخالفة',settings:'إعدادات التطبيق'})[entity]||'سجل';}
 function auditDateText(value){const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString('ar-DZ'):'وقت غير محدد';}
-function auditCanRevertByEntry(entry){const record=Array.isArray(db[entry.entity])?db[entry.entity].find(x=>String(x.id)===String(entry.entityId)):null;return !!record&&auditCanRevert(entry,record);}
+function auditCanRevertByEntry(entry){
+ if(entry?.entity==='settings')return auditCanRevertSettings(entry,db.settings);
+ const record=Array.isArray(db[entry?.entity])?db[entry.entity].find(x=>String(x.id)===String(entry.entityId)):null;
+ return !!record&&auditCanRevert(entry,record);
+}
+function auditEntriesForDisplay(entries){
+ if(!Array.isArray(entries))return [];
+ return entries.filter(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry)&&
+  (entry.changes===undefined||Array.isArray(entry.changes))&&
+  (entry.restrictedFields===undefined||Array.isArray(entry.restrictedFields))&&
+  (entry.totals===undefined||(entry.totals&&typeof entry.totals==='object'&&!Array.isArray(entry.totals))));
+}
 function renderAuditLog(){
- const all=Array.isArray(db.auditLog)?db.auditLog.slice().reverse():[];
+ const stored=Array.isArray(db.auditLog)?db.auditLog:[];
+ const all=auditEntriesForDisplay(stored).slice().reverse(),skipped=stored.length-all.length;
  const query=normalizeDirectorySearch($('#auditSearch')?.value||'');
  const entity=$('#auditEntityFilter')?.value||'',action=$('#auditActionFilter')?.value||'';
  const from=$('#auditDateFrom')?.value||'',to=$('#auditDateTo')?.value||'';
@@ -1305,22 +1336,28 @@ function renderAuditLog(){
   const day=String(entry.at||'').slice(0,10);
   if(from&&(!day||day<from))return false;
   if(to&&(!day||day>to))return false;
-  const hay=[entry.summary,entry.entityLabel,entry.actor,entry.source,...(entry.changes||[]).map(x=>x.label),...(entry.restrictedFields||[])].join(' ');
+  const searchableChanges=Array.isArray(entry.changes)?entry.changes.filter(change=>change&&typeof change==='object'&&!Array.isArray(change)).flatMap(change=>[change.label,change.key,change.before,change.after]):[];
+  const safeRestricted=Array.isArray(entry.restrictedFields)?entry.restrictedFields.filter(value=>typeof value==='string'):[];
+  const hay=[entry.summary,entry.entityLabel,entry.actor,entry.source,...searchableChanges,...safeRestricted].join(' ');
   return !query||normalizeDirectorySearch(hay).includes(query);
  });
- $('#auditLogCount').textContent=(filtered.length>120?'عرض أحدث 120 من '+filtered.length.toLocaleString('ar-DZ')+' نتيجة':'عرض '+filtered.length.toLocaleString('ar-DZ')+' نتيجة')+' · إجمالي السجل '+all.length.toLocaleString('ar-DZ');
+ $('#auditLogCount').textContent=(filtered.length>120?'عرض أحدث 120 من '+filtered.length.toLocaleString('ar-DZ')+' نتيجة':'عرض '+filtered.length.toLocaleString('ar-DZ')+' نتيجة')+' · إجمالي السجل '+stored.length.toLocaleString('ar-DZ');
  const list=$('#auditLogEntries');
- list.innerHTML=filtered.length?filtered.slice(0,120).map(entry=>{
-  const details=Array.isArray(entry.changes)?entry.changes:[];
-  const restricted=Array.isArray(entry.restrictedFields)?entry.restrictedFields:[];
+ const integrityNotice=skipped?'<p class="notice">تم تجاهل عرض '+skipped.toLocaleString('ar-DZ')+' سجل غير مكتمل البنية حفاظاً على استقرار الصفحة. لم تُحذف هذه السجلات من قاعدة البيانات أو من ملف التصدير.</p>':'';
+ list.innerHTML=integrityNotice+(filtered.length?filtered.slice(0,120).map(entry=>{
+  const details=Array.isArray(entry.changes)?entry.changes.filter(change=>change&&typeof change==='object'&&!Array.isArray(change)):[];
+  const restricted=Array.isArray(entry.restrictedFields)?entry.restrictedFields.filter(value=>typeof value==='string'):[];
   const rows=details.map(change=>'<tr><th>'+esc(change.label||change.key||'حقل')+'</th><td>'+esc(auditEntryValue(change.before,change.beforeMissing))+'</td><td>'+esc(auditEntryValue(change.after,change.afterMissing))+'</td></tr>').join('');
   const count=details.length+restricted.length;
   const bulk=entry.totals?'<div class="audit-bulk-summary">أضيف: '+Number(entry.totals.added||0)+' · عُدّل: '+Number(entry.totals.updated||0)+' · حُذف: '+Number(entry.totals.deleted||0)+'</div>':'';
   const note=restricted.length?'<div class="audit-private-note">تم تغيير حقول لم يُحفظ محتواها في سجل المراجعة حفاظاً على الخصوصية: '+esc(restricted.join('، '))+'.</div>':'';
   const detailBlock=count?'<details><summary>تفاصيل التغيير ('+count+')</summary>'+(details.length?'<div class="tablewrap"><table class="audit-change-table"><thead><tr><th>الحقل</th><th>قبل العملية</th><th>بعد العملية</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')+note+'</details>':note;
-  const canRevert= auditCanRevertByEntry(entry);
-  return '<article class="panel audit-entry" data-audit-action="'+esc(entry.action||'')+'"><div class="audit-entry-head"><div><strong class="audit-entry-summary">'+esc(entry.summary||auditActionText(entry.action)+' '+auditEntityText(entry.entity))+'</strong><div class="audit-entry-meta"><span class="pill">'+esc(auditActionText(entry.action))+'</span><span>'+esc(auditDateText(entry.at))+'</span><span>'+esc(entry.actor||'الجهاز الحالي')+'</span></div></div></div>'+bulk+detailBlock+(canRevert?'<div class="audit-entry-actions"><button type="button" class="btn small" data-audit-revert="'+esc(entry.id)+'">استرجاع الحقول الآمنة</button></div>':'')+'</article>';
- }).join(''):'<div class="panel empty">لا توجد عمليات تطابق معايير البحث.</div>';
+  const canRevert=auditCanRevertByEntry(entry);
+  const related=entry.revertsId?all.find(item=>String(item.id)===String(entry.revertsId)):null;
+  const relation=related?'<div class="audit-bulk-summary">استرجاع مرتبط بعملية: '+esc(related.summary||auditActionText(related.action)+' '+auditEntityText(related.entity))+'</div>':'';
+  const source=entry.source?'<span>'+esc(entry.source)+'</span>':'';
+  return '<article class="panel audit-entry" data-audit-action="'+esc(entry.action||'')+'"><div class="audit-entry-head"><div><strong class="audit-entry-summary">'+esc(entry.summary||auditActionText(entry.action)+' '+auditEntityText(entry.entity))+'</strong><div class="audit-entry-meta"><span class="pill">'+esc(auditActionText(entry.action))+'</span><span>'+esc(auditDateText(entry.at))+'</span><span>'+esc(entry.actor||'الجهاز الحالي')+'</span>'+source+'</div></div></div>'+relation+bulk+detailBlock+(canRevert?'<div class="audit-entry-actions"><button type="button" class="btn small" data-audit-revert="'+esc(entry.id)+'">استرجاع الحقول الآمنة</button></div>':'')+'</article>';
+ }).join(''):'<div class="panel empty">لا توجد عمليات تطابق معايير البحث.</div>');
  list.querySelectorAll('[data-audit-revert]').forEach(button=>button.addEventListener('click',()=>window.restoreAuditEdit(button.dataset.auditRevert)));
 }
 function exportAuditLog(){
@@ -1339,12 +1376,15 @@ window.restoreAuditEdit=eventId=>{
  if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن استرجاع التعديلات قبل تفعيل الترخيص.');return;}
  const entry=(Array.isArray(db.auditLog)?db.auditLog:[]).find(x=>String(x.id)===String(eventId));
  if(!entry||!['update','revert'].includes(entry.action)){alert('هذا السجل لا يمثل تعديلاً قابلاً للاسترجاع.');return;}
- const record=Array.isArray(db[entry.entity])?db[entry.entity].find(x=>String(x.id)===String(entry.entityId)):null;
- if(!record||!auditCanRevert(entry,record)){alert('تعذر الاسترجاع لأن السجل تغيّر مرة أخرى أو لم يعد موجوداً. لم يتم تعديل أي بيانات.');return;}
+ const settingsEntry=entry.entity==='settings';
+ const record=settingsEntry?db.settings:(Array.isArray(db[entry.entity])?db[entry.entity].find(x=>String(x.id)===String(entry.entityId)):null);
+ const canApply=settingsEntry?auditCanRevertSettings(entry,record):auditCanRevert(entry,record);
+ if(!record||!canApply){alert('تعذر الاسترجاع لأن السجل تغيّر مرة أخرى أو يحتوي حقولاً لا يسمح باسترجاعها آلياً. لم يتم تعديل أي بيانات.');return;}
  const summary='سيعيد التطبيق الحقول الآمنة المسجلة في هذا التعديل إلى قيمها السابقة. لن تُغيّر الملاحظات أو الصور أو بيانات الاتصال الخاصة. هل تريد المتابعة؟';
  if(!confirm(summary))return;
  const afterValues=entry.changes.map(change=>({key:change.key,missing:change.afterMissing,value:record[change.key]}));
- if(!auditApplyRevert(entry,record)){alert('لم يتم الاسترجاع؛ تغيرت بيانات السجل.');return;}
+ const applied=settingsEntry?auditApplyRevertSettings(entry,record):auditApplyRevert(entry,record);
+ if(!applied){alert('لم يتم الاسترجاع؛ تغيرت بيانات السجل.');return;}
  auditNextRevertsId=String(entry.id);
  if(!save()){
   auditNextRevertsId='';
