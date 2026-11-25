@@ -52,6 +52,22 @@ for (const id of [
     'critical workflow ID remains unique: ' + id);
 }
 
+// The student directory is the primary student workflow; the long add/edit form stays compact until needed.
+const studentEditorStart = html.indexOf('<details class="panel attendance-log student-editor-disclosure" id="studentEditorDisclosure">');
+const studentEditorEnd = html.indexOf('</details>', studentEditorStart);
+assert.ok(studentEditorStart >= 0 && studentEditorEnd > studentEditorStart, 'student add/edit form is grouped in a disclosure');
+const studentEditorMarkup = html.slice(studentEditorStart, studentEditorEnd);
+assert.ok(!/\\sopen(?:\\s|>)/.test(studentEditorMarkup.slice(0, 180)), 'student editor starts collapsed');
+assert.ok(studentEditorMarkup.includes('إضافة أو تعديل بطاقة تلميذ'), 'student editor has a clear action summary');
+assert.ok(studentEditorMarkup.includes('<form id="studentForm">'), 'student form remains inside the disclosure');
+
+const studentEditorScriptStart = html.indexOf('function resetStudentEditor(){');
+const studentEditorScriptEnd = html.indexOf("$('#sectionForm').onsubmit", studentEditorScriptStart);
+assert.ok(studentEditorScriptStart >= 0 && studentEditorScriptEnd > studentEditorScriptStart, 'student editor logic is available');
+const studentEditorScript = html.slice(studentEditorScriptStart, studentEditorScriptEnd);
+assert.match(studentEditorScript, /if\\(editor\\)editor\\.open=false/, 'saving or cancelling closes the student editor');
+assert.match(studentEditorScript, /if\\(editor\\)editor\\.open=true/, 'editing an existing student opens the form before scrolling');
+
 // Less-frequent summaries start collapsed; core daily work and speech access remain visible.
 const smartDetailsStart = html.indexOf('<details class="panel attendance-log home-advanced-panel">');
 assert.ok(smartDetailsStart >= 0, 'weekly analysis is in a disclosure');
