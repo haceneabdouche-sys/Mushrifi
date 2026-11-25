@@ -2012,6 +2012,114 @@ function profileLatenessMinutes(record){
  if(hours===''||Number.isNaN(hours))hours=parseHours(record.period);
  return typeof hours==='number'&&Number.isFinite(hours)&&hours>=0?Math.round(hours*60):0;
 }
+
+function profileJustificationCategory(record){
+ const value=String(record?.justified??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u0640]/g,'').replace(/\s+/g,'').trim();
+ if(value.includes('قيد')&&value.includes('تبرير'))return 'pending';
+ if(value.includes('غير')&&value.includes('مبرر'))return 'unjustified';
+ if(value.includes('مبرر'))return 'justified';
+ return 'unknown';
+}
+function profileJustificationLabel(record){
+ return ({justified:'مبرر',unjustified:'غير مبرر',pending:'قيد التبرير',unknown:'غير محدد'})[profileJustificationCategory(record)];
+}
+function profileKnownAbsenceHours(record){
+ let hours=parseHours(record?.hours);
+ if(hours===''||Number.isNaN(hours))hours=parseHours(record?.period);
+ return typeof hours==='number'&&Number.isFinite(hours)&&hours>=0?hours:null;
+}
+function profileKnownLatenessMinutes(record){
+ const raw=String(record?.minutes??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٫،]/g,'.');
+ if(raw!==''&&/^\d+(?:\.\d+)?$/.test(raw)){const minutes=Number(raw);if(Number.isFinite(minutes)&&minutes>=0)return minutes;}
+ let hours=parseHours(record?.hours);
+ if(hours===''||Number.isNaN(hours))hours=parseHours(record?.period);
+ return typeof hours==='number'&&Number.isFinite(hours)&&hours>=0?Math.round(hours*60):null;
+}
+function profileAbsenceHours(record){return profileKnownAbsenceHours(record)??0;}
+function profileLatenessMinutes(record){return profileKnownLatenessMinutes(record)??0;}
+function buildStudentReportData(target,database){
+ const students=Array.isArray(database?.students)?database.students:[];
+ const matches=record=>profileRecordBelongsToStudent(record,target,students);
+ const sortRecent=items=>items.slice().sort((a,b)=>String(b?.date||'').localeCompare(String(a?.date||'')));
+ const allAttendance=sortRecent((Array.isArray(database?.attendance)?database.attendance:[]).filter(matches));
+ const attendance=allAttendance.filter(x=>['غياب','تأخر'].includes(String(x.type||'').trim()));
+ const absences=attendance.filter(x=>String(x.type||'').trim()==='غياب');
+ const lateness=attendance.filter(x=>String(x.type||'').trim()==='تأخر');
+ const violations=sortRecent((Array.isArray(database?.violations)?database.violations:[]).filter(matches));
+ const documents=sortRecent((Array.isArray(database?.documents)?database.documents:[]).filter(matches));
+ const summons=documents.filter(x=>String(x.type||'').includes('استدعاء'));
+ const absenceNotices=documents.filter(x=>String(x.type||'').includes('إشعار غياب'));
+ const alerts=documents.filter(x=>String(x.type||'').includes('تنبيه'));
+ const otherDocuments=documents.filter(x=>!summons.includes(x)&&!absenceNotices.includes(x));
+ const countStatuses=items=>{
+  const counts={justified:0,unjustified:0,pending:0,unknown:0};
+  items.forEach(item=>counts[profileJustificationCategory(item)]++);
+  return counts;
+ };
+ const absenceStatus=countStatuses(absences),latenessStatus=countStatuses(lateness);
+ const knownAbsence=absences.map(profileKnownAbsenceHours).filter(value=>value!==null);
+ const knownLateness=lateness.map(profileKnownLatenessMinutes).filter(value=>value!==null);
+ const notes=[];
+ const addNotes=(items,category)=>{
+  items.forEach(item=>{
+   const note=String(item.notes??item.note??'').trim();
+   if(note)notes.push({date:String(item.date||''),category,note,id:String(item.id||'')});
+  });
+ };
+ addNotes(attendance,'الغياب والتأخر');
+ addNotes(violations,'المخالفات');
+ addNotes(documents,'الوثائق والاستدعاءات');
+ notes.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ return {
+  student:target,attendance,absences,lateness,violations,documents,summons,absenceNotices,alerts,otherDocuments,notes,
+  summary:{
+   absences:absences.length,absenceStatus,absenceHours:knownAbsence.reduce((n,x)=>n+x,0),knownAbsenceHoursRecords:knownAbsence.length,unknownAbsenceHours:absences.length-knownAbsence.length,
+   lateness:lateness.length,latenessStatus,latenessMinutes:knownLateness.reduce((n,x)=>n+x,0),knownLatenessMinutesRecords:knownLateness.length,unknownLatenessMinutes:lateness.length-knownLateness.length,
+   violations:violations.length,documents:documents.length,summons:summons.length,absenceNotices:absenceNotices.length,alerts:alerts.length,otherDocuments:otherDocuments.length,notes:notes.length
+  }
+ };
+}
+function profilePrintableTable(rows,headers,renderRow,emptyMessage){
+ if(!rows.length)return '<p class="student-report-empty">'+esc(emptyMessage||'لا توجد سجلات ضمن هذا القسم.')+'</p>';
+ return '<div class="student-report-table-wrap"><table class="student-report-table"><thead><tr>'+headers.map(header=>'<th>'+esc(header)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(renderRow).join('')+'</tbody></table></div>';
+}
+function profilePrintableStatusSummary(counts){
+ return '<div class="student-report-statuses"><span>مبرر: <b>'+counts.justified+'</b></span><span>غير مبرر: <b>'+counts.unjustified+'</b></span><span>قيد التبرير: <b>'+counts.pending+'</b></span><span>غير محدد: <b>'+counts.unknown+'</b></span></div>';
+}
+function buildStudentPrintableReportMarkup(data){
+ const s=data.student,p=studentAcademicParts(s),sum=data.summary;
+ const fullName=[s.last||'',s.first||''].join(' ').trim()||s.name||s.fullName||'—';
+ const number=value=>Number(value||0).toLocaleString('ar-DZ',{maximumFractionDigits:2});
+ const info=[['اسم التلميذ',fullName],['المستوى',p.schoolYear||'—'],['الشعبة',p.branch||'—'],['القسم',p.sectionNumber||s.class||'—'],['الصفة',s.attribute||s.status||'—'],['اسم الولي',s.guardian||'—'],['تاريخ الميلاد',s.birthDate||'—']];
+ const infoMarkup=info.map(([label,value])=>'<div class="student-report-info-item"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join('');
+ const summaryCards=[
+  ['مجموع الغيابات',sum.absences],['غيابات مبررة',sum.absenceStatus.justified],['غيابات غير مبررة',sum.absenceStatus.unjustified],['قيد التبرير / غير محدد',sum.absenceStatus.pending+' / '+sum.absenceStatus.unknown],
+  ['ساعات الغياب المعروفة',number(sum.absenceHours)],['مدد غياب غير مسجلة',sum.unknownAbsenceHours],
+  ['مجموع التأخرات',sum.lateness],['تأخرات مبررة',sum.latenessStatus.justified],['تأخرات غير مبررة',sum.latenessStatus.unjustified],['قيد التبرير / غير محدد',sum.latenessStatus.pending+' / '+sum.latenessStatus.unknown],
+  ['دقائق التأخر المعروفة',number(sum.latenessMinutes)],['مدد تأخر غير مسجلة',sum.unknownLatenessMinutes],
+  ['المخالفات',sum.violations],['استدعاءات الأولياء',sum.summons],['إشعارات الغياب',sum.absenceNotices],['الوثائق والتنبيهات الأخرى',sum.otherDocuments]
+ ];
+ const cardMarkup=summaryCards.map(([label,value])=>'<div class="student-report-kpi"><small>'+esc(label)+'</small><strong>'+esc(value)+'</strong></div>').join('');
+ const absenceRows=profilePrintableTable(data.absences,['التاريخ','الفترة','عدد الساعات','حالة التبرير','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(profileKnownAbsenceHours(x)===null?'غير مسجلة':number(profileKnownAbsenceHours(x))+' ساعة')+'</td><td>'+esc(profileJustificationLabel(x))+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
+ const latenessRows=profilePrintableTable(data.lateness,['التاريخ','الفترة','عدد الدقائق','حالة التبرير','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(profileKnownLatenessMinutes(x)===null?'غير مسجلة':number(profileKnownLatenessMinutes(x))+' دقيقة')+'</td><td>'+esc(profileJustificationLabel(x))+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
+ const violationRows=profilePrintableTable(data.violations,['التاريخ','نوع المخالفة','الوصف','الإجراء والمتابعة','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.description||'—')+'</td><td>'+esc(x.action||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
+ const documentRows=items=>profilePrintableTable(items,['التاريخ','نوع الوثيقة','السبب / الموضوع','موعد الحضور','التذكير','إثبات التبليغ','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+esc(x.reminderAt||'—')+'</td><td>'+esc([x.deliveryDate,x.deliveryProof].filter(Boolean).join(' — ')||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
+ const noteRows=profilePrintableTable(data.notes,['التاريخ','القسم','الملاحظة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.note)+'</td></tr>');
+ return '<div class="student-report-document" dir="rtl">'+
+  '<div class="student-report-main-title"><h1>التقرير الشامل للتلميذ</h1><p>ملخص السجل المدرسي والمتابعة التربوية</p></div>'+
+  '<section class="student-report-section"><h2>البيانات التعريفية</h2><div class="student-report-info-grid">'+infoMarkup+'</div></section>'+
+  '<section class="student-report-section"><h2>الحصيلة الإجمالية</h2><div class="student-report-kpi-grid">'+cardMarkup+'</div><p class="student-report-method-note">الساعات والدقائق المعروضة هي المدد المقروءة من السجلات فقط. السجلات التي لا تتضمن مدة واضحة تظهر منفصلة ولا تُحتسب بصفر على أنها مدة مؤكدة. كما أن حالة التبرير غير المحددة لا تُصنّف تلقائياً على أنها غير مبررة.</p></section>'+
+  '<section class="student-report-section"><h2>تفصيل الغيابات ('+sum.absences+')</h2>'+profilePrintableStatusSummary(sum.absenceStatus)+absenceRows+'</section>'+
+  '<section class="student-report-section"><h2>تفصيل التأخرات ('+sum.lateness+')</h2>'+profilePrintableStatusSummary(sum.latenessStatus)+latenessRows+'</section>'+
+  '<section class="student-report-section"><h2>سجل المخالفات ('+sum.violations+')</h2>'+violationRows+'</section>'+
+  '<section class="student-report-section"><h2>استدعاءات الأولياء ('+sum.summons+')</h2>'+documentRows(data.summons)+'</section>'+
+  '<section class="student-report-section"><h2>إشعارات الغياب ('+sum.absenceNotices+')</h2>'+documentRows(data.absenceNotices)+'</section>'+
+  '<section class="student-report-section"><h2>الوثائق والإشعارات الأخرى ('+sum.otherDocuments+')</h2>'+documentRows(data.otherDocuments)+'</section>'+
+  '<section class="student-report-section"><h2>الملاحظات المسجلة ('+sum.notes+')</h2>'+noteRows+'</section>'+
+  '<p class="student-report-footnote">أُعد هذا التقرير من السجلات المحفوظة في تطبيق مُشرِفي. لا يُعد التقرير بديلاً عن مراجعة الوثائق الأصلية وإثباتات التبليغ قبل اتخاذ أي إجراء إداري.</p>'+
+ '</div>';
+}
+
 window.openStudentProfileAttendanceEdit=id=>{
  go('attendance');
  if(typeof window.editAttendance==='function')window.editAttendance(String(id));
