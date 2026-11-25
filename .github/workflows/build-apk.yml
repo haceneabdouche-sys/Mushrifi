@@ -117,6 +117,8 @@ jobs:
         run: node tests/daily-followup-dashboard.test.cjs
       - name: Run agenda calendar, backup and audit integrity tests
         run: node tests/agenda-calendar.test.cjs
+      - name: Run recurring agenda integrity and reminder regression tests
+        run: node tests/agenda-recurring.test.cjs
       - name: Run agenda Android notification scheduling regression tests
         run: node tests/agenda-notification-scheduling.test.cjs
       - name: Run Java local-time agenda reminder planner tests
