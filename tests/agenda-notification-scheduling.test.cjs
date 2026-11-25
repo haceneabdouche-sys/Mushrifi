@@ -5,7 +5,7 @@ const vm=require('node:vm');
 process.env.TZ='Europe/Paris';
 const html=fs.readFileSync('android/app/src/main/assets/index.html','utf8');
 const validStart=html.indexOf('function agendaValidDate(v){');
-const validEnd=html.indexOf('function agendaShiftDate(v,n)',validStart);
+const validEnd=html.indexOf('function agendaWeekStart(v)',validStart);
 const planStart=html.indexOf('function buildAgendaReminderPlan(items,nowValue){');
 const planEnd=html.indexOf('let lastAgendaReminderPayload=',planStart);
 assert.ok(validStart>=0&&validEnd>validStart,'agenda date validator exists');
