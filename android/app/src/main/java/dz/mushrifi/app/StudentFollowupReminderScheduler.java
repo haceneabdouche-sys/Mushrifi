@@ -43,23 +43,19 @@ public final class StudentFollowupReminderScheduler {
         LinkedHashMap<String, JSONObject> desired = new LinkedHashMap<>();
         Set<String> seen = new HashSet<>();
         int expired = 0;
-        int ignoredInactive = 0;
 
         for (int i = 0; i < input.length(); i++) {
             JSONObject raw = input.optJSONObject(i);
             if (raw == null) throw new IllegalArgumentException("عنصر متابعة تربوية رقم " + (i + 1) + " غير صالح.");
-            String id = safeText(raw.optString("id", ""), 128);
-            String status = safeText(raw.optString("status", ""), 40);
-            String reviewDate = raw.optString("nextDate", "");
-            if (id.isEmpty()) throw new IllegalArgumentException("معرّف سجل المتابعة التربوية مطلوب.");
-            if (!seen.add(id)) throw new IllegalArgumentException("يوجد معرّف متابعة تربوية مكرر؛ لم يتم تغيير جدول التنبيهات.");
-
-            if (!"قيد المتابعة".equals(status) || reviewDate == null || reviewDate.trim().isEmpty()) {
-                ignoredInactive++;
-                continue;
+            String reviewDate = safeText(raw.optString("reviewDate", ""), 10);
+            int count = raw.optInt("count", 0);
+            if (reviewDate.isEmpty() || count < 1) {
+                throw new IllegalArgumentException("تاريخ المراجعة وعدد السجلات مطلوبان لجدولة التذكير اليومي.");
             }
-
             long reminderAt = StudentFollowupReminderPlanner.reviewReminderMillis(reviewDate, null);
+            String id = reviewDate;
+            if (!seen.add(id)) throw new IllegalArgumentException("يوجد تاريخ مراجعة مكرر؛ لم يتم تغيير جدول التنبيهات.");
+
             if (reminderAt <= now - StudentFollowupReminderPlanner.MAX_LATE_DELIVERY_MS) {
                 expired++;
                 continue;
@@ -68,6 +64,7 @@ public final class StudentFollowupReminderScheduler {
             JSONObject stored = new JSONObject();
             stored.put("id", id);
             stored.put("reviewDate", reviewDate);
+            stored.put("count", count);
             stored.put("reminderAt", reminderAt);
             desired.put(id, stored);
         }
@@ -142,7 +139,6 @@ public final class StudentFollowupReminderScheduler {
         result.put("failedToSchedule", failedToSchedule);
         result.put("cancelled", cancelKeys.size());
         result.put("expired", expired);
-        result.put("ignoredInactive", ignoredInactive);
         result.put("notificationPermission", hasNotificationPermission(context));
         if (failedToSchedule > 0) {
             result.put("error", "تعذر ضبط " + failedToSchedule + " منبه(ات) للمراجعة؛ ستبقى السجلات محفوظة وستُعاد المحاولة عند فتح التطبيق.");
@@ -237,7 +233,7 @@ public final class StudentFollowupReminderScheduler {
         Intent intent = new Intent(context, StudentFollowupReminderReceiver.class);
         intent.setAction(ACTION);
         intent.setData(Uri.parse("mushrifi://student-followup-review/" + Uri.encode(id)));
-        intent.putExtra("followup_id", id);
+        intent.putExtra("followup_date", id);
         int flags = PendingIntent.FLAG_IMMUTABLE | extraFlags;
         if ((extraFlags & PendingIntent.FLAG_NO_CREATE) == 0) flags |= PendingIntent.FLAG_UPDATE_CURRENT;
         return PendingIntent.getBroadcast(context, id.hashCode(), intent, flags);
@@ -344,7 +340,8 @@ public final class StudentFollowupReminderScheduler {
             if (raw == null) return null;
             JSONObject item = new JSONObject(raw);
             if (!id.equals(item.optString("id", "")) ||
-                item.optString("reviewDate", "").trim().isEmpty() ||
+                !id.equals(item.optString("reviewDate", "")) ||
+                item.optInt("count", 0) < 1 ||
                 item.optLong("reminderAt", 0L) <= 0L) return null;
             return item;
         } catch (Exception invalid) {
