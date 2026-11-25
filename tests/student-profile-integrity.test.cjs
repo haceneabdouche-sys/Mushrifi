@@ -50,7 +50,7 @@ const profileStart=html.indexOf('window.studentHistory=id=>{');
 const profileEnd=html.indexOf('window.closeMushrifiPrintPreview',profileStart);
 assert.ok(profileStart>=0&&profileEnd>profileStart,'student profile renderer exists');
 const profile=html.slice(profileStart,profileEnd);
-assert.ok(profile.includes('profileRecordBelongsToStudent(s,db.students)'),'profile uses the tested conservative record matcher');
+assert.ok(profile.includes('const belongsToStudent=record=>profileRecordBelongsToStudent(record,s,db.students)'),'profile uses the tested conservative record matcher');
 assert.ok(profile.includes('مجموع ساعات الغياب')&&profile.includes('مجموع دقائق التأخر'),'profile displays absence hours and lateness minutes as separate units');
 assert.ok(!profile.includes('مجموع الساعات الكلي'),'profile does not add incompatible hours and minutes together');
 assert.ok(profile.includes("profileLatenessMinutes(x)+' دقيقة'"),'lateness rows display minutes');
