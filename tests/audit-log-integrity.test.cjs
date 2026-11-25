@@ -87,6 +87,11 @@ assert.equal(sandbox.auditCanRevert(privateOnly,{id:'s',parentPhone:'222'}),fals
 
 const baseline=sandbox.auditComparableDatabase({...after,auditLog:[{id:'new'}]});
 assert.equal(Object.prototype.hasOwnProperty.call(baseline,'auditLog'),false,'audit history is excluded from change comparison to avoid self-logging');
+const compactText=JSON.stringify(sandbox.auditComparableDatabase(after));
+for(const privateValue of ['0555000000','0555999999','PERSONAL-123','PERSONAL-456','ملاحظة خاصة قبل','ملاحظة خاصة بعد','سبب خاص وسري','PRIVATEIMAGE']){
+ assert.ok(!compactText.includes(privateValue),'the in-memory comparison baseline stores fingerprints, not private values: '+privateValue);
+}
+assert.ok(compactText.includes('__auditFingerprint'),'private values are represented by compact change fingerprints');
 
 assert.ok(html.includes("const AUDIT_LOG_LIMIT=500;"),'audit history is capped to a bounded size');
 assert.ok(html.includes("previousAuditLog.concat(newEntries).slice(-AUDIT_LOG_LIMIT)"),'only the most recent audit entries are retained');
