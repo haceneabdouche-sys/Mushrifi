@@ -156,6 +156,96 @@ public class MainActivity extends Activity {
         private String lastError = "";
         synchronized String getLastError() { return lastError; }
         synchronized boolean write(String json) { try { android.content.ContentValues v = new android.content.ContentValues(); v.put("id", 1); v.put("json", encryptData(json)); long result = getWritableDatabase().insertWithOnConflict("appdata", null, v, SQLiteDatabase.CONFLICT_REPLACE); if (result == -1) { lastError = "SQLite لم يقبل حفظ السجل (insertWithOnConflict أعاد -1)."; return false; } lastError = ""; return true; } catch (Exception e) { lastError = e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()); android.util.Log.e("MushrifiDB", "Database write failed", e); return false; } }
+        synchronized boolean restoreSafely(String json) {
+            SQLiteDatabase database = null;
+            boolean transactionStarted = false;
+            boolean restored = false;
+            try {
+                if (json == null || json.trim().isEmpty()) {
+                    throw new IOException("بيانات الاستعادة فارغة.");
+                }
+                // Validate the database envelope again at the native storage boundary.
+                org.json.JSONObject replacement = new org.json.JSONObject(json);
+                for (String key : new String[]{"students", "attendance", "documents", "violations"}) {
+                    if (!(replacement.opt(key) instanceof org.json.JSONArray)) {
+                        throw new IOException("قائمة البيانات غير صالحة: " + key);
+                    }
+                }
+                for (String key : new String[]{"agenda", "followups", "auditLog"}) {
+                    if (replacement.has(key) && !(replacement.opt(key) instanceof org.json.JSONArray)) {
+                        throw new IOException("قائمة البيانات غير صالحة: " + key);
+                    }
+                }
+                if (!(replacement.opt("settings") instanceof org.json.JSONObject)) {
+                    throw new IOException("إعدادات قاعدة البيانات غير صالحة.");
+                }
+                for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "auditLog"}) {
+                    org.json.JSONArray records = replacement.optJSONArray(key);
+                    if (records == null) continue;
+                    for (int i = 0; i < records.length(); i++) {
+                        if (!(records.opt(i) instanceof org.json.JSONObject)) {
+                            throw new IOException("يوجد سجل غير صالح داخل القائمة: " + key);
+                        }
+                    }
+                }
+
+                database = getWritableDatabase();
+                ensureRecoveryTable(database);
+                database.beginTransaction();
+                transactionStarted = true;
+
+                // Keep the JS-created encrypted undo snapshot intact. It is deliberately
+                // not overwritten by a raw database payload, because the app's Undo UI
+                // expects the versioned snapshot envelope.
+                String recoverySnapshot = null;
+                try (Cursor cursor = database.rawQuery("SELECT json FROM recovery_snapshot WHERE id=1", null)) {
+                    if (cursor.moveToFirst()) recoverySnapshot = decryptData(cursor.getString(0));
+                }
+                if (recoverySnapshot == null || recoverySnapshot.trim().isEmpty()) {
+                    throw new IOException("لم يتم العثور على نقطة الاسترجاع المشفّرة قبل الاستعادة.");
+                }
+                org.json.JSONObject recoveryEnvelope = new org.json.JSONObject(recoverySnapshot);
+                if (recoveryEnvelope.optInt("version", -1) != 1
+                    || !(recoveryEnvelope.opt("database") instanceof org.json.JSONObject)) {
+                    throw new IOException("نقطة الاسترجاع المشفّرة غير مكتملة؛ أُوقفت العملية دون استبدال البيانات.");
+                }
+
+                android.content.ContentValues values = new android.content.ContentValues();
+                values.put("id", 1);
+                values.put("json", encryptData(json));
+                long row = database.insertWithOnConflict("appdata", null, values, SQLiteDatabase.CONFLICT_REPLACE);
+                if (row == -1) {
+                    throw new IOException("SQLite لم يقبل كتابة قاعدة البيانات المستعادة.");
+                }
+
+                String verifiedJson = null;
+                try (Cursor cursor = database.rawQuery("SELECT json FROM appdata WHERE id=1", null)) {
+                    if (cursor.moveToFirst()) verifiedJson = decryptData(cursor.getString(0));
+                }
+                if (!json.equals(verifiedJson)) {
+                    throw new IOException("فشل التحقق من قراءة البيانات بعد كتابتها؛ أُلغيت المعاملة.");
+                }
+
+                database.setTransactionSuccessful();
+                restored = true;
+                lastError = "";
+            } catch (Exception error) {
+                restored = false;
+                lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                android.util.Log.e("MushrifiDB", "Safe restore transaction failed", error);
+            } finally {
+                if (transactionStarted && database != null) {
+                    try {
+                        database.endTransaction();
+                    } catch (Exception error) {
+                        restored = false;
+                        lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                        android.util.Log.e("MushrifiDB", "Safe restore transaction could not finish", error);
+                    }
+                }
+            }
+            return restored;
+        }
         synchronized boolean saveRecoverySnapshot(String json) {
             try {
                 if (json == null || json.trim().isEmpty()) return false;
@@ -236,6 +326,17 @@ public class MainActivity extends Activity {
             String script = "window.onMushrifiLicenseResult && window.onMushrifiLicenseResult("
                 + org.json.JSONObject.quote(callbackId) + "," + result.toString() + ");";
             runOnUiThread(() -> { if (web != null) web.evaluateJavascript(script, null); });
+        }
+        @JavascriptInterface public String sha256Utf8(String value) {
+            try { return BackupIntegrity.sha256Hex(value); }
+            catch (Exception error) {
+                android.util.Log.e("MushrifiBackup", "SHA-256 calculation failed", error);
+                return "";
+            }
+        }
+        @JavascriptInterface public boolean restoreDatabaseSafely(String json) {
+            if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
+            return localDb.restoreSafely(json);
         }
         @JavascriptInterface public String loadDatabase() { return localDb.read(); }
         @JavascriptInterface public boolean canModifyData() { return LicenseManager.canWrite(MainActivity.this); }
