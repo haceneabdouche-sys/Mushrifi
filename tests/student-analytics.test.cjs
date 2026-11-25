@@ -4,7 +4,7 @@ const vm=require('node:vm');
 
 const html=fs.readFileSync('android/app/src/main/assets/index.html','utf8');
 const start=html.indexOf('function analyticsDateValid(value){');
-const end=html.indexOf('function analyticsFormatCount(value)',start);
+const end=html.indexOf("$('#makeReport').onclick=()=>{",start);
 assert.ok(start>=0&&end>start,'pure student analytics helpers must exist before the renderer');
 const sandbox={};
 vm.createContext(sandbox);
