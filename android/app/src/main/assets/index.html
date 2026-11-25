@@ -1341,6 +1341,123 @@ $('#studentsRows').innerHTML=matches.slice().sort((a,b)=>String(a.class||'').loc
 }
 
 window.openTaskPage=page=>{const target=$('#nav button[data-page="'+String(page||'')+'"]');if(target)target.click();};
+
+function agendaValidDate(v){const m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return false;const y=+m[1],mo=+m[2],d=+m[3],x=new Date(Date.UTC(y,mo-1,d));return x.getUTCFullYear()===y&&x.getUTCMonth()===mo-1&&x.getUTCDate()===d;}
+function agendaShiftDate(v,n){if(!agendaValidDate(v))return '';const [y,m,d]=v.split('-').map(Number),x=new Date(Date.UTC(y,m-1,d));x.setUTCDate(x.getUTCDate()+Number(n||0));return x.getUTCFullYear()+'-'+String(x.getUTCMonth()+1).padStart(2,'0')+'-'+String(x.getUTCDate()).padStart(2,'0');}
+function agendaWeekStart(v){if(!agendaValidDate(v))return '';const [y,m,d]=v.split('-').map(Number);return agendaShiftDate(v,-new Date(Date.UTC(y,m-1,d)).getUTCDay());}
+function agendaMonthGrid(v){if(!agendaValidDate(v))return null;const first=v.slice(0,7)+'-01',start=agendaWeekStart(first);return {start,end:agendaShiftDate(start,41),month:v.slice(0,7)};}
+function agendaDateRange(view,v){if(!agendaValidDate(v))return null;if(view==='day')return {from:v,to:v};if(view==='week'){const from=agendaWeekStart(v);return {from,to:agendaShiftDate(from,6)};}const m=agendaMonthGrid(v);return m?{from:m.start,to:m.end}:null;}
+function agendaTypeLabel(t){return ({summons:'استدعاء ولي',meeting:'اجتماع',task:'مهمة يومية',followup:'متابعة تلميذ',personal:'موعد آخر'})[t]||'موعد';}
+function agendaPriorityLabel(p){return ({normal:'عادية',high:'مرتفعة',urgent:'عاجلة'})[p]||'عادية';}
+function agendaFormatDate(v,opts){if(!agendaValidDate(v))return 'تاريخ غير محدد';const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d,12).toLocaleDateString('ar-DZ',opts||{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
+function buildAgendaSnapshot(manualItems,documents,from,to,resolveStudent){
+ if(!agendaValidDate(from)||!agendaValidDate(to)||from>to)return {valid:false,items:[],manualCount:0,summonsCount:0,invalidManual:0,invalidSummons:0};
+ const out=[],manual=Array.isArray(manualItems)?manualItems:[],docs=Array.isArray(documents)?documents:[],resolve=typeof resolveStudent==='function'?resolveStudent:()=>null;let invalidManual=0,invalidSummons=0;
+ manual.forEach(x=>{if(!x||typeof x!=='object'||Array.isArray(x)||!String(x.id||'').trim()||!agendaValidDate(x.date)||!String(x.title||'').trim()){invalidManual++;return;}if(x.date<from||x.date>to)return;let linked=null;try{linked=x.studentId?resolve(String(x.studentId)):null;}catch(_){}
+ out.push({id:String(x.id),source:'manual',title:String(x.title),type:['meeting','task','followup','personal'].includes(x.type)?x.type:'task',date:x.date,startTime:String(x.startTime||''),endTime:String(x.endTime||''),location:String(x.location||''),priority:['normal','high','urgent'].includes(x.priority)?x.priority:'normal',status:['planned','done','cancelled'].includes(x.status)?x.status:'planned',notes:String(x.notes||''),studentId:String(x.studentId||''),student:linked});});
+ const seen=new Set();
+ docs.forEach(x=>{const ap=String(x?.appointment||''),date=ap.slice(0,10);if(!String(x?.type||'').includes('استدعاء'))return;if(!x.id||!agendaValidDate(date)||!ap.includes('T')){if(ap)invalidSummons++;return;}const id=String(x.id);if(seen.has(id))return;seen.add(id);if(date<from||date>to)return;let linked=null;try{linked=x.student?resolve(String(x.student),x):null;}catch(_){}
+ const studentName=linked?(String(linked.last||'')+' '+String(linked.first||'')).trim():String(x.studentName||'تلميذ غير محدد');
+ out.push({id:'summons:'+id,documentId:id,source:'summons',readOnly:true,title:'حضور ولي: '+studentName,type:'summons',date,startTime:ap.slice(11,16),endTime:'',location:'المؤسسة',priority:'high',status:'planned',student:linked,studentId:String(x.student||'')});});
+ out.sort((a,b)=>a.date.localeCompare(b.date)||String(a.startTime||'99:99').localeCompare(String(b.startTime||'99:99'))||a.title.localeCompare(b.title,'ar'));
+ return {valid:true,items:out,manualCount:out.filter(x=>x.source==='manual').length,summonsCount:out.filter(x=>x.source==='summons').length,invalidManual,invalidSummons};
+}
+let agendaCurrentView='month',agendaSelectedDate=(new Date()).getFullYear()+'-'+String((new Date()).getMonth()+1).padStart(2,'0')+'-'+String((new Date()).getDate()).padStart(2,'0'),agendaCurrentTypeFilter='all';
+function agendaRange(){if(agendaCurrentView==='month'){const x=agendaMonthGrid(agendaSelectedDate);return x?{from:x.start,to:x.end,month:x.month}:null;}return agendaDateRange(agendaCurrentView,agendaSelectedDate);}
+function agendaGetEvents(from,to){const s=buildAgendaSnapshot(db.agenda,db.documents,from,to,id=>student(id));s.items=agendaCurrentTypeFilter==='all'?s.items:s.items.filter(x=>x.type===agendaCurrentTypeFilter);return s;}
+function agendaEventMarkup(x,compact=false){
+ const time=x.startTime?(x.endTime?x.startTime+'–'+x.endTime:x.startTime):'طوال اليوم',studentName=x.student?(String(x.student.last||'')+' '+String(x.student.first||'')).trim():'';
+ const actions=x.source==='summons'?'<button type="button" class="btn small" data-agenda-open-doc="'+esc(x.documentId)+'">فتح وثيقة الاستدعاء</button>':'<div class="agenda-item-actions"><button type="button" class="btn small" data-agenda-toggle="'+esc(x.id)+'">'+(x.status==='done'?'إعادة فتح':'تم الإنجاز')+'</button><button type="button" class="btn small" data-agenda-edit="'+esc(x.id)+'">تعديل</button><button type="button" class="btn small danger" data-agenda-delete="'+esc(x.id)+'">حذف</button></div>';
+ return '<article class="agenda-event '+(x.status==='done'?'agenda-done':'')+'"><div class="agenda-event-top"><strong>'+esc(x.title)+'</strong><span class="agenda-event-time">'+esc(time)+'</span></div><div class="agenda-event-meta"><span class="agenda-type agenda-type-'+esc(x.type)+'">'+esc(agendaTypeLabel(x.type))+'</span><span class="agenda-priority agenda-priority-'+esc(x.priority)+'">'+esc(agendaPriorityLabel(x.priority))+'</span><span>'+esc(x.source==='summons'?'من الوثائق':(x.status==='done'?'منجز':'مجدول'))+'</span></div>'+(compact?'':'<div class="agenda-event-extra">'+(x.location?'<span>المكان: '+esc(x.location)+'</span>':'')+(studentName?'<span>التلميذ: '+esc(studentName)+'</span>':'')+(x.notes?'<p>'+esc(x.notes)+'</p>':'')+'</div>')+actions+'</article>';
+}
+function renderAgenda(){
+ const calendar=$('#agendaCalendar'),selected=$('#agendaSelectedItems');if(!calendar||!selected)return;
+ const range=agendaRange();if(!range)return;
+ const snapshot=agendaGetEvents(range.from,range.to),all=buildAgendaSnapshot(db.agenda,db.documents,'0001-01-01','9999-12-31',id=>student(id));
+ const d=new Date(),today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),week=agendaDateRange('week',today);
+ const weekEvents=week?buildAgendaSnapshot(db.agenda,db.documents,week.from,week.to,id=>student(id)).items:[];
+ const todayEvents=all.items.filter(x=>x.date===today),manual=Array.isArray(db.agenda)?db.agenda:[];
+ $('#agendaStoredCount').textContent=manual.length.toLocaleString('ar-DZ')+' موعد محفوظ';
+ $('#agendaTodayCount').textContent=todayEvents.length.toLocaleString('ar-DZ');$('#agendaWeekCount').textContent=weekEvents.length.toLocaleString('ar-DZ');
+ $('#agendaOpenCount').textContent=manual.filter(x=>x.status!=='done'&&x.status!=='cancelled').length.toLocaleString('ar-DZ');$('#agendaDoneCount').textContent=manual.filter(x=>x.status==='done').length.toLocaleString('ar-DZ');
+ $('#agendaSelectedDate').value=agendaSelectedDate;document.querySelectorAll('[data-agenda-view]').forEach(b=>b.classList.toggle('active',b.dataset.agendaView===agendaCurrentView));
+ const weekdays=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],byDate=new Map();snapshot.items.forEach(x=>{if(!byDate.has(x.date))byDate.set(x.date,[]);byDate.get(x.date).push(x);});
+ if(agendaCurrentView==='month'){
+  const grid=agendaMonthGrid(agendaSelectedDate);let out='<div class="agenda-month-grid">'+weekdays.map(x=>'<div class="agenda-weekday">'+x+'</div>').join('');
+  for(let i=0;i<42;i++){const date=agendaShiftDate(grid.start,i),items=byDate.get(date)||[];out+='<button type="button" class="agenda-month-day '+(date.slice(0,7)!==grid.month?'outside-month ':'')+(date===agendaSelectedDate?'selected-day ':'')+(date===today?'is-today':'')+'" data-agenda-select-date="'+date+'"><b>'+Number(date.slice(8,10))+'</b>'+(items.length?items.slice(0,2).map(x=>'<span class="agenda-day-chip">'+esc(x.startTime?x.startTime+' ':'')+esc(x.title)+'</span>').join(''):'<small class="agenda-day-empty">—</small>')+(items.length>2?'<small class="agenda-more-count">+'+(items.length-2)+'</small>':'')+'</button>';}calendar.innerHTML=out+'</div>';
+ }else if(agendaCurrentView==='week'){
+  let out='<div class="agenda-week-grid">';for(let i=0;i<7;i++){const date=agendaShiftDate(range.from,i),items=byDate.get(date)||[];out+='<section class="agenda-week-day '+(date===agendaSelectedDate?'selected-day ':'')+(date===today?'is-today':'')+'"><button type="button" class="agenda-week-day-title" data-agenda-select-date="'+date+'"><b>'+weekdays[i]+'</b><span>'+date.slice(8,10)+'/'+date.slice(5,7)+'</span></button>'+(items.length?items.map(x=>agendaEventMarkup(x,true)).join(''):'<p class="agenda-day-empty">لا توجد مواعيد</p>')+'</section>';}calendar.innerHTML=out+'</div>';
+ }else calendar.innerHTML='<div class="agenda-day-focus"><span class="home-eyebrow">العرض اليومي</span><h3>'+esc(agendaFormatDate(agendaSelectedDate))+'</h3></div>';
+ const selectedItems=snapshot.items.filter(x=>x.date===agendaSelectedDate);
+ $('#agendaSelectedHeading').textContent='مواعيد '+agendaFormatDate(agendaSelectedDate);$('#agendaSelectedCount').textContent=selectedItems.length.toLocaleString('ar-DZ');
+ selected.innerHTML=selectedItems.length?selectedItems.map(x=>agendaEventMarkup(x)).join(''):'<p class="empty">لا توجد مواعيد أو مهام في هذا اليوم.</p>';
+ $('#agendaSelectedItems').closest('.agenda-selected-panel')?.classList.toggle('hidden',agendaCurrentView==='day');
+ if(snapshot.invalidManual||snapshot.invalidSummons)calendar.insertAdjacentHTML('beforeend','<p class="notice">تعذر عرض '+snapshot.invalidManual+' موعد يدوي و'+snapshot.invalidSummons+' استدعاء بسبب بيانات أو تاريخ غير صالح؛ لم تُحذف السجلات.</p>');
+ [calendar,selected].forEach(box=>{
+  box.querySelectorAll('[data-agenda-select-date]').forEach(b=>b.addEventListener('click',()=>{agendaSelectedDate=b.dataset.agendaSelectDate;renderAgenda();}));
+  box.querySelectorAll('[data-agenda-toggle]').forEach(b=>b.addEventListener('click',()=>agendaToggleStatus(b.dataset.agendaToggle)));
+  box.querySelectorAll('[data-agenda-edit]').forEach(b=>b.addEventListener('click',()=>showAgendaForm(b.dataset.agendaEdit)));
+  box.querySelectorAll('[data-agenda-delete]').forEach(b=>b.addEventListener('click',()=>agendaDelete(b.dataset.agendaDelete)));
+  box.querySelectorAll('[data-agenda-open-doc]').forEach(b=>b.addEventListener('click',()=>openAgendaSummons(b.dataset.agendaOpenDoc)));
+ });
+}
+function showAgendaForm(id){
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن إضافة المواعيد قبل تفعيل الترخيص.');return;}
+ const form=$('#agendaForm'),panel=$('#agendaFormPanel'),studentSelect=$('#agendaStudent');if(!form||!panel)return;
+ const oldStudent=studentSelect.value;studentSelect.innerHTML='<option value="">لا يوجد تلميذ محدد</option>'+db.students.slice().sort((a,b)=>String(a.last||'').localeCompare(String(b.last||''),'ar')).map(x=>'<option value="'+esc(x.id)+'">'+esc((x.last||'')+' '+(x.first||''))+' — '+esc(studentAcademicLabel(x))+'</option>').join('');
+ const item=id?db.agenda.find(x=>String(x.id)===String(id)):null;form.reset();
+ $('#agendaFormId').value=item?String(item.id):'';$('#agendaTitle').value=item?.title||'';$('#agendaType').value=item?.type||'task';
+ $('#agendaDate').value=item?.date||agendaSelectedDate;$('#agendaStartTime').value=item?.startTime||'';$('#agendaEndTime').value=item?.endTime||'';
+ $('#agendaLocation').value=item?.location||'';$('#agendaStudent').value=item?.studentId||oldStudent||'';$('#agendaPriority').value=item?.priority||'normal';$('#agendaNotes').value=item?.notes||'';
+ $('#agendaFormHeading').textContent=item?'تعديل الموعد أو المهمة':'إضافة موعد أو مهمة';panel.classList.remove('hidden');panel.scrollIntoView({behavior:'smooth',block:'start'});$('#agendaTitle').focus();
+}
+function closeAgendaForm(){agendaEditingId='';$('#agendaFormPanel')?.classList.add('hidden');$('#agendaForm')?.reset();}
+let agendaEditingId='';
+function agendaHandleSubmit(e){
+ e.preventDefault();if(licenseReadOnly)return;
+ const d=new FormData(e.currentTarget),id=String(d.get('id')||''),title=String(d.get('title')||'').trim(),date=String(d.get('date')||''),startTime=String(d.get('startTime')||''),endTime=String(d.get('endTime')||'');
+ if(!title||title.length>100){alert('أدخل عنواناً صحيحاً لا يتجاوز 100 حرف.');return;}
+ if(!agendaValidDate(date)){alert('التاريخ غير صحيح.');return;}
+ if(startTime&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(startTime)||endTime&&!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(endTime)||startTime&&endTime&&endTime<=startTime){alert('تحقق من وقت البداية والنهاية؛ يجب أن تكون النهاية بعد البداية.');return;}
+ const type=String(d.get('type')||'task');if(!['meeting','task','followup','personal'].includes(type)){alert('نوع الموعد غير صالح.');return;}
+ const item=id?db.agenda.find(x=>String(x.id)===id):null;if(id&&!item){alert('تعذر العثور على الموعد المراد تعديله.');return;}
+ const previous=item?{...item}:null,values={title,type,date,startTime,endTime,location:String(d.get('location')||'').trim().slice(0,100),studentId:String(d.get('studentId')||''),priority:['normal','high','urgent'].includes(String(d.get('priority')))?String(d.get('priority')):'normal',notes:String(d.get('notes')||'').trim().slice(0,1200),updatedAt:new Date().toISOString()};
+ if(item)Object.assign(item,values);else db.agenda.push({id:crypto.randomUUID(),...values,status:'planned',createdAt:new Date().toISOString()});
+ if(!save()){if(item)Object.assign(item,previous);else db.agenda.pop();return;}
+ agendaSelectedDate=date;closeAgendaForm();renderAgenda();
+}
+function agendaToggleStatus(id){const item=db.agenda.find(x=>String(x.id)===String(id));if(!item||licenseReadOnly)return;const old=item.status;item.status=old==='done'?'planned':'done';item.updatedAt=new Date().toISOString();if(!save()){item.status=old;return;}renderAgenda();}
+function agendaDelete(id){if(licenseReadOnly)return;const i=db.agenda.findIndex(x=>String(x.id)===String(id));if(i<0)return;const item=db.agenda[i];if(!confirm('هل تريد حذف الموعد «'+String(item.title||'')+'»؟ لن يتأثر الاستدعاء الأصلي في قسم الوثائق.'))return;db.agenda.splice(i,1);if(!save()){db.agenda.splice(i,0,item);return;}renderAgenda();}
+function openAgendaSummons(id){if(!db.documents.some(x=>String(x.id)===String(id)))return;go('documents');if(typeof window.editDocument==='function')window.editDocument(String(id));}
+function initAgendaControls(){
+ document.querySelectorAll('[data-agenda-view]').forEach(b=>b.addEventListener('click',()=>{agendaCurrentView=b.dataset.agendaView;renderAgenda();}));
+ $('#agendaPrev')?.addEventListener('click',()=>{if(agendaCurrentView==='month'){const [y,m]=agendaSelectedDate.split('-').map(Number),x=new Date(y,m-2,1,12);agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-01';}else agendaSelectedDate=agendaShiftDate(agendaSelectedDate,agendaCurrentView==='week'?-7:-1);renderAgenda();});
+ $('#agendaNext')?.addEventListener('click',()=>{if(agendaCurrentView==='month'){const [y,m]=agendaSelectedDate.split('-').map(Number),x=new Date(y,m,1,12);agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-01';}else agendaSelectedDate=agendaShiftDate(agendaSelectedDate,agendaCurrentView==='week'?7:1);renderAgenda();});
+ $('#agendaToday')?.addEventListener('click',()=>{const x=new Date();agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');renderAgenda();});
+ $('#agendaSelectedDate')?.addEventListener('change',e=>{if(agendaValidDate(e.target.value)){agendaSelectedDate=e.target.value;renderAgenda();}});
+ $('#agendaTypeFilter')?.addEventListener('change',e=>{agendaCurrentTypeFilter=e.target.value||'all';renderAgenda();});
+ $('#agendaAdd')?.addEventListener('click',()=>showAgendaForm(''));$('#agendaCancel')?.addEventListener('click',closeAgendaForm);$('#agendaCancelBottom')?.addEventListener('click',closeAgendaForm);
+ $('#agendaForm')?.addEventListener('submit',agendaHandleSubmit);
+}
+function renderAgendaHome(today){
+ const output=$('#upcomingAgenda');if(!output)return;const to=agendaShiftDate(today,6),snapshot=buildAgendaSnapshot(db.agenda,db.documents,today,to,id=>student(id));
+ const items=snapshot.items.filter(x=>x.status!=='done'&&x.status!=='cancelled').slice(0,5);
+ output.innerHTML=items.length?items.map(x=>'<button type="button" class="agenda-home-item" data-agenda-home-date="'+esc(x.date)+'"><span><b>'+esc(x.title)+'</b><small>'+esc(agendaFormatDate(x.date,{weekday:'short',month:'short',day:'numeric'}))+(x.startTime?' · '+esc(x.startTime):'')+'</small></span><small>'+esc(agendaTypeLabel(x.type))+'</small></button>').join(''):'<p class="empty">لا توجد مواعيد أو مهام مفتوحة في الأيام السبعة القادمة.</p>';
+ output.querySelectorAll('[data-agenda-home-date]').forEach(b=>b.addEventListener('click',()=>{agendaSelectedDate=b.dataset.agendaHomeDate;agendaCurrentView='day';go('agenda');}));
+}
+function initAgendaControls(){
+ document.querySelectorAll('[data-agenda-view]').forEach(b=>b.addEventListener('click',()=>{agendaCurrentView=b.dataset.agendaView;renderAgenda();}));
+ $('#agendaPrev')?.addEventListener('click',()=>{if(agendaCurrentView==='month'){const [y,m]=agendaSelectedDate.split('-').map(Number),x=new Date(y,m-2,1,12);agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-01';}else agendaSelectedDate=agendaShiftDate(agendaSelectedDate,agendaCurrentView==='week'?-7:-1);renderAgenda();});
+ $('#agendaNext')?.addEventListener('click',()=>{if(agendaCurrentView==='month'){const [y,m]=agendaSelectedDate.split('-').map(Number),x=new Date(y,m,1,12);agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-01';}else agendaSelectedDate=agendaShiftDate(agendaSelectedDate,agendaCurrentView==='week'?7:1);renderAgenda();});
+ $('#agendaToday')?.addEventListener('click',()=>{const x=new Date();agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');renderAgenda();});
+ $('#agendaSelectedDate')?.addEventListener('change',e=>{if(agendaValidDate(e.target.value)){agendaSelectedDate=e.target.value;renderAgenda();}});
+ $('#agendaTypeFilter')?.addEventListener('change',e=>{agendaCurrentTypeFilter=e.target.value||'all';renderAgenda();});
+ $('#agendaAdd')?.addEventListener('click',()=>showAgendaForm(''));$('#agendaCancel')?.addEventListener('click',closeAgendaForm);$('#agendaCancelBottom')?.addEventListener('click',closeAgendaForm);
+ $('#agendaForm')?.addEventListener('submit',agendaHandleSubmit);
+}
+initAgendaControls();
+
+
 function smartDashboardDateShift(value,offset){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return '';const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]),date=new Date(y,mo-1,d,12);if(date.getFullYear()!==y||date.getMonth()!==mo-1||date.getDate()!==d)return '';date.setDate(date.getDate()+Number(offset||0));return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
 function smartDashboardValidDate(v){const s=String(v||'');return /^\d{4}-\d{2}-\d{2}$/.test(s)&&smartDashboardDateShift(s,0)===s;}
 function buildSmartDashboardSnapshot(attendance,violations,today,resolveStudent){
