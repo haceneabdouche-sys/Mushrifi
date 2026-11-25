@@ -1085,7 +1085,7 @@ function applyLicenseAccess(state){
  const allowed=new Set(['exportData','exportAuditLog','makeReport','validateLicenseBtn','activateLicenseBtn']);
  if(licenseReadOnly){
   $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
-  $('select').forEach(el=>setLicenseControlDisabled(el,!el.closest('#auditLogFilters')));
+  document.querySelectorAll('select').forEach(el=>setLicenseControlDisabled(el,!el.closest('#auditLogFilters')));
   $$('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>setLicenseControlDisabled(el,true));
   $$('button').forEach(el=>{
    const action=el.getAttribute('onclick')||'';
