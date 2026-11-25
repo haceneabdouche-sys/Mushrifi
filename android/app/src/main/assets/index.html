@@ -1683,24 +1683,24 @@ function agendaAlternativeSlots(events,target,options){
   const start=agendaConflictTimeMinutes(rawStart);
   if(start===null){ignored.invalidTime++;return;}
   if(!rawEnd){
-   blocked.push({start:Math.max(workStart,start-buffer),end:Math.min(workEnd,start+buffer),point:true});
+   blocked.push({start:Math.max(workStart,start-buffer),end:Math.min(workEnd,start+buffer),point:buffer===0});
    return;
   }
   const end=agendaConflictTimeMinutes(rawEnd);
   if(end===null||end<=start){ignored.invalidTime++;return;}
   blocked.push({start:Math.max(workStart,start-buffer),end:Math.min(workEnd,end+buffer),point:false});
  });
- const slots=[];
+ const candidates=[];
  for(let start=workStart;start+duration<=workEnd;start+=15){
   const end=start+duration;
   const conflict=blocked.some(block=>block.point
    ?block.start>=start&&block.start<end
    :Math.max(start,block.start)<Math.min(end,block.end));
-  if(conflict)continue;
-  if(start===targetWindow.start)continue;
-  slots.push({startTime:agendaFormatMinuteOfDay(start),endTime:agendaFormatMinuteOfDay(end),start,end,duration});
-  if(slots.length>=3)break;
+  if(conflict||start===targetWindow.start)continue;
+  candidates.push({startTime:agendaFormatMinuteOfDay(start),endTime:agendaFormatMinuteOfDay(end),start,end,duration});
  }
+ candidates.sort((a,b)=>Math.abs(a.start-targetWindow.start)-Math.abs(b.start-targetWindow.start)||a.start-b.start);
+ const slots=candidates.slice(0,3);
  return {valid:true,slots,duration,ignoredWithoutTime:ignored.withoutTime,ignoredInvalidTime:ignored.invalidTime,bufferMinutes:buffer};
 }
 
