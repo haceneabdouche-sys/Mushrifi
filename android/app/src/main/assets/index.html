@@ -1392,7 +1392,7 @@ function auditEntryValue(value,missing){
 let auditBaselineJson=JSON.stringify(auditComparableDatabase(db));
 let auditNextRevertsId='';
 let preserveUndoOnNextSave=false;
-const save=()=>{
+const save=(options={})=>{
  if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}
  const clearUndoAfterSave=!preserveUndoOnNextSave;preserveUndoOnNextSave=false;
  const previousAuditLog=Array.isArray(db.auditLog)?db.auditLog.slice():[];
@@ -1404,9 +1404,17 @@ const save=()=>{
   else db.auditLog=previousAuditLog;
   json=JSON.stringify(db);
   if(isAndroidApp){
-   if(!AndroidBridge.saveDatabase(json)){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}
+   let stored=false;
+   if(options&&options.restore===true){
+    if(typeof AndroidBridge.restoreDatabaseSafely!=='function')throw Error('إصدار التخزين الآمن لا يدعم الاستعادة المعاملية؛ لم تُعتمد النسخة.');
+    stored=AndroidBridge.restoreDatabaseSafely(json)===true;
+   }else stored=AndroidBridge.saveDatabase(json)===true;
+   if(!stored){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}
    try{localStorage.removeItem(DBKEY);}catch(_){}
-  }else localStorage.setItem(DBKEY,json);
+  }else{
+   localStorage.setItem(DBKEY,json);
+   if(localStorage.getItem(DBKEY)!==json)throw Error('تعذر التحقق من البيانات بعد كتابتها في التخزين المحلي.');
+  }
  }catch(e){
   db.auditLog=previousAuditLog;
   alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;
@@ -3529,20 +3537,20 @@ function updateBackupHealth(timestamp,verified){
 }
 window.onMushrifiBackupVerified=timestamp=>{try{localStorage.setItem('mushrifi_backup_export_requested',String(timestamp));}catch(_){}updateBackupHealth(timestamp,true);};
 (function initBackupHealth(){try{if(window.AndroidBridge&&typeof AndroidBridge.getLastVerifiedBackupTime==='function'){const verified=Number(AndroidBridge.getLastVerifiedBackupTime()||0);if(verified){updateBackupHealth(verified,true);return;}}const requested=Number(localStorage.getItem('mushrifi_backup_export_requested')||0);updateBackupHealth(requested,false);}catch(_){updateBackupHealth(0,false);}})();
-$('#exportData').onclick=()=>{
+$('#exportData').onclick=async()=>{
  if(!licenseReadOnly&&!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}
  try{
   const payload={...db};delete payload.mushrifiBackup;
   const check=JSON.parse(JSON.stringify(payload));
-  if(!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!Array.isArray(check.agenda)||!check.settings||typeof check.settings!=='object'||Array.isArray(check.settings))
+  if(!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!Array.isArray(check.agenda)||!Array.isArray(check.followups)||!check.settings||typeof check.settings!=='object'||Array.isArray(check.settings))
    throw new Error('بنية البيانات غير مكتملة');
   const total=Object.values(backupPayloadCounts(check)).reduce((n,v)=>n+(Number.isFinite(v)?v:0),0);
   if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;
-  const manifest=createMushrifiBackupManifest(check,new Date().toISOString());
+  const manifest=await createMushrifiBackupManifest(check,new Date().toISOString());
   const envelope={...check,mushrifiBackup:manifest};
   const json=JSON.stringify(envelope,null,2);
-  const verification=verifyMushrifiBackupManifest(JSON.parse(json));
-  if(!verification.ok)throw new Error('فشل التحقق الداخلي من النسخة التي تم تجهيزها: '+verification.errors.join(' '));
+  const verification=await verifyMushrifiBackupManifest(JSON.parse(json));
+  if(!verification.ok||!verification.strongHashVerified)throw new Error('فشل التحقق الداخلي من النسخة التي تم تجهيزها: '+verification.errors.join(' '));
   if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}
   const blob=new Blob([json],{type:'application/json'});
   if(blob.size<2)throw new Error('حجم النسخة غير صالح');
@@ -3572,12 +3580,16 @@ function showBackupPreview(data,bytes){
  let manifestNote='';
  if(manifestInfo&&manifestInfo.present){
   const exported=Date.parse(manifestInfo.exportedAt),ageDays=Number.isFinite(exported)?Math.max(0,Math.floor((Date.now()-exported)/86400000)):null;
-  manifestNote='<p class="notice"><b>بيان النسخة:</b> النسخة من إصدار مُشرفي '+esc(manifestInfo.appVersion)+'، أُنشئت بتاريخ '+esc(new Date(exported).toLocaleString('ar-DZ'))+'. تم التحقق من بصمة المحتوى CRC32 وأعداد السجلات وحجم البيانات. '+(ageDays!==null&&ageDays>=30?'تنبيه: هذه النسخة أقدم من 30 يوماً؛ راجع تاريخها قبل الاستعادة.':'')+'</p>';
+  const strength=manifestInfo.strongHashVerified?'تم التحقق من SHA-256 وCRC32 وأعداد السجلات وحجم البيانات. هذه البصمة تكشف التغيير لكنها ليست توقيعاً رقمياً.':'تم التحقق من CRC32 وأعداد السجلات وحجم البيانات فقط؛ هذه صيغة أقدم لا تتضمن SHA-256.';
+  manifestNote='<p class="notice"><b>بيان النسخة:</b> النسخة من إصدار مُشرِفي '+esc(manifestInfo.appVersion)+'، أُنشئت بتاريخ '+esc(new Date(exported).toLocaleString('ar-DZ'))+'. '+strength+' '+(ageDays!==null&&ageDays>=30?'تنبيه: هذه النسخة أقدم من 30 يوماً؛ راجع تاريخها قبل الاستعادة.':'')+'</p>';
  }else{
   manifestNote='<p class="notice"><b>نسخة من إصدار سابق:</b> لا تحتوي على بيان سلامة مضمّن. اجتازت فحوص البنية ومعرّفات التلاميذ الحالية، لكن لا يمكن التحقق من تاريخها أو بصمتها الداخلية. لا تحذف الملف الأصلي.</p>';
  }
  const integrity=pendingBackupInfo&&pendingBackupInfo.integrity?pendingBackupInfo.integrity:null;
- const integrityNote=integrity?'<p class="notice"><b>فحص سلامة المعرّفات:</b> اجتازت النسخة فحص تفرّد معرّفات التلاميذ والسجلات. '+(integrity.unresolvedStudentReferences?'يوجد '+integrity.unresolvedStudentReferences+' سجل تاريخي لا يشير معرّفه إلى تلميذ موجود؛ سيُحتفظ به كما هو دون ربط تخميني. ':'لا توجد إحالات إلى تلاميذ مفقودين. ')+(integrity.legacyRecordsWithoutIds?'يوجد '+integrity.legacyRecordsWithoutIds+' سجل قديم دون معرّف مستقل؛ سيُحتفظ به كما هو.':'')+'</p>':'';
+ const unresolvedByCollection=integrity&&integrity.unresolvedStudentReferencesByCollection?integrity.unresolvedStudentReferencesByCollection:{};
+ const unresolvedCollectionLabels={attendance:'الغياب والتأخر',documents:'الوثائق',violations:'المخالفات',followups:'المتابعات التربوية'};
+ const unresolvedBreakdown=Object.keys(unresolvedByCollection).filter(key=>unresolvedByCollection[key]>0).map(key=>(unresolvedCollectionLabels[key]||key)+': '+unresolvedByCollection[key]).join('، ');
+ const integrityNote=integrity?'<p class="notice"><b>فحص سلامة المعرّفات:</b> اجتازت النسخة فحص تفرّد معرّفات التلاميذ والسجلات. '+(integrity.unresolvedStudentReferences?'يوجد '+integrity.unresolvedStudentReferences+' سجل تاريخي لا يشير معرّفه إلى تلميذ موجود'+(unresolvedBreakdown?' ('+unresolvedBreakdown+')':'')+'؛ سيُحتفظ به كما هو دون ربط تخميني. ':'لا توجد إحالات إلى تلاميذ مفقودين. ')+(integrity.legacyRecordsWithoutIds?'يوجد '+integrity.legacyRecordsWithoutIds+' سجل قديم دون معرّف مستقل؛ سيُحتفظ به كما هو.':'')+'</p>':'';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
  const classText=Object.keys(classes).sort((a,b)=>a.localeCompare(b,'ar',{numeric:true})).map(k=>'القسم '+esc(k)+': '+classes[k]).join('، ');
  const attrText=Object.keys(attributes).map(k=>esc(k)+': '+attributes[k]).join('، ');
@@ -3641,9 +3653,10 @@ function recoverStudentsFromHistory(data){
 function inspectBackupIdentityIntegrity(data){
  const blockers=[],duplicateStudentIds=[],duplicateRecordIds=[];
  let missingStudentIds=0,legacyRecordsWithoutIds=0,unresolvedStudentReferences=0;
+ const unresolvedStudentReferencesByCollection={};
  const students=Array.isArray(data&&data.students)?data.students:[];
  const studentIds=new Set();
- students.forEach((record,index)=>{
+ students.forEach(record=>{
   const id=String(record&&record.id!==undefined&&record.id!==null?record.id:'').trim();
   if(!id){missingStudentIds++;return;}
   if(studentIds.has(id))duplicateStudentIds.push(id);
@@ -3667,8 +3680,12 @@ function inspectBackupIdentityIntegrity(data){
  for(const collection of ['attendance','documents','violations','followups']){
   const items=Array.isArray(data&&data[collection])?data[collection]:[];
   items.forEach(record=>{
-   const reference=String(record&&record.student!==undefined&&record.student!==null?record.student:'').trim();
-   if(reference&&!studentIds.has(reference))unresolvedStudentReferences++;
+   const raw=record&&record.student!==undefined&&record.student!==null?record.student:'';
+   const reference=String(raw).trim();
+   if(reference&&!studentIds.has(reference)){
+    unresolvedStudentReferences++;
+    unresolvedStudentReferencesByCollection[collection]=(unresolvedStudentReferencesByCollection[collection]||0)+1;
+   }
   });
  }
  return {
@@ -3678,7 +3695,8 @@ function inspectBackupIdentityIntegrity(data){
   duplicateRecordIds,
   missingStudentIds,
   legacyRecordsWithoutIds,
-  unresolvedStudentReferences
+  unresolvedStudentReferences,
+  unresolvedStudentReferencesByCollection
  };
 }
 
@@ -3701,30 +3719,47 @@ function backupCrc32(value){
  }
  return ((crc^0xffffffff)>>>0).toString(16).padStart(8,'0');
 }
-function createMushrifiBackupManifest(data,exportedAt){
+async function backupSha256(value){
+ const input=String(value??'');
+ let digest='';
+ if(window.AndroidBridge&&typeof AndroidBridge.sha256Utf8==='function'){
+  digest=String(AndroidBridge.sha256Utf8(input)||'');
+ }else if(typeof crypto!=='undefined'&&crypto.subtle&&typeof TextEncoder!=='undefined'){
+  const bytes=new TextEncoder().encode(input);
+  const result=await crypto.subtle.digest('SHA-256',bytes);
+  digest=Array.from(new Uint8Array(result),byte=>byte.toString(16).padStart(2,'0')).join('');
+ }else{
+  throw new Error('لا تتوفر وسيلة موثوقة لحساب SHA-256 على هذا الجهاز؛ لم يتم إنشاء نسخة احتياطية ناقصة التحقق.');
+ }
+ if(!/^[0-9a-f]{64}$/i.test(digest))throw new Error('أعاد محرك SHA-256 بصمة غير صالحة.');
+ return digest.toLowerCase();
+}
+async function createMushrifiBackupManifest(data,exportedAt){
  const payload={...(data&&typeof data==='object'?data:{})};
  delete payload.mushrifiBackup;
  const serialized=JSON.stringify(payload);
  if(typeof serialized!=='string')throw new Error('تعذر تجهيز محتوى النسخة الاحتياطية.');
  return {
   format:'mushrifi-backup',
-  formatVersion:1,
+  formatVersion:2,
   dataSchemaVersion:1,
   appVersion:'2.6',
   exportedAt:String(exportedAt||new Date().toISOString()),
   payloadBytes:backupUtf8ByteLength(serialized),
   counts:backupPayloadCounts(payload),
-  checksum:{algorithm:'CRC32',value:backupCrc32(serialized)}
+  checksum:{algorithm:'CRC32',value:backupCrc32(serialized)},
+  strongChecksum:{algorithm:'SHA-256',value:await backupSha256(serialized)}
  };
 }
-function verifyMushrifiBackupManifest(data){
+async function verifyMushrifiBackupManifest(data){
  if(!data||!Object.prototype.hasOwnProperty.call(data,'mushrifiBackup'))
-  return {ok:true,present:false,legacy:true,errors:[]};
+  return {ok:true,present:false,legacy:true,integrityLevel:'none',errors:[]};
  const manifest=data.mushrifiBackup,errors=[];
  if(!manifest||typeof manifest!=='object'||Array.isArray(manifest))
-  return {ok:false,present:true,legacy:false,errors:['بيان النسخة غير صالح.']};
+  return {ok:false,present:true,legacy:false,integrityLevel:'invalid',errors:['بيان النسخة غير صالح.']};
+ const formatVersion=Number(manifest.formatVersion);
  if(manifest.format!=='mushrifi-backup')errors.push('صيغة بيان النسخة غير معروفة.');
- if(manifest.formatVersion!==1)errors.push('إصدار تنسيق النسخة غير مدعوم.');
+ if(![1,2].includes(formatVersion))errors.push('إصدار تنسيق بيان النسخة غير مدعوم.');
  if(manifest.dataSchemaVersion!==1)errors.push('إصدار بنية بيانات النسخة غير مدعوم.');
  if(typeof manifest.appVersion!=='string'||!manifest.appVersion.trim())errors.push('إصدار التطبيق غير مسجل في بيان النسخة.');
  if(typeof manifest.exportedAt!=='string'||!Number.isFinite(Date.parse(manifest.exportedAt)))
@@ -3744,11 +3779,26 @@ function verifyMushrifiBackupManifest(data){
  }
  const expected=manifest.checksum&&manifest.checksum.value;
  if(!manifest.checksum||manifest.checksum.algorithm!=='CRC32'||typeof expected!=='string'||!/^[0-9a-f]{8}$/i.test(expected))
-  errors.push('بصمة سلامة النسخة مفقودة أو غير صالحة.');
+  errors.push('بصمة CRC32 مفقودة أو غير صالحة.');
  else if(backupCrc32(serialized)!==expected.toLowerCase())
-  errors.push('بصمة محتوى النسخة لا تطابق البيان؛ قد يكون الملف تعرض للتلف أو التعديل.');
+  errors.push('بصمة CRC32 لا تطابق محتوى النسخة.');
+ let strongHashVerified=false;
+ if(formatVersion===2){
+  const strong=manifest.strongChecksum&&manifest.strongChecksum.value;
+  if(!manifest.strongChecksum||manifest.strongChecksum.algorithm!=='SHA-256'||typeof strong!=='string'||!/^[0-9a-f]{64}$/i.test(strong)){
+   errors.push('بصمة SHA-256 مفقودة أو غير صالحة.');
+  }else{
+   try{
+    const actualStrong=await backupSha256(serialized);
+    if(actualStrong!==strong.toLowerCase())errors.push('بصمة SHA-256 لا تطابق محتوى النسخة؛ قد يكون الملف تعرض للتلف أو التغيير.');
+    else strongHashVerified=true;
+   }catch(error){errors.push(error&&error.message?error.message:'تعذر التحقق من بصمة SHA-256.');}
+  }
+ }
  return {
-  ok:errors.length===0,present:true,legacy:false,errors,
+  ok:errors.length===0,present:true,legacy:formatVersion===1,formatVersion,
+  integrityLevel:formatVersion===2&&strongHashVerified?'sha256+crc32':'crc32-legacy',
+  strongHashVerified,errors,
   exportedAt:manifest.exportedAt,appVersion:manifest.appVersion,
   payloadBytes:manifest.payloadBytes,counts:actualCounts
  };
@@ -3766,7 +3816,7 @@ async function importBackupText(raw,bytes){
    else if(nested&&typeof nested==='object')obj=nested;
    if(outerManifest!==undefined&&obj&&typeof obj==='object'&&!Object.prototype.hasOwnProperty.call(obj,'mushrifiBackup'))obj={...obj,mushrifiBackup:outerManifest};
   }
-  const manifestCheck=verifyMushrifiBackupManifest(obj);
+  const manifestCheck=await verifyMushrifiBackupManifest(obj);
   if(!manifestCheck.ok)throw new Error('فشل فحص بيان سلامة النسخة: '+manifestCheck.errors.join(' ')+' لم تتغير بيانات الهاتف؛ احتفظ بالملف الأصلي واختر نسخة سليمة.');
   if(manifestCheck.present){obj={...obj};delete obj.mushrifiBackup;}
   if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students))throw new Error('لم أجد قائمة التلاميذ داخل الملف. لا يبدو أنه ملف نسخة احتياطية متوافق مع مُشرفي.');
@@ -3784,7 +3834,7 @@ async function importBackupText(raw,bytes){
   const integrity=inspectBackupIdentityIntegrity(normalized);
   if(!integrity.ok)throw new Error('أوقف التطبيق الاستعادة لأن فحص المعرّفات كشف تعارضاً قد يربط السجلات بتلميذ غير صحيح: '+integrity.blockers.join(' ')+ ' لم تتغير بيانات الهاتف. أصلح النسخة أو اختر نسخة أخرى.');
   pendingBackupData=normalized;
-  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup,integrity,manifest:{present:manifestCheck.present,legacy:manifestCheck.legacy,exportedAt:manifestCheck.exportedAt||'',appVersion:manifestCheck.appVersion||'',payloadBytes:manifestCheck.payloadBytes||0,counts:manifestCheck.counts||null}};
+  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup,integrity,manifest:{present:manifestCheck.present,legacy:manifestCheck.legacy,formatVersion:manifestCheck.formatVersion||0,integrityLevel:manifestCheck.integrityLevel||'none',strongHashVerified:!!manifestCheck.strongHashVerified,exportedAt:manifestCheck.exportedAt||'',appVersion:manifestCheck.appVersion||'',payloadBytes:manifestCheck.payloadBytes||0,counts:manifestCheck.counts||null}};
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
  }catch(err){pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
 }
@@ -3806,7 +3856,7 @@ function restorePendingBackup(){
   const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];
   const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;
   db={...pendingBackupData,agenda:Array.isArray(pendingBackupData.agenda)?pendingBackupData.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]),auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
-  if(!save()){
+  if(!save({restore:true})){
    db=oldDb;resetRestoreState();refreshUndoPanel();render();
    alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي، وتم الإبقاء على نقطة الاسترجاع المشفّرة تحسباً لأي تعثر في التخزين. لا تحذف التطبيق.');return;
   }
