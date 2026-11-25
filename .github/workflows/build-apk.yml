@@ -121,6 +121,8 @@ jobs:
         run: node tests/agenda-recurring.test.cjs
       - name: Run agenda time conflict detection regression tests
         run: node tests/agenda-conflicts.test.cjs
+      - name: Run agenda alternative time slot regression tests
+        run: node tests/agenda-alternatives.test.cjs
       - name: Run agenda Android notification scheduling regression tests
         run: node tests/agenda-notification-scheduling.test.cjs
       - name: Run Java local-time agenda reminder planner tests
