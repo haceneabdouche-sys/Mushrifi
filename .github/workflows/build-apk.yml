@@ -113,6 +113,8 @@ jobs:
         run: node tests/exact-alarm-permission-status.test.cjs
       - name: Run smart daily dashboard regression tests
         run: node tests/smart-daily-dashboard.test.cjs
+      - name: Run audit log integrity regression tests
+        run: node tests/audit-log-integrity.test.cjs
       - name: Run CSV import identity safety regression tests
         run: node tests/csv-import-identity-safety.test.cjs
       - name: Run easy navigation layout regression tests
