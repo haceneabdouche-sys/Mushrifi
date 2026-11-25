@@ -51,6 +51,7 @@ assert.equal(result.valid,true,'valid date range is accepted');
 assert.equal(result.summary.absences,3,'valid absence rows are counted once per unique record ID');
 assert.equal(result.summary.justifiedAbsences,1,'justified absences are separated');
 assert.equal(result.summary.unjustifiedAbsences,1,'unjustified absences are separated');
+assert.equal(result.summary.unknownAbsenceJustification,1,'missing justification status is not mislabeled as unjustified');
 assert.equal(result.summary.absenceHours,12,'Arabic hour units are parsed as numeric hours');
 assert.equal(result.summary.lateness,2,'late records are counted');
 assert.equal(result.summary.latenessMinutes,42,'explicit minutes win and legacy hours convert to minutes');
@@ -64,6 +65,7 @@ assert.equal(section1.absences,2,'known records are attributed to their verified
 assert.equal(section1.violations,2,'violations are attributed to the verified section');
 assert.equal(section2.lateness,2,'late records are attributed to the verified section');
 assert.equal(section2.violations,1,'second section violation count is correct');
+assert.equal(result.sectionsByLateness[0].key,groupKey(students[1]),'late-section ranking sorts by lateness rather than absence count');
 assert.deepEqual(JSON.parse(JSON.stringify(result.topViolators.map(x=>({id:x.id,count:x.count,distinctDays:x.distinctDays})))),[
  {id:'s1',count:2,distinctDays:2},
  {id:'s2',count:1,distinctDays:1}
