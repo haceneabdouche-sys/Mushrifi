@@ -52,7 +52,7 @@ const records=[
  {id:'f-complete',student:'s1',date:'2026-11-20',category:'المواظبة والحضور',status:'تمت المتابعة',nextDate:'2026-11-24'},
  {id:'f-closed',student:'s1',date:'2026-11-20',category:'السلوك والانضباط',status:'أغلقت الحالة',nextDate:'2026-11-24'},
  {id:'f-invalid',student:'s1',date:'2026-11-20',category:'متابعة تربوية عامة',status:'قيد المتابعة',nextDate:'2026-02-30'},
- {id:'f-ambiguous',student:'unknown-id',studentName:'وائل عيسو',class:'3',date:'2026-11-20',category:'المواظبة والحضور',status:'قيد المتابعة',nextDate:'2026-11-23'}
+ {id:'f-ambiguous',student:'unknown-id',studentName:'وائل عيسو',class:'',date:'2026-11-20',category:'المواظبة والحضور',status:'قيد المتابعة',nextDate:'2026-11-23'}
 ];
 const before=JSON.stringify(records);
 const snapshot=sandbox.buildDailyFollowupSnapshot([],[],[],[],today,Date.parse('2026-11-25T08:00:00+01:00'),byId,records,students);
