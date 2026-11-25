@@ -111,6 +111,8 @@ jobs:
         run: node tests/csv-import-identity-safety.test.cjs
       - name: Run easy navigation layout regression tests
         run: node tests/easy-navigation-layout.test.cjs
+      - name: Run Arabic-aware student directory search regression tests
+        run: node tests/student-directory-search.test.cjs
       - name: Run mobile performance regression tests
         run: node tests/mobile-performance.test.cjs
       - name: Package complete Android project
