@@ -440,6 +440,8 @@ header .credit-signature{width:72px;height:72px;margin-top:2px}
 .voice-panel #startVoiceBtn{flex:0 0 auto;min-height:46px;padding-inline:18px}
 .voice-panel #voiceTranscript,.voice-panel #voiceConfirm{flex:1 1 100%;margin:4px 0 0}
 .daily-tasks-panel{margin-top:12px;border-right:4px solid #d6b46b}.daily-tasks-list{display:grid;gap:8px}.daily-task-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfd}.daily-task-item .task-copy{min-width:0}.daily-task-item strong{display:block;overflow-wrap:anywhere}.daily-task-item small{display:block;color:var(--muted);line-height:1.7}.daily-task-item .btn{flex:0 0 auto}.daily-task-kind{display:inline-block;font-size:11px;font-weight:700;color:#805b11;background:#fff5d9;border-radius:20px;padding:3px 8px;margin-bottom:4px}@media(max-width:560px){.daily-task-item{align-items:flex-start;flex-direction:column}.daily-task-item .btn{width:100%}}
+.smart-dashboard-panel{margin-top:12px;border-right:4px solid #9ab7c8}.smart-week-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}.smart-week-grid .stat{min-width:0;padding:12px;background:#f8fafb;box-shadow:none}.smart-week-grid .stat strong{font-size:clamp(21px,3vw,27px)}.smart-week-grid .smart-trend{display:block;margin-top:5px;color:var(--muted);font-size:10px;line-height:1.5}.smart-followup-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:15px}.smart-followup-head h3{margin:0;font-size:15px}.smart-followup-list{display:grid;gap:8px;margin-top:9px}.smart-followup-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfd}.smart-followup-item strong{display:block;overflow-wrap:anywhere}.smart-followup-item small{display:block;color:var(--muted);line-height:1.6}.smart-followup-item .btn{flex:0 0 auto}@media(max-width:560px){.smart-week-grid{gap:6px}.smart-week-grid .stat{padding:9px 7px}.smart-week-grid .stat small{font-size:10px}.smart-week-grid .smart-trend{font-size:9px}.smart-followup-item{align-items:flex-start;flex-direction:column}.smart-followup-item .btn{width:100%}}
+
 .home-feature-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:stretch}
 .home-feature-grid>.panel{min-width:0;margin-top:0}
 .panel-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
@@ -612,6 +614,19 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
   <div class="stat"><small>استدعاءات اليوم</small><strong id="todaySummons">0</strong></div>
 </div>
 <section class="panel daily-tasks-panel" aria-labelledby="dailyTasksHeading"><div class="panel-title-row"><h2 id="dailyTasksHeading">مهامي اليوم</h2><span class="pill" id="dailyTasksCount">0 متابعة</span></div><p class="muted">ملخص عملي للاستدعاءات القريبة وسجلات الغياب أو التأخر التي ما زالت قيد التبرير.</p><div id="dailyTasksList" class="daily-tasks-list"><p class="empty">جارٍ تحديث المهام...</p></div></section>
+
+<section class="panel smart-dashboard-panel" aria-labelledby="smartDashboardHeading">
+<div class="panel-title-row"><h2 id="smartDashboardHeading">ملخص الأسبوع ومؤشرات المتابعة</h2><span class="pill">آخر 7 أيام</span></div>
+<p class="muted">مقارنة النشاط بالأيام السبعة السابقة، مع إظهار حالات التكرار التي تستحق مراجعة ملف التلميذ.</p>
+<div class="smart-week-grid">
+<div class="stat"><small>سجلات الغياب</small><strong id="smartWeekAbsences">0</strong><span class="smart-trend" id="smartWeekAbsenceTrend">—</span></div>
+<div class="stat"><small>سجلات التأخر</small><strong id="smartWeekLateness">0</strong><span class="smart-trend" id="smartWeekLatenessTrend">—</span></div>
+<div class="stat"><small>المخالفات</small><strong id="smartWeekViolations">0</strong><span class="smart-trend" id="smartWeekViolationTrend">—</span></div>
+</div>
+<div class="smart-followup-head"><h3>تلاميذ يستحقون المراجعة</h3><span class="pill" id="priorityFollowupCount">0 تلميذ</span></div>
+<p class="muted">يظهر المؤشر عند تسجيل غياب أو تأخر غير مبرر في ثلاثة أيام مختلفة على الأقل خلال آخر 7 أيام. هو تنبيه للمراجعة فقط وليس قرارًا إداريًا. لا تُنسب السجلات غير المرتبطة بملف معروف إلى أي تلميذ.</p>
+<div id="priorityFollowupList" class="smart-followup-list" aria-live="polite"><p class="empty">جارٍ تحليل سجلات الأسبوع...</p></div>
+</section>
 
 <section id="voiceAssistant" class="panel voice-panel no-print">
   <div class="voice-copy">
@@ -926,6 +941,25 @@ $('#studentsRows').innerHTML=matches.slice().sort((a,b)=>String(a.class||'').loc
 }
 
 window.openTaskPage=page=>{const target=$('#nav button[data-page="'+String(page||'')+'"]');if(target)target.click();};
+function smartDashboardDateShift(value,offset){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return '';const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]),date=new Date(y,mo-1,d,12);if(date.getFullYear()!==y||date.getMonth()!==mo-1||date.getDate()!==d)return '';date.setDate(date.getDate()+Number(offset||0));return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
+function smartDashboardValidDate(v){const s=String(v||'');return /^\d{4}-\d{2}-\d{2}$/.test(s)&&smartDashboardDateShift(s,0)===s;}
+function buildSmartDashboardSnapshot(attendance,violations,today,resolveStudent){
+ const start=smartDashboardDateShift(today,-6),priorStart=smartDashboardDateShift(today,-13),priorEnd=smartDashboardDateShift(today,-7),empty={current:{absences:0,lateness:0,violations:0},previous:{absences:0,lateness:0,violations:0},followups:[]};if(!start||!priorStart||!priorEnd)return empty;
+ const inRange=(date,a,b)=>smartDashboardValidDate(date)&&date>=a&&date<=b,typeOf=r=>String(r?.type??'').trim().replace(/\s+/g,''),count=(items,a,b,type)=>items.filter(r=>inRange(r?.date,a,b)&&(!type||typeOf(r)===type)).length,A=Array.isArray(attendance)?attendance:[],V=Array.isArray(violations)?violations:[];
+ const current={absences:count(A,start,today,'غياب'),lateness:count(A,start,today,'تأخر'),violations:count(V,start,today,'')},previous={absences:count(A,priorStart,priorEnd,'غياب'),lateness:count(A,priorStart,priorEnd,'تأخر'),violations:count(V,priorStart,priorEnd,'')},groups=new Map();
+ A.forEach(r=>{if(!inRange(r?.date,start,today)||String(r?.justified??'غير مبرر').trim()!=='غير مبرر')return;const t=typeOf(r);if(t!=='غياب'&&t!=='تأخر')return;const st=typeof resolveStudent==='function'?resolveStudent(r.student,r):null;if(!st||st.id===undefined||st.id===null)return;const id=String(st.id);if(!id)return;if(!groups.has(id))groups.set(id,{student:st,absence:new Set(),late:new Set()});const g=groups.get(id);(t==='غياب'?g.absence:g.late).add(String(r.date));});
+ const followups=[...groups.values()].map(g=>({student:g.student,absenceDays:g.absence.size,latenessDays:g.late.size})).filter(x=>x.absenceDays>=3||x.latenessDays>=3).sort((a,b)=>b.absenceDays+b.latenessDays-(a.absenceDays+a.latenessDays)||String(a.student.last||'').localeCompare(String(b.student.last||''),'ar'));
+ return {current,previous,followups};
+}
+function smartDashboardTrend(a,b){const n=Number(a||0)-Number(b||0);return n===0?'مثل الأسبوع السابق':(n>0?'زيادة ':'انخفاض ')+Math.abs(n)+' عن الأسبوع السابق';}
+function renderSmartDashboard(today){
+ const s=buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
+ $('#smartWeekAbsences').textContent=s.current.absences.toLocaleString('ar-DZ');$('#smartWeekLateness').textContent=s.current.lateness.toLocaleString('ar-DZ');$('#smartWeekViolations').textContent=s.current.violations.toLocaleString('ar-DZ');
+ $('#smartWeekAbsenceTrend').textContent=smartDashboardTrend(s.current.absences,s.previous.absences);$('#smartWeekLatenessTrend').textContent=smartDashboardTrend(s.current.lateness,s.previous.lateness);$('#smartWeekViolationTrend').textContent=smartDashboardTrend(s.current.violations,s.previous.violations);$('#priorityFollowupCount').textContent=s.followups.length.toLocaleString('ar-DZ')+' تلميذ';
+ const list=$('#priorityFollowupList');list.innerHTML=s.followups.length?s.followups.slice(0,6).map(x=>{const detail=[];if(x.absenceDays>=3)detail.push('غياب غير مبرر: '+x.absenceDays+' أيام مختلفة');if(x.latenessDays>=3)detail.push('تأخر غير مبرر: '+x.latenessDays+' أيام مختلفة');return '<div class="smart-followup-item"><div><strong>'+esc(name(x.student.id))+'</strong><small>'+esc(attendanceGroupLabel(x.student))+'</small><small>'+esc(detail.join(' · '))+'</small></div><button type="button" class="btn small" data-smart-student-id="'+esc(x.student.id)+'">فتح ملف التلميذ</button></div>';}).join(''):'<p class="empty">لا توجد حالات تكرار بلغت حد المراجعة خلال آخر 7 أيام.</p>';
+ list.querySelectorAll('[data-smart-student-id]').forEach(b=>b.addEventListener('click',()=>window.studentHistory(b.dataset.smartStudentId)));
+}
+
 function render(){
 const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';
 if(activePage==='students')refreshStudentSectionOptions();
@@ -953,6 +987,7 @@ const taskMarkup=[];
 dueSummons.slice(0,6).forEach(x=>{const ap=String(x.appointment),clock=ap.slice(11,16);taskMarkup.push('<div class="daily-task-item"><div class="task-copy"><span class="daily-task-kind">موعد ولي خلال 24 ساعة</span><strong>'+esc(name(x.student))+'</strong><small>'+esc(x.reason||'استدعاء ولي')+' · '+esc(ap.slice(0,10))+' · '+esc(clock||'الوقت غير محدد')+'</small></div><button type="button" class="btn small" onclick="openTaskPage(\'documents\')">عرض الاستدعاءات</button></div>');});
 pendingReasons.slice(0,6).forEach(x=>{taskMarkup.push('<div class="daily-task-item"><div class="task-copy"><span class="daily-task-kind">قيد التبرير</span><strong>'+esc(x.studentName||name(x.student))+'</strong><small>'+esc(x.type||'غياب')+' · '+esc(x.date||'تاريخ غير محدد')+' · القسم '+esc(x.class||'—')+'</small></div><button type="button" class="btn small" onclick="openTaskPage(\'attendance\')">مراجعة السجل</button></div>');});
 $('#dailyTasksList').innerHTML=taskMarkup.length?taskMarkup.join(''):'<p class="empty">لا توجد متابعة عاجلة خلال الساعات القادمة.</p>';
+renderSmartDashboard(today);
 }
 
 
