@@ -8,6 +8,7 @@ const helperEnd=html.indexOf('window.openStudentProfileAttendanceEdit',helperSta
 assert.ok(helperStart>=0&&helperEnd>helperStart,'profile identity and duration helpers must be defined before profile actions');
 const helperSource=html.slice(helperStart,helperEnd);
 const sandbox={
+  window:{},
   attendanceGroupLabel:st=>[st.schoolYear||'',st.branch||'',st.class||''].filter(Boolean).join(' — '),
   parseHours:value=>{
     let text=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -40,7 +41,7 @@ const duplicate={id:'student-duplicate',last:'وائل',first:'عيسو',class:'
 assert.equal(sandbox.profileRecordBelongsToStudent({student:'وائل عيسو1'},student,[student,duplicate]),false,'a legacy record without section is not guessed when the same name exists more than once');
 
 assert.equal(sandbox.profileAbsenceHours({hours:'7 ساعات'}),7,'absence hour totals parse Arabic unit labels');
-assert.equal(sandbox.profileAbsenceHours({hours:'',period:'٢٫٥'}),0,'invalid fallback values do not produce fabricated absence hours');
+assert.equal(sandbox.profileAbsenceHours({hours:'',period:'الفترة الصباحية'}),0,'invalid fallback values do not produce fabricated absence hours');
 assert.equal(sandbox.profileLatenessMinutes({minutes:12,hours:0.2}),12,'explicit lateness minutes are authoritative');
 assert.equal(sandbox.profileLatenessMinutes({hours:0.25}),15,'legacy lateness hours convert to minutes');
 assert.equal(sandbox.profileLatenessMinutes({minutes:0,hours:1}),0,'an explicitly stored zero-minute value is preserved');
