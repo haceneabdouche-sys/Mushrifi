@@ -71,6 +71,8 @@ assert.ok(javaScheduler.includes('StudentFollowupReminderPlanner.MAX_LATE_DELIVE
 assert.ok(javaScheduler.includes('old.optBoolean("delivered", false)')&&javaScheduler.includes('item.put("delivered", true)'),'native scheduler persists delivered state to prevent duplicate notifications');
 assert.ok(javaScheduler.includes('cancel(context, id)')&&javaScheduler.includes('cancelKeys'),'removed, completed or rescheduled reviews cancel the old alarm and notification');
 assert.ok(javaScheduler.includes('waitingForPermission')&&javaScheduler.includes('waitingForScheduling'),'permission and scheduling failures remain recoverable');
+assert.ok(javaScheduler.includes('if (old.optBoolean("waitingForScheduling", false))')&&javaScheduler.includes('scheduleKeys.add(id)'),'a later native sync retries a previously failed future alarm');
+assert.ok(javaScheduler.includes('item.remove("waitingForScheduling")'),'successful retry clears the scheduling failure marker');
 assert.ok(javaReceiver.includes('Notification.VISIBILITY_PRIVATE'),'review notification hides detail on the lock screen');
 assert.ok(javaReceiver.includes('يوجد سجل متابعة تربوية يحتاج إلى المراجعة')&&!javaReceiver.includes('item.optString("studentName"'),'notification body is generic and never reads student details');
 assert.ok(manifest.includes('.StudentFollowupReminderReceiver'),'Android manifest registers the review reminder receiver');
@@ -79,4 +81,6 @@ assert.ok(main.includes('StudentFollowupReminderScheduler.sync(MainActivity.this
 assert.ok(main.includes('StudentFollowupReminderScheduler.rescheduleAll(this)'),'activity resume and notification permission renewal restore scheduled reviews');
 assert.ok(html.includes('syncStudentFollowupRemindersWithAndroid(false)')&&html.includes('syncStudentFollowupRemindersWithAndroid(true)'),'successful saves and initial load synchronize active review reminders');
 
-console.log('PASS: educational follow-up reminder payload identity filtering, privacy minimization, schedule bounds, no-mutation behavior, idempotent native delivery, cancellation, permissions and reboot recovery.');
+assert.ok(html.includes('تذكيرات أندرويد العامة للمراجعات النشطة يوم الموعد عند 08:00')&&html.includes('موعد المراجعة المقبلة (التذكير 08:00)'),'the profile explains the local 08:00 reminder time and generic privacy-safe notification');
+
+console.log('PASS: educational follow-up reminder payload identity filtering, privacy minimization, schedule bounds, no-mutation behavior, retryable scheduling, idempotent native delivery, cancellation, permissions and reboot recovery.');
