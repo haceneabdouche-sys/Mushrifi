@@ -55,6 +55,9 @@ assert.ok(profile.includes('مجموع ساعات الغياب')&&profile.includ
 assert.ok(!profile.includes('مجموع الساعات الكلي'),'profile does not add incompatible hours and minutes together');
 assert.ok(profile.includes("profileLatenessMinutes(x)+' دقيقة'"),'lateness rows display minutes');
 assert.ok(profile.includes("profileAbsenceHours(x)+' ساعة'"),'absence rows display hours');
+assert.ok(profile.includes("profileKnownAbsenceHours(x)===null?'غير مسجلة'"),'unknown absence duration is never displayed as zero hours');
+assert.ok(profile.includes("profileKnownLatenessMinutes(x)===null?'غير مسجلة'"),'unknown lateness duration is never displayed as zero minutes');
+assert.ok(profile.includes('unknownAbsenceHours')&&profile.includes('unknownLatenessMinutes'),'profile totals separate known durations from records with no readable duration');
 assert.ok(profile.includes('openStudentProfileAttendanceEdit(this.dataset.id)'),'profile attendance records have a direct edit action');
 assert.ok(profile.includes('openStudentProfileDocumentEdit(this.dataset.id)'),'profile documents have a direct edit action');
 assert.match(html,/window\.openStudentProfileAttendanceEdit=id=>\{\s*go\('attendance'\);[\s\S]*window\.editAttendance\(String\(id\)\)/,'profile attendance edit opens the existing editor safely');
