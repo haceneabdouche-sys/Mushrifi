@@ -1638,8 +1638,6 @@ function buildDailyFollowupSnapshot(attendance,documents,agenda,violations,today
  });
  violationsToday=V.filter(x=>x&&x.date===today).length;
  const sectionSummary=[...sections.values()].map(x=>({label:x.label,absences:x.absences,lateness:x.lateness,students:x.students.size,classified:x.classified}));
- // The loop above closes here after every attendance record has been grouped once.
- });
  const pendingAll=A.filter(x=>x&&safeDate(x.date)&&(typeOf(x)==='غياب'||typeOf(x)==='تأخر')&&String(x.justified||'').trim()==='قيد التبرير'),pendingRows=pendingAll.filter(x=>linked(x.student,x));
  pending=pendingAll.length;const unlinkedPending=pendingAll.length-pendingRows.length;
  pendingAll.filter(x=>!linked(x.student,x)).forEach(x=>tasks.push({kind:'unlinked',priority:'high',title:'سجل قيد التبرير بلا ربط آمن',detail:String(x.type||'غياب')+' · '+String(x.date||'')+' · يلزم فحص هوية السجل',recordId:safeRecordId(x),page:'attendance'}));
@@ -1663,7 +1661,8 @@ function buildDailyFollowupSnapshot(attendance,documents,agenda,violations,today
 }
 function openDailyDashboardTask(button){
  const studentId=String(button?.dataset?.dailyStudentId||''),recordId=String(button?.dataset?.dailyRecordId||''),documentId=String(button?.dataset?.dailyDocumentId||''),page=String(button?.dataset?.dailyPage||'');
- if(studentId&&typeof window.studentHistory==='function'){window.studentHistory(studentId);return;}
+ // Profile and action buttons are separate: only the explicit profile button carries dailyStudentId.
+ if(studentId){if(typeof window.studentHistory==='function')window.studentHistory(studentId);return;}
  if(page==='documents'&&documentId){openAgendaSummons(documentId);return;}
  if(page==='agenda'){agendaSelectedDate=String(button.dataset.dailyAgendaDate||dateISO());agendaCurrentView='day';go('agenda');return;}
  if(page==='attendance'){go('attendance');if(recordId){const row=[...document.querySelectorAll('[data-att-id]')].find(x=>String(x.getAttribute('data-att-id'))===recordId);if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.classList.add('daily-task-focus');}}return;}
