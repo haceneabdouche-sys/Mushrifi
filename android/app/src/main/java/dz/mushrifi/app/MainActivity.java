@@ -269,13 +269,12 @@ public class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public boolean hasExactAlarmAccess() {
-            if (Build.VERSION.SDK_INT < 31) return true;
-            AlarmManager alarms = (AlarmManager) getSystemService(ALARM_SERVICE);
-            return alarms != null && alarms.canScheduleExactAlarms();
+            return exactAlarmAccessGranted();
         }
         @JavascriptInterface public void requestExactAlarmAccess() {
             runOnUiThread(() -> {
-                if (Build.VERSION.SDK_INT < 31 || hasExactAlarmAccess()) {
+                if (exactAlarmAccessGranted()) {
+                    notifyExactAlarmPermissionState();
                     Toast.makeText(MainActivity.this, "التنبيهات الدقيقة متاحة بالفعل.", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -423,6 +422,7 @@ public class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         rescheduleStoredReminders();
+        notifyExactAlarmPermissionState();
         checkLicenseWhenDue();
     }
 
@@ -457,6 +457,18 @@ public class MainActivity extends Activity {
             String script = "window.onMushrifiLicenseAutoCheck && window.onMushrifiLicenseAutoCheck(" + result.toString() + ");";
             runOnUiThread(() -> { if (web != null) web.evaluateJavascript(script, null); });
         });
+    }
+
+    private boolean exactAlarmAccessGranted() {
+        if (Build.VERSION.SDK_INT < 31) return true;
+        AlarmManager alarms = (AlarmManager) getSystemService(ALARM_SERVICE);
+        return alarms != null && alarms.canScheduleExactAlarms();
+    }
+
+    private void notifyExactAlarmPermissionState() {
+        if (web == null) return;
+        boolean granted = exactAlarmAccessGranted();
+        web.evaluateJavascript("window.onMushrifiExactAlarmPermissionChanged && window.onMushrifiExactAlarmPermissionChanged(" + granted + ");", null);
     }
 
     private void notifyNotificationPermissionState(boolean granted) {
