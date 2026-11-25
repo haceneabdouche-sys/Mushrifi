@@ -69,7 +69,7 @@ assert.equal(JSON.stringify(records),before,'dashboard calculation never mutates
 const legacy={id:'f-legacy',student:'اسم قديم',studentName:'أحمد أمين',class:'1',date:'2026-11-21',category:'متابعة تربوية عامة',status:'قيد المتابعة',nextDate:today};
 const legacySnapshot=sandbox.buildDailyFollowupSnapshot([],[],[],[],today,Date.parse('2026-11-25T08:00:00+01:00'),byId,[legacy],students);
 assert.ok(legacySnapshot.tasks.some(x=>x.kind==='followup-dueToday'&&x.studentId==='s1'),'legacy name plus matching section can link only when unique');
-const duplicateLegacy={...legacy,studentName:'وائل عيسو',class:'3'};
+const duplicateLegacy={...legacy,student:'unknown-id',studentName:'وائل عيسو',class:''};
 const ambiguousSnapshot=sandbox.buildDailyFollowupSnapshot([],[],[],[],today,Date.parse('2026-11-25T08:00:00+01:00'),byId,[duplicateLegacy],students);
 assert.equal(ambiguousSnapshot.followupReviews.unlinked,1,'same-name records with ambiguous section membership remain unlinked');
 
