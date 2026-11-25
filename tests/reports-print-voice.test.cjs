@@ -23,7 +23,7 @@ const checks = [
   ['upcoming parent summons remain visible on the home dashboard', /class="[^"]*upcoming-panel[\s\S]*?id="upcomingSummons"/],
   ['the More page exposes violations, reports and settings', /<section id="more" class="page hidden">[\s\S]*?data-go="violations"[\s\S]*?data-go="reports"[\s\S]*?data-go="settings"/],
   ['bottom navigation is fixed and reserves space for mobile safe areas', /#nav\{position:fixed[\s\S]*?env\(safe-area-inset-bottom\)/],
-  ['navigation keeps More selected for violations, reports and settings', /x\.dataset\.page==='more'&&\['violations','reports','settings'\]\.includes\(page\)/],
+  ['navigation keeps More selected for violations, reports, settings and audit', /x\.dataset\.page==='more'&&\['violations','reports','settings','audit'\]\.includes\(page\)/],
   ['quick voice action is present on the home screen', /id="quickVoiceAccess"[^>]*>🎙️<b>التحدث إلى مُشرِفي<\/b>/],
   ['quick voice action launches the Arabic speech button', /\$\('#quickVoiceAccess'\)\?\.addEventListener\('click',[\s\S]*?\$\('#startVoiceBtn'\)\?\.click\(\)/],
   ['report print uses a dedicated preview instead of printing the whole app', /window\.printReport\s*=\s*\(\)=>[\s\S]*?id='mushrifiPrintPreview'[\s\S]*?window\.print\(\)/],
