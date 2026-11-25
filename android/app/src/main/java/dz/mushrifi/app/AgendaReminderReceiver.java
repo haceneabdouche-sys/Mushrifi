@@ -35,6 +35,7 @@ public class AgendaReminderReceiver extends android.content.BroadcastReceiver {
             channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
             manager.createNotificationChannel(channel);
         }
+        if (!AgendaReminderScheduler.areAgendaNotificationsEnabled(context)) return false;
 
         String id = item.optString("id", "");
         String title = item.optString("title", "موعد في الأجندة");
@@ -94,6 +95,7 @@ public class AgendaReminderReceiver extends android.content.BroadcastReceiver {
             channel.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
             manager.createNotificationChannel(channel);
         }
+        if (!AgendaReminderScheduler.areAgendaNotificationsEnabled(context)) return false;
         Notification.Builder builder = Build.VERSION.SDK_INT >= 26
             ? new Notification.Builder(context, AgendaReminderScheduler.CHANNEL_ID)
             : new Notification.Builder(context);
