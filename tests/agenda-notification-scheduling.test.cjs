@@ -79,13 +79,16 @@ assert.ok(html.includes('function renderAgendaNotificationStatus')&&html.include
 assert.ok(html.includes('agendaTestNotification')&&html.includes('testAgendaNotification'),'agenda offers a direct notification test');
 assert.ok(html.includes('window.openAgendaFromNotification=(id,date)=>'),'notification tap can deep-link back to the selected agenda day');
 assert.ok(html.includes('reminderEnabled',''),'reminder setting persists as part of the agenda record');
-assert.ok(html.includes("if(intent==null||!ACTION.equals(intent.getAction()))"),'native agenda receiver ignores unrelated broadcasts');
+assert.ok(fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/AgendaReminderReceiver.java','utf8').includes("if (intent == null || !ACTION.equals(intent.getAction()))"),'native agenda receiver ignores unrelated broadcasts');
 assert.ok(fs.existsSync('android/app/src/main/java/dz/mushrifi/app/AgendaReminderScheduler.java'),'native scheduler source exists');
 assert.ok(fs.existsSync('android/app/src/main/java/dz/mushrifi/app/AgendaReminderReceiver.java'),'native notification receiver source exists');
 assert.ok(fs.existsSync('android/app/src/main/java/dz/mushrifi/app/AgendaReminderPlanner.java'),'native timezone-aware planner source exists');
 const scheduler=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/AgendaReminderScheduler.java','utf8');
 assert.ok(scheduler.includes('setExactAndAllowWhileIdle')&&scheduler.includes('setAndAllowWhileIdle'),'native scheduler uses precise alarms when granted and safe inexact fallback otherwise');
 assert.ok(scheduler.includes('rescheduleAll')&&scheduler.includes('waitingForPermission'),'stored alarms survive reboot and keep due reminders while permission is denied');
+assert.ok(scheduler.includes('sameSchedule(old, next)')&&scheduler.includes('put("delivered", true)'),'delivered reminders are not re-armed by ordinary saves or title-only edits');
+assert.ok(scheduler.includes('notifications.cancel(("agenda:" + id).hashCode())'),'changing or disabling an event cancels an already posted agenda notification');
+assert.ok(scheduler.includes('failedToSchedule'),'native alarm scheduling failures are surfaced to the user');
 assert.ok(scheduler.includes('FLAG_NO_CREATE'),'cancel uses the same stable PendingIntent identity without creating a new alarm');
 const receiver=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/AgendaReminderReceiver.java','utf8');
 assert.ok(receiver.includes('Notification.VISIBILITY_PRIVATE'),'agenda reminder content is private on the lock screen');
