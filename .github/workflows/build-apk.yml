@@ -113,6 +113,8 @@ jobs:
         run: node tests/exact-alarm-permission-status.test.cjs
       - name: Run smart daily dashboard regression tests
         run: node tests/smart-daily-dashboard.test.cjs
+      - name: Run agenda calendar, backup and audit integrity tests
+        run: node tests/agenda-calendar.test.cjs
       - name: Run audit log integrity regression tests
         run: node tests/audit-log-integrity.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
