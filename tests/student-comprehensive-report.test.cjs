@@ -79,7 +79,7 @@ assert.ok(!markup.includes('student-2')&&!markup.includes('لا يخص التل�
 assert.ok(!markup.includes('0550000000'),'PDF omits guardian phone number to limit unnecessary personal data exposure');
 assert.ok(!markup.includes('<button'),'printable PDF contains no editing controls');
 
-const profileStart=html.indexOf('window.studentHistory=id=>{');
+const profileStart=html.indexOf('window.studentHistory=(id,focusFollowupId)=>{');
 const profileEnd=html.indexOf('\n};\nwindow.closeMushrifiPrintPreview',profileStart);
 assert.ok(profileStart>=0&&profileEnd>profileStart,'student profile renderer exists');
 const profile=html.slice(profileStart,profileEnd);
