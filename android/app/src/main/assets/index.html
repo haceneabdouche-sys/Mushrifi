@@ -1031,7 +1031,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
     <p class="notice">لأن التطبيق لا يطلب حساب مستخدم مستقلًا، يحدد السجل أن العملية تمت من التطبيق على هذا الجهاز ولا يدّعي معرفة الشخص الذي ضغط الزر. لا تُعرض أرقام الهواتف أو بيانات الولي أو محتوى الصور والملاحظات الخاصة.</p>
     <div class="audit-toolbar" id="auditLogFilters">
       <input id="auditSearch" type="search" placeholder="ابحث باسم التلميذ أو نوع العملية" aria-label="البحث في سجل العمليات">
-      <select id="auditEntityFilter" aria-label="تصفية حسب نوع السجل"><option value="">كل السجلات</option><option value="students">بطاقات التلاميذ</option><option value="attendance">الغياب والتأخر</option><option value="documents">الوثائق والاستدعاءات</option><option value="violations">المخالفات</option><option value="agenda">الأجندة والمواعيد</option><option value="settings">الإعدادات</option></select>
+      <select id="auditEntityFilter" aria-label="تصفية حسب نوع السجل"><option value="">كل السجلات</option><option value="students">بطاقات التلاميذ</option><option value="attendance">الغياب والتأخر</option><option value="documents">الوثائق والاستدعاءات</option><option value="violations">المخالفات</option><option value="followups">المتابعات التربوية</option><option value="agenda">الأجندة والمواعيد</option><option value="settings">الإعدادات</option></select>
       <select id="auditActionFilter" aria-label="تصفية حسب العملية"><option value="">كل العمليات</option><option value="add">إضافة</option><option value="update">تعديل</option><option value="revert">استرجاع تعديل</option><option value="delete">حذف</option><option value="bulk">عملية جماعية</option></select>
       <input id="auditDateFrom" type="date" aria-label="من تاريخ">
       <input id="auditDateTo" type="date" aria-label="إلى تاريخ">
@@ -3063,6 +3063,7 @@ function buildStudentFollowupRecords(target,database){
 }
 function profileStudentFollowupView(records){
  const list=Array.isArray(records)?records:[];
+ const readOnly=typeof licenseReadOnly!=='undefined'&&licenseReadOnly,disabled=readOnly?' disabled aria-disabled="true"':'';
  const html=list.map(record=>{
   const id=String(record.id??'');
   return '<article class="student-followup-item" data-followup-id="'+esc(id)+'">'+
@@ -3071,9 +3072,9 @@ function profileStudentFollowupView(records){
    '<p><b>الإجراء المتخذ:</b> '+esc(record.actionTaken||'—')+'</p>'+
    (record.result?'<p><b>النتيجة:</b> '+esc(record.result)+'</p>':'')+
    (record.nextDate?'<p><b>موعد المراجعة المقبلة:</b> '+esc(record.nextDate)+'</p>':'')+
-   '<div class="student-followup-actions no-print"><button type="button" class="btn small" data-followup-action="edit" data-followup-id="'+esc(id)+'">تعديل المتابعة</button><button type="button" class="btn small danger" data-followup-action="delete" data-followup-id="'+esc(id)+'">حذف</button></div></article>';
+   '<div class="student-followup-actions no-print"><button type="button" class="btn small"'+disabled+' data-followup-action="edit" data-followup-id="'+esc(id)+'">تعديل المتابعة</button><button type="button" class="btn small danger"'+disabled+' data-followup-action="delete" data-followup-id="'+esc(id)+'">حذف</button></div></article>';
  }).join('');
- return {total:list.length,pending:list.filter(x=>x.status==='قيد المتابعة').length,html:html||'<p class="empty">لم تُسجّل متابعة تربوية لهذا التلميذ بعد.</p>'};
+ return {total:list.length,pending:list.filter(x=>x.status==='قيد المتابعة').length,completed:list.filter(x=>x.status==='تمت المتابعة').length,closed:list.filter(x=>x.status==='أغلقت الحالة').length,html:html||'<p class="empty">لم تُسجّل متابعة تربوية لهذا التلميذ بعد.</p>'};
 }
 
 function profilePrintableTable(rows,headers,renderRow,emptyMessage){
@@ -3131,6 +3132,7 @@ window.resetStudentFollowupForm=()=>{
  $('#studentFollowupCancel').hidden=true;
 };
 window.editStudentFollowup=(studentId,recordId)=>{
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن تعديل سجل المتابعة قبل تجديد الترخيص.');return;}
  const sid=String(studentId),id=String(recordId),target=db.students.find(x=>String(x.id)===sid);
  const record=(Array.isArray(db.followups)?db.followups:[]).find(x=>String(x.id)===id);
  if(!target||!record||!profileRecordBelongsToStudent(record,target,db.students)){alert('لم يتم العثور على سجل المتابعة في ملف هذا التلميذ.');return;}
@@ -3145,6 +3147,7 @@ window.editStudentFollowup=(studentId,recordId)=>{
  form.scrollIntoView?.({behavior:'smooth',block:'start'});
 };
 window.deleteStudentFollowup=(studentId,recordId)=>{
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن حذف سجل المتابعة قبل تجديد الترخيص.');return;}
  const sid=String(studentId),id=String(recordId),target=db.students.find(x=>String(x.id)===sid);
  const record=(Array.isArray(db.followups)?db.followups:[]).find(x=>String(x.id)===id);
  if(!target||!record||!profileRecordBelongsToStudent(record,target,db.students)){alert('لم يتم العثور على سجل المتابعة المطلوب.');return;}
@@ -3155,6 +3158,7 @@ window.deleteStudentFollowup=(studentId,recordId)=>{
 };
 window.saveStudentFollowup=event=>{
  if(event&&typeof event.preventDefault==='function')event.preventDefault();
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن حفظ المتابعة قبل تجديد الترخيص.');return false;}
  const form=$('#studentFollowupForm');if(!form)return false;
  const sid=String(form.dataset.studentId||''),target=db.students.find(x=>String(x.id)===sid);
  if(!target){alert('تعذر تحديد ملف التلميذ. لم يتم حفظ المتابعة.');return false;}
@@ -3224,7 +3228,7 @@ window.studentHistory=id=>{
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.printReport()">طباعة / حفظ التقرير الشامل PDF</button></div>
   <h2>الملف التربوي الشامل للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>الاسم</small><strong style="font-size:16px">${esc(s.first||'—')}</strong></div><div class="stat"><small>اللقب</small><strong style="font-size:16px">${esc(s.last||'—')}</strong></div><div class="stat"><small>المستوى</small><strong style="font-size:16px">${esc(studentAcademicParts(s).schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(studentAcademicParts(s).branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(studentAcademicParts(s).sectionNumber||s.class||'—')}</strong></div><div class="stat"><small>الصفة</small><strong style="font-size:16px">${esc(s.attribute||s.status||'—')}</strong></div><div class="stat"><small>تاريخ الميلاد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>رقم الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
   <div class="no-print"><button class="btn" onclick="editStudent('${s.id}')">تعديل بطاقة التلميذ</button> <button class="btn primary" onclick="openGuardianWhatsApp('${s.id}')">مراسلة الولي عبر واتساب</button></div>
-  <section class="panel student-followup-panel" aria-labelledby="studentFollowupHeading"><div class="student-followup-heading"><div><h3 id="studentFollowupHeading">سجل المتابعة التربوية</h3><p class="muted">سجل مستقل يوثق الملاحظة والإجراء والنتيجة وموعد المراجعة، دون تغيير سجلات الغياب أو المخالفات.</p></div><span class="pill">الإجمالي: ${followups.length} · قيد المتابعة: ${followupView.pending}</span></div>
+  <section class="panel student-followup-panel" aria-labelledby="studentFollowupHeading"><div class="student-followup-heading"><div><h3 id="studentFollowupHeading">سجل المتابعة التربوية</h3><p class="muted">سجل مستقل يوثق الملاحظة والإجراء والنتيجة وموعد المراجعة، دون تغيير سجلات الغياب أو المخالفات.</p></div><span class="pill">الإجمالي: ${followupView.total} · قيد المتابعة: ${followupView.pending} · تمت: ${followupView.completed} · مغلقة: ${followupView.closed}</span></div>
    <form id="studentFollowupForm" class="student-followup-form no-print" data-student-id="${esc(sid)}">
     <h4 id="studentFollowupFormTitle">إضافة متابعة تربوية جديدة</h4><input type="hidden" name="recordId">
     <div class="row"><div><label for="studentFollowupDate">تاريخ المتابعة</label><input id="studentFollowupDate" name="date" type="date" value="${followupToday}" required></div><div><label for="studentFollowupCategory">مجال المتابعة</label><select id="studentFollowupCategory" name="category" required><option value="">اختر المجال</option><option>المواظبة والحضور</option><option>السلوك والانضباط</option><option>التواصل مع الولي</option><option>متابعة تربوية عامة</option></select></div><div><label for="studentFollowupStatus">حالة المتابعة</label><select id="studentFollowupStatus" name="status" required><option>قيد المتابعة</option><option>تمت المتابعة</option><option>أغلقت الحالة</option></select></div></div>
@@ -3269,6 +3273,7 @@ window.studentHistory=id=>{
   });
   const followupForm=$('#studentFollowupForm'),followupList=$('#studentFollowupList');
   followupForm.addEventListener('submit',window.saveStudentFollowup);
+  if(licenseReadOnly)followupForm.querySelectorAll('input,select,textarea,button').forEach(control=>{control.disabled=true;});
   followupList.addEventListener('click',event=>{
    const button=event.target.closest('[data-followup-action]');if(!button)return;
    const id=String(button.dataset.followupId||''),action=String(button.dataset.followupAction||'');if(!id)return;
