@@ -1415,6 +1415,7 @@ const save=()=>{
  auditNextRevertsId='';
  if(clearUndoAfterSave){try{clearStoredRecoverySnapshot();}catch(e){console.warn('Mushrifi recovery cleanup failed',e);}}
  try{if(isAndroidApp)syncAgendaRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi agenda reminder sync failed',e);}
+ try{if(isAndroidApp)syncStudentFollowupRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi educational follow-up reminder sync failed',e);}
  try{render();refreshUndoPanel();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}
  return true;
 };
@@ -1784,6 +1785,40 @@ function syncAgendaRemindersWithAndroid(force){
  if(result&&result.ok)lastAgendaReminderPayload=payload;
  renderAgendaNotificationStatus(plan,result);
  return {...result,plan};
+}
+function buildStudentFollowupReminderPayload(followups,students){
+ const F=Array.isArray(followups)?followups:[],S=Array.isArray(students)?students:[];
+ const reminders=[];let unlinked=0,invalid=0;
+ F.forEach(record=>{
+  if(!record||typeof record!=='object'||String(record.status||'').trim()!=='قيد المتابعة')return;
+  const id=String(record.id??'').trim(),nextDate=String(record.nextDate??'').trim();
+  if(!id||!nextDate||typeof profileTimelineValidDate!=='function'||!profileTimelineValidDate(nextDate)){invalid++;return;}
+  const matches=S.filter(target=>{
+   try{return typeof profileRecordBelongsToStudent==='function'&&profileRecordBelongsToStudent(record,target,S);}
+   catch(_){return false;}
+  });
+  if(matches.length!==1){unlinked++;return;}
+  // Deliberately send only opaque record ID, state and date to Android.
+  // Student name, section, observation, action and result never enter native reminder storage.
+  reminders.push({id,status:'قيد المتابعة',nextDate});
+ });
+ reminders.sort((a,b)=>a.nextDate.localeCompare(b.nextDate)||a.id.localeCompare(b.id));
+ return {reminders,unlinked,invalid,overflow:reminders.length>2000};
+}
+let lastStudentFollowupReminderPayload='';
+let lastStudentFollowupReminderSyncResult=null;
+function syncStudentFollowupRemindersWithAndroid(force){
+ if(!window.AndroidBridge||typeof AndroidBridge.syncStudentFollowupReminders!=='function')return {ok:false,unavailable:true};
+ const plan=buildStudentFollowupReminderPayload(db.followups,db.students);
+ if(plan.overflow)return {ok:false,overflow:true,error:'عدد المتابعات النشطة يتجاوز الحد الآمن لجدولة التنبيهات؛ لم يتغير جدول التنبيهات السابق.'};
+ const payload=JSON.stringify(plan.reminders);
+ if(!force&&payload===lastStudentFollowupReminderPayload)return lastStudentFollowupReminderSyncResult||{ok:true,unchanged:true};
+ let result;
+ try{result=JSON.parse(AndroidBridge.syncStudentFollowupReminders(payload)||'{}');}
+ catch(error){result={ok:false,error:String(error?.message||error||'تعذر تحليل نتيجة جدولة المراجعات التربوية')};}
+ lastStudentFollowupReminderSyncResult=result;
+ if(result&&result.ok)lastStudentFollowupReminderPayload=payload;
+ return {...result,unlinked:plan.unlinked,invalid:plan.invalid};
 }
 function renderAgendaNotificationStatus(plan,result){
  const status=$('#agendaNotificationStatus');if(!status)return;
@@ -2752,7 +2787,7 @@ $('#agendaRequestNotificationPermission')?.addEventListener('click',()=>{if(wind
 $('#agendaRequestExactAlarmPermission')?.addEventListener('click',()=>{if(window.AndroidBridge&&typeof AndroidBridge.requestExactAlarmAccess==='function')AndroidBridge.requestExactAlarmAccess();else alert('التنبيهات الدقيقة متاحة في نسخة Android المثبتة فقط.');});
 $('#agendaTestNotification')?.addEventListener('click',()=>{if(window.AndroidBridge&&typeof AndroidBridge.testAgendaNotification==='function')AndroidBridge.testAgendaNotification();else alert('اختبار إشعارات الأجندة متاح في نسخة Android المثبتة فقط.');});
 $('#agendaOpenNotificationSettings')?.addEventListener('click',()=>{if(window.AndroidBridge&&typeof AndroidBridge.openAgendaNotificationSettings==='function')AndroidBridge.openAgendaNotificationSettings();else alert('إعدادات إشعارات Android متاحة في نسخة التطبيق المثبتة فقط.');});
-window.addEventListener('load',()=>{refreshNotificationPermissionStatus();refreshExactAlarmPermissionStatus();refreshAgendaNotificationStatus();if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function'){db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}if(window.AndroidBridge&&typeof AndroidBridge.syncAgendaReminders==='function')syncAgendaRemindersWithAndroid(true);});
+window.addEventListener('load',()=>{refreshNotificationPermissionStatus();refreshExactAlarmPermissionStatus();refreshAgendaNotificationStatus();if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function'){db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}if(window.AndroidBridge&&typeof AndroidBridge.syncAgendaReminders==='function')syncAgendaRemindersWithAndroid(true);if(window.AndroidBridge&&typeof AndroidBridge.syncStudentFollowupReminders==='function')syncStudentFollowupRemindersWithAndroid(true);});
 window.studentAction=(source,id)=>{
   const action=typeof source==='string'?source:String(source?.value||'');
   if(source&&typeof source==='object'&&'value'in source)source.value='';
