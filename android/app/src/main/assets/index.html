@@ -3529,7 +3529,28 @@ function updateBackupHealth(timestamp,verified){
 }
 window.onMushrifiBackupVerified=timestamp=>{try{localStorage.setItem('mushrifi_backup_export_requested',String(timestamp));}catch(_){}updateBackupHealth(timestamp,true);};
 (function initBackupHealth(){try{if(window.AndroidBridge&&typeof AndroidBridge.getLastVerifiedBackupTime==='function'){const verified=Number(AndroidBridge.getLastVerifiedBackupTime()||0);if(verified){updateBackupHealth(verified,true);return;}}const requested=Number(localStorage.getItem('mushrifi_backup_export_requested')||0);updateBackupHealth(requested,false);}catch(_){updateBackupHealth(0,false);}})();
-$('#exportData').onclick=()=>{if(!licenseReadOnly&&!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!Array.isArray(check.agenda)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length,agenda:check.agenda.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();const requestedAt=Date.now();try{localStorage.setItem('mushrifi_backup_export_requested',String(requestedAt));}catch(_){}updateBackupHealth(requestedAt,false);setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
+$('#exportData').onclick=()=>{
+ if(!licenseReadOnly&&!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}
+ try{
+  const payload={...db};delete payload.mushrifiBackup;
+  const check=JSON.parse(JSON.stringify(payload));
+  if(!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!Array.isArray(check.agenda)||!check.settings||typeof check.settings!=='object'||Array.isArray(check.settings))
+   throw new Error('بنية البيانات غير مكتملة');
+  const total=Object.values(backupPayloadCounts(check)).reduce((n,v)=>n+(Number.isFinite(v)?v:0),0);
+  if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;
+  const manifest=createMushrifiBackupManifest(check,new Date().toISOString());
+  const envelope={...check,mushrifiBackup:manifest};
+  const json=JSON.stringify(envelope,null,2);
+  const verification=verifyMushrifiBackupManifest(JSON.parse(json));
+  if(!verification.ok)throw new Error('فشل التحقق الداخلي من النسخة التي تم تجهيزها: '+verification.errors.join(' '));
+  if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}
+  const blob=new Blob([json],{type:'application/json'});
+  if(blob.size<2)throw new Error('حجم النسخة غير صالح');
+  const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();
+  const requestedAt=Date.now();try{localStorage.setItem('mushrifi_backup_export_requested',String(requestedAt));}catch(_){}
+  updateBackupHealth(requestedAt,false);setTimeout(()=>URL.revokeObjectURL(url),2000);
+ }catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}
+};
 let pendingBackupData=null;
 let pendingBackupInfo=null;
 function showBackupPreview(data,bytes){
@@ -3547,6 +3568,14 @@ function showBackupPreview(data,bytes){
  const agendaRecoveryNote=pendingBackupInfo&&pendingBackupInfo.agendaMissingInBackup?'<p class="notice"><b>الأجندة:</b> النسخة المختارة قديمة ولا تحتوي على قسم الأجندة؛ احتفظ التطبيق بمواعيد الأجندة الموجودة حالياً على هذا الهاتف بدلاً من حذفها.</p>':'';
  const followupRecoveryNote=pendingBackupInfo&&pendingBackupInfo.followupsMissingInBackup?'<p class="notice"><b>سجل المتابعة التربوية:</b> النسخة المختارة لا تحتوي على هذا السجل؛ سيحتفظ التطبيق بالمتابعات الموجودة حالياً على الهاتف بدلاً من حذفها.</p>':'';
  const recoveryNote=pendingBackupInfo&&pendingBackupInfo.recoveredCount?'<p class="notice"><b>استعادة الأسماء:</b> لم تكن قائمة التلاميذ موجودة في الملف؛ أُعيد تكوين '+pendingBackupInfo.recoveredCount+' ملفاً من الأسماء المحفوظة داخل سجلات المتابعة. '+(pendingBackupInfo.missingClassCount?'قسم '+pendingBackupInfo.missingClassCount+' تلميذاً غير محفوظ في السجلات، لذلك سيبقى حقل القسم فارغاً. ':'')+'قد لا تشمل هذه الأسماء تلاميذ لم تكن لهم سجلات متابعة.</p>':'';
+ const manifestInfo=pendingBackupInfo&&pendingBackupInfo.manifest?pendingBackupInfo.manifest:null;
+ let manifestNote='';
+ if(manifestInfo&&manifestInfo.present){
+  const exported=Date.parse(manifestInfo.exportedAt),ageDays=Number.isFinite(exported)?Math.max(0,Math.floor((Date.now()-exported)/86400000)):null;
+  manifestNote='<p class="notice"><b>بيان النسخة:</b> النسخة من إصدار مُشرفي '+esc(manifestInfo.appVersion)+'، أُنشئت بتاريخ '+esc(new Date(exported).toLocaleString('ar-DZ'))+'. تم التحقق من بصمة المحتوى CRC32 وأعداد السجلات وحجم البيانات. '+(ageDays!==null&&ageDays>=30?'تنبيه: هذه النسخة أقدم من 30 يوماً؛ راجع تاريخها قبل الاستعادة.':'')+'</p>';
+ }else{
+  manifestNote='<p class="notice"><b>نسخة من إصدار سابق:</b> لا تحتوي على بيان سلامة مضمّن. اجتازت فحوص البنية ومعرّفات التلاميذ الحالية، لكن لا يمكن التحقق من تاريخها أو بصمتها الداخلية. لا تحذف الملف الأصلي.</p>';
+ }
  const integrity=pendingBackupInfo&&pendingBackupInfo.integrity?pendingBackupInfo.integrity:null;
  const integrityNote=integrity?'<p class="notice"><b>فحص سلامة المعرّفات:</b> اجتازت النسخة فحص تفرّد معرّفات التلاميذ والسجلات. '+(integrity.unresolvedStudentReferences?'يوجد '+integrity.unresolvedStudentReferences+' سجل تاريخي لا يشير معرّفه إلى تلميذ موجود؛ سيُحتفظ به كما هو دون ربط تخميني. ':'لا توجد إحالات إلى تلاميذ مفقودين. ')+(integrity.legacyRecordsWithoutIds?'يوجد '+integrity.legacyRecordsWithoutIds+' سجل قديم دون معرّف مستقل؛ سيُحتفظ به كما هو.':'')+'</p>':'';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
@@ -3560,7 +3589,7 @@ function showBackupPreview(data,bytes){
  '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div>'+
  '<div class="stat"><small>مواعيد الأجندة</small><strong>'+agenda.length+'</strong></div>'+
  '<div class="stat"><small>المتابعات التربوية</small><strong>'+followups.length+'</strong></div></div>'+
- '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+agendaRecoveryNote+followupRecoveryNote+recoveryNote+integrityNote+
+ '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+manifestNote+agendaRecoveryNote+followupRecoveryNote+recoveryNote+integrityNote+
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
@@ -3652,16 +3681,94 @@ function inspectBackupIdentityIntegrity(data){
   unresolvedStudentReferences
  };
 }
+
+function backupPayloadCounts(data){
+ const counts={};
+ for(const key of ['students','attendance','documents','violations','agenda','followups','auditLog'])
+  counts[key]=Array.isArray(data&&data[key])?data[key].length:null;
+ return counts;
+}
+function backupUtf8ByteLength(value){
+ return unescape(encodeURIComponent(String(value??''))).length;
+}
+// CRC32 detects accidental file damage; it is not a cryptographic signature.
+function backupCrc32(value){
+ const bytes=unescape(encodeURIComponent(String(value??'')));
+ let crc=0xffffffff;
+ for(let i=0;i<bytes.length;i++){
+  crc^=bytes.charCodeAt(i);
+  for(let bit=0;bit<8;bit++)crc=(crc>>>1)^((crc&1)?0xedb88320:0);
+ }
+ return ((crc^0xffffffff)>>>0).toString(16).padStart(8,'0');
+}
+function createMushrifiBackupManifest(data,exportedAt){
+ const payload={...(data&&typeof data==='object'?data:{})};
+ delete payload.mushrifiBackup;
+ const serialized=JSON.stringify(payload);
+ if(typeof serialized!=='string')throw new Error('تعذر تجهيز محتوى النسخة الاحتياطية.');
+ return {
+  format:'mushrifi-backup',
+  formatVersion:1,
+  dataSchemaVersion:1,
+  appVersion:'2.6',
+  exportedAt:String(exportedAt||new Date().toISOString()),
+  payloadBytes:backupUtf8ByteLength(serialized),
+  counts:backupPayloadCounts(payload),
+  checksum:{algorithm:'CRC32',value:backupCrc32(serialized)}
+ };
+}
+function verifyMushrifiBackupManifest(data){
+ if(!data||!Object.prototype.hasOwnProperty.call(data,'mushrifiBackup'))
+  return {ok:true,present:false,legacy:true,errors:[]};
+ const manifest=data.mushrifiBackup,errors=[];
+ if(!manifest||typeof manifest!=='object'||Array.isArray(manifest))
+  return {ok:false,present:true,legacy:false,errors:['بيان النسخة غير صالح.']};
+ if(manifest.format!=='mushrifi-backup')errors.push('صيغة بيان النسخة غير معروفة.');
+ if(manifest.formatVersion!==1)errors.push('إصدار تنسيق النسخة غير مدعوم.');
+ if(manifest.dataSchemaVersion!==1)errors.push('إصدار بنية بيانات النسخة غير مدعوم.');
+ if(typeof manifest.appVersion!=='string'||!manifest.appVersion.trim())errors.push('إصدار التطبيق غير مسجل في بيان النسخة.');
+ if(typeof manifest.exportedAt!=='string'||!Number.isFinite(Date.parse(manifest.exportedAt)))
+  errors.push('تاريخ إنشاء النسخة غير صالح.');
+ const payload={...data};delete payload.mushrifiBackup;
+ const serialized=JSON.stringify(payload);
+ const actualBytes=backupUtf8ByteLength(serialized);
+ if(manifest.payloadBytes!==actualBytes)errors.push('حجم محتوى النسخة لا يطابق البيان.');
+ const actualCounts=backupPayloadCounts(payload);
+ if(!manifest.counts||typeof manifest.counts!=='object'||Array.isArray(manifest.counts)){
+  errors.push('أعداد السجلات في بيان النسخة مفقودة أو غير صالحة.');
+ }else{
+  for(const key of Object.keys(actualCounts)){
+   if(!Object.prototype.hasOwnProperty.call(manifest.counts,key)||manifest.counts[key]!==actualCounts[key])
+    errors.push('عدد سجلات '+key+' لا يطابق بيان النسخة.');
+  }
+ }
+ const expected=manifest.checksum&&manifest.checksum.value;
+ if(!manifest.checksum||manifest.checksum.algorithm!=='CRC32'||typeof expected!=='string'||!/^[0-9a-f]{8}$/i.test(expected))
+  errors.push('بصمة سلامة النسخة مفقودة أو غير صالحة.');
+ else if(backupCrc32(serialized)!==expected.toLowerCase())
+  errors.push('بصمة محتوى النسخة لا تطابق البيان؛ قد يكون الملف تعرض للتلف أو التعديل.');
+ return {
+  ok:errors.length===0,present:true,legacy:false,errors,
+  exportedAt:manifest.exportedAt,appVersion:manifest.appVersion,
+  payloadBytes:manifest.payloadBytes,counts:actualCounts
+ };
+}
+
 async function importBackupText(raw,bytes){
  try{
-  raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
+  raw=String(raw||'').replace(/^\uFEFF/,'').trim();
   if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('محتوى الملف ليس JSON سليماً. تأكد من اختيار ملف النسخة الاحتياطية الأصلي بصيغة JSON.');}
+  const outerManifest=obj&&Object.prototype.hasOwnProperty.call(obj,'mushrifiBackup')?obj.mushrifiBackup:undefined;
   if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&!Array.isArray(obj.students)){
    const nested=obj.data||obj.backup||obj.database||obj.db;
    if(typeof nested==='string'){try{obj=JSON.parse(nested);}catch(_){throw new Error('البيانات الداخلية للنسخة ليست JSON سليماً.');}}
    else if(nested&&typeof nested==='object')obj=nested;
+   if(outerManifest!==undefined&&obj&&typeof obj==='object'&&!Object.prototype.hasOwnProperty.call(obj,'mushrifiBackup'))obj={...obj,mushrifiBackup:outerManifest};
   }
+  const manifestCheck=verifyMushrifiBackupManifest(obj);
+  if(!manifestCheck.ok)throw new Error('فشل فحص بيان سلامة النسخة: '+manifestCheck.errors.join(' ')+' لم تتغير بيانات الهاتف؛ احتفظ بالملف الأصلي واختر نسخة سليمة.');
+  if(manifestCheck.present){obj={...obj};delete obj.mushrifiBackup;}
   if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students))throw new Error('لم أجد قائمة التلاميذ داخل الملف. لا يبدو أنه ملف نسخة احتياطية متوافق مع مُشرفي.');
   for(const key of ['students','attendance','documents','violations'])if(!Array.isArray(obj[key]))throw new Error('النسخة غير مكتملة: قائمة '+key+' مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
   if(obj.agenda!==undefined&&(!Array.isArray(obj.agenda)||!obj.agenda.every(item=>item&&typeof item==='object'&&!Array.isArray(item))))throw new Error('قائمة الأجندة داخل النسخة الاحتياطية غير صالحة. لم يتم تغيير بيانات الهاتف.');
@@ -3677,18 +3784,38 @@ async function importBackupText(raw,bytes){
   const integrity=inspectBackupIdentityIntegrity(normalized);
   if(!integrity.ok)throw new Error('أوقف التطبيق الاستعادة لأن فحص المعرّفات كشف تعارضاً قد يربط السجلات بتلميذ غير صحيح: '+integrity.blockers.join(' ')+ ' لم تتغير بيانات الهاتف. أصلح النسخة أو اختر نسخة أخرى.');
   pendingBackupData=normalized;
-  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup,integrity};
+  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup,integrity,manifest:{present:manifestCheck.present,legacy:manifestCheck.legacy,exportedAt:manifestCheck.exportedAt||'',appVersion:manifestCheck.appVersion||'',payloadBytes:manifestCheck.payloadBytes||0,counts:manifestCheck.counts||null}};
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
  }catch(err){pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
 }
+let restoreInProgress=false;
 function restorePendingBackup(){
- if(!pendingBackupData)return;
+ if(!pendingBackupData||restoreInProgress)return;
  if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
  if(!confirm('تأكيد أخير: هل توافق على استبدال بيانات الهاتف بالنسخة التي تمت معاينتها؟'))return;
  if(!saveUndoSnapshot('استبدال البيانات عند استعادة نسخة احتياطية'))return;
- const oldDb=db;const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;db={...pendingBackupData,agenda:Array.isArray(pendingBackupData.agenda)?pendingBackupData.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]),auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
- if(!save()){db=oldDb;refreshUndoPanel();render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي، وتم الإبقاء على نقطة الاسترجاع المشفّرة تحسباً لأي تعثر في التخزين. لا تحذف التطبيق.');return;}
+ restoreInProgress=true;
+ const restoreButton=$('#restoreBackupNow');
+ if(restoreButton){restoreButton.disabled=true;restoreButton.textContent='جارٍ حفظ النسخة واستبدال البيانات...';}
+ const resetRestoreState=()=>{
+  restoreInProgress=false;
+  if(restoreButton){restoreButton.disabled=false;restoreButton.textContent='استعادة هذه النسخة';}
+ };
+ const oldDb=db;
+ try{
+  const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];
+  const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;
+  db={...pendingBackupData,agenda:Array.isArray(pendingBackupData.agenda)?pendingBackupData.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]),auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
+  if(!save()){
+   db=oldDb;resetRestoreState();refreshUndoPanel();render();
+   alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي، وتم الإبقاء على نقطة الاسترجاع المشفّرة تحسباً لأي تعثر في التخزين. لا تحذف التطبيق.');return;
+  }
+ }catch(err){
+  db=oldDb;resetRestoreState();refreshUndoPanel();render();
+  alert('تعذرت عملية الاستعادة قبل اكتمال الحفظ؛ بقيت البيانات السابقة كما هي ونقطة الاسترجاع المشفّرة محفوظة. '+(err&&err.message?err.message:''));return;
+ }
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
+ resetRestoreState();
  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
  alert('تمت استعادة النسخة الاحتياطية بنجاح. عدد التلاميذ: '+db.students.length+'، وسجلات المتابعة: '+(db.attendance.length+db.documents.length+db.violations.length+(db.followups?.length||0))+'.');

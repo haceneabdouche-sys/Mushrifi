@@ -70,6 +70,8 @@ const restoreContext = {
   pendingBackupInfo: {},
   db: { students: [{ id: 'old' }], attendance: [], documents: [], violations: [], agenda: [], followups: [], settings: {} },
   AUDIT_LOG_LIMIT: 500,
+  restoreInProgress: false,
+  $: () => null,
   confirm: () => true,
   saveUndoSnapshot: () => true,
   save: () => false,
@@ -88,6 +90,7 @@ assert.equal(restoreContext.db, oldDatabase, 'failed restore returns the in-memo
 assert.equal(restoreContext.snapshotCleared, false, 'failed restore never deletes the encrypted recovery snapshot');
 assert.equal(restoreContext.refreshed, true);
 assert.equal(restoreContext.rendered, true);
+assert.equal(restoreContext.restoreInProgress, false, 'a failed restore releases its in-progress guard');
 assert.match(restoreContext.alertMessage, /الإبقاء على نقطة الاسترجاع المشفّرة/,
   'the user is told that the recovery point remains available');
 
