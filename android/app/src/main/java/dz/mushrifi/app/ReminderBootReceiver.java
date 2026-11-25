@@ -45,6 +45,7 @@ public class ReminderBootReceiver extends BroadcastReceiver {
 
         // Agenda alarms are rebuilt from local calendar date/time so timezone and clock changes are honored.
         AgendaReminderScheduler.rescheduleAll(context);
+        StudentFollowupReminderScheduler.rescheduleAll(context);
     }
 
     private static final class AlarmPermissionAction {
