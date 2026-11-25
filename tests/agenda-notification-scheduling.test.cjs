@@ -10,7 +10,10 @@ const planStart=html.indexOf('function buildAgendaReminderPlan(items,nowValue){'
 const planEnd=html.indexOf('let lastAgendaReminderPayload=',planStart);
 assert.ok(validStart>=0&&validEnd>validStart,'agenda date validator exists');
 assert.ok(planStart>=0&&planEnd>planStart,'pure agenda reminder planner exists');
-const source=html.slice(validStart,validEnd)+'\n'+html.slice(planStart,planEnd);
+const repeatStart=html.indexOf('function agendaRepeatRule(item){');
+const repeatEnd=html.indexOf('function agendaReminderLeadLabel(lead)',repeatStart);
+assert.ok(repeatStart>=0&&repeatEnd>repeatStart,'agenda recurrence helpers are pure and available to reminder planning');
+const source=html.slice(validStart,validEnd)+'\n'+html.slice(repeatStart,repeatEnd)+'\n'+html.slice(planStart,planEnd);
 const sandbox={Date,Number,String,Array};
 vm.createContext(sandbox);
 vm.runInContext(source,sandbox);
