@@ -43,7 +43,7 @@ assert.deepEqual(local(plan.reminders[0].triggerAtMillis),[2024,2,29,8,0],'one-d
 
 plan=sandbox.buildAgendaReminderPlan([{...base,date:'2027-03-29',startTime:'10:00'}],ts(2027,3,27,10,0));
 assert.deepEqual(local(plan.reminders[0].triggerAtMillis),[2027,3,28,10,0],'one-day reminder preserves local wall time across spring DST change');
-assert.equal(plan.reminders[0].triggerAtMillis - ts(2027,3,27,10,0),0,'the reminder is at the previous local day 10:00');
+assert.equal(ts(2027,3,29,10,0) - plan.reminders[0].triggerAtMillis,23*60*60*1000,'the previous local day is 23 elapsed hours before the event across spring DST');
 
 const dueSoon={...base,date:'2026-11-26',startTime:'09:00',reminderLeadMinutes:1440};
 plan=sandbox.buildAgendaReminderPlan([dueSoon],ts(2026,11,25,10,0));
