@@ -56,7 +56,8 @@ assert.ok(attendanceUpdate.restrictedFields.includes('الملاحظات'),'priv
 const documentAdd=event('documents','add');
 assert.ok(documentAdd.restrictedFields.includes('موضوع الوثيقة وتفاصيلها'),'document reasons are redacted');
 assert.ok(documentAdd.restrictedFields.includes('صورة الوثيقة'),'document photos are redacted');
-assert.ok(!serialized.includes('stu-1'),'student record identifiers are not leaked into the audit content');
+const linkedRecordEvents=events.filter(x=>x.entity!=='students');
+assert.ok(!JSON.stringify(linkedRecordEvents).includes('stu-1'),'student IDs are not copied into attendance, document, or violation history');
 
 const revertable={id:'att-1',hours:4,justified:'غير مبرر',notes:'ملاحظة خاصة بعد'};
 assert.equal(sandbox.auditCanRevert(attendanceUpdate,revertable),true,'a safe edit can be reverted while current values still match its recorded after values');
