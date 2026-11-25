@@ -740,6 +740,23 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 .agenda-conflict-panel{border-right:3px solid #c58a4d}
 .agenda-conflict-panel.has-conflicts{border-right-color:#c06a5f}
 .agenda-conflict-panel.no-conflicts{border-right-color:#6e9c7c}
+
+.agenda-alternative-controls{margin-top:12px;padding:11px;border:1px solid var(--line);border-radius:9px;background:var(--surface,#fbfcfd)}
+.agenda-alternative-controls h4{margin:0 0 5px;font-size:13px}
+.agenda-alternative-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:9px 0}
+.agenda-alternative-fields label{display:block;margin-bottom:4px;font-size:11px;font-weight:800}
+.agenda-alternative-fields input,.agenda-alternative-fields select{width:100%;min-width:0;min-height:38px}
+.agenda-alternative-disclaimer{font-size:10px;line-height:1.7}
+.agenda-alternative-list{display:grid;gap:8px;margin-top:9px}
+.agenda-alternative-group{padding:9px;border:1px solid var(--line);border-radius:8px;background:#fff}
+.agenda-alternative-group>strong{display:block;font-size:12px;overflow-wrap:anywhere}
+.agenda-alternative-slots{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.agenda-alternative-slot{display:inline-flex;padding:5px 8px;border-radius:7px;background:#edf5ef;color:#315d42;font-size:11px;font-weight:800;direction:ltr}
+.agenda-alternative-empty{font-size:11px;color:var(--muted);margin:5px 0}
+@media(max-width:720px){.agenda-alternative-fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.agenda-alternative-fields{grid-template-columns:1fr}}
+@media print{.agenda-alternative-controls{display:none!important}}
+
 .agenda-conflict-list{display:grid;gap:8px}
 .agenda-conflict-empty{padding:9px 11px;border:1px dashed var(--line);border-radius:8px;color:var(--muted);font-size:12px}
 .agenda-conflict-item{padding:10px;border:1px solid #ead7c9;border-right:4px solid #c06a5f;border-radius:9px;background:#fffaf7}
@@ -952,6 +969,19 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
     <div class="panel-title-row"><h3>كشف تعارض المواعيد</h3><span class="pill" id="agendaConflictCount">جارٍ الفحص</span></div>
     <p class="muted" id="agendaConflictHint" role="status" aria-live="polite">يفحص مُشرِفي تداخل الأوقات في الفترة المعروضة، بما فيها المواعيد المتكررة واستدعاءات الأولياء.</p>
     <div id="agendaConflictList" class="agenda-conflict-list"><p class="empty">جارٍ فحص المواعيد...</p></div>
+ <div class="agenda-alternative-controls">
+ <h4>اقتراح أوقات بديلة</h4>
+ <p class="muted">حدد فترة العمل المتاحة لهذا اليوم. سيبحث التطبيق عن أوقات خالية دون تعديل الموعدين الأصليين.</p>
+ <div class="agenda-alternative-fields">
+  <div><label for="agendaAlternativeStart">بداية الفترة المتاحة</label><input type="time" id="agendaAlternativeStart" value="08:00"></div>
+  <div><label for="agendaAlternativeEnd">نهاية الفترة المتاحة</label><input type="time" id="agendaAlternativeEnd" value="16:00"></div>
+  <div><label for="agendaAlternativeDuration">مدة الموعد دون وقت نهاية</label><select id="agendaAlternativeDuration"><option value="15">15 دقيقة</option><option value="30" selected>30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">ساعة</option><option value="90">ساعة ونصف</option><option value="120">ساعتان</option><option value="150">ساعتان ونصف</option><option value="180">3 ساعات</option><option value="240">4 ساعات</option></select></div>
+  <div><label for="agendaAlternativeBuffer">فاصل أمان بين المواعيد</label><select id="agendaAlternativeBuffer"><option value="0">دون فاصل</option><option value="5">5 دقائق</option><option value="10" selected>10 دقائق</option><option value="15">15 دقيقة</option><option value="20">20 دقيقة</option><option value="30">30 دقيقة</option></select></div>
+ </div>
+ <button type="button" class="btn primary small" id="agendaComputeAlternatives">احسب الأوقات البديلة</button>
+ <p class="muted agenda-alternative-disclaimer">هذه اقتراحات فقط. لا تُحفظ التغييرات ولا تُنقل مواعيد الاستدعاء أو سلسلة التكرار تلقائياً. المواعيد بلا وقت محدد لا تدخل في حجز الفترات، لذا راجعها قبل اعتماد أي اقتراح.</p>
+ <div id="agendaAlternativeList" class="agenda-alternative-list" aria-live="polite"><p class="agenda-conflict-empty">أدخل فترة العمل واضغط «احسب الأوقات البديلة» عند وجود تعارض.</p></div>
+</div>
   </div>
   <div class="panel agenda-calendar-panel"><div class="panel-title-row"><h3 id="agendaRangeHeading">التقويم الشهري</h3><span class="pill">التاريخ المحدد</span></div><div id="agendaCalendar" aria-live="polite"><p class="empty">جارٍ إعداد الأجندة...</p></div></div>
   <div class="panel agenda-selected-panel"><div class="panel-title-row"><h3 id="agendaSelectedHeading">مواعيد اليوم المحدد</h3><span class="pill" id="agendaSelectedCount">0</span></div><div id="agendaSelectedItems"><p class="empty">لا توجد مواعيد في هذا اليوم.</p></div></div>
@@ -1630,8 +1660,50 @@ function buildAgendaConflictSnapshot(items){
   }
  }
  conflicts.sort((a,b)=>a.date.localeCompare(b.date)||a.startTime.localeCompare(b.startTime)||String(a.first.title||'').localeCompare(String(b.first.title||''),'ar'));
- return {conflicts,total:conflicts.length,ignoredWithoutTime,ignoredInvalidTime};
+ return {conflicts,total:conflicts.length,ignoredWithoutTime,ignoredInvalidTime,events:source};
 }
+
+function agendaFormatMinuteOfDay(value){
+ return String(Math.floor(value/60)).padStart(2,'0')+':'+String(value%60).padStart(2,'0');
+}
+function agendaAlternativeSlots(events,target,options){
+ const source=Array.isArray(events)?events:[],config=options&&typeof options==='object'?options:{};
+ const workStart=agendaConflictTimeMinutes(config.startTime),workEnd=agendaConflictTimeMinutes(config.endTime);
+ const buffer=Number(config.bufferMinutes??0),defaultDuration=Number(config.defaultDuration??30);
+ if(!target||!agendaValidDate(target.date)||workStart===null||workEnd===null||workEnd<=workStart||!Number.isInteger(buffer)||buffer<0||buffer>30||![15,30,45,60,90,120,150,180,240].includes(defaultDuration))return {valid:false,slots:[],duration:0,ignoredWithoutTime:0,ignoredInvalidTime:0};
+ const targetWindow=agendaConflictWindow(target);
+ if(!targetWindow)return {valid:false,slots:[],duration:0,ignoredWithoutTime:0,ignoredInvalidTime:0};
+ const duration=targetWindow.point?defaultDuration:targetWindow.end-targetWindow.start;
+ if(duration<=0||duration>workEnd-workStart)return {valid:true,slots:[],duration,ignoredWithoutTime:0,ignoredInvalidTime:0};
+ const blocked=[],ignored={withoutTime:0,invalidTime:0};
+ source.forEach(event=>{
+  if(!event||event.date!==target.date||String(event.id)===String(target.id)||['done','cancelled'].includes(String(event.status||'').toLowerCase()))return;
+  const rawStart=String(event.startTime??'').trim(),rawEnd=String(event.endTime??'').trim();
+  if(!rawStart){ignored.withoutTime++;return;}
+  const start=agendaConflictTimeMinutes(rawStart);
+  if(start===null){ignored.invalidTime++;return;}
+  if(!rawEnd){
+   blocked.push({start:Math.max(workStart,start-buffer),end:Math.min(workEnd,start+buffer),point:true});
+   return;
+  }
+  const end=agendaConflictTimeMinutes(rawEnd);
+  if(end===null||end<=start){ignored.invalidTime++;return;}
+  blocked.push({start:Math.max(workStart,start-buffer),end:Math.min(workEnd,end+buffer),point:false});
+ });
+ const slots=[];
+ for(let start=workStart;start+duration<=workEnd;start+=15){
+  const end=start+duration;
+  const conflict=blocked.some(block=>block.point
+   ?block.start>=start&&block.start<end
+   :Math.max(start,block.start)<Math.min(end,block.end));
+  if(conflict)continue;
+  if(start===targetWindow.start)continue;
+  slots.push({startTime:agendaFormatMinuteOfDay(start),endTime:agendaFormatMinuteOfDay(end),start,end,duration});
+  if(slots.length>=3)break;
+ }
+ return {valid:true,slots,duration,ignoredWithoutTime:ignored.withoutTime,ignoredInvalidTime:ignored.invalidTime,bufferMinutes:buffer};
+}
+
 function agendaConflictTimeLabel(conflict){
  return conflict.point?'تعارض عند الساعة '+conflict.startTime:'تداخل من '+conflict.startTime+' إلى '+conflict.endTime+' ('+conflict.minutes+' دقيقة)';
 }
