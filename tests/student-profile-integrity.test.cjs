@@ -24,7 +24,7 @@ const student={id:'student-current',last:'وائل',first:'عيسو',class:'١',
 assert.equal(sandbox.normalizeProfileStudentName('وَائِل عيسو1'),'وائل عيسو','Latin trailing digits are removed after Arabic normalization');
 assert.equal(sandbox.normalizeProfileStudentName('وَائِل عيسو ١'),'وائل عيسو','Arabic trailing digits are removed too');
 assert.equal(sandbox.normalizeProfileStudentName('وائل عيسو 2'),'وائل عيسو','trailing suffix is removed with or without a separating space');
-assert.equal(sandbox.normalizeProfileStudentName('عبد ٢ الرحمن'),'عبد ٢ الرحمن','digits inside a name are preserved');
+assert.equal(sandbox.normalizeProfileStudentName('عبد ٢ الرحمن'),'عبد 2 الرحمن','digits inside a name are preserved while their numeral script is normalized');
 assert.equal(sandbox.normalizeProfileStudentSection(' ١ '),'1','Arabic numerals and spaces normalize in section matching');
 
 const legacyNameRecord={student:'وائل عيسو1',studentName:'وائل عيسو1',class:'1'};
