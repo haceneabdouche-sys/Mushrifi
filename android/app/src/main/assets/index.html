@@ -440,6 +440,10 @@ header .credit-signature{width:72px;height:72px;margin-top:2px}
 .voice-panel #startVoiceBtn{flex:0 0 auto;min-height:46px;padding-inline:18px}
 .voice-panel #voiceTranscript,.voice-panel #voiceConfirm{flex:1 1 100%;margin:4px 0 0}
 .daily-tasks-panel{margin-top:12px;border-right:4px solid #d6b46b}.daily-tasks-list{display:grid;gap:8px}.daily-task-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfd}.daily-task-item .task-copy{min-width:0}.daily-task-item strong{display:block;overflow-wrap:anywhere}.daily-task-item small{display:block;color:var(--muted);line-height:1.7}.daily-task-item .btn{flex:0 0 auto}.daily-task-kind{display:inline-block;font-size:11px;font-weight:700;color:#805b11;background:#fff5d9;border-radius:20px;padding:3px 8px;margin-bottom:4px}@media(max-width:560px){.daily-task-item{align-items:flex-start;flex-direction:column}.daily-task-item .btn{width:100%}}
+
+.audit-heading{margin-top:0}.audit-heading>p{line-height:1.75}.audit-toolbar{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:12px}.audit-toolbar input,.audit-toolbar select{min-width:0;width:100%}.audit-toolbar input[type=date]{direction:ltr}.audit-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.audit-log-list{display:grid;gap:10px;margin-top:12px}.audit-entry{margin:0;border-right:4px solid #a8bac7}.audit-entry[data-audit-action="delete"]{border-right-color:#ba7777}.audit-entry[data-audit-action="revert"]{border-right-color:#6eaa8f}.audit-entry-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}.audit-entry-head strong{display:block;overflow-wrap:anywhere}.audit-entry-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:5px;color:var(--muted);font-size:11px}.audit-entry-summary{font-size:14px;font-weight:800}.audit-entry details{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.audit-entry details>summary{cursor:pointer;font-size:12px;font-weight:700;color:var(--navy)}.audit-change-table{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}.audit-change-table th,.audit-change-table td{padding:7px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top;overflow-wrap:anywhere}.audit-change-table th{color:var(--muted);background:#f7f9fa}.audit-private-note{margin-top:8px;padding:8px 10px;border-radius:8px;background:#f6f7f8;color:var(--muted);font-size:11px;line-height:1.6}.audit-entry-actions{display:flex;justify-content:flex-start;gap:8px;flex-wrap:wrap;margin-top:10px}.audit-entry-actions .btn{min-height:34px}.audit-bulk-summary{margin-top:7px;color:var(--muted);font-size:12px}
+@media(max-width:650px){.audit-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.audit-toolbar input[type=search]{grid-column:1/-1}.audit-entry-head{align-items:flex-start}.audit-change-table{font-size:11px}}
+
 .smart-dashboard-panel{margin-top:12px;border-right:4px solid #9ab7c8}.smart-week-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}.smart-week-grid .stat{min-width:0;padding:12px;background:#f8fafb;box-shadow:none}.smart-week-grid .stat strong{font-size:clamp(21px,3vw,27px)}.smart-week-grid .smart-trend{display:block;margin-top:5px;color:var(--muted);font-size:10px;line-height:1.5}.smart-followup-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:15px}.smart-followup-head h3{margin:0;font-size:15px}.smart-followup-list{display:grid;gap:8px;margin-top:9px}.smart-followup-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfd}.smart-followup-item strong{display:block;overflow-wrap:anywhere}.smart-followup-item small{display:block;color:var(--muted);line-height:1.6}.smart-followup-item .btn{flex:0 0 auto}@media(max-width:560px){.smart-week-grid{gap:6px}.smart-week-grid .stat{padding:9px 7px}.smart-week-grid .stat small{font-size:10px}.smart-week-grid .smart-trend{font-size:9px}.smart-followup-item{align-items:flex-start;flex-direction:column}.smart-followup-item .btn{width:100%}}
 
 .home-feature-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;margin-top:12px;align-items:stretch}
@@ -690,8 +694,25 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
       <div class="tile" data-go="settings">⚙️<b>الإعدادات والترخيص</b><small>النسخ الاحتياطي والبيانات والتفعيل</small></div>
       <div class="tile" data-go="documents">📨<b>الإشعارات والاستدعاءات</b><small>متابعة مواعيد الأولياء</small></div>
       <div class="tile" data-go="attendance">📋<b>سجل الغياب والتأخر</b><small>المراجعة والتبرير والتعديل</small></div>
+      <div class="tile" data-go="audit">🧾<b>سجل العمليات والتعديلات</b><small>من أضاف أو عدّل أو حذف ومتى</small></div>
     </div>
   </div>
+</section>
+<section id="audit" class="page hidden">
+  <div class="panel audit-heading">
+    <div class="panel-title-row"><h2>سجل العمليات والتعديلات</h2><span class="pill" id="auditLogCount">0 عملية</span></div>
+    <p class="muted">يسجل التطبيق عمليات إضافة وتعديل وحذف واستيراد واسترجاع البيانات، مع وقت العملية والحقول التي تغيرت. حُفظ السجل داخل قاعدة بيانات مُشرِفي المشفّرة على هذا الجهاز، ويُضمّن في النسخ الاحتياطية.</p>
+    <p class="notice">لأن التطبيق لا يطلب حساب مستخدم مستقلًا، يحدد السجل أن العملية تمت من التطبيق على هذا الجهاز ولا يدّعي معرفة الشخص الذي ضغط الزر. لا تُعرض أرقام الهواتف أو بيانات الولي أو محتوى الصور والملاحظات الخاصة.</p>
+    <div class="audit-toolbar" id="auditLogFilters">
+      <input id="auditSearch" type="search" placeholder="ابحث باسم التلميذ أو نوع العملية" aria-label="البحث في سجل العمليات">
+      <select id="auditEntityFilter" aria-label="تصفية حسب نوع السجل"><option value="">كل السجلات</option><option value="students">بطاقات التلاميذ</option><option value="attendance">الغياب والتأخر</option><option value="documents">الوثائق والاستدعاءات</option><option value="violations">المخالفات</option><option value="settings">الإعدادات</option></select>
+      <select id="auditActionFilter" aria-label="تصفية حسب العملية"><option value="">كل العمليات</option><option value="add">إضافة</option><option value="update">تعديل</option><option value="revert">استرجاع تعديل</option><option value="delete">حذف</option><option value="bulk">عملية جماعية</option></select>
+      <input id="auditDateFrom" type="date" aria-label="من تاريخ">
+      <input id="auditDateTo" type="date" aria-label="إلى تاريخ">
+    </div>
+    <div class="audit-actions"><button type="button" class="btn primary" id="exportAuditLog">تصدير سجل العمليات</button><span class="muted">يحتفظ التطبيق بآخر 500 عملية، ويُحذف الأقدم تلقائياً عند تجاوز الحد.</span></div>
+  </div>
+  <div id="auditLogEntries" class="audit-log-list"><p class="empty">لا توجد عمليات مسجلة بعد.</p></div>
 </section>
 <section id="students" class="page hidden">
 <div class="panel"><h2 id="studentFormTitle">بطاقة التلميذ – إضافة بيانات</h2><p class="muted">تتضمن بطاقة التلميذ الاسم واللقب والمستوى والشعبة والقسم والصفة وتاريخ الميلاد واسم الولي ورقم هاتفه.</p><form id="studentForm">
@@ -1060,10 +1081,10 @@ function setLicenseControlDisabled(el,disabled){
 function applyLicenseAccess(state){
  licenseReadOnly=!!(!state||!state.hasLicense||!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
- const allowed=new Set(['exportData','makeReport','validateLicenseBtn','activateLicenseBtn']);
+ const allowed=new Set(['exportData','exportAuditLog','makeReport','validateLicenseBtn','activateLicenseBtn']);
  if(licenseReadOnly){
   $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
-  $$('select').forEach(el=>setLicenseControlDisabled(el,true));
+  $('select').forEach(el=>setLicenseControlDisabled(el,!el.closest('#auditLogFilters')));
   $$('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>setLicenseControlDisabled(el,true));
   $$('button').forEach(el=>{
    const action=el.getAttribute('onclick')||'';
@@ -1102,7 +1123,7 @@ return String(value??'').normalize('NFKC').toLocaleLowerCase('ar')
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
 const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.name||s.fullName||'—';for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>normalizeStudentKey(x.student)===normalizeStudentKey(id)&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
-let previousAppPage='home';const appPageStack=['home'];function go(page,addHistory=true){if(!document.getElementById(page)||!document.getElementById(page).classList.contains('page'))return;const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current!==page&&addHistory){previousAppPage=current;appPageStack.push(page);try{history.pushState({mushrifiPage:page},'');}catch(err){console.warn('Mushrifi: browser history unavailable; using in-page navigation',err);}}document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page||(x.dataset.page==='more'&&['violations','reports','settings'].includes(page))));if(typeof render==='function')render();}function goPreviousPage(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;let index=appPageStack.lastIndexOf(current);let target=index>0?appPageStack[index-1]:previousAppPage;if(!target||target===current||!document.getElementById(target)||!document.getElementById(target).classList.contains('page'))target='home';if(index>0)appPageStack.splice(index);if(!appPageStack.length)appPageStack.push('home');go(target,false);previousAppPage=appPageStack.length>1?appPageStack[appPageStack.length-2]:'home';return true;}window.handleMushrifiAndroidBack=function(){if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(false);return true;}const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;return goPreviousPage();};
+let previousAppPage='home';const appPageStack=['home'];function go(page,addHistory=true){if(!document.getElementById(page)||!document.getElementById(page).classList.contains('page'))return;const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current!==page&&addHistory){previousAppPage=current;appPageStack.push(page);try{history.pushState({mushrifiPage:page},'');}catch(err){console.warn('Mushrifi: browser history unavailable; using in-page navigation',err);}}document.querySelectorAll('.page').forEach(x=>x.classList.toggle('hidden',x.id!==page));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===page||(x.dataset.page==='more'&&['violations','reports','settings','audit'].includes(page))));if(typeof render==='function')render();}function goPreviousPage(){const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;let index=appPageStack.lastIndexOf(current);let target=index>0?appPageStack[index-1]:previousAppPage;if(!target||target===current||!document.getElementById(target)||!document.getElementById(target).classList.contains('page'))target='home';if(index>0)appPageStack.splice(index);if(!appPageStack.length)appPageStack.push('home');go(target,false);previousAppPage=appPageStack.length>1?appPageStack[appPageStack.length-2]:'home';return true;}window.handleMushrifiAndroidBack=function(){if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(false);return true;}const current=document.querySelector('.page:not(.hidden)')?.id||'home';if(current==='home')return false;return goPreviousPage();};
 try{history.replaceState({mushrifiPage:document.querySelector('.page:not(.hidden)')?.id||'home'},'');}catch(err){console.warn('Mushrifi: initial browser history unavailable; navigation remains enabled',err);}
 window.addEventListener('popstate',event=>{if(window.mushrifiPrintOpen){window.closeMushrifiPrintPreview(true);return;}const page=event.state?.mushrifiPage;go(page&&document.getElementById(page)?page:'home',false);});
 function setSettingsTab(tab){const allowed=['schedule','followup','rates','alerts','data','license'];if(!allowed.includes(tab))tab='schedule';allowed.forEach(key=>{const pane=$('#settings-pane-'+key),button=$('[data-settings-tab="'+key+'"]');if(pane)pane.classList.toggle('hidden',key!==tab);if(button){button.classList.toggle('active',key===tab);button.setAttribute('aria-selected',key===tab?'true':'false');}});return tab;}
@@ -1137,8 +1158,79 @@ function renderSmartDashboard(today){
  list.querySelectorAll('[data-smart-student-id]').forEach(b=>b.addEventListener('click',()=>window.studentHistory(b.dataset.smartStudentId)));
 }
 
+function auditActionText(action){return action==='add'?'إضافة':action==='update'?'تعديل':action==='revert'?'استرجاع تعديل':action==='delete'?'حذف':action==='bulk'?'عملية جماعية':'عملية';}
+function auditEntityText(entity){return ({students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'مخالفة',settings:'إعدادات التطبيق'})[entity]||'سجل';}
+function auditDateText(value){const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString('ar-DZ'):'وقت غير محدد';}
+function auditCanRevertByEntry(entry){const record=Array.isArray(db[entry.entity])?db[entry.entity].find(x=>String(x.id)===String(entry.entityId)):null;return !!record&&auditCanRevert(entry,record);}
+function renderAuditLog(){
+ const all=Array.isArray(db.auditLog)?db.auditLog.slice().reverse():[];
+ const query=normalizeDirectorySearch($('#auditSearch')?.value||'');
+ const entity=$('#auditEntityFilter')?.value||'',action=$('#auditActionFilter')?.value||'';
+ const from=$('#auditDateFrom')?.value||'',to=$('#auditDateTo')?.value||'';
+ const filtered=all.filter(entry=>{
+  if(entity&&entry.entity!==entity)return false;
+  if(action&&entry.action!==action)return false;
+  const day=String(entry.at||'').slice(0,10);
+  if(from&&(!day||day<from))return false;
+  if(to&&(!day||day>to))return false;
+  const hay=[entry.summary,entry.entityLabel,entry.actor,entry.source,...(entry.changes||[]).map(x=>x.label),...(entry.restrictedFields||[])].join(' ');
+  return !query||normalizeDirectorySearch(hay).includes(query);
+ });
+ $('#auditLogCount').textContent=filtered.length.toLocaleString('ar-DZ')+' من '+all.length.toLocaleString('ar-DZ')+' عملية';
+ const list=$('#auditLogEntries');
+ list.innerHTML=filtered.length?filtered.slice(0,120).map(entry=>{
+  const details=Array.isArray(entry.changes)?entry.changes:[];
+  const restricted=Array.isArray(entry.restrictedFields)?entry.restrictedFields:[];
+  const rows=details.map(change=>'<tr><th>'+esc(change.label||change.key||'حقل')+'</th><td>'+esc(auditEntryValue(change.before,change.beforeMissing))+'</td><td>'+esc(auditEntryValue(change.after,change.afterMissing))+'</td></tr>').join('');
+  const count=details.length+restricted.length;
+  const bulk=entry.totals?'<div class="audit-bulk-summary">أضيف: '+Number(entry.totals.added||0)+' · عُدّل: '+Number(entry.totals.updated||0)+' · حُذف: '+Number(entry.totals.deleted||0)+'</div>':'';
+  const note=restricted.length?'<div class="audit-private-note">تم تغيير حقول لم يُحفظ محتواها في سجل المراجعة حفاظاً على الخصوصية: '+esc(restricted.join('، '))+'.</div>':'';
+  const detailBlock=count?'<details><summary>تفاصيل التغيير ('+count+')</summary>'+(details.length?'<div class="tablewrap"><table class="audit-change-table"><thead><tr><th>الحقل</th><th>قبل العملية</th><th>بعد العملية</th></tr></thead><tbody>'+rows+'</tbody></table></div>':'')+note+'</details>':note;
+  const canRevert= auditCanRevertByEntry(entry);
+  return '<article class="panel audit-entry" data-audit-action="'+esc(entry.action||'')+'"><div class="audit-entry-head"><div><strong class="audit-entry-summary">'+esc(entry.summary||auditActionText(entry.action)+' '+auditEntityText(entry.entity))+'</strong><div class="audit-entry-meta"><span class="pill">'+esc(auditActionText(entry.action))+'</span><span>'+esc(auditDateText(entry.at))+'</span><span>'+esc(entry.actor||'الجهاز الحالي')+'</span></div></div></div>'+bulk+detailBlock+(canRevert?'<div class="audit-entry-actions"><button type="button" class="btn small" data-audit-revert="'+esc(entry.id)+'">استرجاع الحقول الآمنة</button></div>':'')+'</article>';
+ }).join(''):'<div class="panel empty">لا توجد عمليات تطابق معايير البحث.</div>';
+ list.querySelectorAll('[data-audit-revert]').forEach(button=>button.addEventListener('click',()=>window.restoreAuditEdit(button.dataset.auditRevert)));
+}
+function exportAuditLog(){
+ const entries=Array.isArray(db.auditLog)?db.auditLog:[];
+ if(!entries.length){alert('لا توجد عمليات مسجلة لتصديرها.');return;}
+ if(!confirm('سيُصدّر سجل المراجعة الذي قد يتضمن أسماء تلاميذ وتواريخ عمليات. تبقى أرقام الهواتف والصور ومحتويات الملاحظات الخاصة مستثناة. احفظ الملف في مكان آمن. هل تريد المتابعة؟'))return;
+ try{
+  const payload={format:'Mushrifi-AuditLog-v1',exportedAt:new Date().toISOString(),entries};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='mushrifi-audit-log-'+new Date().toISOString().slice(0,10)+'.json';link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+ }catch(error){alert('تعذر تصدير سجل العمليات: '+(error?.message||'خطأ غير معروف'));}
+}
+window.restoreAuditEdit=eventId=>{
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن استرجاع التعديلات قبل تفعيل الترخيص.');return;}
+ const entry=(Array.isArray(db.auditLog)?db.auditLog:[]).find(x=>String(x.id)===String(eventId));
+ if(!entry||!['update','revert'].includes(entry.action)){alert('هذا السجل لا يمثل تعديلاً قابلاً للاسترجاع.');return;}
+ const record=Array.isArray(db[entry.entity])?db[entry.entity].find(x=>String(x.id)===String(entry.entityId)):null;
+ if(!record||!auditCanRevert(entry,record)){alert('تعذر الاسترجاع لأن السجل تغيّر مرة أخرى أو لم يعد موجوداً. لم يتم تعديل أي بيانات.');return;}
+ const summary='سيعيد التطبيق الحقول الآمنة المسجلة في هذا التعديل إلى قيمها السابقة. لن تُغيّر الملاحظات أو الصور أو بيانات الاتصال الخاصة. هل تريد المتابعة؟';
+ if(!confirm(summary))return;
+ const afterValues=entry.changes.map(change=>({key:change.key,missing:change.afterMissing,value:record[change.key]}));
+ if(!auditApplyRevert(entry,record)){alert('لم يتم الاسترجاع؛ تغيرت بيانات السجل.');return;}
+ auditNextRevertsId=String(entry.id);
+ if(!save()){
+  auditNextRevertsId='';
+  afterValues.forEach(item=>{if(item.missing)delete record[item.key];else record[item.key]=item.value;});
+  render();alert('تعذر حفظ الاسترجاع؛ أُعيدت القيم السابقة كما كانت.');return;
+ }
+ if(entry.entity==='documents'&&window.AndroidBridge){
+  if(typeof AndroidBridge.cancelSummonsReminder==='function')AndroidBridge.cancelSummonsReminder(String(record.id));
+  if(record.type==='استدعاء ولي'&&record.reminderAt&&new Date(record.reminderAt).getTime()>Date.now())scheduleSummonsReminder(record);
+ }
+ alert('تم استرجاع الحقول الآمنة بنجاح. سُجلت عملية الاسترجاع الجديدة في سجل العمليات.');
+};
+['auditSearch','auditEntityFilter','auditActionFilter','auditDateFrom','auditDateTo'].forEach(id=>{const control=document.getElementById(id);if(control)control.addEventListener('input',renderAuditLog);});
+$('#exportAuditLog')?.addEventListener('click',exportAuditLog);
+
 function render(){
 const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';
+if(activePage==='audit')renderAuditLog();
 if(activePage==='students')refreshStudentSectionOptions();
 const schoolName=String(db.settings.school||'ثانوية الشيخ بوعمامة'),schoolLocation=String(db.settings.location||'بوسكن – ولاية المدية');
 $('#schoolHeaderName').textContent=schoolName;$('#schoolHeaderLocation').textContent=schoolLocation;$('#schoolHeaderLocation').classList.toggle('hidden',!schoolLocation.trim());
