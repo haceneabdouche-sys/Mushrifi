@@ -127,7 +127,14 @@ jobs:
         run: node tests/agenda-alternatives.test.cjs
       - name: Run agenda Android notification scheduling regression tests
         run: node tests/agenda-notification-scheduling.test.cjs
+      - name: Run educational follow-up reminder payload and privacy tests
+        run: node tests/student-followup-reminders.test.cjs
       - name: Run Java local-time agenda reminder planner tests
+      - name: Run Java educational follow-up reminder planner tests
+        run: |
+          mkdir -p /tmp/mushrifi-followup-planner
+          javac -d /tmp/mushrifi-followup-planner android/app/src/main/java/dz/mushrifi/app/StudentFollowupReminderPlanner.java tests/StudentFollowupReminderPlannerTest.java
+          java -cp /tmp/mushrifi-followup-planner dz.mushrifi.app.StudentFollowupReminderPlannerTest
         run: |
           mkdir -p /tmp/mushrifi-agenda-planner
           javac -d /tmp/mushrifi-agenda-planner android/app/src/main/java/dz/mushrifi/app/AgendaReminderPlanner.java tests/AgendaReminderPlannerTest.java
