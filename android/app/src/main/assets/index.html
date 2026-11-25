@@ -3547,6 +3547,8 @@ function showBackupPreview(data,bytes){
  const agendaRecoveryNote=pendingBackupInfo&&pendingBackupInfo.agendaMissingInBackup?'<p class="notice"><b>الأجندة:</b> النسخة المختارة قديمة ولا تحتوي على قسم الأجندة؛ احتفظ التطبيق بمواعيد الأجندة الموجودة حالياً على هذا الهاتف بدلاً من حذفها.</p>':'';
  const followupRecoveryNote=pendingBackupInfo&&pendingBackupInfo.followupsMissingInBackup?'<p class="notice"><b>سجل المتابعة التربوية:</b> النسخة المختارة لا تحتوي على هذا السجل؛ سيحتفظ التطبيق بالمتابعات الموجودة حالياً على الهاتف بدلاً من حذفها.</p>':'';
  const recoveryNote=pendingBackupInfo&&pendingBackupInfo.recoveredCount?'<p class="notice"><b>استعادة الأسماء:</b> لم تكن قائمة التلاميذ موجودة في الملف؛ أُعيد تكوين '+pendingBackupInfo.recoveredCount+' ملفاً من الأسماء المحفوظة داخل سجلات المتابعة. '+(pendingBackupInfo.missingClassCount?'قسم '+pendingBackupInfo.missingClassCount+' تلميذاً غير محفوظ في السجلات، لذلك سيبقى حقل القسم فارغاً. ':'')+'قد لا تشمل هذه الأسماء تلاميذ لم تكن لهم سجلات متابعة.</p>':'';
+ const integrity=pendingBackupInfo&&pendingBackupInfo.integrity?pendingBackupInfo.integrity:null;
+ const integrityNote=integrity?'<p class="notice"><b>فحص سلامة المعرّفات:</b> اجتازت النسخة فحص تفرّد معرّفات التلاميذ والسجلات. '+(integrity.unresolvedStudentReferences?'يوجد '+integrity.unresolvedStudentReferences+' سجل تاريخي لا يشير معرّفه إلى تلميذ موجود؛ سيُحتفظ به كما هو دون ربط تخميني. ':'لا توجد إحالات إلى تلاميذ مفقودين. ')+(integrity.legacyRecordsWithoutIds?'يوجد '+integrity.legacyRecordsWithoutIds+' سجل قديم دون معرّف مستقل؛ سيُحتفظ به كما هو.':'')+'</p>':'';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
  const classText=Object.keys(classes).sort((a,b)=>a.localeCompare(b,'ar',{numeric:true})).map(k=>'القسم '+esc(k)+': '+classes[k]).join('، ');
  const attrText=Object.keys(attributes).map(k=>esc(k)+': '+attributes[k]).join('، ');
@@ -3558,7 +3560,7 @@ function showBackupPreview(data,bytes){
  '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div>'+
  '<div class="stat"><small>مواعيد الأجندة</small><strong>'+agenda.length+'</strong></div>'+
  '<div class="stat"><small>المتابعات التربوية</small><strong>'+followups.length+'</strong></div></div>'+
- '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+agendaRecoveryNote+followupRecoveryNote+recoveryNote+
+ '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+agendaRecoveryNote+followupRecoveryNote+recoveryNote+integrityNote+
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
@@ -3607,6 +3609,49 @@ function recoverStudentsFromHistory(data){
  }
  return {students,recoveredCount,missingClassCount};
 }
+function inspectBackupIdentityIntegrity(data){
+ const blockers=[],duplicateStudentIds=[],duplicateRecordIds=[];
+ let missingStudentIds=0,legacyRecordsWithoutIds=0,unresolvedStudentReferences=0;
+ const students=Array.isArray(data&&data.students)?data.students:[];
+ const studentIds=new Set();
+ students.forEach((record,index)=>{
+  const id=String(record&&record.id!==undefined&&record.id!==null?record.id:'').trim();
+  if(!id){missingStudentIds++;return;}
+  if(studentIds.has(id))duplicateStudentIds.push(id);
+  else studentIds.add(id);
+ });
+ if(missingStudentIds)blockers.push('يوجد '+missingStudentIds+' ملف تلميذ دون معرّف ثابت.');
+ if(duplicateStudentIds.length)blockers.push('توجد معرّفات تلاميذ مكررة ('+duplicateStudentIds.length+').');
+ for(const collection of ['attendance','documents','violations','agenda','followups']){
+  const seen=new Set(),items=Array.isArray(data&&data[collection])?data[collection]:[];
+  items.forEach(record=>{
+   const id=String(record&&record.id!==undefined&&record.id!==null?record.id:'').trim();
+   if(!id){legacyRecordsWithoutIds++;return;}
+   if(seen.has(id))duplicateRecordIds.push({collection,id});
+   else seen.add(id);
+  });
+ }
+ if(duplicateRecordIds.length){
+  const collections=[...new Set(duplicateRecordIds.map(item=>item.collection))].join('، ');
+  blockers.push('توجد معرّفات سجلات مكررة في: '+collections+'.');
+ }
+ for(const collection of ['attendance','documents','violations','followups']){
+  const items=Array.isArray(data&&data[collection])?data[collection]:[];
+  items.forEach(record=>{
+   const reference=String(record&&record.student!==undefined&&record.student!==null?record.student:'').trim();
+   if(reference&&!studentIds.has(reference))unresolvedStudentReferences++;
+  });
+ }
+ return {
+  ok:blockers.length===0,
+  blockers,
+  duplicateStudentIds:[...new Set(duplicateStudentIds)],
+  duplicateRecordIds,
+  missingStudentIds,
+  legacyRecordsWithoutIds,
+  unresolvedStudentReferences
+ };
+}
 async function importBackupText(raw,bytes){
  try{
   raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
@@ -3629,8 +3674,10 @@ async function importBackupText(raw,bytes){
   const agendaMissingInBackup=!Array.isArray(obj.agenda);
   const followupsMissingInBackup=!Array.isArray(obj.followups);
   const normalized={...obj,students:recovered.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,agenda:agendaMissingInBackup?(Array.isArray(db.agenda)?db.agenda.slice():[]):obj.agenda,followups:followupsMissingInBackup?(Array.isArray(db.followups)?db.followups.slice():[]):obj.followups,settings:obj.settings};
+  const integrity=inspectBackupIdentityIntegrity(normalized);
+  if(!integrity.ok)throw new Error('أوقف التطبيق الاستعادة لأن فحص المعرّفات كشف تعارضاً قد يربط السجلات بتلميذ غير صحيح: '+integrity.blockers.join(' ')+ ' لم تتغير بيانات الهاتف. أصلح النسخة أو اختر نسخة أخرى.');
   pendingBackupData=normalized;
-  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup};
+  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup,integrity};
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
  }catch(err){pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
 }
@@ -3640,7 +3687,7 @@ function restorePendingBackup(){
  if(!confirm('تأكيد أخير: هل توافق على استبدال بيانات الهاتف بالنسخة التي تمت معاينتها؟'))return;
  if(!saveUndoSnapshot('استبدال البيانات عند استعادة نسخة احتياطية'))return;
  const oldDb=db;const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;db={...pendingBackupData,agenda:Array.isArray(pendingBackupData.agenda)?pendingBackupData.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]),auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
- if(!save()){db=oldDb;clearStoredRecoverySnapshot();refreshUndoPanel();render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
+ if(!save()){db=oldDb;refreshUndoPanel();render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي، وتم الإبقاء على نقطة الاسترجاع المشفّرة تحسباً لأي تعثر في التخزين. لا تحذف التطبيق.');return;}
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
