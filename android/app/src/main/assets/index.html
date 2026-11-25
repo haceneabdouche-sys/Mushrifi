@@ -2100,14 +2100,14 @@ function buildDailyFollowupSnapshot(attendance,documents,agenda,violations,today
  });
  const todayAgenda=agendaExpandOccurrences(G,today,today,500).items.filter(x=>!['done','cancelled'].includes(String(x.status||'').toLowerCase())&&String(x.title||'').trim());
  todayAgenda.slice().sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||''))).forEach(x=>tasks.push({kind:'agenda',priority:x.priority==='urgent'?'urgent':x.priority==='high'?'high':'normal',title:String(x.title).slice(0,120),detail:(String(x.startTime||'').trim()||'الوقت غير محدد')+(x.location?' · '+String(x.location).slice(0,100):''),studentId:linked(x.studentId,x)?String(linked(x.studentId,x).id):'',agendaDate:today,page:'agenda'}));
- const priorityRank={urgent:0,high:1,normal:2},kindRank={followup-overdue:0,summons:1,pending:2,unlinked:3,today:4,followup-dueToday:5,'followup-unlinked':6,'followup-upcoming7Days':7,agenda:8};tasks.sort((a,b)=>priorityRank[a.priority]-priorityRank[b.priority]||(kindRank[a.kind]??99)-(kindRank[b.kind]??99));
+ const priorityRank={urgent:0,high:1,normal:2},kindRank={'followup-overdue':0,summons:1,pending:2,unlinked:3,today:4,'followup-dueToday':5,'followup-unlinked':6,'followup-upcoming7Days':7,agenda:8};tasks.sort((a,b)=>priorityRank[a.priority]-priorityRank[b.priority]||(kindRank[a.kind]??99)-(kindRank[b.kind]??99));
  const orderedSections=sectionSummary.sort((a,b)=>b.absences+b.lateness-(a.absences+a.lateness)||a.label.localeCompare(b.label,'ar'));
  return {today:{absences,lateness,unjustified,pending,violations:violationsToday},followupReviews,summonsNext24h:summons.length,unlinkedSummons:summons.filter(x=>!linked(x.student,x)).length,agendaToday:todayAgenda.length,unlinkedPending,sections:orderedSections,tasks,totalTasks:tasks.length};
 }
 function openDailyDashboardTask(button){
  const studentId=String(button?.dataset?.dailyStudentId||''),recordId=String(button?.dataset?.dailyRecordId||''),documentId=String(button?.dataset?.dailyDocumentId||''),followupId=String(button?.dataset?.dailyFollowupId||''),page=String(button?.dataset?.dailyPage||'');
  // Profile and action buttons are separate: only the explicit profile button carries dailyStudentId.
- if(studentId){if(typeof window.studentHistory==='function')window.studentHistory(studentId,followupId);return;}
+ if(studentId){if(typeof window.studentHistory==='function'){if(followupId)window.studentHistory(studentId,followupId);else window.studentHistory(studentId);}return;}
  if(page==='documents'&&documentId){openAgendaSummons(documentId);return;}
  if(page==='agenda'){agendaSelectedDate=String(button.dataset.dailyAgendaDate||dateISO());agendaCurrentView='day';go('agenda');return;}
  if(page==='attendance'){go('attendance');if(recordId){const row=[...document.querySelectorAll('[data-att-id]')].find(x=>String(x.getAttribute('data-att-id'))===recordId);if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.classList.add('daily-task-focus');}}return;}
