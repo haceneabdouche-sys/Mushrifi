@@ -601,7 +601,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 .analytics-summary-card small{display:block;color:var(--muted);font-size:11px;line-height:1.5}
 .analytics-summary-card strong{display:block;margin-top:5px;color:var(--navy);font-size:clamp(19px,3.8vw,25px);overflow-wrap:anywhere}
 .analytics-justification{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:9px 11px;margin-bottom:12px;background:#fbfcfd;border:1px solid var(--line);border-radius:9px;font-size:12px}
-.analytics-status-ok{color:#21734f;font-weight:700}.analytics-status-warn{color:#a24b28;font-weight:700}.analytics-status-pending{color:#75621e;font-weight:700}
+.analytics-status-ok{color:#21734f;font-weight:700}.analytics-status-warn{color:#a24b28;font-weight:700}.analytics-status-pending{color:#75621e;font-weight:700}.analytics-status-unknown{color:#667987;font-weight:700}
 .analytics-two-charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
 .analytics-chart,.analytics-ranking{min-width:0;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff;margin:12px 0}
 .analytics-chart h3,.analytics-ranking h3{margin:0 0 10px;font-size:15px}
@@ -1331,14 +1331,17 @@ function renderStudentAnalytics(){
  const justified='<span class="analytics-status-ok">مبرر: '+analyticsFormatCount(s.justifiedAbsences)+'</span>';
  const unjustified='<span class="analytics-status-warn">غير مبرر: '+analyticsFormatCount(s.unjustifiedAbsences)+'</span>';
  const pending='<span class="analytics-status-pending">قيد التبرير: '+analyticsFormatCount(s.pendingAbsences)+'</span>';
+ const unknownJustification='<span class="analytics-status-unknown">حالة التبرير غير محددة: '+analyticsFormatCount(s.unknownAbsenceJustification)+'</span>'; 
  const sectionRows=snap.sections.length?snap.sections.map((g,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(g.label)+'</td><td>'+analyticsFormatCount(g.roster)+'</td><td><b>'+analyticsFormatCount(g.absences)+'</b></td><td>'+analyticsFormatCount(g.absenceHours.toFixed(2))+'</td><td>'+analyticsFormatCount(g.lateness)+'</td><td>'+analyticsFormatCount(g.latenessMinutes.toFixed(0))+'</td><td>'+analyticsFormatCount(g.violations)+'</td></tr>').join(''):'<tr><td colspan="8" class="empty">لا توجد أقسام أو تلاميذ مسجلون.</td></tr>';
+ const lateSectionRows=snap.sectionsByLateness.length?snap.sectionsByLateness.map((g,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(g.label)+'</td><td>'+analyticsFormatCount(g.lateness)+'</td><td>'+analyticsFormatCount(g.latenessMinutes.toFixed(0))+'</td><td>'+analyticsFormatCount(g.absences)+'</td><td>'+analyticsFormatCount(g.violations)+'</td></tr>').join(''):'<tr><td colspan="6" class="empty">لا توجد أقسام مسجلة.</td></tr>';
  const violRows=snap.topViolators.length?snap.topViolators.map((x,i)=>'<tr><td>'+(i+1)+'</td><td><button type="button" class="student-name analytics-student-open" data-student-id="'+esc(x.id)+'">'+esc(x.label)+'</button></td><td><b>'+analyticsFormatCount(x.count)+'</b></td><td>'+analyticsFormatCount(x.distinctDays)+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">لا توجد مخالفات مرتبطة بملفات تلاميذ معروفة ضمن الفترة.</td></tr>';
  output.innerHTML='<div class="analytics-summary-grid">'+cards.map(([label,value])=>'<div class="analytics-summary-card"><small>'+label+'</small><strong>'+esc(value)+'</strong></div>').join('')+'</div>'+
- '<div class="analytics-justification">'+justified+' · '+unjustified+' · '+pending+'</div>'+
+ '<div class="analytics-justification">'+justified+' · '+unjustified+' · '+pending+' · '+unknownJustification+'</div>'+
  '<div class="analytics-two-charts">'+analyticsChartMarkup('الاتجاه الأسبوعي — أسابيع الفترة المحددة',snap.weekly)+analyticsChartMarkup('الاتجاه الشهري — أشهر الفترة المحددة',snap.monthly)+'</div>'+
  '<section class="analytics-ranking"><div class="panel-title-row"><h3>مقارنة الأقسام</h3><span class="pill">الترتيب حسب عدد الغيابات</span></div><p class="muted">الأعداد سجلات وليست نسباً مئوية. ساعات الغياب ودقائق التأخر تُعرض كلٌّ بوحدتها، ويُحسب عدد التلاميذ من القائمة الحالية لكل قسم.</p><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>القسم</th><th>التلاميذ</th><th>غيابات</th><th>ساعات غياب</th><th>تأخرات</th><th>دقائق تأخر</th><th>مخالفات</th></tr></thead><tbody>'+sectionRows+'</tbody></table></div></section>'+
+ '<section class="analytics-ranking"><div class="panel-title-row"><h3>ترتيب الأقسام حسب التأخر</h3><span class="pill">الأعلى أولاً</span></div><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>القسم</th><th>سجلات التأخر</th><th>دقائق التأخر</th><th>غيابات</th><th>مخالفات</th></tr></thead><tbody>'+lateSectionRows+'</tbody></table></div></section>'+
  '<section class="analytics-ranking"><div class="panel-title-row"><h3>التلاميذ الأكثر تكراراً للمخالفات</h3><span class="pill">أعلى 10</span></div><p class="muted">الترتيب حسب عدد سجلات المخالفات، مع عدد الأيام المختلفة. اضغط اسم التلميذ لفتح ملفه. لا تُنسب السجلات مجهولة الهوية إلى تلميذ بالتخمين.</p><div class="tablewrap"><table><thead><tr><th>الترتيب</th><th>التلميذ</th><th>عدد المخالفات</th><th>أيام مختلفة</th></tr></thead><tbody>'+violRows+'</tbody></table></div></section>'+
- '<p class="analytics-integrity-note">حالة اكتمال الربط: '+analyticsFormatCount(s.unclassifiedAttendance)+' سجل غياب/تأخر و'+analyticsFormatCount(s.unclassifiedViolations)+' سجل مخالفة لم يمكن ربطها بقسم معروف؛ أُبقيت ضمن إجماليات المؤسسة ولم تُنسب إلى قسم أو تلميذ. '+(s.unknownAbsenceHours?'تعذر قراءة مدة '+analyticsFormatCount(s.unknownAbsenceHours)+' غياباً. ':'')+(s.unknownLatenessMinutes?'تعذر قراءة مدة '+analyticsFormatCount(s.unknownLatenessMinutes)+' تأخراً.':'')+'</p>';
+ '<p class="analytics-integrity-note">حالة اكتمال الربط: '+analyticsFormatCount(s.unclassifiedAttendance)+' سجل غياب/تأخر و'+analyticsFormatCount(s.unclassifiedViolations)+' سجل مخالفة لم يمكن ربطها بقسم معروف؛ أُبقيت ضمن إجماليات المؤسسة ولم تُنسب إلى قسم أو تلميذ. '+(s.unknownAbsenceJustification?'حالة تبرير '+analyticsFormatCount(s.unknownAbsenceJustification)+' من سجلات الغياب غير محددة. ':'')+(s.unknownAbsenceHours?'تعذر قراءة مدة '+analyticsFormatCount(s.unknownAbsenceHours)+' غياباً. ':'')+(s.unknownLatenessMinutes?'تعذر قراءة مدة '+analyticsFormatCount(s.unknownLatenessMinutes)+' تأخراً.':'')+'</p>';
  output.querySelectorAll('.analytics-student-open').forEach(button=>button.addEventListener('click',()=>window.studentHistory(button.dataset.studentId)));
 }
 function setStudentAnalyticsRange(preset){
@@ -2078,7 +2081,7 @@ function analyticsMonthShift(value,offset){
 function buildStudentAnalyticsSnapshot(input={}){
  const attendance=Array.isArray(input.attendance)?input.attendance:[],violations=Array.isArray(input.violations)?input.violations:[],students=Array.isArray(input.students)?input.students:[];
  const from=String(input.from||''),to=String(input.to||'');
- const empty={valid:false,summary:{absences:0,justifiedAbsences:0,unjustifiedAbsences:0,pendingAbsences:0,absenceHours:0,unknownAbsenceHours:0,lateness:0,latenessMinutes:0,unknownLatenessMinutes:0,violations:0,studentsWithActivity:0,unclassifiedAttendance:0,unclassifiedViolations:0},sections:[],topViolators:[],weekly:[],monthly:[]};
+ const empty={valid:false,summary:{absences:0,justifiedAbsences:0,unjustifiedAbsences:0,pendingAbsences:0,absenceHours:0,unknownAbsenceHours:0,unknownAbsenceJustification:0,lateness:0,latenessMinutes:0,unknownLatenessMinutes:0,violations:0,studentsWithActivity:0,unclassifiedAttendance:0,unclassifiedViolations:0},sections:[],topViolators:[],weekly:[],monthly:[]};
  if(!analyticsDateValid(from)||!analyticsDateValid(to)||from>to)return empty;
  const resolveStudent=typeof input.resolveStudent==='function'?input.resolveStudent:()=>null;
  const groupKey=typeof input.groupKey==='function'?input.groupKey:st=>String(st?.class||'');
@@ -2120,7 +2123,8 @@ function buildStudentAnalyticsSnapshot(input={}){
    const status=String(r.justified??'').normalize('NFKC').replace(/\s+/g,'').replace(/[أإآ]/g,'ا');
    if(status.includes('قيد')){summary.pendingAbsences++;if(group)group.pendingAbsences++;}
    else if(status.includes('مبرر')&&!status.includes('غير')){summary.justifiedAbsences++;if(group)group.justifiedAbsences++;}
-   else{summary.unjustifiedAbsences++;if(group)group.unjustifiedAbsences++;}
+   else if(status.includes('غير')){summary.unjustifiedAbsences++;if(group)group.unjustifiedAbsences++;}
+   else summary.unknownAbsenceJustification++;
    const hours=Number(parseHoursValue(r.hours));
    if(Number.isFinite(hours)&&hours>=0){summary.absenceHours+=hours;if(group)group.absenceHours+=hours;}
    else{summary.unknownAbsenceHours++;if(group)group.unknownAbsenceHours++;}
@@ -2147,6 +2151,7 @@ function buildStudentAnalyticsSnapshot(input={}){
  dedupe(violations,'violation').filter(inRange).forEach(r=>countRecord('violation',r,safeResolve(r)));
  summary.studentsWithActivity=activeStudentDays.size;
  const sections=[...groups.values()].sort((a,b)=>b.absences-a.absences||b.lateness-a.lateness||b.violations-a.violations||a.label.localeCompare(b.label,'ar',{numeric:true}));
+ const sectionsByLateness=sections.slice().sort((a,b)=>b.lateness-a.lateness||b.latenessMinutes-a.latenessMinutes||a.label.localeCompare(b.label,'ar',{numeric:true}));
  const topViolators=[...studentViolationMap.values()].map(x=>({id:x.id,label:x.label,count:x.count,distinctDays:x.days.size})).sort((a,b)=>b.count-a.count||b.distinctDays-a.distinctDays||a.label.localeCompare(b.label,'ar')).slice(0,10);
  const weekStarts=[];
  let cursor=from;
@@ -2168,7 +2173,7 @@ function buildStudentAnalyticsSnapshot(input={}){
   const wi=visibleWeeks.lastIndexOf(weekStart);if(wi>=0)addBucket(weekly[wi],day,kind);
   const mi=visibleMonths.indexOf(day.slice(0,7));if(mi>=0)addBucket(monthly[mi],day,kind);
  });
- return {valid:true,from,to,summary,sections,topViolators,weekly,monthly};
+ return {valid:true,from,to,summary,sections,sectionsByLateness,topViolators,weekly,monthly};
 }
 
 $('#makeReport').onclick=()=>{
