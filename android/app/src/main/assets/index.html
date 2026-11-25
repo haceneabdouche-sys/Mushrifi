@@ -756,6 +756,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 <style>
 
 /* Android agenda reminder controls */
+.agenda-repeat-options{margin-top:12px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#f8fafb}.agenda-repeat-options>.row,.agenda-repeat-details>.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.agenda-repeat-options label{display:block;font-weight:700;font-size:12px;margin-bottom:5px}.agenda-repeat-options select,.agenda-repeat-options input{width:100%;min-width:0}.agenda-repeat-details{margin-top:8px}.agenda-repeat-options .muted{font-size:11px;line-height:1.7;margin:8px 0 0}.agenda-repeat-chip{display:inline-flex;padding:2px 7px;border-radius:20px;background:#edf4f0;color:#35634c;font-size:10px;font-weight:700}.agenda-event[data-repeat-occurrence=\"true\"]{border-style:dashed}@media(max-width:560px){.agenda-repeat-options>.row,.agenda-repeat-details>.row{grid-template-columns:1fr}}
 .agenda-notification-permission{margin:12px 0;padding:12px;border:1px solid var(--line);border-right:3px solid #397da4;border-radius:10px;background:#f8fbfd}
 .agenda-permission-actions{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0}
 .agenda-permission-actions .btn{font-size:11px}
@@ -940,6 +941,15 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
       <div class="row"><div><label for="agendaLocation">المكان</label><input id="agendaLocation" name="location" maxlength="100" placeholder="قاعة الاجتماعات أو المكتب"></div><div><label for="agendaStudent">التلميذ المرتبط بالمتابعة (اختياري)</label><select id="agendaStudent" name="studentId"><option value="">لا يوجد تلميذ محدد</option></select></div></div>
       <div class="row"><div><label for="agendaPriority">الأولوية</label><select id="agendaPriority" name="priority"><option value="normal">عادية</option><option value="high">مرتفعة</option><option value="urgent">عاجلة</option></select></div><div><label for="agendaNotes">ملاحظات خاصة (تبقى داخل بيانات التطبيق)</label><textarea id="agendaNotes" name="notes" rows="2" maxlength="1200" placeholder="ملاحظات المتابعة أو التحضير"></textarea></div></div>
       <div class="agenda-reminder-options"><label class="agenda-reminder-toggle"><input type="checkbox" id="agendaReminderEnabled" name="reminderEnabled" checked> تفعيل إشعار Android لهذا الموعد</label><div><label for="agendaReminderLead">وقت إرسال التنبيه</label><select id="agendaReminderLead" name="reminderLeadMinutes"><option value="1440">قبل الموعد بيوم (بنفس الساعة)</option><option value="60">قبل الموعد بساعة</option><option value="0">عند حلول الموعد</option></select></div><p class="muted">للموعد دون ساعة محددة، يعتمد التنبيه الساعة 08:00 صباحاً. لا تُرسل إشعارات للمهام المنجزة أو الملغاة. المواعيد القديمة لا تُفعّل تنبيهاتها تلقائياً؛ فعّلها عند تعديل كل موعد.</p></div>
+      <div class="agenda-repeat-options">
+ <div class="row">
+  <div><label for="agendaRepeatFrequency">تكرار الموعد</label><select id="agendaRepeatFrequency" name="repeatFrequency"><option value="none">بدون تكرار</option><option value="daily">يومياً</option><option value="weekly">أسبوعياً</option><option value="monthly">شهرياً</option></select></div>
+ </div>
+ <div id="agendaRepeatDetails" class="agenda-repeat-details hidden">
+  <div class="row"><div><label for="agendaRepeatInterval">كل كم فترة؟</label><input id="agendaRepeatInterval" name="repeatInterval" type="number" min="1" max="12" step="1" value="1"></div><div><label for="agendaRepeatUntil">ينتهي التكرار في</label><input id="agendaRepeatUntil" name="repeatUntil" type="date"></div></div>
+  <p class="muted">نحفظ سلسلة واحدة ونُظهر مواعيدها عند الحاجة. التاريخ النهائي شامل، ويمكن أن يمتد التكرار حتى خمس سنوات. إنجاز موعد أو تخطيه لا يلغي بقية السلسلة. تعديل أو حذف السلسلة يؤثر في جميع مواعيدها.</p>
+ </div>
+</div>
       <div class="actions"><button type="submit" class="btn primary">حفظ الموعد</button><button type="button" class="btn" id="agendaCancelBottom">إلغاء</button></div>
     </form>
   </div>
@@ -1111,7 +1121,7 @@ const AUDIT_FIELD_DEFINITIONS={
  attendance:[['class','القسم'],['date','التاريخ'],['type','نوع المتابعة'],['period','الفترة'],['hours','ساعات الغياب'],['minutes','دقائق التأخر'],['justified','حالة التبرير'],['fullDay','غياب يوم كامل'],['schoolYear','المستوى'],['branch','الشعبة'],['sectionLabel','وصف القسم'],['studentClass','القسم']],
  documents:[['date','تاريخ الوثيقة'],['type','نوع الوثيقة'],['appointment','موعد حضور الولي'],['reminderAt','موعد التنبيه'],['absenceStage','مرحلة التبليغ'],['deliveryDate','تاريخ التبليغ']],
  violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']],
- agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة'],['reminderEnabled','تنبيه الهاتف'],['reminderLeadMinutes','موعد التذكير']]
+ agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة'],['reminderEnabled','تنبيه الهاتف'],['reminderLeadMinutes','موعد التذكير'],['repeatFrequency','نمط التكرار'],['repeatInterval','الفاصل بين مرات التكرار'],['repeatUntil','نهاية التكرار'],['repeatCompletedDates','تواريخ إنجاز المرات المتكررة'],['repeatSkippedDates','تواريخ تخطي المرات المتكررة']]
 };
 const AUDIT_PRIVATE_FIELDS={
  students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',notes:'ملاحظات خاصة'},
@@ -1125,7 +1135,7 @@ const AUDIT_REVERSIBLE_FIELDS={
  attendance:['class','date','type','period','hours','minutes','justified','fullDay','schoolYear','branch','sectionLabel','studentClass'],
  documents:['date','type','appointment','reminderAt','absenceStage','deliveryDate'],
  violations:['date','type','action'],
- agenda:['title','type','date','startTime','endTime','location','priority','status','reminderEnabled','reminderLeadMinutes']
+ agenda:['title','type','date','startTime','endTime','location','priority','status','reminderEnabled','reminderLeadMinutes','repeatFrequency','repeatInterval','repeatUntil','repeatCompletedDates','repeatSkippedDates']
 };
 const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة',agenda:'موعد في أجندة المشرف',settings:'إعدادات التطبيق'};
 const AUDIT_SAFE_SETTING_FIELDS={school:'اسم المؤسسة',location:'موقع المؤسسة',summonsReminderTime:'وقت تنبيه الاستدعاءات'};
@@ -1547,7 +1557,7 @@ function agendaEventMarkup(x,compact=false){
   '<div class="agenda-item-actions"><button type="button" class="btn small" data-agenda-toggle="'+esc(baseId)+'" data-agenda-occurrence-date="'+esc(occurrenceDate)+'">'+(x.status==='done'?'إعادة فتح':'تم الإنجاز')+'</button>'+
   (isRepeat&&x.status!=='done'?'<button type="button" class="btn small" data-agenda-skip="'+esc(baseId)+'" data-agenda-occurrence-date="'+esc(occurrenceDate)+'">تخطي هذه المرة</button>':'')+
   '<button type="button" class="btn small" data-agenda-edit="'+esc(baseId)+'">تعديل'+(isRepeat?' السلسلة':'')+'</button><button type="button" class="btn small danger" data-agenda-delete="'+esc(baseId)+'">حذف'+(isRepeat?' السلسلة':'')+'</button></div>';
- return '<article class="agenda-event '+(x.status==='done'?'agenda-done':'')+'" data-agenda-event-id="'+esc(x.id)+'" data-agenda-base-id="'+esc(baseId)+'"><div class="agenda-event-top"><strong>'+esc(x.title)+'</strong><span class="agenda-event-time">'+esc(time)+'</span></div><div class="agenda-event-meta"><span class="agenda-type agenda-type-'+esc(x.type)+'">'+esc(agendaTypeLabel(x.type))+'</span><span class="agenda-priority agenda-priority-'+esc(x.priority)+'">'+esc(agendaPriorityLabel(x.priority))+'</span><span>'+esc(x.source==='summons'?'من الوثائق':(x.status==='done'?'منجز':'مجدول'))+'</span>'+(x.repeatLabel?'<span class="agenda-repeat-chip">'+esc(x.repeatLabel)+'</span>':'')+'</div>'+(compact?'':'<div class="agenda-event-extra">'+(x.location?'<span>المكان: '+esc(x.location)+'</span>':'')+(studentName?'<span>التلميذ: '+esc(studentName)+'</span>':'')+(x.notes?'<p>'+esc(x.notes)+'</p>':'')+(x.repeatOccurrence?'<small class="muted">هذه مرة من سلسلة متكررة؛ تعديل أو حذف السلسلة يؤثر في مواعيدها الأخرى.</small>':'')+'</div>')+actions+'</article>';
+ return '<article class="agenda-event '+(x.status==='done'?'agenda-done':'')+'" data-agenda-event-id="'+esc(x.id)+'" data-agenda-base-id="'+esc(baseId)+'" data-repeat-occurrence="'+(isRepeat?'true':'false')+'"><div class="agenda-event-top"><strong>'+esc(x.title)+'</strong><span class="agenda-event-time">'+esc(time)+'</span></div><div class="agenda-event-meta"><span class="agenda-type agenda-type-'+esc(x.type)+'">'+esc(agendaTypeLabel(x.type))+'</span><span class="agenda-priority agenda-priority-'+esc(x.priority)+'">'+esc(agendaPriorityLabel(x.priority))+'</span><span>'+esc(x.source==='summons'?'من الوثائق':(x.status==='done'?'منجز':'مجدول'))+'</span>'+(x.repeatLabel?'<span class="agenda-repeat-chip">'+esc(x.repeatLabel)+'</span>':'')+'</div>'+(compact?'':'<div class="agenda-event-extra">'+(x.location?'<span>المكان: '+esc(x.location)+'</span>':'')+(studentName?'<span>التلميذ: '+esc(studentName)+'</span>':'')+(x.notes?'<p>'+esc(x.notes)+'</p>':'')+(x.repeatOccurrence?'<small class="muted">هذه مرة من سلسلة متكررة؛ تعديل أو حذف السلسلة يؤثر في مواعيدها الأخرى.</small>':'')+'</div>')+actions+'</article>';
 }
 
 function renderAgenda(){
@@ -1588,6 +1598,12 @@ function renderAgenda(){
  });
 }
 
+function syncAgendaRepeatControls(){
+ const frequency=$('#agendaRepeatFrequency')?.value||'none',details=$('#agendaRepeatDetails'),until=$('#agendaRepeatUntil'),interval=$('#agendaRepeatInterval'),enabled=frequency!=='none';
+ if(details)details.classList.toggle('hidden',!enabled);
+ if(until)until.required=enabled;
+ if(interval)interval.required=enabled;
+}
 function showAgendaForm(id){
  if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن إضافة المواعيد قبل تفعيل الترخيص.');return;}
  const form=$('#agendaForm'),panel=$('#agendaFormPanel'),studentSelect=$('#agendaStudent');if(!form||!panel)return;
@@ -1598,9 +1614,10 @@ function showAgendaForm(id){
  $('#agendaLocation').value=item?.location||'';$('#agendaStudent').value=item?.studentId||oldStudent||'';$('#agendaPriority').value=item?.priority||'normal';$('#agendaNotes').value=item?.notes||'';
  $('#agendaReminderEnabled').checked=item?item.reminderEnabled===true:true;
  $('#agendaReminderLead').value=String([0,60,1440].includes(Number(item?.reminderLeadMinutes))?Number(item.reminderLeadMinutes):1440);
- $('#agendaFormHeading').textContent=item?'تعديل الموعد أو المهمة':'إضافة موعد أو مهمة';panel.classList.remove('hidden');panel.scrollIntoView({behavior:'smooth',block:'start'});$('#agendaTitle').focus();
+ $('#agendaRepeatFrequency').value=['daily','weekly','monthly'].includes(item?.repeatFrequency)?item.repeatFrequency:'none';$('#agendaRepeatInterval').value=String(Number.isInteger(Number(item?.repeatInterval))?Number(item.repeatInterval):1);$('#agendaRepeatUntil').value=item?.repeatUntil||'';syncAgendaRepeatControls();
+ $('#agendaFormHeading').textContent=item?(item.repeatFrequency&&item.repeatFrequency!=='none'?'تعديل السلسلة المتكررة':'تعديل الموعد أو المهمة'):'إضافة موعد أو مهمة';panel.classList.remove('hidden');panel.scrollIntoView({behavior:'smooth',block:'start'});$('#agendaTitle').focus();
 }
-function closeAgendaForm(){agendaEditingId='';$('#agendaFormPanel')?.classList.add('hidden');$('#agendaForm')?.reset();}
+function closeAgendaForm(){agendaEditingId='';$('#agendaFormPanel')?.classList.add('hidden');$('#agendaForm')?.reset();syncAgendaRepeatControls();}
 let agendaEditingId='';
 function agendaHandleSubmit(e){
  e.preventDefault();if(licenseReadOnly)return;
@@ -1611,14 +1628,40 @@ function agendaHandleSubmit(e){
  const type=String(d.get('type')||'task');if(!['meeting','task','followup','personal'].includes(type)){alert('نوع الموعد غير صالح.');return;}
  const item=id?db.agenda.find(x=>String(x.id)===id):null;if(id&&!item){alert('تعذر العثور على الموعد المراد تعديله.');return;}
  const previous=item?{...item}:null,reminderLeadMinutes=Number(d.get('reminderLeadMinutes')||1440);
+ const repeatFrequency=String(d.get('repeatFrequency')||'none'),repeatInterval=Number(d.get('repeatInterval')||1),repeatUntil=String(d.get('repeatUntil')||''),repeatRule=agendaRepeatRule({date,repeatFrequency,repeatInterval,repeatUntil});
+ if(!repeatRule.valid){alert('إعدادات التكرار غير صحيحة. اختر تكراراً وفترة من 1 إلى 12 وحدد تاريخ انتهاء صحيحاً بعد تاريخ البداية، وفي حدود خمس سنوات.');return;}
+ const sameRepeat=!!item&&String(item.repeatFrequency||'none')===repeatFrequency&&Number(item.repeatInterval||1)===(repeatFrequency==='none'?1:repeatInterval)&&String(item.repeatUntil||'')===(repeatFrequency==='none'?'':repeatUntil)&&String(item.date||'')===date;
  if(![0,60,1440].includes(reminderLeadMinutes)){alert('اختر مدة تنبيه صحيحة.');return;}
- const values={title,type,date,startTime,endTime,location:String(d.get('location')||'').trim().slice(0,100),studentId:String(d.get('studentId')||''),priority:['normal','high','urgent'].includes(String(d.get('priority')))?String(d.get('priority')):'normal',notes:String(d.get('notes')||'').trim().slice(0,1200),reminderEnabled:$('#agendaReminderEnabled').checked===true,reminderLeadMinutes,updatedAt:new Date().toISOString()};
+ const values={title,type,date,startTime,endTime,location:String(d.get('location')||'').trim().slice(0,100),studentId:String(d.get('studentId')||''),priority:['normal','high','urgent'].includes(String(d.get('priority')))?String(d.get('priority')):'normal',notes:String(d.get('notes')||'').trim().slice(0,1200),reminderEnabled:$('#agendaReminderEnabled').checked===true,reminderLeadMinutes,repeatFrequency,repeatInterval:repeatFrequency==='none'?1:repeatInterval,repeatUntil:repeatFrequency==='none'?'':repeatUntil,repeatCompletedDates:sameRepeat&&Array.isArray(item.repeatCompletedDates)?item.repeatCompletedDates.slice():[],repeatSkippedDates:sameRepeat&&Array.isArray(item.repeatSkippedDates)?item.repeatSkippedDates.slice():[],updatedAt:new Date().toISOString()};
  if(item)Object.assign(item,values);else db.agenda.push({id:crypto.randomUUID(),...values,status:'planned',createdAt:new Date().toISOString()});
  if(!save()){if(item)Object.assign(item,previous);else db.agenda.pop();return;}
  agendaSelectedDate=date;closeAgendaForm();renderAgenda();
 }
-function agendaToggleStatus(id){const item=db.agenda.find(x=>String(x.id)===String(id));if(!item||licenseReadOnly)return;const old=item.status;item.status=old==='done'?'planned':'done';item.updatedAt=new Date().toISOString();if(!save()){item.status=old;return;}renderAgenda();}
-function agendaDelete(id){if(licenseReadOnly)return;const i=db.agenda.findIndex(x=>String(x.id)===String(id));if(i<0)return;const item=db.agenda[i];if(!confirm('هل تريد حذف الموعد «'+String(item.title||'')+'»؟ لن يتأثر الاستدعاء الأصلي في قسم الوثائق.'))return;db.agenda.splice(i,1);if(!save()){db.agenda.splice(i,0,item);return;}renderAgenda();}
+function agendaToggleStatus(id,occurrenceDate){
+ const item=db.agenda.find(x=>String(x.id)===String(id));if(!item||licenseReadOnly)return;
+ const rule=agendaRepeatRule(item),date=String(occurrenceDate||'');
+ if(rule.valid&&rule.frequency!=='none'&&agendaValidDate(date)){
+  const old=Array.isArray(item.repeatCompletedDates)?item.repeatCompletedDates.slice():[],next=new Set(old);
+  if(next.has(date))next.delete(date);else next.add(date);
+  item.repeatCompletedDates=[...next].sort();item.updatedAt=new Date().toISOString();
+  if(!save()){item.repeatCompletedDates=old;return;}
+ }else{
+  const old=item.status;item.status=old==='done'?'planned':'done';item.updatedAt=new Date().toISOString();
+  if(!save()){item.status=old;return;}
+ }
+ renderAgenda();
+}
+function agendaSkipOccurrence(id,occurrenceDate){
+ const item=db.agenda.find(x=>String(x.id)===String(id)),date=String(occurrenceDate||'');
+ if(!item||licenseReadOnly||!agendaRepeatRule(item).valid||!agendaRepeatRule(item).frequency||agendaRepeatRule(item).frequency==='none'||!agendaValidDate(date))return;
+ if(!confirm('سيتم تخطي هذا الموعد فقط، وستبقى بقية مواعيد السلسلة كما هي. هل تريد المتابعة؟'))return;
+ const old=Array.isArray(item.repeatSkippedDates)?item.repeatSkippedDates.slice():[];
+ if(!old.includes(date))item.repeatSkippedDates=old.concat(date).sort();
+ item.updatedAt=new Date().toISOString();
+ if(!save()){item.repeatSkippedDates=old;return;}
+ renderAgenda();
+}
+function agendaDelete(id){if(licenseReadOnly)return;const i=db.agenda.findIndex(x=>String(x.id)===String(id));if(i<0)return;const item=db.agenda[i],recurring=agendaRepeatRule(item).frequency!=='none';if(!confirm(recurring?'هل تريد حذف السلسلة المتكررة «'+String(item.title||'')+'» وجميع مواعيدها المستقبلية؟ لن يتأثر أي استدعاء محفوظ في قسم الوثائق.':'هل تريد حذف الموعد «'+String(item.title||'')+'»؟ لن يتأثر الاستدعاء الأصلي في قسم الوثائق.'))return;db.agenda.splice(i,1);if(!save()){db.agenda.splice(i,0,item);return;}renderAgenda();}
 function openAgendaSummons(id){if(!db.documents.some(x=>String(x.id)===String(id)))return;go('documents');if(typeof window.editDocument==='function')window.editDocument(String(id));}
 function renderAgendaHome(today){
  const output=$('#upcomingAgenda');if(!output)return;const to=agendaShiftDate(today,6),snapshot=buildAgendaSnapshot(db.agenda,db.documents,today,to,id=>student(id));
@@ -1633,6 +1676,7 @@ function initAgendaControls(){
  $('#agendaToday')?.addEventListener('click',()=>{const x=new Date();agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');renderAgenda();});
  $('#agendaSelectedDate')?.addEventListener('change',e=>{if(agendaValidDate(e.target.value)){agendaSelectedDate=e.target.value;renderAgenda();}});
  $('#agendaTypeFilter')?.addEventListener('change',e=>{agendaCurrentTypeFilter=e.target.value||'all';renderAgenda();});
+ $('#agendaRepeatFrequency')?.addEventListener('change',syncAgendaRepeatControls);
  $('#agendaAdd')?.addEventListener('click',()=>showAgendaForm(''));$('#agendaCancel')?.addEventListener('click',closeAgendaForm);$('#agendaCancelBottom')?.addEventListener('click',closeAgendaForm);
  $('#agendaForm')?.addEventListener('submit',agendaHandleSubmit);
 }
@@ -1683,7 +1727,7 @@ function buildDailyFollowupSnapshot(attendance,documents,agenda,violations,today
  todayRows.filter(x=>String(x.justified||'').trim()==='غير مبرر').forEach(x=>{
   const st=linked(x.student,x);tasks.push({kind:'today',priority:'high',title:'غياب أو تأخر غير مبرر اليوم',detail:typeOf(x)+' · '+String(x.period||'')+' · '+String(x.class||x.studentClass||st?.class||'قسم غير محدد')+(st?'':' · سجل غير مربوط ببطاقة مؤكدة'),studentId:st?String(st.id):'',recordId:safeRecordId(x),page:'attendance'});
  });
- const todayAgenda=G.filter(x=>x&&x.date===today&&!['done','cancelled'].includes(String(x.status||'').toLowerCase())&&String(x.title||'').trim());
+ const todayAgenda=agendaExpandOccurrences(G,today,today,500).items.filter(x=>!['done','cancelled'].includes(String(x.status||'').toLowerCase())&&String(x.title||'').trim());
  todayAgenda.slice().sort((a,b)=>String(a.startTime||'').localeCompare(String(b.startTime||''))).forEach(x=>tasks.push({kind:'agenda',priority:x.priority==='urgent'?'urgent':x.priority==='high'?'high':'normal',title:String(x.title).slice(0,120),detail:(String(x.startTime||'').trim()||'الوقت غير محدد')+(x.location?' · '+String(x.location).slice(0,100):''),studentId:linked(x.studentId,x)?String(linked(x.studentId,x).id):'',agendaDate:today,page:'agenda'}));
  const priorityRank={urgent:0,high:1,normal:2},kindRank={pending:0,unlinked:1,summons:2,today:3,agenda:4};tasks.sort((a,b)=>priorityRank[a.priority]-priorityRank[b.priority]||kindRank[a.kind]-kindRank[b.kind]);
  const orderedSections=sectionSummary.sort((a,b)=>b.absences+b.lateness-(a.absences+a.lateness)||a.label.localeCompare(b.label,'ar'));
