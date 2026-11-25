@@ -48,7 +48,7 @@ const database={
 };
 const data=sandbox.buildStudentReportData(target,database);
 assert.equal(data.timeline.length,7,'timeline contains every verified record and no record from another active student');
-assert.deepEqual(data.timeline.map(x=>x.recordId),['d-2','d-1','v-1','l-1','a-2','a-1','legacy-a'],'timeline sorts newest first and keeps distinct same-day records and safe legacy records');
+assert.deepEqual(JSON.parse(JSON.stringify(data.timeline.map(x=>x.recordId))),['d-2','d-1','v-1','l-1','a-2','a-1','legacy-a'],'timeline sorts newest first and keeps distinct same-day records and safe legacy records');
 assert.equal(data.timeline[0].source,'documents','latest dated document appears first');
 assert.equal(data.timeline[0].date,'2026-10-10','a document without an issue date uses its valid appointment date as a chronology fallback');
 assert.ok(data.timeline.some(x=>x.recordId==='a-1'&&x.detail.includes('7 ساعة')),'absence duration uses the known Arabic hours value');
