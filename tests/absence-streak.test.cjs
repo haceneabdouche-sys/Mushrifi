@@ -29,10 +29,12 @@ const source=String.raw`function getUnjustifiedStreaks(){
   const events=item.events;
   for(const [date,event] of events){
    const scheduled=scheduledHoursForStudentDate(item.student,date);
-   // لا نثبت الغياب الكامل إلا في يوم توجد فيه ساعات دراسة فعلية ومعلومة.
-   // حتى اختيار «اليوم كاملاً» لا يكفي إذا كان توقيت القسم غير مضبوط أو اليوم عطلة.
-   event.fullDayAbsence=!event.hasBreak&&scheduled!==null&&scheduled>0&&
-    (event.explicitFullDay||event.unjustifiedHours>=scheduled);
+   // الغياب المسجل صراحةً «اليوم كاملاً» يُعتد به حتى عند غياب التوقيت الأسبوعي.
+   // أما الساعات الجزئية فلا تثبت يوماً كاملاً إلا بمقارنتها بتوقيت القسم.
+   event.fullDayAbsence=!event.hasBreak&&(
+    (event.explicitFullDay&&scheduled!==0)||
+    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled)
+   );
   }
   const ordered=[...events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
@@ -51,9 +53,9 @@ const source=String.raw`function getUnjustifiedStreaks(){
     if(weekday===5||weekday===6){last=date;continue;}
     const scheduled=scheduledHoursForStudentDate(item.student,date);
     if(scheduled===0){last=date;continue;}
-    // غياب التوقيت الأسبوعي يجعل التحقق غير ممكن؛ لا نحتسب يوماً غير مثبت.
-    if(scheduled===null){valid=false;break;}
+    // إذا كان اليوم مسجلاً صراحةً كاملاً، فلا نحتاج إلى توقيت القسم لإثبات هذا اليوم.
     const event=events.get(date);
+    if(scheduled===null&&(!event||!event.explicitFullDay)){valid=false;break;}
     if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
     last=date;
    }
@@ -134,3 +136,6 @@ test('stage 32 is blocked when warning delivery proof is absent',()=>{setNotice(
 test('monthly scheduled-hours denominator excludes declared school holidays',()=>{holidays=[{start:'2026-11-15',end:'2026-11-19'}];assert.equal(vm.runInContext("monthScheduledHours({},'2026-11')",ctx),34);});
 test('overlapping holiday ranges do not subtract scheduled hours twice',()=>{holidays=[{start:'2026-11-15',end:'2026-11-18'},{start:'2026-11-17',end:'2026-11-19'}];assert.equal(vm.runInContext("monthScheduledHours({},'2026-11')",ctx),34);});
 test('monthly absence numerator ignores records dated in declared holidays',()=>{holidays=[{start:'2026-11-16',end:'2026-11-16'}];ctx.db.attendance=[{id:'holiday',type:'غياب',date:'2026-11-16',groupKey:'g'},{id:'valid',type:'غياب',date:'2026-11-17',groupKey:'g'},{id:'other-month',type:'غياب',date:'2026-10-31',groupKey:'g'},{id:'other-group',type:'غياب',date:'2026-11-17',groupKey:'x'},{id:'present',type:'حضور',date:'2026-11-17',groupKey:'g'}];assert.deepEqual(JSON.parse(JSON.stringify(vm.runInContext("monthlyAbsenceRecords({key:'g'},'2026-11')",ctx))).map(x=>x.id),['valid']);});
+
+test('manually entered hours with full-day period count as full-day absence without timetable',()=>{const x=run([absence('2026-11-16',{fullDay:true}),absence('2026-11-17',{fullDay:true}),absence('2026-11-18',{fullDay:true})],[],{'2026-11-16':null,'2026-11-17':null,'2026-11-18':null});assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-16');assert.equal(x[0].days,3);});
+test('partial absence without timetable does not count as a full day',()=>{const x=run([absence('2026-11-18',{fullDay:false,hours:2})],[],{'2026-11-18':null});assert.equal(x.length,0);});

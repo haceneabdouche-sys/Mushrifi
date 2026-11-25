@@ -25,6 +25,9 @@ for(const [full,short] of cases){
  assert.equal(context.canonicalBranch(short),full,'accept alias '+short);
  assert.equal(context.canonicalBranch(full),full,'keep canonical branch '+full);
 }
+assert.equal(context.canonicalBranch('جدع مشترك علوم وتكنولوجيا'),'جذع مشترك علوم وتكنولوجيا','normalize common-core typo from the official Excel export');
+assert.equal(context.canonicalBranch('جدع مشترك آداب'),'جذع مشترك آداب','normalize common-core literature typo from the official Excel export');
+assert.ok(html.includes('if(data.branch)data.branch=canonicalBranch(data.branch);'),'imported branch aliases must be canonicalized before matching and saving');
 assert.equal(context.canonicalBranch('  ج   م   ع   ت  '),'جذع مشترك علوم وتكنولوجيا','normalize extra spaces in alias');
 assert.equal(context.shortBranch('شعبة غير معروفة'),'شعبة غير معروفة','preserve unknown branch names');
 const partsStart=html.indexOf('function studentAcademicParts(');

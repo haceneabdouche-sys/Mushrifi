@@ -173,13 +173,50 @@ footer{padding:24px 12px;color:#71818d}
  .students-table tbody td:last-child{border-bottom:0}
 }
 @media(max-width:390px){.students-table tbody tr{grid-template-columns:1fr;gap:0}.students-table tbody td{grid-template-columns:94px minmax(0,1fr)}}
+
+.setup-wizard{max-width:760px;margin:24px auto;border:1px solid #d8e3eb;border-radius:20px;background:linear-gradient(145deg,#fff,#f7fafc);box-shadow:0 18px 48px rgba(20,47,73,.13);padding:clamp(18px,4vw,30px)}
+.setup-wizard h2{color:var(--navy);font-size:23px;margin:0 0 8px}.setup-wizard .setup-intro{color:var(--muted);line-height:1.9;margin:0 0 18px}
+.setup-wizard .setup-step{display:inline-flex;padding:6px 11px;border-radius:30px;background:#edf4f8;color:var(--navy);font-size:12px;font-weight:800;margin-bottom:12px}
+.setup-wizard .setup-section-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:end}
+.setup-wizard .setup-assigned-list{display:grid;gap:7px;margin:10px 0 16px}.setup-wizard .setup-assigned-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.setup-wizard .setup-upload{border:1px dashed #9eb6c7;border-radius:13px;padding:13px;background:#f7fafc;margin:14px 0}
+body.setup-required .notice,body.setup-required nav,body.setup-required .page,body.setup-required footer{display:none!important}
+@media(max-width:650px){.setup-wizard .setup-section-row{grid-template-columns:1fr 1fr}.setup-wizard .setup-section-row button{grid-column:1/-1}}
+
+/* Keep the branch value on one line in mobile student cards */
+@media(max-width:700px){
+ .students-table tbody td[data-label="الشعبة"]{
+  grid-column:1/-1;
+  grid-template-columns:94px minmax(0,1fr);
+  align-items:center;
+ }
+ .students-table tbody td[data-label="الشعبة"]{
+  white-space:nowrap !important;
+  overflow-wrap:normal !important;
+  word-break:keep-all !important;
+ }
+}
 </style>
 </head>
 <body>
 <header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><span class="credit-rule" aria-hidden="true"></span><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"></div>
 </div></header>
 <div class="wrap">
-<div class="notice"><b>نسخة مستقلة تعمل محلياً:</b> تُحفظ سجلات التلاميذ على هذا الهاتف فقط، ولا تحتاج إلى حسابات أو مواقع خارجية.</div>
+
+<section id="firstRunSetup" class="setup-wizard hidden" aria-labelledby="setupTitle">
+ <div class="setup-step">التهيئة الأولى</div><h2 id="setupTitle">مرحباً بك في مُشرِفي</h2>
+ <p class="setup-intro">عند بدء جديد دون استعادة نسخة احتياطية، يبدأ التطبيق بقاعدة بيانات فارغة: لا توجد بطاقات تلاميذ أو سجلات غياب أو تأخر أو مخالفات أو استدعاءات. اختر الطور التعليمي، وأضف الأقسام المسندة إليك، ثم ارفع قائمة التلاميذ. بعد الاستيراد يعرض التطبيق تلاميذ الأقسام التي اخترتها فقط، وتبدأ سجلات المتابعة بالظهور عندما تنشئها أنت.</p>
+ <form id="firstRunSetupForm">
+  <label for="setupEducationLevel">الطور التعليمي</label>
+  <select id="setupEducationLevel" required><option value="">اختر الطور التعليمي</option><option value="primary">التعليم الابتدائي</option><option value="middle">التعليم المتوسط</option><option value="secondary">التعليم الثانوي</option></select>
+  <div class="row"><div><label for="setupSchool">اسم المؤسسة</label><input id="setupSchool" required maxlength="120" placeholder="اسم المؤسسة"></div><div><label for="setupLocation">البلدية والولاية</label><input id="setupLocation" maxlength="120" placeholder="الموقع"></div></div>
+  <h3>الأقسام المسندة إليك</h3><p class="muted">في الابتدائي والمتوسط لا تحتاج إلى إدخال شعبة.</p>
+  <div class="setup-section-row"><div><label for="setupYear">المستوى / السنة</label><input id="setupYear" placeholder="مثال: الأولى متوسط"></div><div id="setupBranchField"><label for="setupBranch">الشعبة / الجذع</label><input id="setupBranch" placeholder="مثال: علوم تجريبية"></div><div><label for="setupSection">رقم القسم</label><input id="setupSection" placeholder="مثال: 1"></div><button class="btn" id="setupAddSection" type="button">إضافة القسم</button></div>
+  <div id="setupAssignedList" class="setup-assigned-list"><p class="muted">لم تضف أقساماً بعد.</p></div>
+  <div class="setup-upload"><label for="setupBackupFile">نسخة JSON الاحتياطية (اختياري عند التثبيت الجديد)</label><input id="setupBackupFile" type="file" accept=".json,application/json"><p class="muted">إذا كنت تثبّت مُشرِفي على هاتف جديد، يمكنك اختيار نسخة JSON لاستعادة الغيابات والتأخرات والاستدعاءات والمخالفات قبل استيراد القائمة. إذا كانت بياناتك موجودة بالفعل على هذا الهاتف، اترك هذا الحقل فارغاً.</p></div><div class="setup-upload"><label for="setupRosterFile">قائمة التلاميذ بصيغة CSV أو Excel</label><input id="setupRosterFile" type="file" accept=".csv,.xls,.html,text/csv,text/html" required><p class="muted">يدعم CSV وملفات Excel القديمة المحفوظة كجدول HTML (.xls). أما XLSX وملفات Excel الثنائية فحوّلها إلى CSV أولاً. يدعم الفاصلة والفاصلة المنقوطة والجدولة.</p></div>
+  <button class="btn primary" type="submit" id="finishFirstRunSetup">حفظ الإعدادات واستيراد القائمة</button><p id="setupStatus" class="muted" aria-live="polite"></p>
+ </form>
+</section>
 <nav class="no-print" id="nav">
 <button class="active" data-page="home">الرئيسية</button><button data-page="students">التلاميذ</button><button data-page="attendance">الغياب والتأخر</button><button data-page="documents">الإشعارات والاستدعاءات</button><button data-page="violations">المخالفات</button><button data-page="reports">التقارير والطباعة</button><button data-page="settings" type="button" onclick="go('settings')">الإعدادات</button>
 </nav>
@@ -204,7 +241,7 @@ footer{padding:24px 12px;color:#71818d}
 <div class="panel"><h2 id="studentFormTitle">بطاقة التلميذ – إضافة بيانات</h2><p class="muted">تتضمن بطاقة التلميذ الاسم واللقب والمستوى والشعبة والقسم والصفة وتاريخ الميلاد واسم الولي ورقم هاتفه.</p><form id="studentForm">
 <div class="row"><div><label>الاسم</label><input name="first" required></div><div><label>اللقب</label><input name="last" required></div></div>
 <div class="row"><div><label>المستوى</label><select name="schoolYear" id="studentYearSelect" required><option value="">اختر المستوى</option></select></div><div><label>الشعبة</label><select name="branch" id="studentBranchSelect" required><option value="">اختر الشعبة</option></select></div><div><label>القسم</label><select name="sectionNumber" id="studentClassSelect" required><option value="">اختر القسم</option></select><input type="hidden" name="class" id="studentClassValue"></div></div>
-<div class="row"><div><label>الصفة</label><input name="attribute" placeholder="أدخل صفة التلميذ"></div><div><label>تاريخ الميلاد</label><input name="birthDate" type="date"></div></div>
+<div class="row"><div><label>الصفة</label><input name="attribute" placeholder="أدخل صفة التلميذ"></div><div><label>الجنس</label><select name="gender"><option value="">غير محدد</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div><div><label>تاريخ الميلاد</label><input name="birthDate" type="date"></div></div>
 <div class="row"><div><label>اسم الولي</label><input name="guardian"></div><div><label>رقم الهاتف</label><input name="phone" type="tel" inputmode="tel" autocomplete="tel"></div></div>
 <div class="actions"><button class="btn primary" id="studentSubmit" type="submit">حفظ بطاقة التلميذ</button><button class="btn hidden" id="cancelStudentEdit" type="button">إلغاء التعديل</button></div></form></div>
 <div class="panel"><h2>إضافة مستوى أو شعبة أو قسم</h2><p class="muted">يمكنك إضافة تركيبة جديدة، وسيُدرج المستوى والشعبة والقسم تلقائيًا في القوائم المتدرجة.</p><form id="sectionForm"><div class="row"><div><label>المستوى</label><input name="schoolYear" placeholder="مثال: أولى" required></div><div><label>الشعبة</label><input name="branch" placeholder="مثال: علوم تجريبية" required></div><div><label>رقم القسم</label><input name="sectionNumber" placeholder="مثال: 2" required></div></div><button class="btn primary" type="submit">إضافة إلى القوائم</button></form><div id="sectionList" class="muted"></div></div>
@@ -257,7 +294,7 @@ footer{padding:24px 12px;color:#71818d}
 <div class="panel"><h2>ترخيص تطبيق مُشرِفي</h2><p class="muted">يُربط الترخيص بهذا الهاتف فقط. لا تُدخل أي رمز إلا إذا استلمته من الجهة المرخّصة. لا توجد رموز تفعيل تجريبية أو تجارية منشأة حالياً.</p><p id="licenseStatusText" class="muted" aria-live="polite">جارٍ قراءة حالة الترخيص...</p><label for="licenseActivationCode">رمز التفعيل</label><input id="licenseActivationCode" type="text" autocomplete="off" autocapitalize="characters" placeholder="أدخل رمز التفعيل عند استلامه"><div class="row"><button type="button" class="btn primary" id="activateLicenseBtn">تفعيل هذا الهاتف</button><button type="button" class="btn" id="validateLicenseBtn">التحقق من الترخيص</button></div><p id="licenseActionStatus" class="muted" aria-live="polite">لم يُنفذ أي طلب بعد.</p></div>
 </div>
 <div class="settings-pane hidden" id="settings-pane-data" role="tabpanel">
-<div class="panel"><h2>إعدادات المؤسسة</h2><p class="muted">أدخل معلومات مؤسستك يدوياً، وستظهر في أعلى واجهة التطبيق مباشرة فوق اسمك وإمضائك المتحركين.</p><label for="schoolName">اسم المؤسسة</label><input id="schoolName" type="text" maxlength="120" placeholder="أدخل اسم المؤسسة"><label for="schoolLocation">الموقع (البلدية والولاية)</label><input id="schoolLocation" type="text" maxlength="120" placeholder="أدخل البلدية والولاية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
+<div class="panel"><h2>إعدادات المؤسسة</h2><p class="muted">أدخل معلومات مؤسستك يدوياً، وستظهر في أعلى واجهة التطبيق مباشرة فوق اسمك وإمضائك المتحركين.</p><label for="schoolName">اسم المؤسسة</label><input id="schoolName" type="text" maxlength="120" placeholder="أدخل اسم المؤسسة"><label for="schoolLocation">الموقع (البلدية والولاية)</label><input id="schoolLocation" type="text" maxlength="120" placeholder="أدخل البلدية والولاية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div><div class="panel" id="educationProfileSettings"><h2>الطور التعليمي والأقسام المسندة</h2><label for="educationLevelSetting">الطور التعليمي</label><select id="educationLevelSetting"><option value="primary">التعليم الابتدائي</option><option value="middle">التعليم المتوسط</option><option value="secondary">التعليم الثانوي</option></select><button class="btn primary" id="saveEducationProfile" type="button">حفظ الطور</button><p class="muted">تغيير الطور لا يحذف أي تلميذ أو سجل. راجع الأقسام المسندة بعد تغييره.</p><h3>الأقسام المسندة حالياً</h3><div id="assignedSectionsList" class="setup-assigned-list"></div><h3>إضافة قسم إلى المتابعة</h3><div class="setup-section-row"><div><label for="assignedYear">المستوى / السنة</label><input id="assignedYear" placeholder="مثال: الأولى متوسط"></div><div id="assignedBranchField"><label for="assignedBranch">الشعبة / الجذع</label><input id="assignedBranch" placeholder="مثال: علوم تجريبية"></div><div><label for="assignedSection">رقم القسم</label><input id="assignedSection" placeholder="مثال: 1"></div><button class="btn" id="addAssignedSection" type="button">إضافة القسم</button></div><p id="assignedSectionStatus" class="muted" aria-live="polite">يمكنك تعديل الأقسام المسندة في أي وقت.</p></div>
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
@@ -277,15 +314,27 @@ footer{padding:24px 12px;color:#71818d}
 const DBKEY='mushrifi_v1';
 const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"settings":{}}';
 const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase==='function');
-const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
-if(nativeJson==='!MUSHRIFI_DB_ERROR!'){document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2"><h2>تعذر فتح قاعدة بيانات مُشرفي</h2><p>لم يتم عرض قائمة فارغة حتى لا تُستبدل بياناتك. لا تحذف التطبيق. احتفظ بنسخة احتياطية إن كانت لديك، ثم تواصل مع الدعم.</p></main>';throw new Error('Mushrifi encrypted database could not be read');}
-const legacyJson=localStorage.getItem(DBKEY);
-let db=JSON.parse(nativeJson||legacyJson||EMPTY_DB);
+let nativeJson=null,legacyJson=null,db;
+try{
+ nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
+ if(nativeJson==='!MUSHRIFI_DB_ERROR!')throw new Error('تعذر فك تشفير قاعدة بيانات مُشرِفي أو قراءتها.');
+ legacyJson=localStorage.getItem(DBKEY);
+ db=JSON.parse(nativeJson||legacyJson||EMPTY_DB);
+}catch(error){
+ console.error('[Mushrifi startup] Database bootstrap failed',error);
+ const message=nativeJson==='!MUSHRIFI_DB_ERROR!'
+  ?'تعذر فتح قاعدة بيانات مُشرِفي أو فك تشفيرها.'
+  :'تعذر قراءة بيانات مُشرِفي؛ قد تكون قاعدة البيانات غير مكتملة أو تالفة.';
+ document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2;max-width:720px;margin:30px auto;color:#243746"><h2>تعذر تشغيل مُشرِفي بأمان</h2><p>'+message+'</p><p>حفاظاً على بياناتك، لم يتم إنشاء قاعدة فارغة ولم تُستبدل أي سجلات.</p><p>لا تحذف التطبيق ولا تمسح بياناته. احتفظ بالنسخة الاحتياطية إن كانت لديك، وتواصل مع الدعم لفحص الاستعادة.</p></main>';
+ throw error;
+}
 db.students=Array.isArray(db.students)?db.students:[];
 db.attendance=Array.isArray(db.attendance)?db.attendance:[];
 db.documents=Array.isArray(db.documents)?db.documents:[];
 db.violations=Array.isArray(db.violations)?db.violations:[];
 db.settings=db.settings&&typeof db.settings==='object'?db.settings:{};
+if(!db.settings.educationLevel&&db.students.length)db.settings.educationLevel='secondary';
+if((db.students.length||db.attendance.length||db.documents.length||db.violations.length)&&db.settings.setupComplete!==true){db.settings.educationLevel=db.settings.educationLevel||'secondary';db.settings.setupComplete=true;}
 if(isAndroidApp){if(!nativeJson&&legacyJson&&!AndroidBridge.saveDatabase(legacyJson))throw new Error('تعذرت ترقية بيانات الهاتف إلى التخزين المشفر');localStorage.removeItem(DBKEY);}
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const sectionNorm=v=>String(v??"").trim().replace(/\s+/g," ").toLocaleLowerCase("ar");
@@ -294,15 +343,82 @@ const sectionLabel=code=>{const map=sectionNames(),key=Object.keys(map).find(k=>
 const sectionDisplay=code=>{const raw=String(code||"").trim();if(!raw)return "—";const full=sectionLabel(raw);return full===raw?raw:raw+" — "+full;};
 const DEFAULT_ACADEMIC_STRUCTURE=[["أولى","جذع مشترك آداب","1"],["أولى","جذع مشترك آداب","2"],["أولى","جذع مشترك آداب","3"],["أولى","جذع مشترك علوم وتكنولوجيا","1"],["أولى","جذع مشترك علوم وتكنولوجيا","2"],["أولى","جذع مشترك علوم وتكنولوجيا","3"],["أولى","جذع مشترك علوم وتكنولوجيا","4"],["ثانية","آداب وفلسفة","1"],["ثانية","تسيير واقتصاد","1"],["ثانية","تقني رياضي","1"],["ثانية","رياضيات","1"],["ثانية","علوم تجريبية","1"],["ثانية","لغات أجنبية","1"],["ثالثة","آداب وفلسفة","1"],["ثالثة","تسيير واقتصاد","1"],["ثالثة","تقني رياضي","1"],["ثالثة","رياضيات","1"],["ثالثة","علوم تجريبية","1"],["ثالثة","لغات أجنبية","1"]];
 const academicNorm=v=>String(v??"").normalize("NFKC").replace(/[\u0640\u064B-\u065F\u0670]/g,"").replace(/\s+/g," ").trim().toLocaleLowerCase("ar");
+function academicYearKey(value){
+ let key=String(value??"").normalize("NFKC")
+  .replace(/[\u0640\u064B-\u065F\u0670]/g,"")
+  .replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+  .replace(/[\u200B-\u200D\uFEFF]/g,"")
+  .replace(/\s+/g," ").trim().toLocaleLowerCase("ar");
+ key=key.replace(/^السنة\s*/,"").replace(/^السنه\s*/,"");
+ key=key.replace(/^ال(?=(?:اولي|ثانيه|ثالثه|رابعه|خامسه|سادسه)(?:\s|$))/,"");
+ key=key.replace(/\s+(?:ثانوي|الثانوي)$/,"");
+ return key;
+}
 const BRANCH_SHORTCUTS=[["جذع مشترك علوم وتكنولوجيا","ج م ع ت"],["جذع مشترك آداب","ج م أ"],["آداب وفلسفة","أ ف"],["تسيير واقتصاد","ت إ"],["رياضيات","ريا"],["تقني رياضي","ت ر"],["علوم تجريبية","ع ت"],["لغات أجنبية","ل ا"]];
 const compactAcademic=v=>academicNorm(v).replace(/\s+/g,"");
-function canonicalBranch(value){const raw=String(value??"").trim();if(!raw)return "";const key=compactAcademic(raw);const found=BRANCH_SHORTCUTS.find(([full,short])=>key===compactAcademic(full)||key===compactAcademic(short));return found?found[0]:raw;}
+function canonicalBranch(value){const raw=String(value??"").trim();if(!raw)return "";const key=compactAcademic(raw).replace(/جدع/g,"جذع");const found=BRANCH_SHORTCUTS.find(([full,short])=>key===compactAcademic(full)||key===compactAcademic(short));return found?found[0]:raw;}
 function shortBranch(value){const full=canonicalBranch(value);const found=BRANCH_SHORTCUTS.find(([name])=>academicNorm(name)===academicNorm(full));return found?found[1]:(full||"—");}
-function studentAcademicParts(st){const raw=String(st?.class||"").trim(),parts=raw.split(/\s*\/\s*/);return{schoolYear:String(st?.schoolYear||parts[0]||"").trim(),branch:canonicalBranch(st?.branch||parts[1]||""),sectionNumber:String(st?.sectionNumber||parts[2]||raw).trim()};}
-function academicStructure(){if(!Array.isArray(db.settings.academicStructure))db.settings.academicStructure=[];const list=db.settings.academicStructure,clean=[];const add=(y,b,c)=>{y=String(y||"").trim();b=canonicalBranch(b);c=String(c||"").trim();if(!y||!b||!c)return;const key=[y,b,c].map(academicNorm).join("¦");if(!clean.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join("¦")===key))clean.push({schoolYear:y,branch:b,sectionNumber:c});};list.forEach(x=>add(x.schoolYear,x.branch,x.sectionNumber));DEFAULT_ACADEMIC_STRUCTURE.forEach(x=>add(...x));db.students.forEach(st=>{const p=studentAcademicParts(st);if(p.schoolYear&&p.branch&&p.sectionNumber){st.schoolYear=p.schoolYear;st.branch=p.branch;st.sectionNumber=p.sectionNumber;st.class=p.sectionNumber;add(p.schoolYear,p.branch,p.sectionNumber);}});list.splice(0,list.length,...clean);return list;}
-function ensureAcademicCombination(y,b,c){const list=academicStructure(),key=[y,canonicalBranch(b),c].map(academicNorm).join("¦");if(!list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join("¦")===key))list.push({schoolYear:String(y).trim(),branch:canonicalBranch(b),sectionNumber:String(c).trim()});}
+function studentAcademicParts(st){
+ const raw=String(st?.class||"").trim(),parts=raw.split(/\s*\/\s*/);
+ const branch=st?.branch||parts[1]||(db.settings.educationLevel&&db.settings.educationLevel!=="secondary"?"عام":"");
+ return{schoolYear:String(st?.schoolYear||parts[0]||"").trim(),branch:canonicalBranch(branch),sectionNumber:String(st?.sectionNumber||parts[2]||raw).trim()};
+}
+function academicStructure(){
+ if(!Array.isArray(db.settings.academicStructure))db.settings.academicStructure=[];
+ const list=db.settings.academicStructure,clean=[];
+ const add=(y,b,c)=>{y=String(y||"").trim();b=canonicalBranch(b);c=String(c||"").trim();if(!y||!b||!c)return;const key=[academicYearKey(y),academicNorm(b),academicNorm(c)].join("¦");if(!clean.some(x=>[academicYearKey(x.schoolYear),academicNorm(x.branch),academicNorm(x.sectionNumber)].join("¦")===key))clean.push({schoolYear:y,branch:b,sectionNumber:c});};
+ list.forEach(x=>add(x.schoolYear,x.branch,x.sectionNumber));
+ if(db.settings.educationLevel==="secondary")DEFAULT_ACADEMIC_STRUCTURE.forEach(x=>add(...x));
+ db.students.forEach(st=>{const p=studentAcademicParts(st);if(p.schoolYear&&p.branch&&p.sectionNumber){st.schoolYear=p.schoolYear;st.branch=p.branch;st.sectionNumber=p.sectionNumber;st.class=p.sectionNumber;add(p.schoolYear,p.branch,p.sectionNumber);}});
+ list.splice(0,list.length,...clean);return list;
+}
+function ensureAcademicCombination(y,b,c){const list=academicStructure(),key=[academicYearKey(y),academicNorm(canonicalBranch(b)),academicNorm(c)].join("¦");if(!list.some(x=>[academicYearKey(x.schoolYear),academicNorm(x.branch),academicNorm(x.sectionNumber)].join("¦")===key))list.push({schoolYear:String(y).trim(),branch:canonicalBranch(b),sectionNumber:String(c).trim()});}
+
+function assignedSectionKey(section){return[academicYearKey(section?.schoolYear||''),academicNorm(canonicalBranch(section?.branch||'')),academicNorm(section?.sectionNumber||section?.class||'')].join('¦');}
+function isStudentAssigned(st){
+ if(!Array.isArray(db.settings.assignedSections)||!db.settings.assignedSections.length)return true;
+ const p=studentAcademicParts(st),key=assignedSectionKey({schoolYear:p.schoolYear,branch:p.branch,sectionNumber:p.sectionNumber});
+ return db.settings.assignedSections.some(section=>assignedSectionKey(section)===key);
+}
+function studentsForUser(){const visible=db.students.filter(isStudentAssigned);return db.students.length&&!visible.length?db.students:visible;}
+function renderAssignedSections(){
+ const el=$('#assignedSectionsList');if(!el)return;
+ if(!Array.isArray(db.settings.assignedSections)){el.innerHTML='<p class="muted">لم يتم تخصيص أقسام؛ تظهر جميع الأقسام الموجودة.</p>';return;}
+ el.innerHTML=db.settings.assignedSections.map((x,i)=>'<div class="setup-assigned-item"><span>'+esc(x.schoolYear)+' — '+esc(x.branch==='عام'?'':x.branch)+' — القسم '+esc(x.sectionNumber)+'</span><button type="button" class="btn small danger" data-remove-assigned="'+i+'">إزالة من المتابعة</button></div>').join('')||'<p class="muted">لا توجد أقسام مسندة.</p>';
+ el.querySelectorAll('[data-remove-assigned]').forEach(button=>button.addEventListener('click',()=>{const index=Number(button.dataset.removeAssigned),removed=db.settings.assignedSections.splice(index,1)[0];if(!save()){db.settings.assignedSections.splice(index,0,removed);render();}}));
+}
+function updateAssignedBranchVisibility(){const secondary=$('#educationLevelSetting').value==='secondary';$('#assignedBranchField').classList.toggle('hidden',!secondary);$('#assignedBranch').required=secondary;if(!secondary)$('#assignedBranch').value='عام';else if($('#assignedBranch').value==='عام')$('#assignedBranch').value='';}
+$('#educationLevelSetting')?.addEventListener('change',updateAssignedBranchVisibility);
+$('#addAssignedSection')?.addEventListener('click',()=>{
+ const level=$('#educationLevelSetting').value,schoolYear=$('#assignedYear').value.trim().replace(/\s+/g,' '),branch=level==='secondary'?canonicalBranch($('#assignedBranch').value.trim()):'عام',sectionNumber=$('#assignedSection').value.trim().replace(/\s+/g,' '),status=$('#assignedSectionStatus');
+ if(!schoolYear||!sectionNumber||(level==='secondary'&&!branch)){status.textContent='أدخل المستوى ورقم القسم، والشعبة في الثانوي.';return;}
+ const item={schoolYear,branch,sectionNumber},previous=Array.isArray(db.settings.assignedSections)?db.settings.assignedSections.map(x=>({...x})):null;
+ if(!Array.isArray(db.settings.assignedSections))db.settings.assignedSections=[];
+ if(db.settings.assignedSections.some(x=>assignedSectionKey(x)===assignedSectionKey(item))){status.textContent='هذا القسم موجود ضمن الأقسام المسندة بالفعل.';return;}
+ db.settings.assignedSections.push(item);
+ if(!save()){if(previous)db.settings.assignedSections=previous;else delete db.settings.assignedSections;render();status.textContent='تعذر حفظ القسم؛ لم تتغير الأقسام المسندة.';return;}
+ $('#assignedYear').value='';$('#assignedSection').value='';renderAssignedSections();render();$('#assignedSectionStatus').textContent='تمت إضافة القسم إلى المتابعة بنجاح.';
+});
+updateAssignedBranchVisibility();
 function updateStudentClassValue(){const c=$("#studentClassSelect")?.value||"",hidden=$("#studentClassValue");if(hidden)hidden.value=c;}
-function refreshStudentSectionOptions(preferred={}){const ys=$("#studentYearSelect"),bs=$("#studentBranchSelect"),cs=$("#studentClassSelect");if(!ys||!bs||!cs)return;const list=academicStructure(),oy=preferred.schoolYear??ys.value,ob=preferred.branch??bs.value,oc=preferred.sectionNumber??cs.value;const years=[...new Set(list.map(x=>x.schoolYear))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));ys.innerHTML='<option value="">اختر المستوى</option>'+years.map(x=>`<option value="${esc(x)}">${esc(x)} ثانوي</option>`).join("");ys.value=years.includes(oy)?oy:"";const branches=[...new Set(list.filter(x=>x.schoolYear===ys.value).map(x=>x.branch))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));bs.innerHTML='<option value="">اختر الشعبة</option>'+branches.map(x=>`<option value="${esc(x)}">${esc(shortBranch(x))}</option>`).join("");bs.value=branches.includes(ob)?ob:"";const sections=[...new Set(list.filter(x=>x.schoolYear===ys.value&&x.branch===bs.value).map(x=>x.sectionNumber))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));cs.innerHTML='<option value="">اختر القسم</option>'+sections.map(x=>`<option value="${esc(x)}">القسم ${esc(x)}</option>`).join("");cs.value=sections.includes(oc)?oc:"";updateStudentClassValue();const box=$("#sectionList");if(box){const sorted=list.slice().sort((a,b)=>[a.schoolYear,a.branch,a.sectionNumber].join(" ").localeCompare([b.schoolYear,b.branch,b.sectionNumber].join(" "),"ar",{numeric:true}));box.innerHTML=sorted.map(x=>`<div>${esc(x.schoolYear)} — ${esc(shortBranch(x.branch))} — القسم ${esc(x.sectionNumber)}</div>`).join("");}}
+function refreshStudentSectionOptions(preferred={}){
+ const ys=$("#studentYearSelect"),bs=$("#studentBranchSelect"),cs=$("#studentClassSelect");if(!ys||!bs||!cs)return;
+ const list=academicStructure(),oy=preferred.schoolYear??ys.value,ob=preferred.branch??bs.value,oc=preferred.sectionNumber??cs.value;
+ const level=db.settings.educationLevel||"secondary",secondary=level==="secondary",suffix=level==="primary"?"ابتدائي":level==="middle"?"متوسط":"ثانوي";
+ const relevantList=secondary?list:list.filter(x=>x.branch==="عام");
+ const years=[...new Set(relevantList.map(x=>x.schoolYear))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));
+ ys.innerHTML='<option value="">اختر المستوى</option>'+years.map(x=>'<option value="'+esc(x)+'">'+esc(x)+' '+suffix+'</option>').join("");
+ ys.value=years.includes(oy)?oy:"";
+ const branches=secondary?[...new Set(relevantList.filter(x=>x.schoolYear===ys.value).map(x=>x.branch))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true})):["عام"];
+ bs.innerHTML='<option value="">اختر الشعبة</option>'+branches.map(x=>'<option value="'+esc(x)+'">'+esc(secondary?shortBranch(x):"تعليم عام")+'</option>').join("");
+ bs.value=secondary?(branches.includes(ob)?ob:""):"عام";
+ bs.parentElement?.classList.toggle("hidden",!secondary);
+ const sections=[...new Set(relevantList.filter(x=>x.schoolYear===ys.value&&x.branch===bs.value).map(x=>x.sectionNumber))].sort((a,b)=>a.localeCompare(b,"ar",{numeric:true}));
+ cs.innerHTML='<option value="">اختر القسم</option>'+sections.map(x=>'<option value="'+esc(x)+'">القسم '+esc(x)+'</option>').join("");
+ cs.value=sections.includes(oc)?oc:"";updateStudentClassValue();
+ const box=$("#sectionList");if(box){const sorted=list.slice().sort((a,b)=>[a.schoolYear,a.branch,a.sectionNumber].join(" ").localeCompare([b.schoolYear,b.branch,b.sectionNumber].join(" "),"ar",{numeric:true}));box.innerHTML=sorted.map(x=>'<div>'+esc(x.schoolYear)+' — '+esc(x.branch==="عام"?"":shortBranch(x.branch))+' — القسم '+esc(x.sectionNumber)+'</div>').join("");}
+ const branchField=$("#sectionBranchField");if(branchField){branchField.classList.toggle("hidden",!secondary);const input=branchField.querySelector("input");if(input&&!secondary)input.value="عام";}
+}
 $("#studentYearSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:"",sectionNumber:""}));
 $("#studentBranchSelect")?.addEventListener("change",()=>refreshStudentSectionOptions({schoolYear:$("#studentYearSelect").value,branch:$("#studentBranchSelect").value,sectionNumber:""}));
 $("#studentClassSelect")?.addEventListener("change",updateStudentClassValue);
@@ -350,35 +466,52 @@ window.setSettingsTab=setSettingsTab;
 $$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
 $$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
 function renderStudentDirectory(){
-let q=($('#studentSearch')?.value||'').trim().toLocaleLowerCase('ar');
-$('#studentCount').textContent=db.students.filter(s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).length+' تلميذ';
-const searchable=s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar');
-$('#studentsRows').innerHTML=db.students.filter(s=>searchable(s).includes(q)).slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(s.first||'—')}</button></td><td data-label="اللقب">${esc(s.last||'—')}</td><td data-label="المستوى">${esc(p.schoolYear||'—')}</td><td data-label="الشعبة">${esc(shortBranch(p.branch))}</td><td data-label="القسم">${esc(p.sectionNumber||s.class||'—')}</td><td data-label="الصفة">${esc(s.attribute||s.status||'—')}</td><td data-label="تاريخ الميلاد">${esc(s.birthDate||'—')}</td><td data-label="اسم الولي">${esc(s.guardian||'—')}</td><td data-label="رقم الهاتف">${esc(s.phone||'—')}</td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="10" class="empty">لا يوجد تلاميذ.</td></tr>';
+ const visible=studentsForUser(),q=($('#studentSearch')?.value||'').trim().toLocaleLowerCase('ar');
+ const searchable=s=>[s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar');
+ const filtered=visible.filter(s=>searchable(s).includes(q));
+ $('#studentCount').textContent=filtered.length+' من '+visible.length+' تلميذ';
+ $('#studentsRows').innerHTML=filtered.slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')">${esc(s.first||'—')}</button></td><td data-label="اللقب">${esc(s.last||'—')}</td><td data-label="المستوى">${esc(p.schoolYear||'—')}</td><td data-label="الشعبة">${esc(p.branch==='عام'?'—':shortBranch(p.branch))}</td><td data-label="القسم">${esc(p.sectionNumber||s.class||'—')}</td><td data-label="الصفة">${esc(s.attribute||s.status||'—')}</td><td data-label="تاريخ الميلاد">${esc(s.birthDate||'—')}</td><td data-label="اسم الولي">${esc(s.guardian||'—')}</td><td data-label="رقم الهاتف">${esc(s.phone||'—')}</td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="10" class="empty">لا يوجد تلاميذ في الأقسام المسندة.</td></tr>';
 }
-
 function render(){
-refreshStudentSectionOptions();
-const schoolName=String(db.settings.school||'ثانوية الشيخ بوعمامة'),schoolLocation=String(db.settings.location||'بوسكن – ولاية المدية');
+refreshStudentSectionOptions();renderAssignedSections();if($('#educationLevelSetting'))$('#educationLevelSetting').value=db.settings.educationLevel||'secondary';if(typeof updateAssignedBranchVisibility==='function')updateAssignedBranchVisibility();
+const assignedStudents=studentsForUser(),assignedIds=new Set(assignedStudents.map(st=>String(st.id)));
+const legacyKey=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/\\s*\\d+$/,'').replace(/\\s+/g,' ').trim().toLocaleLowerCase('ar');
+const studentById=new Map(db.students.map(st=>[String(st.id),st]));
+const studentsByLegacyName=new Map();
+db.students.forEach(st=>[st.last+' '+st.first,st.first+' '+st.last,st.name,st.fullName].map(legacyKey).filter(Boolean).forEach(key=>{if(!studentsByLegacyName.has(key))studentsByLegacyName.set(key,[]);const bucket=studentsByLegacyName.get(key);if(!bucket.some(x=>String(x.id)===String(st.id)))bucket.push(st);}));
+const belongsToAssigned=record=>{
+ const recordId=String(record.student??'').trim(),byId=studentById.get(recordId);
+ if(byId)return assignedIds.has(recordId);
+ const keys=[legacyKey(record.studentName),legacyKey(record.student)].filter(Boolean),matches=new Map();
+ keys.forEach(key=>(studentsByLegacyName.get(key)||[]).forEach(st=>matches.set(String(st.id),st)));
+ let candidates=[...matches.values()];
+ if(candidates.length===1)return assignedIds.has(String(candidates[0].id));
+ const section=String(record.class||record.studentClass||record.sectionLabel||record.section||'').trim();
+ if(candidates.length>1&&section){candidates=candidates.filter(st=>[st.class,attendanceGroupLabel(st),st.section,st.className].some(value=>classKey(value)===classKey(section)));return candidates.length===1&&assignedIds.has(String(candidates[0].id));}
+ return false;
+};
+const visibleAttendance=db.attendance.filter(belongsToAssigned),visibleDocuments=db.documents.filter(belongsToAssigned),visibleViolations=db.violations.filter(belongsToAssigned);
+const schoolName=String(db.settings.school||'مُشرِفي'),schoolLocation=String(db.settings.location||'');
 $('#schoolHeaderName').textContent=schoolName;$('#schoolHeaderLocation').textContent=schoolLocation;$('#schoolHeaderLocation').classList.toggle('hidden',!schoolLocation.trim());
 if(document.activeElement!==$('#schoolName'))$('#schoolName').value=db.settings.school||'';
 if(document.activeElement!==$('#schoolLocation'))$('#schoolLocation').value=db.settings.location||'';
-const normType=v=>String(v??'').trim().replace(/\s+/g,'');const absCount=db.attendance.filter(x=>normType(x.type)==='غياب').length;const lateCount=db.attendance.filter(x=>normType(x.type)==='تأخر').length;const summonsCount=db.documents.filter(x=>normType(x.type).includes('استدعاء')).length;const absenceNoticesCount=db.documents.filter(x=>normType(x.type).includes('إشعارغياب')).length;$('#sStudents').textContent=db.students.length;$('#sAbs').textContent=absCount;$('#sLate').textContent=lateCount;$('#sViol').textContent=db.violations.length;$('#sDocs').textContent=db.documents.length;$('#sSummons').textContent=summonsCount;$('#sAbsNotices').textContent=absenceNoticesCount;$('#sRecords').textContent=db.attendance.length+db.documents.length+db.violations.length;
+const normType=v=>String(v??'').trim().replace(/\s+/g,'');const absCount=visibleAttendance.filter(x=>normType(x.type)==='غياب').length;const lateCount=visibleAttendance.filter(x=>normType(x.type)==='تأخر').length;const summonsCount=visibleDocuments.filter(x=>normType(x.type).includes('استدعاء')).length;const absenceNoticesCount=visibleDocuments.filter(x=>normType(x.type).includes('إشعارغياب')).length;$('#sStudents').textContent=studentsForUser().length;$('#sAbs').textContent=absCount;$('#sLate').textContent=lateCount;$('#sViol').textContent=visibleViolations.length;$('#sDocs').textContent=visibleDocuments.length;$('#sSummons').textContent=summonsCount;$('#sAbsNotices').textContent=absenceNoticesCount;$('#sRecords').textContent=visibleAttendance.length+visibleDocuments.length+visibleViolations.length;
 const today=dateISO();
-const todayAbs=db.attendance.filter(x=>x.date===today&&normType(x.type)==='غياب').length;
-const todayLate=db.attendance.filter(x=>x.date===today&&normType(x.type)==='تأخر').length;
-const todayViol=db.violations.filter(x=>x.date===today).length;
-const todaySummons=db.documents.filter(x=>x.date===today&&normType(x.type).includes('استدعاء')).length;
+const todayAbs=visibleAttendance.filter(x=>x.date===today&&normType(x.type)==='غياب').length;
+const todayLate=visibleAttendance.filter(x=>x.date===today&&normType(x.type)==='تأخر').length;
+const todayViol=visibleViolations.filter(x=>x.date===today).length;
+const todaySummons=visibleDocuments.filter(x=>x.date===today&&normType(x.type).includes('استدعاء')).length;
 $('#todayAbs').textContent=todayAbs;$('#todayLate').textContent=todayLate;$('#todayViol').textContent=todayViol;$('#todaySummons').textContent=todaySummons;
-const upcoming=db.documents.filter(x=>normType(x.type).includes('استدعاء')&&x.appointment&&String(x.appointment).slice(0,16)>=today+'T00:00').slice().sort((a,b)=>String(a.appointment).localeCompare(String(b.appointment))).slice(0,5);
+const upcoming=visibleDocuments.filter(x=>normType(x.type).includes('استدعاء')&&x.appointment&&String(x.appointment).slice(0,16)>=today+'T00:00').slice().sort((a,b)=>String(a.appointment).localeCompare(String(b.appointment))).slice(0,5);
 $('#upcomingSummons').className=upcoming.length?'upcoming-list':'empty';
 $('#upcomingSummons').innerHTML=upcoming.length?upcoming.map(x=>{const ap=String(x.appointment),day=ap.slice(0,10),clock=ap.slice(11,16);return '<div class="upcoming-item"><div><strong>'+esc(name(x.student))+'</strong><small>'+esc(x.reason||'استدعاء ولي')+'</small></div><div class="when">'+esc(day)+' · '+esc(clock)+'</div></div>';}).join(''):'لا توجد استدعاءات قادمة.';
 
 renderStudentDirectory();
-$$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';const q=sel.name==='student'&&sel.form?.id==='attForm'?($('#attStudentSearch')?.value||'').trim().toLocaleLowerCase('ar'):(sel.id==='reportStudent'?($('#reportStudentSearch')?.value||'').trim().toLocaleLowerCase('ar'):'');sel.innerHTML=first+db.students.filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(studentAcademicLabel(s))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
-$('#attLogCount').textContent=db.attendance.length+' سجل';$('#attRows').innerHTML=db.attendance.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).map(x=>{const duration=x.type==='حضور'?'حضور مسجل':x.type==='تأخر'?(x.minutes?x.minutes+' دقيقة':(Number(x.hours||0)*60).toFixed(0)+' دقيقة'):(x.hours!==undefined&&x.hours!==''?x.hours+' ساعة':'—');return `<tr data-att-id="${esc(x.id)}"><td data-label="التلميذ"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(x.studentName||name(x.student))}</button></td><td data-label="القسم">${esc(x.class||x.studentClass||student(x.student)?.class||'غير محدد')}</td><td data-label="التاريخ">${esc(x.date)}</td><td data-label="الحالة">${esc(x.type)} ${esc(x.period||'')} · ${esc(duration)}</td><td data-label="التبرير">${esc(x.justified||'غير مبرر')}</td><td data-label="ملاحظات">${esc(x.notes||'—')}</td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="editAttendance('${x.id}')">تعديل السجل</button><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">لا توجد سجلات.</td></tr>';
-$('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.description)}${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td>${esc(x.action)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
-$('#docsRows').innerHTML=db.documents.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>الموضوع</th><th>موعد الحضور</th><th>الصورة</th><th>الإجراءات</th></tr></thead><tbody>${db.documents.slice().reverse().map(x=>`<tr data-doc-id="${esc(x.id)}"><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td><td>${esc(x.reminderAt||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td><td><div class="actions"><button class="btn small primary" onclick="editDocument('${x.id}')">تعديل</button><button class="btn small" onclick="printDoc('${x.id}')">طباعة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد وثائق.</div>';
-let all=[...db.attendance.map(x=>({date:x.date,t:name(x.student),desc:x.type})),...db.violations.map(x=>({date:x.date,t:name(x.student),desc:'مخالفة'})),...db.documents.map(x=>({date:x.date,t:name(x.student),desc:x.type||'وثيقة'}))].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,6);
+$$('.studentSelect').forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';const q=sel.name==='student'&&sel.form?.id==='attForm'?($('#attStudentSearch')?.value||'').trim().toLocaleLowerCase('ar'):(sel.id==='reportStudent'?($('#reportStudentSearch')?.value||'').trim().toLocaleLowerCase('ar'):'');sel.innerHTML=first+studentsForUser().filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(studentAcademicLabel(s))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});
+$('#attLogCount').textContent=visibleAttendance.length+' سجل';$('#attRows').innerHTML=visibleAttendance.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).map(x=>{const duration=x.type==='حضور'?'حضور مسجل':x.type==='تأخر'?(x.minutes?x.minutes+' دقيقة':(Number(x.hours||0)*60).toFixed(0)+' دقيقة'):(x.hours!==undefined&&x.hours!==''?x.hours+' ساعة':'—');return `<tr data-att-id="${esc(x.id)}"><td data-label="التلميذ"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(x.studentName||name(x.student))}</button></td><td data-label="القسم">${esc(x.class||x.studentClass||student(x.student)?.class||'غير محدد')}</td><td data-label="التاريخ">${esc(x.date)}</td><td data-label="الحالة">${esc(x.type)} ${esc(x.period||'')} · ${esc(duration)}</td><td data-label="التبرير">${esc(x.justified||'غير مبرر')}</td><td data-label="ملاحظات">${esc(x.notes||'—')}</td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="editAttendance('${x.id}')">تعديل السجل</button><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">لا توجد سجلات.</td></tr>';
+$('#violRows').innerHTML=visibleViolations.slice().reverse().map(x=>`<tr><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.description)}${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td>${esc(x.action)}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
+$('#docsRows').innerHTML=visibleDocuments.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>الموضوع</th><th>موعد الحضور</th><th>الصورة</th><th>الإجراءات</th></tr></thead><tbody>${visibleDocuments.slice().reverse().map(x=>`<tr data-doc-id="${esc(x.id)}"><td>${esc(x.date)}</td><td><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td><td>${esc(x.reminderAt||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td><td><div class="actions"><button class="btn small primary" onclick="editDocument('${x.id}')">تعديل</button><button class="btn small" onclick="printDoc('${x.id}')">طباعة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد وثائق.</div>';
+let all=[...visibleAttendance.map(x=>({date:x.date,t:name(x.student),desc:x.type})),...visibleViolations.map(x=>({date:x.date,t:name(x.student),desc:'مخالفة'})),...visibleDocuments.map(x=>({date:x.date,t:name(x.student),desc:x.type||'وثيقة'}))].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,6);
 $('#recentCount').textContent=all.length+' عملية';$('#recent').className=all.length?'':'empty';$('#recent').innerHTML=all.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>نوع العملية</th></tr></thead><tbody>${all.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.t)}</td><td><span class="pill">${esc(x.desc)}</span></td></tr>`).join('')}</tbody></table></div>`:'لا توجد عمليات مسجلة بعد.';
  refreshAttendanceClassOptions();renderAttendanceWorkspace();
 }
@@ -423,7 +556,7 @@ function voiceStudentRanked(nameText){
  const q=normalizeArabic(nameText).replace(/ة/g,'ه').replace(/[ؤئ]/g,'ء');
  if(!q)return [];
  const qt=q.split(' ').filter(Boolean);
- return db.students.map(st=>{
+ return studentsForUser().map(st=>{
   const last=normalizeArabic(st.last||'').replace(/ة/g,'ه').replace(/[ؤئ]/g,'ء');
   const first=normalizeArabic(st.first||'').replace(/ة/g,'ه').replace(/[ؤئ]/g,'ء');
   const variants=[last+' '+first,first+' '+last].filter(Boolean);
@@ -439,7 +572,7 @@ function voiceStudentMatches(nameText){return voiceStudentRanked(nameText).map(x
 function showVoiceStudentChoices(matches,title,choose){
  $('#voiceStatus').textContent=title;$('#voiceConfirm').classList.remove('hidden');
  $('#voiceConfirm').innerHTML='<h3>اختر التلميذ الصحيح</h3>'+matches.map(x=>{const st=x.student||x;return '<button type="button" class="btn small voiceStudentChoice" data-student-id="'+esc(st.id)+'">'+esc((st.last+' '+st.first).trim()+' – '+st.class)+'</button>';}).join(' ');
- $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=db.students.find(x=>String(x.id)===btn.dataset.studentId);if(st)choose(st);});
+ $$('.voiceStudentChoice').forEach(btn=>btn.onclick=()=>{const st=studentsForUser().find(x=>String(x.id)===btn.dataset.studentId);if(st)choose(st);});
 }
 function handleVoiceOpenStudent(raw){
  let requested=normalizeArabic(raw);
@@ -485,7 +618,7 @@ function onArabicSpeechResult(raw){
  const requestedName=nameMatch[1].replace(/\s+(الفترة|صباحا|صباحية|مساء|مسائية|ساعتين|ساعات?).*$/i,'').trim();
  const ranked=voiceStudentRanked(requestedName);
  let st=null;
- if(window.voiceChosenStudentId){st=db.students.find(x=>String(x.id)===String(window.voiceChosenStudentId))||null;window.voiceChosenStudentId=null;}
+ if(window.voiceChosenStudentId){st=studentsForUser().find(x=>String(x.id)===String(window.voiceChosenStudentId))||null;window.voiceChosenStudentId=null;}
  if(!st&&ranked.length===1&&ranked[0].score>=0.94)st=ranked[0].student;
  if(!st){
   if(ranked.length)showVoiceStudentChoices(ranked,'لم أتأكد من الاسم المنطوق. اختر التلميذ الصحيح قبل متابعة تسجيل الغياب:',chosen=>{window.voiceChosenStudentId=chosen.id;onArabicSpeechResult(raw);});
@@ -512,21 +645,21 @@ $('#startVoiceBtn').onclick=()=>{
 };
 
 let editingStudentId=null;
-const studentCardFieldNames=['first','last','schoolYear','branch','sectionNumber','class','attribute','birthDate','guardian','phone'];
+const studentCardFieldNames=['first','last','schoolYear','branch','sectionNumber','class','attribute','gender','birthDate','guardian','phone'];
 function readStudentForm(form){const f=new FormData(form),v={};for(const key of studentCardFieldNames)v[key]=String(f.get(key)||'').trim();v.class=v.sectionNumber;return v;}
-function studentAcademicLabel(st){const p=studentAcademicParts(st);const code=[shortBranch(p.branch),p.sectionNumber].filter(Boolean).join(' ');return [p.schoolYear,code].filter(Boolean).join(' — ')||'—';}
+function studentAcademicLabel(st){const p=studentAcademicParts(st);const code=[p.branch==='عام'?'':shortBranch(p.branch),p.sectionNumber].filter(Boolean).join(' ');return [p.schoolYear,code].filter(Boolean).join(' — ')||'—';}
 function resetStudentEditor(){editingStudentId=null;$('#studentForm').reset();refreshStudentSectionOptions({schoolYear:'',branch:'',sectionNumber:''});$('#studentFormTitle').textContent='بطاقة التلميذ – إضافة بيانات';$('#studentSubmit').textContent='حفظ بطاقة التلميذ';$('#cancelStudentEdit').classList.add('hidden');}
-window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['attribute','birthDate','guardian','phone'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
+window.editStudent=id=>{const s=studentsForUser().find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['attribute','gender','birthDate','guardian','phone'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
 $('#cancelStudentEdit').onclick=resetStudentEditor;
-$('#sectionForm').onsubmit=e=>{e.preventDefault();const f=e.target,y=String(f.elements.schoolYear.value||'').trim().replace(/\s+/g,' '),b=canonicalBranch(String(f.elements.branch.value||'').trim().replace(/\s+/g,' ')),c=String(f.elements.sectionNumber.value||'').trim().replace(/\s+/g,' ');if(!y||!b||!c){alert('أدخل المستوى والشعبة ورقم القسم.');return;}const list=academicStructure(),key=[y,b,c].map(academicNorm).join('¦');if(list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join('¦')===key)){alert('هذا القسم موجود مسبقًا ضمن المستوى والشعبة المحددين.');return;}list.push({schoolYear:y,branch:b,sectionNumber:c});if(!save()){list.pop();return;}f.reset();refreshStudentSectionOptions();alert('تمت إضافة المستوى والشعبة والقسم إلى القوائم بنجاح.');};
+$('#sectionForm').onsubmit=e=>{e.preventDefault();const f=e.target,y=String(f.elements.schoolYear.value||'').trim().replace(/\s+/g,' '),secondary=db.settings.educationLevel==='secondary',b=canonicalBranch(String(f.elements.branch.value||'').trim().replace(/\s+/g,' ')||(secondary?'':'عام')),c=String(f.elements.sectionNumber.value||'').trim().replace(/\s+/g,' ');if(!y||!c||(secondary&&!b)){alert('أدخل المستوى ورقم القسم، والشعبة في التعليم الثانوي.');return;}const list=academicStructure(),key=[y,b,c].map(academicNorm).join('¦');if(list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join('¦')===key)){alert('هذا القسم موجود مسبقًا ضمن المستوى والشعبة المحددين.');return;}list.push({schoolYear:y,branch:b,sectionNumber:c});if(!Array.isArray(db.settings.assignedSections))db.settings.assignedSections=db.students.map(st=>{const p=studentAcademicParts(st);return{schoolYear:p.schoolYear,branch:p.branch,sectionNumber:p.sectionNumber};});if(!db.settings.assignedSections.some(x=>assignedSectionKey(x)===key))db.settings.assignedSections.push({schoolYear:y,branch:b,sectionNumber:c});if(!save()){list.pop();return;}f.reset();refreshStudentSectionOptions();renderAssignedSections();alert('تمت إضافة القسم إلى القوائم والأقسام المسندة إليك.');};
 $('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.last||!values.first||!values.schoolYear||!values.branch||!values.sectionNumber){alert('الاسم واللقب والمستوى والشعبة والقسم حقول إلزامية.');return;}const norm=v=>String(v||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');const duplicate=db.students.find(s=>norm(s.first)===norm(values.first)&&norm(s.last)===norm(values.last)&&norm(s.class)===norm(values.class)&&norm(s.schoolYear)===norm(values.schoolYear)&&norm(s.branch)===norm(values.branch)&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('هذا التلميذ مسجل مسبقاً بالاسم واللقب والقسم نفسيهما. لم تُضف بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ مع الحفاظ على بياناته وسجلات متابعته السابقة.');}else{const record={id:crypto.randomUUID(),identityNumber:'',...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
 
 const attendanceWeekdays=[['sun','الأحد'],['mon','الإثنين'],['tue','الثلاثاء'],['wed','الأربعاء'],['thu','الخميس']];
 const dateISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const classKey=v=>String(v??'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');
 const attendanceGroupKey=st=>[st?.schoolYear||'',st?.branch||'',st?.class||''].map(classKey).join('¦');
-const attendanceGroupLabel=st=>[st?.schoolYear||'',st?.branch||'',st?.class?sectionDisplay(st.class):'قسم غير محدد'].filter(Boolean).join(' — ');
-const attendanceGroups=()=>{const m=new Map();db.students.forEach(st=>{const key=attendanceGroupKey(st);if(!m.has(key))m.set(key,{key,label:attendanceGroupLabel(st),schoolYear:st.schoolYear||'',branch:st.branch||'',class:st.class||''});});return [...m.values()].sort((a,b)=>a.label.localeCompare(b.label,'ar',{numeric:true}));};
+const attendanceGroupLabel=st=>[st?.schoolYear||'',st?.branch==='عام'?'':(st?.branch||''),st?.class?sectionDisplay(st.class):'قسم غير محدد'].filter(Boolean).join(' — ');
+const attendanceGroups=()=>{const m=new Map();studentsForUser().forEach(st=>{const key=attendanceGroupKey(st);if(!m.has(key))m.set(key,{key,label:attendanceGroupLabel(st),schoolYear:st.schoolYear||'',branch:st.branch||'',class:st.class||''});});return [...m.values()].sort((a,b)=>a.label.localeCompare(b.label,'ar',{numeric:true}));};
 const attendanceRecordGroupKey=a=>{const st=student(a.student);if(st)return attendanceGroupKey(st);return [a.schoolYear||'',a.branch||'',a.class||a.studentClass||''].map(classKey).join('¦');};
 const timetableForGroup=group=>{const all=db.settings.timetables||{};if(all[group.key])return all[group.key];const sameClass=attendanceGroups().filter(g=>classKey(g.class)===classKey(group.class));return sameClass.length===1?all[group.class]||null:null;};
 function refreshAttendanceClassOptions(){const groups=attendanceGroups(),daily=$('#dailyClass'),schedule=$('#scheduleClass'),old=daily.value,oldSchedule=schedule.value,options=groups.map(g=>'<option value="'+esc(g.key)+'">'+esc(g.label)+'</option>').join('');daily.innerHTML='<option value="">اختر القسم</option>'+options;schedule.innerHTML='<option value="">اختر القسم لحفظ توقيته</option>'+options;if(groups.some(g=>g.key===old))daily.value=old;if(groups.some(g=>g.key===oldSchedule))schedule.value=oldSchedule;}
@@ -539,7 +672,7 @@ function renderAttendanceWorkspace(){
 window.loadTimetableIntoForm=key=>{const group=attendanceGroups().find(g=>g.key===key);if(!group)return;go('settings');setSettingsTab('schedule');const t=timetableForGroup(group)||{},f=$('#scheduleForm');f.elements.class.value=key;attendanceWeekdays.forEach(([k])=>f.elements[k].value=Number(t[k]||0));requestAnimationFrame(()=>f.scrollIntoView({behavior:'smooth',block:'center'}));};
 $('#scheduleForm').onsubmit=e=>{e.preventDefault();const f=e.target,key=String(f.elements.class.value||'').trim(),group=attendanceGroups().find(g=>g.key===key);if(!group){alert('اختر قسماً صحيحاً.');return;}const t={};for(const [k] of attendanceWeekdays){const n=Number(f.elements[k].value);if(!Number.isFinite(n)||n<0||n>12){alert('تحقق من ساعات كل يوم؛ يجب أن تكون بين 0 و12.');return;}t[k]=n;}db.settings.timetables=db.settings.timetables||{};const old=db.settings.timetables[key];db.settings.timetables[key]=t;if(!save()){if(old)db.settings.timetables[key]=old;else delete db.settings.timetables[key];return;}alert('تم حفظ توقيت '+group.label+'. سيُستخدم في حساب النسبة الشهرية لهذا القسم وحده.');};
 function loadDailyRoster(){
- const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),students=db.students.filter(s=>attendanceGroupKey(s)===cls);
+ const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),students=studentsForUser().filter(s=>attendanceGroupKey(s)===cls);
  if(!cls||!group){$('#dailyRoster').className='daily-roster empty';$('#dailyRoster').textContent='اختر القسم لعرض قائمة التلاميذ.';$('#dailyRosterTools').classList.add('hidden');$('#saveDailyAbsences').disabled=true;return;}
  if(!students.length){$('#dailyRoster').innerHTML='<p class="empty">لا يوجد تلاميذ مسجلون في هذا القسم.</p>';$('#dailyRosterTools').classList.remove('hidden');$('#saveDailyAbsences').disabled=true;$('#dailyRosterCount').textContent='0 تلميذ';return;}
  const already=new Map(db.attendance.filter(a=>(a.type==='غياب'||a.type==='حضور')&&a.date===$('#dailyDate').value&&attendanceRecordGroupKey(a)===cls).map(a=>[String(a.student),a.type]));
@@ -566,11 +699,11 @@ $('#dailyPeriod').addEventListener('change',()=>{
 $('#dailyHours').addEventListener('input',()=>{$$('#dailyRoster .daily-absent:checked').forEach(c=>{const h=c.closest('.daily-student')?.querySelector('.daily-hours');if(h&&!h.disabled&&!h.readOnly)h.value=$('#dailyHours').value;});});
 $('#saveDailyAbsences').onclick=()=>{
  const selected=$('.daily-absent:checked');const cls=$('#dailyClass').value,group=attendanceGroups().find(g=>g.key===cls),date=$('#dailyDate').value,period=$('#dailyPeriod').value,justified=$('#dailyJustified').value;if(!date){alert('حدد تاريخ الغياب.');return;}const records=[];
- for(const check of selected){const card=check.closest('.daily-student'),st=db.students.find(x=>String(x.id)===check.dataset.id);let hours=period==='اليوم كاملاً'?scheduledHoursForGroupDate(group,date):parseHours(card.querySelector('.daily-hours').value);if(!st||hours===null||hours===''||Number.isNaN(Number(hours))||Number(hours)<=0||Number(hours)>24){alert(period==='اليوم كاملاً'?'لا يمكن تسجيل يوم كامل: أدخل توقيت القسم وتأكد من وجود ساعات دراسة في هذا اليوم.':'تحقق من عدد ساعات الغياب لكل تلميذ محدد.');return;}records.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'غياب',period,hours:Number(hours),fullDay:period==='اليوم كاملاً',justified,notes:card.querySelector('.daily-note').value.trim()});}
+ for(const check of selected){const card=check.closest('.daily-student'),st=studentsForUser().find(x=>String(x.id)===check.dataset.id);let hours=period==='اليوم كاملاً'?scheduledHoursForGroupDate(group,date):parseHours(card.querySelector('.daily-hours').value);if(!st||hours===null||hours===''||Number.isNaN(Number(hours))||Number(hours)<=0||Number(hours)>24){alert(period==='اليوم كاملاً'?'لا يمكن تسجيل يوم كامل: أدخل توقيت القسم وتأكد من وجود ساعات دراسة في هذا اليوم.':'تحقق من عدد ساعات الغياب لكل تلميذ محدد.');return;}records.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'غياب',period,hours:Number(hours),fullDay:period==='اليوم كاملاً',justified,notes:card.querySelector('.daily-note').value.trim()});}
  const selectedIds=new Set(selected.map(c=>String(c.dataset.id))),currentRecords=db.attendance.filter(a=>a.date===date&&attendanceRecordGroupKey(a)===cls),alreadyToday=new Set(currentRecords.filter(a=>a.type==='غياب'||a.type==='حضور').map(a=>String(a.student))),latest=new Map();
  for(const a of db.attendance){if(!['غياب','حضور','تأخر'].includes(a.type)||!a.date||a.date>date)continue;const key=String(a.student),prior=latest.get(key);if(!prior||String(a.date)>=String(prior.date))latest.set(key,a);}
  const presenceRecords=[];
- for(const st of db.students.filter(x=>attendanceGroupKey(x)===cls)){const key=String(st.id),last=latest.get(key);if(selectedIds.has(key)||alreadyToday.has(key)||!last||last.type!=='غياب'||String(last.justified||'غير مبرر')==='مبرر')continue;presenceRecords.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'حضور',period, hours:0,minutes:null,justified:'مبرر',notes:'حضور مثبت من كشف القسم'});}
+ for(const st of studentsForUser().filter(x=>attendanceGroupKey(x)===cls)){const key=String(st.id),last=latest.get(key);if(selectedIds.has(key)||alreadyToday.has(key)||!last||last.type!=='غياب'||String(last.justified||'غير مبرر')==='مبرر')continue;presenceRecords.push({id:crypto.randomUUID(),student:st.id,studentName:(st.last+' '+st.first).trim(),class:st.class||'',schoolYear:st.schoolYear||'',branch:st.branch||'',sectionLabel:group?.label||attendanceGroupLabel(st),date,type:'حضور',period, hours:0,minutes:null,justified:'مبرر',notes:'حضور مثبت من كشف القسم'});}
  if(!records.length&&!presenceRecords.length){alert('لا توجد غيابات جديدة أو حالات حضور تحتاج إلى تحديث.');return;}const previous=db.attendance.slice();db.attendance.push(...records,...presenceRecords);if(!save()){db.attendance=previous;render();return;}$('#dailyRosterTools').classList.add('hidden');$('#dailyRoster').className='daily-roster empty';$('#dailyRoster').textContent='تم حفظ '+records.length+' سجل غياب و'+presenceRecords.length+' سجل حضور لتحديث سلاسل الغياب.';$('#saveDailyAbsences').disabled=true;$('#dailyRosterCount').textContent='تم الحفظ';alert('تم تسجيل غياب '+records.length+' تلميذاً، وإثبات حضور '+presenceRecords.length+' تلميذاً كانت لديهم سلسلة غياب سابقة في القسم '+cls+'.');
 };
 function scheduledHoursForGroupDate(group,date){
@@ -589,13 +722,15 @@ function updateIndividualPeriodFields(){
  if(!period||!custom||!hours)return;
  const full=period.value==='اليوم كاملاً',other=period.value==='توقيت آخر';
  custom.classList.toggle('hidden',!other);
- hours.readOnly=full;
  if(full){
-  const st=db.students.find(x=>String(x.id)===String($('#attForm').elements.student.value));
+  const st=studentsForUser().find(x=>String(x.id)===String($('#attForm').elements.student.value));
   const value=scheduledHoursForStudentDate(st,$('#attForm').elements.date.value);
-  hours.value=value===null||value<=0?'':String(value);
-  hours.placeholder=value===null?'أدخل توقيت القسم أولاً':value<=0?'لا توجد دراسة مبرمجة في هذا اليوم':'ساعات اليوم الدراسي';
+  const hasSchedule=value!==null&&value>0;
+  hours.readOnly=hasSchedule;
+  hours.value=hasSchedule?String(value):'';
+  hours.placeholder=hasSchedule?'ساعات اليوم الدراسي':'لا يوجد توقيت مضبوط؛ أدخل الساعات يدوياً';
  }else{
+  hours.readOnly=false;
   hours.placeholder='مثال: 2 أو 7.5';
  }
 }
@@ -605,18 +740,19 @@ $('#attPeriod').addEventListener('change',updateIndividualPeriodFields);
 $('#attForm').elements.student.addEventListener('change',updateIndividualPeriodFields);
 $('#attForm').elements.date.addEventListener('change',updateIndividualPeriodFields);
 updateAttendanceTypeFields();
-$('#attStudentSearch').addEventListener('input',()=>{const sel=$('#attForm').elements.student,old=sel.value,q=$('#attStudentSearch').value.trim().toLocaleLowerCase('ar');sel.innerHTML=db.students.filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(studentAcademicLabel(s))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old;updateIndividualPeriodFields();});
+$('#attStudentSearch').addEventListener('input',()=>{const sel=$('#attForm').elements.student,old=sel.value,q=$('#attStudentSearch').value.trim().toLocaleLowerCase('ar');sel.innerHTML=studentsForUser().filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(studentAcademicLabel(s))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old;updateIndividualPeriodFields();});
 $('#attForm').onsubmit=e=>{
  e.preventDefault();const f=new FormData(e.target),type=String(f.get('type')||'غياب'),isLate=type==='تأخر',isPresent=type==='حضور';
  let period=String(f.get('period')||'').trim();if(period==='توقيت آخر')period=String(f.get('periodCustom')||'').trim();
  if(!period){alert('حدد الفترة أو أدخل التوقيت.');return;}
- const st=db.students.find(x=>String(x.id)===String(f.get('student')));let hours='',minutes='',fullDay=false;
+ const st=studentsForUser().find(x=>String(x.id)===String(f.get('student')));let hours='',minutes='',fullDay=false;
  if(isPresent){hours=0;}
  else if(isLate){minutes=Number(f.get('minutes'));if(!Number.isFinite(minutes)||minutes<1||minutes>600){alert('أدخل مدة التأخر بالدقائق من 1 إلى 600.');return;}hours=minutes/60;}
  else if(period==='اليوم كاملاً'){
-  hours=scheduledHoursForStudentDate(st,String(f.get('date')||''));
-  if(hours===null){alert('لا يمكن تسجيل يوم كامل قبل إدخال التوقيت الأسبوعي لهذا القسم من الإعدادات.');return;}
-  if(hours<=0){alert('لا توجد ساعات دراسة مبرمجة لهذا القسم في التاريخ المحدد.');return;}
+  const scheduled=scheduledHoursForStudentDate(st,String(f.get('date')||''));
+  if(scheduled!==null&&scheduled>0){hours=scheduled;}
+  else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
+  // اختيار اليوم كاملاً يبقى محفوظاً حتى عند إدخال الساعات يدوياً.
   fullDay=true;
  }else{hours=parseHours(f.get('hours'));if(hours===''||Number.isNaN(hours)||hours<=0||hours>24){alert('أدخل عدد ساعات الغياب من 0.25 إلى 24.');return;}}
  const record={id:crypto.randomUUID(),student:f.get('student'),studentName:st?(st.last+' '+st.first).trim():'',class:st?.class||'',schoolYear:st?.schoolYear||'',branch:st?.branch||'',sectionLabel:st?attendanceGroupLabel(st):'',type,date:f.get('date'),period,hours,fullDay,minutes:isLate?minutes:null,justified:isPresent?'مبرر':f.get('justified'),notes:f.get('notes')};
@@ -656,10 +792,12 @@ function getUnjustifiedStreaks(){
   const events=item.events;
   for(const [date,event] of events){
    const scheduled=scheduledHoursForStudentDate(item.student,date);
-   // لا نثبت الغياب الكامل إلا في يوم توجد فيه ساعات دراسة فعلية ومعلومة.
-   // حتى اختيار «اليوم كاملاً» لا يكفي إذا كان توقيت القسم غير مضبوط أو اليوم عطلة.
-   event.fullDayAbsence=!event.hasBreak&&scheduled!==null&&scheduled>0&&
-    (event.explicitFullDay||event.unjustifiedHours>=scheduled);
+   // الغياب المسجل صراحةً «اليوم كاملاً» يُعتد به حتى عند غياب التوقيت الأسبوعي.
+   // أما الساعات الجزئية فلا تثبت يوماً كاملاً إلا بمقارنتها بتوقيت القسم.
+   event.fullDayAbsence=!event.hasBreak&&(
+    (event.explicitFullDay&&scheduled!==0)||
+    (scheduled!==null&&scheduled>0&&event.unjustifiedHours>=scheduled)
+   );
   }
   const ordered=[...events.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   const lastBreak=ordered.reduce((last,[date,event])=>event.hasBreak&&date>last?date:last,'');
@@ -678,9 +816,9 @@ function getUnjustifiedStreaks(){
     if(weekday===5||weekday===6){last=date;continue;}
     const scheduled=scheduledHoursForStudentDate(item.student,date);
     if(scheduled===0){last=date;continue;}
-    // غياب التوقيت الأسبوعي يجعل التحقق غير ممكن؛ لا نحتسب يوماً غير مثبت.
-    if(scheduled===null){valid=false;break;}
     const event=events.get(date);
+    // إذا كان اليوم مسجلاً صراحةً كاملاً، فلا نحتاج إلى توقيت القسم لإثبات هذا اليوم.
+    if(scheduled===null&&(!event||!event.explicitFullDay)){valid=false;break;}
     if(!event||event.hasBreak||!event.fullDayAbsence){valid=false;break;}
     last=date;
    }
@@ -742,6 +880,11 @@ function renderAbsenceFollowup(){
   const labels={4:'الإشعار الأول',11:'الإشعار الثاني',18:'الإعذار',32:'إحالة للمراجعة الإدارية'};
   const reached=[4,11,18,32].filter(n=>x.days>=n);
   const pending=reached.filter(n=>!noticeExists(x,n)&&(n===4||(n===11&&hasVerifiedAbsenceNoticeDelivery(x,4,7))||(n===18&&hasVerifiedAbsenceNoticeDelivery(x,11,7))||(n===32&&canCreateAbsenceStage32(x))));
+  // أرسل تذكيراً محلياً للمشرف عند بلوغ مرحلة مستحقة فقط؛ لا ينشئ وثيقة تلقائياً.
+  if(pending.length&&window.AndroidBridge&&typeof AndroidBridge.notifyAbsenceStage==='function'){
+   const studentName=(x.student.last+' '+x.student.first).trim()||'التلميذ';
+   pending.forEach(stage=>AndroidBridge.notifyAbsenceStage(String(x.student.id),studentName,stage,x.start));
+  }
   const stage=x.days>=32?'<span class="status-danger">بلغت المتابعة 32 يوماً؛ يلزم التحقق من شروط الإعذار والتبليغ قبل الإحالة للمراجعة الإدارية</span>':x.days>=18?'<span class="status-danger">بلغ مرحلة الإعذار — اليوم 18</span>':x.days>=11?'<span class="status-warn">بلغ مرحلة الإشعار الثاني — اليوم 11</span>':x.days>=4?'<span class="status-warn">بلغ مرحلة الإشعار الأول — اليوم 4</span>':'<span class="status-warn">متابعة الغياب المتواصل</span>';
   const actions=pending.map(n=>'<button type="button" class="btn small primary" onclick="createAbsenceStageNotice(\''+esc(x.student.id)+'\',\''+esc(x.start)+'\','+n+')">إنشاء '+labels[n]+'</button>').join(' ');
   const special=x.thursdayStart&&x.days>=4&&!noticeExists(x,4)?'<p class="status-warn">بدأ الغياب يوم الخميس: تنبيه خاص يوم الأحد، والإشعار الأول ينتظر مراجعتك.</p>':'';
@@ -780,7 +923,7 @@ window.resetManualAbsenceRate=key=>{if(!db.settings.absenceRateOverrides)return;
 function monthlyAbsenceRecords(group,month){return db.attendance.filter(a=>a.type==='غياب'&&String(a.date||'').slice(0,7)===month&&!isSchoolHolidayDate(String(a.date||''))&&attendanceRecordGroupKey(a)===group.key);}
 function renderMonthlyAbsenceRates(){
  const box=$('#monthlyAbsenceRates');if(!box)return;const month=$('#absenceMonth').value||dateISO().slice(0,7),groups=attendanceGroups();let institutionNumerator=0,institutionDenominator=0;
- const rows=groups.map(group=>{const cls=group.label,roster=db.students.filter(s=>attendanceGroupKey(s)===group.key),scheduled=monthScheduledHours(group,month),records=monthlyAbsenceRecords(group,month),total=records.reduce((n,a)=>n+(Number(parseHours(a.hours))||0),0),justified=records.filter(a=>a.justified==='مبرر').reduce((n,a)=>n+(Number(parseHours(a.hours))||0),0),unjustified=records.filter(a=>a.justified!=='مبرر').reduce((n,a)=>n+(Number(parseHours(a.hours))||0),0),denominator=scheduled===null?0:roster.length*scheduled,auto=denominator?total/denominator*100:null,key=month+'|'+group.key,legacyKey=month+'|'+group.class,manual=db.settings.absenceRateOverrides?.[key]||(attendanceGroups().filter(g=>classKey(g.class)===classKey(group.class)).length===1?db.settings.absenceRateOverrides?.[legacyKey]:null),rate=manual?Number(manual.value):auto;institutionNumerator+=total;institutionDenominator+=denominator;return {cls,groupKey:group.key,count:roster.length,scheduled,total,justified,unjustified,auto,rate,manual,key};});
+ const rows=groups.map(group=>{const cls=group.label,roster=studentsForUser().filter(s=>attendanceGroupKey(s)===group.key),scheduled=monthScheduledHours(group,month),records=monthlyAbsenceRecords(group,month),total=records.reduce((n,a)=>n+(Number(parseHours(a.hours))||0),0),justified=records.filter(a=>a.justified==='مبرر').reduce((n,a)=>n+(Number(parseHours(a.hours))||0),0),unjustified=records.filter(a=>a.justified!=='مبرر').reduce((n,a)=>n+(Number(parseHours(a.hours))||0),0),denominator=scheduled===null?0:roster.length*scheduled,auto=denominator?total/denominator*100:null,key=month+'|'+group.key,legacyKey=month+'|'+group.class,manual=db.settings.absenceRateOverrides?.[key]||(attendanceGroups().filter(g=>classKey(g.class)===classKey(group.class)).length===1?db.settings.absenceRateOverrides?.[legacyKey]:null),rate=manual?Number(manual.value):auto;institutionNumerator+=total;institutionDenominator+=denominator;return {cls,groupKey:group.key,count:roster.length,scheduled,total,justified,unjustified,auto,rate,manual,key};});
  const overall=institutionDenominator?institutionNumerator/institutionDenominator*100:null;box.innerHTML='<div class="rate-card"><h3>مجموع المؤسسة — '+esc(month)+'</h3><p>مجموع ساعات الغياب: <b>'+institutionNumerator.toLocaleString('ar-DZ')+'</b> · النسبة الإجمالية: <b>'+(overall===null?'—':overall.toFixed(2)+'%')+'</b></p></div>'+rows.map(r=>{const pct=r.rate===null?'—':r.rate.toFixed(2)+'%',width=r.rate===null?0:Math.min(100,Math.max(0,r.rate));return '<div class="rate-card"><h3>القسم '+esc(r.cls)+' — '+pct+(r.manual?' <span class="pill">تعديل يدوي</span>':'')+'</h3><div class="rate-track"><span style="width:'+width+'%"></span></div><p>التلاميذ: '+r.count+' · الساعات المقررة: '+(r.scheduled===null?'لم يُدخل التوقيت':r.scheduled)+' · ساعات الغياب: '+r.total+'</p><p>مبرر: '+r.justified+' ساعة · غير مبرر أو قيد التبرير: '+r.unjustified+' ساعة</p><div class="actions"><button type="button" class="btn small" onclick="setManualAbsenceRate(\''+esc(r.key)+'\',\''+esc(r.cls)+'\')">تعديل النسبة يدوياً</button>'+(r.manual?'<button type="button" class="btn small" onclick="resetManualAbsenceRate(\''+esc(r.key)+'\')">العودة للحساب الآلي</button>':'')+'</div></div>';}).join('')||'<p class="empty">لا توجد أقسام مسجلة.</p>';
 }
 $('#absenceMonth').addEventListener('change',renderMonthlyAbsenceRates);
@@ -814,7 +957,7 @@ window.delRecord=(kind,id)=>{if(!confirm('هل تريد حذف هذا السجل
 window.editDocument=id=>{
  const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;
  const row=document.querySelector('tr[data-doc-id="'+CSS.escape(String(id))+'"]');if(!row)return;
- const students=db.students.map(st=>'<option value="'+esc(st.id)+'" '+(String(st.id)===String(d.student)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName||'تلميذ')+' — '+esc(sectionDisplay(st.class))+'</option>').join('');
+ const students=studentsForUser().map(st=>'<option value="'+esc(st.id)+'" '+(String(st.id)===String(d.student)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName||'تلميذ')+' — '+esc(sectionDisplay(st.class))+'</option>').join('');
  const types=['إشعار غياب','استدعاء ولي','تنبيه'];if(d.type&&!types.includes(d.type))types.push(d.type);
  const typeOptions=types.map(t=>'<option value="'+esc(t)+'" '+(String(d.type)===t?'selected':'')+'>'+esc(t)+'</option>').join('');
  row.innerHTML='<td data-label="التاريخ"><label>التاريخ</label><input id="editDocDate" type="date" value="'+esc(d.date||'')+'"></td>'+
@@ -829,8 +972,8 @@ window.editDocument=id=>{
 };
 window.saveDocumentEdit=id=>{
  const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;
- const before={...d},date=$('#editDocDate').value,studentId=$('#editDocStudent').value,type=$('#editDocType').value,reason=$('#editDocReason').value.trim(),appointment=$('#editDocAppointment').value,reminderAt=$('#editDocReminder').value,hasDeliveryFields=[4,11,18].includes(Number(d.absenceStage)),deliveryDate=hasDeliveryFields?$('#editDeliveryDate').value:d.deliveryDate,deliveryProof=hasDeliveryFields?$('#editDeliveryProof').value.trim():d.deliveryProof;
- if(!date||!studentId||!reason){alert('يرجى تحديد التاريخ والتلميذ وكتابة الموضوع أو السبب.');return;}if(hasDeliveryFields&&(deliveryDate||deliveryProof)&&(!deliveryDate||!deliveryProof||!isValidISODate(deliveryDate)||deliveryDate>dateISO())){alert('أدخل تاريخ التبليغ الصحيح وإثباته معاً، ولا يمكن أن يكون التاريخ مستقبلياً.');return;}
+ const before={...d},date=$('#editDocDate').value,studentId=$('#editDocStudent').value,linked=studentsForUser().find(st=>String(st.id)===String(studentId)),type=$('#editDocType').value,reason=$('#editDocReason').value.trim(),appointment=$('#editDocAppointment').value,reminderAt=$('#editDocReminder').value,hasDeliveryFields=[4,11,18].includes(Number(d.absenceStage)),deliveryDate=hasDeliveryFields?$('#editDeliveryDate').value:d.deliveryDate,deliveryProof=hasDeliveryFields?$('#editDeliveryProof').value.trim():d.deliveryProof;
+ if(!date||!studentId||!linked||!reason){alert('يرجى تحديد تلميذ من الأقسام المسندة إليك، والتاريخ وكتابة الموضوع أو السبب.');return;}if(hasDeliveryFields&&(deliveryDate||deliveryProof)&&(!deliveryDate||!deliveryProof||!isValidISODate(deliveryDate)||deliveryDate>dateISO())){alert('أدخل تاريخ التبليغ الصحيح وإثباته معاً، ولا يمكن أن يكون التاريخ مستقبلياً.');return;}
  if(type==='استدعاء ولي'){if(!appointment||!reminderAt){alert('يرجى تحديد موعد حضور الولي وتاريخ وساعة التنبيه للاستدعاء.');return;}const appointmentMs=new Date(appointment).getTime(),reminderMs=new Date(reminderAt).getTime();if(!Number.isFinite(appointmentMs)||!Number.isFinite(reminderMs)){alert('تحقق من موعد الحضور والتنبيه.');return;}}
  d.date=date;d.student=studentId;d.type=type;d.reason=reason;d.appointment=type==='استدعاء ولي'?appointment:'';d.reminderAt=type==='استدعاء ولي'?reminderAt:'';if(hasDeliveryFields){d.deliveryDate=deliveryDate;d.deliveryProof=deliveryProof;}
  if(!save()){Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,before);render();return;}
@@ -840,7 +983,7 @@ window.saveDocumentEdit=id=>{
 };
 
 // مطابقة أسماء التلاميذ مع تجاهل التشكيل واختلافات الهمزة والمسافات
-const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\\u064B-\\u065F\\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\\u200f\\u200e]/g,'').replace(/[^\\p{L}\\p{N}]+/gu,' ').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');
+const normalizeStudentIdentity=value=>String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670ـ]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/[\u200f\u200e]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim().replace(/\s*\d+$/,'').replace(/\s+/g,' ').toLocaleLowerCase('ar');
 const findStudentForRecord=record=>{
   const byId=db.students.find(s=>String(s.id)===String(record.student));
   if(byId)return {student:byId,reason:'المعرّف'};
@@ -855,27 +998,29 @@ const findStudentForRecord=record=>{
 window.editAttendance=id=>{
  const r=db.attendance.find(x=>x.id===id);if(!r)return;const row=document.querySelector('tr[data-att-id="'+CSS.escape(id)+'"]');if(!row)return;
  const match=findStudentForRecord(r),linked=match.student,currentName=String(linked?((linked.last+' '+linked.first).trim()||linked.name||linked.fullName):r.studentName||name(r.student)||''),currentClass=String(linked?attendanceGroupLabel(linked):(r.sectionLabel||r.class||r.studentClass||'')),isLate=r.type==='تأخر',isPresent=r.type==='حضور',duration=isLate?(r.minutes??Math.round(Number(r.hours||0)*60)):(r.hours??(parseHours(r.period)!==''?parseHours(r.period):''));
- const choices=db.students.map(st=>'<option value="'+esc(st.id)+'" '+(linked&&String(linked.id)===String(st.id)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName)+' — '+esc(st.class||'قسم غير محدد')+'</option>').join('');
+ const choices=studentsForUser().map(st=>'<option value="'+esc(st.id)+'" '+(linked&&String(linked.id)===String(st.id)?'selected':'')+'>'+esc((st.last+' '+st.first).trim()||st.name||st.fullName)+' — '+esc(st.class||'قسم غير محدد')+'</option>').join('');
  const matchNotice=linked?'تم التعرف على التلميذ من ملفه.':match.ambiguous?.length?'يوجد أكثر من تطابق؛ اختر التلميذ الصحيح.':'لم يتم التعرف تلقائياً؛ اختر التلميذ أو أدخل المعلومات يدوياً.';
  row.innerHTML=`<td data-label="التلميذ"><label>ملف التلميذ</label><select id="editStudentMatch" onchange="fillAttendanceStudent(this.value)"><option value="">— اختيار يدوي / غير معروف —</option>${choices}</select><small class="muted" id="editStudentMatchNotice">${esc(matchNotice)}</small><label>اسم التلميذ</label><input id="editAttendanceName" type="text" value="${esc(currentName)}" style="min-width:150px;width:100%"></td><td data-label="القسم"><label>القسم</label><input id="editAttendanceClass" type="text" value="${esc(currentClass)}" style="min-width:100px;width:100%"></td><td data-label="التاريخ"><label>التاريخ</label><input id="editAttendanceDate" type="date" value="${esc(r.date||'')}"></td><td data-label="الحالة"><label>النوع</label><select id="editAttendanceType" onchange="toggleAttendanceEditDuration()"><option value="غياب" ${!isLate&&!isPresent?'selected':''}>غياب</option><option value="تأخر" ${isLate?'selected':''}>تأخر</option><option value="حضور" ${isPresent?'selected':''}>حضور</option></select><label>الفترة / التوقيت</label><input id="editAttendancePeriod" value="${esc(r.period||'')}" style="width:100%"><label id="editDurationLabel" ${isPresent?'hidden':''}>${isLate?'مدة التأخر بالدقائق':'ساعات الغياب'}</label><input id="editAttendanceDuration" type="number" min="${isLate?'1':'0.25'}" max="${isLate?'600':'24'}" step="${isLate?'1':'0.25'}" value="${esc(duration)}" style="width:100%" ${isPresent?'hidden':''}></td><td data-label="التبرير"><label>حالة التبرير</label><select id="editJustified"><option value="غير مبرر" ${r.justified==='غير مبرر'?'selected':''}>غير مبرر</option><option value="مبرر" ${r.justified==='مبرر'?'selected':''}>مبرر</option><option value="قيد التبرير" ${r.justified==='قيد التبرير'?'selected':''}>قيد التبرير</option></select></td><td data-label="ملاحظات"><label>الملاحظات</label><textarea id="editAttendanceNotes" rows="2" style="width:100%;min-width:120px">${esc(r.notes||'')}</textarea></td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="saveAttendanceEdit('${id}')">حفظ</button><button class="btn small" onclick="render()">إلغاء</button></div></td>`;
 };
 window.toggleAttendanceEditDuration=()=>{const type=$('#editAttendanceType')?.value,late=type==='تأخر',present=type==='حضور';$('#editDurationLabel').hidden=present;$('#editAttendanceDuration').hidden=present;$('#editDurationLabel').textContent=late?'مدة التأخر بالدقائق':'ساعات الغياب';$('#editAttendanceDuration').min=late?'1':'0.25';$('#editAttendanceDuration').max=late?'600':'24';$('#editAttendanceDuration').step=late?'1':'0.25';};
-window.fillAttendanceStudent=id=>{const st=db.students.find(x=>String(x.id)===String(id));if(!st)return;$('#editAttendanceName').value=(st.last+' '+st.first).trim()||st.name||st.fullName||'';$('#editAttendanceClass').value=st.class||'';$('#editStudentMatchNotice').textContent='تم جلب الاسم والقسم من ملف التلميذ.';};
+window.fillAttendanceStudent=id=>{const st=studentsForUser().find(x=>String(x.id)===String(id));if(!st)return;$('#editAttendanceName').value=(st.last+' '+st.first).trim()||st.name||st.fullName||'';$('#editAttendanceClass').value=st.class||'';$('#editStudentMatchNotice').textContent='تم جلب الاسم والقسم من ملف التلميذ.';};
 window.saveAttendanceEdit=id=>{
- const r=db.attendance.find(x=>x.id===id);if(!r)return;const selectedId=$('#editStudentMatch').value,linked=selectedId?db.students.find(st=>String(st.id)===String(selectedId)):null,before={...r},editedName=$('#editAttendanceName').value.trim(),editedClass=$('#editAttendanceClass').value.trim(),type=$('#editAttendanceType').value,date=$('#editAttendanceDate').value,period=$('#editAttendancePeriod').value.trim(),duration=Number($('#editAttendanceDuration').value),justified=$('#editJustified').value,notes=$('#editAttendanceNotes').value;
+ const r=db.attendance.find(x=>x.id===id);if(!r)return;const selectedId=$('#editStudentMatch').value,linked=selectedId?studentsForUser().find(st=>String(st.id)===String(selectedId)):null,before={...r},editedName=$('#editAttendanceName').value.trim(),editedClass=$('#editAttendanceClass').value.trim(),type=$('#editAttendanceType').value,date=$('#editAttendanceDate').value,period=$('#editAttendancePeriod').value.trim(),duration=Number($('#editAttendanceDuration').value),justified=$('#editJustified').value,notes=$('#editAttendanceNotes').value;
  if(!editedName||!date){alert('يرجى إدخال اسم التلميذ والتاريخ.');return;}if(type!=='حضور'&&(!Number.isFinite(duration)||(type==='تأخر'?(duration<1||duration>600):(duration<=0||duration>24)))){alert(type==='تأخر'?'أدخل مدة التأخر بالدقائق من 1 إلى 600.':'أدخل ساعات الغياب من 0.25 إلى 24.');return;}
  if(linked){r.student=linked.id;r.studentName=(linked.last+' '+linked.first).trim()||linked.name||linked.fullName||editedName;r.class=linked.class||editedClass;r.schoolYear=linked.schoolYear||'';r.branch=linked.branch||'';r.sectionLabel=attendanceGroupLabel(linked);r.studentClass=linked.class||editedClass;}else{r.studentName=editedName;r.class=editedClass;r.sectionLabel=editedClass;r.schoolYear=r.schoolYear||'';r.branch=r.branch||'';r.studentClass=editedClass;}
  r.type=type;r.date=date;r.period=period;r.hours=type==='حضور'?0:type==='تأخر'?duration/60:duration;r.minutes=type==='تأخر'?duration:null;r.justified=type==='حضور'?'مبرر':justified;r.notes=notes;
  if(save())alert('تم تحديث السجل بنجاح، مع الاحتفاظ بارتباطه بملف التلميذ.');else{Object.keys(r).forEach(k=>delete r[k]);Object.assign(r,before);render();alert('تعذر حفظ التعديل؛ أُعيد السجل إلى حالته السابقة.');}
 };
 window.studentHistory=id=>{
-  const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
+  const requested=String(id),assignedStudents=studentsForUser();let s=assignedStudents.find(x=>String(x.id)===requested);
+  if(!s){const key=normalizeStudentIdentity(requested),matches=assignedStudents.filter(st=>[st.last+' '+st.first,st.first+' '+st.last,st.name,st.fullName].some(value=>normalizeStudentIdentity(value)===key));if(matches.length===1)s=matches[0];}
+  if(!s){alert('لم يتم العثور على تلميذ مطابق ضمن الأقسام المسندة إليك.');return;}const sid=String(s.id);
   const normStudentName=value=>String(value??'').normalize('NFKC')
-    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
+    .replace(/[\u064B-\u065F\u0670ـ\u200e\u200f]/g,'')
     .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
-    .replace(/\\s*\\d+$/,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+    .replace(/\s*\d+$/,'').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
   const normStudentSection=value=>String(value??'').normalize('NFKC')
-    .replace(/[\\u064B-\\u065F\\u0670ـ\\u200e\\u200f]/g,'')
+    .replace(/[\u064B-\u065F\u0670ـ\u200e\u200f]/g,'')
     .replace(/[أإآٱ]/g,'ا').replace(/\s+/g,'').trim().toLocaleLowerCase('ar');
   const fullStudentName=normStudentName(String(s.last||'')+' '+String(s.first||''))||normStudentName(s.name||s.fullName||'');
   const belongsToStudent=record=>{
@@ -915,7 +1060,7 @@ window.studentHistory=id=>{
   const documentList=items=>items.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th></tr></thead><tbody>${items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.reason||'—')}</td><td>${esc(x.appointment||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد وثائق.</p>';
   go('reports');
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.print()">طباعة الملف</button></div>
-  <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>الاسم</small><strong style="font-size:16px">${esc(s.first||'—')}</strong></div><div class="stat"><small>اللقب</small><strong style="font-size:16px">${esc(s.last||'—')}</strong></div><div class="stat"><small>المستوى</small><strong style="font-size:16px">${esc(studentAcademicParts(s).schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(studentAcademicParts(s).branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(studentAcademicParts(s).sectionNumber||s.class||'—')}</strong></div><div class="stat"><small>الصفة</small><strong style="font-size:16px">${esc(s.attribute||s.status||'—')}</strong></div><div class="stat"><small>تاريخ الميلاد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>رقم الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
+  <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>الاسم</small><strong style="font-size:16px">${esc(s.first||'—')}</strong></div><div class="stat"><small>اللقب</small><strong style="font-size:16px">${esc(s.last||'—')}</strong></div><div class="stat"><small>المستوى</small><strong style="font-size:16px">${esc(studentAcademicParts(s).schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(studentAcademicParts(s).branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(studentAcademicParts(s).sectionNumber||s.class||'—')}</strong></div><div class="stat"><small>الصفة</small><strong style="font-size:16px">${esc(s.attribute||s.status||'—')}</strong></div><div class="stat"><small>الجنس</small><strong style="font-size:16px">${esc(s.gender||'—')}</strong></div><div class="stat"><small>تاريخ الميلاد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>رقم الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
   <div class="no-print"><button class="btn" onclick="editStudent('${s.id}')">تعديل بطاقة التلميذ</button></div>
   <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>غيابات قيد التبرير</small><strong>${pending(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>تأخرات قيد التبرير</small><strong>${pending(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب</small><strong>${absHours}</strong></div><div class="stat"><small>مجموع ساعات التأخر</small><strong>${lateHours}</strong></div><div class="stat"><small>مجموع الساعات الكلي</small><strong>${allHours}</strong></div><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
   <h3>تفصيل الغيابات (${abs.length})</h3>${statusSummary(abs)}${attendanceList(abs)}
@@ -923,7 +1068,7 @@ window.studentHistory=id=>{
   <h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع المخالفة</th><th>الوصف</th><th>الإجراء والمتابعة</th><th>الصورة</th></tr></thead><tbody>${v.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.description||'—')}</td><td>${esc(x.action||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد مخالفات.</p>'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${documentList(d)}`;
 };
 window.printDoc=id=>{let d=db.documents.find(x=>x.id===id),s=student(d.student);let w=window.open('','_blank');w.document.write(`<html lang="ar" dir="rtl"><meta charset="utf-8"><title>${esc(d.type)}</title><style>body{font-family:Tahoma,Arial;padding:35px;line-height:2}h2{text-align:center} .sig{display:flex;justify-content:space-between;margin-top:80px}</style><h3>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')}</h3><p>${esc(db.settings.location||'بوسكن – ولاية المدية')}</p><h2>${esc(d.type)}</h2><p>إلى ولي التلميذ: ${esc(s?.guardian||'ولي التلميذ المحترم')}</p><p>التلميذ(ة): <b>${esc(s?.last||'')} ${esc(s?.first||'')}</b></p><p>القسم: ${esc(s?.class||'')}</p><p>التاريخ: ${esc(d.date)}</p><p>الموضوع: ${esc(d.reason)}</p>${d.appointment?`<p>موعد الحضور: ${esc(d.appointment)}</p>`:''}${d.photo?`<h3>صورة الوثيقة المرفقة</h3><img src="${esc(d.photo)}" style="max-width:100%;max-height:420px;object-fit:contain">`:''}<p>يرجى الاطلاع واتخاذ ما يلزم.</p><div class="sig"><span>إمضاء الولي</span><span>إمضاء وختم الإدارة</span></div><script>window.onload=()=>window.print()<\/script></html>`);w.document.close()};
-const reportStudentMatches=()=>{const q=$('#reportStudentSearch').value.trim().toLocaleLowerCase('ar');return q?db.students.filter(st=>[st.first,st.last,st.class,st.schoolYear,st.branch].join(' ').toLocaleLowerCase('ar').includes(q)):db.students;};
+const reportStudentMatches=()=>{const q=$('#reportStudentSearch').value.trim().toLocaleLowerCase('ar');return q?studentsForUser().filter(st=>[st.first,st.last,st.class,st.schoolYear,st.branch].join(' ').toLocaleLowerCase('ar').includes(q)):studentsForUser();};
  $('#makeReport').onclick=()=>{const query=$('#reportStudentSearch').value.trim(),matches=reportStudentMatches();if(query&&!matches.length){alert('لم يتم العثور على تلميذ بهذا البحث.');$('#reportStudentSearch').focus();return;}if(query&&matches.length===1){window.studentHistory(matches[0].id);return;}if(query&&matches.length>1){$('#reportOutput').innerHTML='<h3>اختر التلميذ لفتح ملفه الفردي الكامل</h3><div class="student-search-results">'+matches.map(st=>`<button type="button" class="btn student-report-result" data-student-id="${esc(st.id)}">${esc(st.last)} ${esc(st.first)} – ${esc(studentAcademicLabel(st))}</button>`).join(' ')+'</div>';$('#reportOutput').querySelectorAll('.student-report-result').forEach(btn=>btn.addEventListener('click',()=>window.studentHistory(btn.dataset.studentId)));return;}const ids=query?new Set(matches.map(st=>st.id)):null;let from=$('#fromDate').value,to=$('#toDate').value;let valid=x=>(!ids||ids.has(x.student))&&(!from||x.date>=from)&&(!to||x.date<=to);let a=db.attendance.filter(valid),v=db.violations.filter(valid),d=db.documents.filter(valid);$('#reportOutput').innerHTML=`<h2>تقرير الحياة المدرسية</h2><p>${esc(db.settings.school||'ثانوية الشيخ بوعمامة')} – ${esc(db.settings.location||'بوسكن')}</p><p>الفترة: ${esc(from||'البداية')} إلى ${esc(to||'اليوم')}</p><h3>الغيابات والتأخرات (${a.length})</h3>${a.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الحالة</th><th>الفترة</th><th>الساعات</th><th>التبرير</th><th>ملاحظات</th></tr></thead><tbody>${a.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.period||'—')}</td><td>${esc(x.hours??'—')}</td><td>${esc(x.justified||'—')}</td><td>${esc(x.notes||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody>${v.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.description)}</td><td>${esc(x.action||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد سجلات'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${d.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>السبب</th><th>موعد الحضور</th></tr></thead><tbody>${d.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(name(x.student))}</td><td>${esc(x.type)}</td><td>${esc(x.reason)}</td><td>${esc(x.appointment||'—')}</td></tr>`).join('')}</tbody></table></div>`:'لا توجد وثائق'}`;};
 $('#saveSettings').onclick=()=>{const school=$('#schoolName').value.trim(),location=$('#schoolLocation').value.trim();if(!school){alert('أدخل اسم المؤسسة أولاً.');$('#schoolName').focus();return;}const previous={...db.settings};db.settings.school=school;db.settings.location=location;if(!save()){db.settings=previous;render();return;}alert('تم حفظ إعدادات المؤسسة، وظهرت المعلومات أعلى اسمك وإمضائك.')};
 $('#exportData').onclick=()=>{if(!licenseReadOnly&&!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
@@ -933,8 +1078,8 @@ function showBackupPreview(data,bytes){
  const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[];
  const classes={},attributes={};
  students.forEach(st=>{const c=String(st.class||st.section||'غير محدد');classes[c]=(classes[c]||0)+1;const a=String(st.attribute||st.status||'غير محدد');attributes[a]=(attributes[a]||0)+1;});
- const abs=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='غياب').length;
- const late=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='تأخر').length;
+ const abs=attendance.filter(x=>String(x.type||'').replace(/\s/g,'')==='غياب').length;
+ const late=attendance.filter(x=>String(x.type||'').replace(/\s/g,'')==='تأخر').length;
  const summons=documents.filter(x=>String(x.type||'').includes('استدعاء')).length;
  const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length};
  const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length};
@@ -1002,7 +1147,7 @@ function recoverStudentsFromHistory(data){
 }
 async function importBackupText(raw,bytes){
  try{
-  raw=String(raw||'').replace(/^\\uFEFF/,'').trim();
+  raw=String(raw||'').replace(/^\uFEFF/,'').trim();
   if(!raw)throw new Error('الملف لم يُرجع أي محتوى عند قراءته.');
   let obj;try{obj=JSON.parse(raw);}catch(_){throw new Error('محتوى الملف ليس JSON سليماً. تأكد من اختيار ملف النسخة الاحتياطية الأصلي بصيغة JSON.');}
   if(obj&&typeof obj==='object'&&!Array.isArray(obj)&&!Array.isArray(obj.students)){
@@ -1029,8 +1174,15 @@ function restorePendingBackup(){
  const oldDb=db;db=pendingBackupData;
  if(!save()){db=oldDb;render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
- if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
- if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
+ if(window.AndroidBridge&&typeof AndroidBridge.replaceSummonsReminders==='function'){
+  const reminders=db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment&&d.reminderAt).map(d=>({
+   id:String(d.id),student:name(d.student),reminderAt:new Date(d.reminderAt).getTime(),appointment:new Date(d.appointment).getTime()
+  })).filter(d=>Number.isFinite(d.reminderAt)&&Number.isFinite(d.appointment));
+  AndroidBridge.replaceSummonsReminders(JSON.stringify(reminders));
+ }else{
+  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
+  if(window.AndroidBridge&&typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);
+ }
  alert('تمت استعادة النسخة الاحتياطية بنجاح. عدد التلاميذ: '+db.students.length+'، وسجلات المتابعة: '+(db.attendance.length+db.documents.length+db.violations.length)+'.');
 }
 window.onNativeBackupLoaded=importBackupText;
@@ -1060,6 +1212,7 @@ function parseCSV(text, delimiter){
 }
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
+function rosterAttributeFields(data){const value=String(data?.schoolingSystem||'').trim();return value?{attribute:value,status:value}:{attribute:'',status:''};}
 $('#clearStudents').onclick=()=>{
   const status=$('#clearStudentsStatus');
   if(!db.students.length){status.textContent='قائمة التلاميذ فارغة بالفعل.';alert(status.textContent);return;}
@@ -1080,6 +1233,7 @@ $('#clearStudents').onclick=()=>{
 function makeStudentImportId(){try{if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();}catch(_){}return 'student_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);}
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
+  let importSnapshot=null,importCommitted=false;
   try{
     // لا نعتمد على اسم الملف أو MIME الذي يرسله مزود الملفات في Android؛ بعض الهواتف تعرض CSV باسم مشفر أو بنوع عام. نتحقق من محتوى الملف ورؤوس أعمدته أدناه.
     // Android WebView قد لا يدعم File.text()؛ استخدم FileReader كمسار متوافق.
@@ -1096,16 +1250,30 @@ $('#csvImport').onchange=async e=>{
     if(!raw.trim())throw new Error('الملف فارغ أو تعذرت قراءة محتواه.');
     raw=raw.replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
-    const delimiters=[',',';','\t'];
-    const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
-    const rows=parsed[0].rows;
+    let rows;
+    if(/<table[\s>]/i.test(raw)){
+      // يدعم ملفات Excel التي تُحفظ بصيغة HTML وتحمل امتداد .xls.
+      const parsedHtml=new DOMParser().parseFromString(raw,'text/html');
+      const table=parsedHtml.querySelector('table');
+      if(!table)throw new Error('لم يتم العثور على جدول داخل ملف Excel.');
+      rows=Array.from(table.querySelectorAll('tr')).map(tr=>
+        Array.from(tr.children).filter(cell=>/^(TH|TD)$/i.test(cell.tagName))
+          .map(cell=>String(cell.textContent||'').replace(/\s+/g,' ').trim())
+      ).filter(row=>row.length);
+    }else{
+      const delimiters=[',',';','\t'];
+      const parsed=delimiters.map(d=>({d,rows:parseCSV(raw,d)})).sort((a,b)=>(b.rows[0]?.length||0)-(a.rows[0]?.length||0));
+      rows=parsed[0].rows;
+    }
     if(rows.length<2)throw new Error('الملف لا يحتوي على سجلات تلاميذ بعد سطر العناوين.');
     const headers=rows[0].map(normHeader);
     const find=names=>headers.findIndex(h=>names.some(name=>h===normHeader(name)));
     const idx={
       identityNumber:find(['رقمالتعريف','رقمالتعريفالوطني','matricule','identifiant']),
+      fullName:find(['الاسم واللقب','الاسم الكامل','الاسم الكامل واللقب','nom et prenom','nom complet','fullname','studentname']),
       last:find(['اللقب','الاسم العائلي','nom','lastname','surname']),
       first:find(['الاسم','الاسم الشخصي','prenom','firstname','givenname']),
+      attribute:find(['الصفة','صفة التلميذ','attribute','status']),
       gender:find(['الجنس','sexe','gender']),
       birthDate:find(['تاريخالازدياد','تاريخالميلاد','datenaissance','birthdate']),
       birthByJudgment:find(['مولودبحكم','مولودبموجب حكم','neparjugement']),
@@ -1120,10 +1288,12 @@ $('#csvImport').onchange=async e=>{
       enrollmentNumber:find(['رقمالقيد','رقمالتسجيل','numeroinscription','enrollmentnumber']),
       enrollmentDate:find(['تاريخالتسجيل','dateinscription','enrollmentdate'])
     };
-    const required=['identityNumber','last','first','class'];
-    const missing=required.filter(k=>idx[k]<0);
-    if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
-    const originalDb=JSON.parse(JSON.stringify(db));
+    const missing=[];
+    if(idx.last<0&&idx.fullName<0)missing.push('الاسم واللقب');
+    if(idx.first<0&&idx.fullName<0)missing.push('الاسم');
+    if(idx.class<0)missing.push('القسم');
+    if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.join('، ')+'.');
+    const originalDb=JSON.parse(JSON.stringify(db));importSnapshot=originalDb;
     // المطابقة: رقم التعريف أولاً، ثم الاسم واللقب والقسم حتى للبطاقات القديمة
     // التي لا تحمل رقم تعريف أو تحمل رقماً قديماً. لا نغيّر المعرّف الداخلي للبطاقة.
     const normalizeKey=v=>String(v??'').normalize('NFKC')
@@ -1131,95 +1301,226 @@ $('#csvImport').onchange=async e=>{
       .replace(/[\u200B-\u200D\uFEFF]/g,'')
       .replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
     const normalizeId=v=>normalizeKey(v).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\s.-]/g,'');
-    const normalizeClass=v=>{
-      const s=normalizeKey(v);
-      const digits=s.match(/[0-9٠-٩۰-۹]+/g);
-      return digits?digits.join(''):s;
-    };
+    const normalizeClass=v=>normalizeKey(v)
+      .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+      .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+      .replace(/\s+/g,'');
+    const normalizeImportName=v=>normalizeKey(v)
+      .replace(/([^\s]+?)[0-9٠-٩۰-۹]+(?=\s|$)/g,'$1')
+      .replace(/\s+/g,' ').trim();
     const getStudentName=st=>{
       const last=st.last??st.surname??st.familyName??'';
       const first=st.first??st.firstname??st.givenName??'';
-      const split=normalizeKey(String(last)+' '+String(first));
-      const legacy=normalizeKey(st.name??st.fullName??st.studentName??'');
-      const reverse=normalizeKey(String(first)+' '+String(last));
-      return new Set([split,reverse,legacy].filter(Boolean));
+      const split=normalizeImportName(String(last)+' '+String(first));
+      const legacy=normalizeImportName(st.name??st.fullName??st.studentName??'');
+      const reverse=normalizeImportName(String(first)+' '+String(last));
+      return new Set([split,reverse,legacy].map(normalizeImportName).filter(Boolean));
     };
+    // ابنِ فهارس المطابقة مرة واحدة؛ لا تمسح قائمة التلاميذ كاملة لكل صف مستورد.
     const existingById=new Map();
+    const fallbackIndex=new Map(),fallbackKeysByStudent=new Map();
+    const fallbackKey=(name,section)=>name+'¦'+section;
+    const indexFallbackStudent=st=>{
+      const names=getStudentName(st);
+      const cls=st.sectionNumber||st.class||st.section||st.className||st.classe||st.group||'';
+      const section=normalizeClass(cls),keys=new Set();
+      if(section)for(const n of names){const key=fallbackKey(n,section);keys.add(key);if(!fallbackIndex.has(key))fallbackIndex.set(key,new Set());fallbackIndex.get(key).add(st);}
+      fallbackKeysByStudent.set(st,keys);
+    };
+    const removeFallbackStudent=st=>{
+      const keys=fallbackKeysByStudent.get(st);if(!keys)return;
+      for(const key of keys){const bucket=fallbackIndex.get(key);if(bucket){bucket.delete(st);if(!bucket.size)fallbackIndex.delete(key);}}
+      fallbackKeysByStudent.delete(st);
+    };
     for(const st of db.students){
       const key=normalizeId(st.identityNumber);
       if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}
+      indexFallbackStudent(st);
     }
+    // اربط سجلات المتابعة بالتلميذ مرة واحدة بدلاً من مسحها عند كل تحديث.
+    const recordsByStudentId=new Map();
+    for(const kind of ['attendance','documents','violations']){
+      for(const record of db[kind]){
+        const key=String(record.student??'');
+        if(!recordsByStudentId.has(key))recordsByStudentId.set(key,[]);
+        recordsByStudentId.get(key).push(record);
+      }
+    }
+    // اجمع الأقسام الجديدة ثم أضفها دفعة واحدة بعد انتهاء المطابقة.
+    const academicKey=(y,b,c)=>[academicYearKey(y),academicNorm(canonicalBranch(b)),academicNorm(c)].join('¦');
+    const knownAcademic=new Set((Array.isArray(db.settings.academicStructure)?db.settings.academicStructure:[]).map(x=>academicKey(x.schoolYear,x.branch,x.sectionNumber)));
+    const pendingAcademic=new Map();
     const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0;
     const fields=Object.keys(idx);
     for(const cells of rows.slice(1)){
       const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
       const data={};for(const key of fields)data[key]=value(key);
+      // توحيد تهجئة «جدع» الواردة في ملفات الإدارة مع «جذع» المعتمدة داخل التطبيق.
+      if(data.branch)data.branch=canonicalBranch(data.branch);
+      // يدعم القوائم ذات عمود واحد «الاسم واللقب»، حتى إذا كان أحد حقلي الاسم موجوداً فقط.
+      if(data.fullName&&(!data.last||!data.first)){
+        const parts=data.fullName.trim().split(/\s+/).filter(Boolean);
+        if(parts.length>=2){
+          if(!data.last)data.last=parts.shift();
+          if(!data.first)data.first=parts.join(' ');
+        }
+      }
+      // بطاقة مُشرِفي تعرض «الصفة»؛ احتفظ بنظام التمدرس في هذا الحقل أيضاً
+      // حتى لا تضيع قيم «نصف داخلي» و«خارجي» عند استيراد ملف التفويج.
+      if(!data.attribute&&data.schoolingSystem)data.attribute=data.schoolingSystem;
+      // إزالة أرقام النسخ الملحقة بالاسم قبل الحفظ، لا عند المطابقة فقط.
+      data.last=normalizeImportName(data.last);
+      data.first=normalizeImportName(data.first);
       data.enrollmentNumber=data.enrollmentNumber||'';
       data.identityNumber=String(data.identityNumber||'').trim();
       // ملف التفويج يفصل السنة والشعبة ورقم القسم؛ احتفظ برقم القسم الأصلي
       // وركّب رمزاً كاملاً يمنع الخلط بين (1) في شعب أو سنوات مختلفة.
+      if(db.settings.educationLevel&&db.settings.educationLevel!=='secondary'&&!data.branch)data.branch='عام';
       data.sectionNumber=String(data.class||'').trim();
       if(data.schoolYear&&data.branch&&data.sectionNumber){
         data.class=data.sectionNumber;
-        ensureAcademicCombination(data.schoolYear,data.branch,data.sectionNumber);
+        const key=academicKey(data.schoolYear,data.branch,data.sectionNumber);
+        if(!knownAcademic.has(key))pendingAcademic.set(key,{schoolYear:data.schoolYear,branch:canonicalBranch(data.branch),sectionNumber:data.sectionNumber});
       }
-      if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
+      if(!data.last||!data.first||!data.class){skipped++;continue;}
       const incomingId=normalizeId(data.identityNumber);
-      if(incoming.has(incomingId)){skipped++;continue;}incoming.add(incomingId);
-      const idMatches=existingById.get(incomingId)||[];
+      const incomingNames=new Set([
+        normalizeImportName(data.last+' '+data.first),
+        normalizeImportName(data.first+' '+data.last),
+        normalizeImportName(data.fullName)
+      ].filter(Boolean));
+      const incomingSection=normalizeClass(data.sectionNumber||data.class);
+      const incomingYear=normalizeClass(data.schoolYear);
+      const incomingBranch=normalizeClass(data.branch);
+      const incomingAcademicKey=[incomingYear,incomingBranch,incomingSection].join('|');
+      const dedupeKey=incomingId?'id:'+incomingId:'name:'+([...incomingNames].sort()[0]||'')+'|academic:'+incomingAcademicKey;
+      if(incoming.has(dedupeKey)){skipped++;continue;}incoming.add(dedupeKey);
+      const idMatches=incomingId?(existingById.get(incomingId)||[]):[];
       if(idMatches.length>1){skipped++;conflicts++;continue;}
       let target=idMatches[0]||null;
       if(!target){
-        const incomingNames=new Set([normalizeKey(data.last+' '+data.first),normalizeKey(data.first+' '+data.last)]);
-        let fallback=db.students.filter(st=>{
-          const names=getStudentName(st);
-          const nameMatch=[...incomingNames].some(n=>names.has(n));
-          const cls=st.sectionNumber??st.class??st.section??st.className??st.classe??st.group??'';
-          const sectionMatch=normalizeClass(cls)===normalizeClass(data.sectionNumber||data.class);
-          const yearMatch=!data.schoolYear||!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear);
-          const branchMatch=!data.branch||!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch);
-          return nameMatch&&sectionMatch&&yearMatch&&branchMatch;
+        const candidates=new Set();
+        for(const n of incomingNames){
+          const bucket=fallbackIndex.get(fallbackKey(n,incomingSection));
+          if(bucket)for(const st of bucket)candidates.add(st);
+        }
+        const fallback=[...candidates].filter(st=>{
+          const yearMatch=!incomingYear||!st.schoolYear||normalizeClass(st.schoolYear)===incomingYear;
+          const branchMatch=!incomingBranch||!st.branch||normalizeClass(st.branch)===incomingBranch;
+          // إذا كان رقما التعريف مختلفين فهما تلميذان مختلفان ولو تطابق الاسم والقسم.
+          const existingId=normalizeId(st.identityNumber);
+          const identityCompatible=!incomingId||!existingId||existingId===incomingId;
+          return yearMatch&&branchMatch&&identityCompatible;
         });
-        // عند تكرار الاسم والقسم، استعمل السنة والشعبة للتفريق ولا تخمّن.
-        if(fallback.length>1&&data.schoolYear){
-          const exact=fallback.filter(st=>!st.schoolYear||normalizeKey(st.schoolYear)===normalizeKey(data.schoolYear));
-          if(exact.length)fallback=exact;
-        }
-        if(fallback.length>1&&data.branch){
-          const exact=fallback.filter(st=>!st.branch||normalizeKey(st.branch)===normalizeKey(data.branch));
-          if(exact.length)fallback=exact;
-        }
         if(fallback.length===1)target=fallback[0];
         else if(fallback.length>1){skipped++;conflicts++;continue;}
       }
       if(target){
-        // حدّث حقول البطاقة الرسمية فقط؛ الخانات الفارغة في CSV لا تمحو البيانات السابقة.
+        // حدّث فهرس الاسم عند تغيير البطاقة، مع الإبقاء على معرّف الطالب وسجلاته.
+        removeFallbackStudent(target);
         for(const key of fields){if(data[key]!==''||!Object.prototype.hasOwnProperty.call(target,key))target[key]=data[key];}
         if(data.sectionNumber)target.sectionNumber=data.sectionNumber;
         if(data.enrollmentNumber!=='')target.code=data.enrollmentNumber;
         if(!target.id)target.id=makeStudentImportId();
-        // حدّث الاسم المعروض في السجلات المرتبطة بمعرّف التلميذ، مع إبقاء تفاصيل الوقائع كما هي.
         const currentDisplayName=(target.last+' '+target.first).trim()||target.name||target.fullName||'';
-        for(const kind of ['attendance','documents','violations']){
-          for(const record of db[kind]){
-            if(String(record.student)===String(target.id))record.studentName=currentDisplayName;
-          }
-        }
+        const linkedRecords=recordsByStudentId.get(String(target.id))||[];
+        for(const record of linkedRecords)record.studentName=currentDisplayName;
+        indexFallbackStudent(target);
         updated++;
       }else{
         const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
         db.students.push(record);
-        if(!existingById.has(data.identityNumber))existingById.set(data.identityNumber,[]);
-        existingById.get(data.identityNumber).push(record);
+        indexFallbackStudent(record);
+        if(incomingId){
+          if(!existingById.has(incomingId))existingById.set(incomingId,[]);
+          existingById.get(incomingId).push(record);
+        }
         added++;
       }
     }
-    if(!save()){db=originalDb;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');}
-    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
-  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
+    if(pendingAcademic.size){
+      if(!Array.isArray(db.settings.academicStructure))db.settings.academicStructure=[];
+      for(const [key,section] of pendingAcademic){if(!knownAcademic.has(key)){db.settings.academicStructure.push(section);knownAcademic.add(key);}}
+    }
+    if(!save())throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');
+    importCommitted=true;
+    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف أو الاسم والقسم: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
+    window.dispatchEvent(new CustomEvent('mushrifi-roster-import-finished',{detail:{ok:true}}));
+  }catch(err){
+    if(importSnapshot&&!importCommitted){db=importSnapshot;try{render();}catch(restoreError){console.error('تعذر تحديث الواجهة بعد التراجع عن الاستيراد',restoreError);}}
+    alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV أو Excel وعناوين الأعمدة ثم أعد المحاولة.');
+    window.dispatchEvent(new CustomEvent('mushrifi-roster-import-finished',{detail:{ok:false}}));
+  }
   finally{input.value='';}
 };
 
+
+let setupSections=[];
+function renderSetupSections(){
+ const box=$('#setupAssignedList');if(!box)return;
+ box.innerHTML=setupSections.length?setupSections.map((x,i)=>'<div class="setup-assigned-item"><span>'+esc(x.schoolYear)+' — '+esc(x.branch==='عام'?'':x.branch)+' — القسم '+esc(x.sectionNumber)+'</span><button type="button" class="btn small danger" data-remove-setup="'+i+'">إزالة</button></div>').join(''):'<p class="muted">لم تضف أقساماً بعد.</p>';
+ box.querySelectorAll('[data-remove-setup]').forEach(b=>b.addEventListener('click',()=>{setupSections.splice(Number(b.dataset.removeSetup),1);renderSetupSections();}));
+}
+function setupBranchVisibility(){
+ const secondary=$('#setupEducationLevel').value==='secondary';$('#setupBranchField').classList.toggle('hidden',!secondary);$('#setupBranch').required=secondary;if(!secondary)$('#setupBranch').value='عام';else if($('#setupBranch').value==='عام')$('#setupBranch').value='';
+}
+$('#setupEducationLevel')?.addEventListener('change',setupBranchVisibility);
+$('#setupAddSection')?.addEventListener('click',()=>{
+ const level=$('#setupEducationLevel').value,y=$('#setupYear').value.trim().replace(/\s+/g,' '),b=level==='secondary'?canonicalBranch($('#setupBranch').value.trim()):'عام',c=$('#setupSection').value.trim().replace(/\s+/g,' ');
+ if(!level){alert('اختر الطور التعليمي أولاً.');return;}if(!y||!c||(level==='secondary'&&!b)){alert('أدخل المستوى ورقم القسم، والشعبة في الثانوي.');return;}
+ const item={schoolYear:y,branch:b,sectionNumber:c},key=assignedSectionKey(item);if(setupSections.some(x=>assignedSectionKey(x)===key)){alert('هذا القسم مضاف مسبقاً.');return;}
+ setupSections.push(item);renderSetupSections();$('#setupSection').value='';
+});
+$('#firstRunSetupForm')?.addEventListener('submit',async e=>{
+ e.preventDefault();const level=$('#setupEducationLevel').value,school=$('#setupSchool').value.trim(),location=$('#setupLocation').value.trim(),file=$('#setupRosterFile').files?.[0],status=$('#setupStatus'),button=$('#finishFirstRunSetup');
+ if(!level||!school||!file||!setupSections.length){alert('اختر الطور واسم المؤسسة، وأضف قسماً واحداً على الأقل وارفع قائمة التلاميذ.');return;}
+ const oldDb=JSON.parse(JSON.stringify(db)),backupFile=$('#setupBackupFile').files?.[0];
+ if(backupFile){
+  if(db.students.length||db.attendance.length||db.documents.length||db.violations.length){alert('توجد بيانات محفوظة بالفعل على هذا الهاتف. اترك ملف JSON فارغاً؛ سيحافظ مُشرِفي على بيانات هذا الجهاز ويحدّث قائمة التلاميذ من ملف Excel/CSV.');return;}
+  try{
+   const raw=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(new Error('تعذرت قراءة النسخة الاحتياطية JSON.'));reader.readAsText(backupFile,'UTF-8');});
+   let backup=JSON.parse(raw);if(backup&&typeof backup==='object'&&!Array.isArray(backup)&&!Array.isArray(backup.students)){const nested=backup.data||backup.backup||backup.database||backup.db;if(typeof nested==='string')backup=JSON.parse(nested);else if(nested&&typeof nested==='object')backup=nested;}
+   if(!backup||typeof backup!=='object'||!Array.isArray(backup.students)||!Array.isArray(backup.attendance)||!Array.isArray(backup.documents)||!Array.isArray(backup.violations))throw new Error('النسخة غير مكتملة؛ يجب أن تحتوي على الطلاب والغيابات والوثائق والمخالفات.');
+   db={...backup,settings:{...(backup.settings&&typeof backup.settings==='object'?backup.settings:{}),educationLevel:level,school,location,assignedSections:setupSections.map(x=>({...x})),setupComplete:false}};
+  }catch(err){alert('تعذرت استعادة النسخة الاحتياطية: '+(err.message||'خطأ غير معروف')+' لم تتغير بيانات التطبيق.');db=oldDb;return;}
+ }else{
+  db.settings.educationLevel=level;db.settings.school=school;db.settings.location=location;db.settings.assignedSections=setupSections.map(x=>({...x}));db.settings.setupComplete=false;
+ }
+ setupSections.forEach(x=>ensureAcademicCombination(x.schoolYear,x.branch,x.sectionNumber));
+ if(!save()){db=oldDb;render();return;}
+ if(backupFile&&window.AndroidBridge){if(typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();if(typeof AndroidBridge.scheduleSummonsReminder==='function')db.documents.filter(d=>d.type==='استدعاء ولي'&&d.appointment).forEach(scheduleSummonsReminder);}
+ button.disabled=true;status.textContent=backupFile?'تم استرجاع سجلات النسخة الاحتياطية. جارٍ مطابقة القائمة الأصلية معها...':'جارٍ استيراد القائمة ومطابقتها مع الأقسام...';
+ try{
+  const result=await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(new Error('انتهت مهلة استيراد القائمة.')),120000);
+   window.addEventListener('mushrifi-roster-import-finished',event=>{clearTimeout(timer);resolve(event.detail||{ok:false});},{once:true});
+   const target=$('#csvImport'),transfer=new DataTransfer();transfer.items.add(file);target.files=transfer.files;target.dispatchEvent(new Event('change'));
+  });
+  if(!result.ok){db.settings.setupComplete=false;save();button.disabled=false;status.textContent=backupFile?'تم حفظ سجلات JSON على الجهاز. أزل ملف JSON من الحقل، ثم أعد اختيار قائمة التلاميذ الصحيحة للمحاولة مجدداً.':'لم يكتمل الاستيراد. صحح الملف أو الأعمدة ثم أعد المحاولة.';return;}
+  db.settings.setupComplete=true;if(!save()){db.settings.setupComplete=false;button.disabled=false;status.textContent='تم الاستيراد لكن تعذر حفظ اكتمال الإعداد. أعد المحاولة.';return;}
+  document.body.classList.remove('setup-required');$('#firstRunSetup').classList.add('hidden');renderAssignedSections();status.textContent='اكتملت التهيئة بنجاح.';
+  alert('اكتملت التهيئة واستيراد القائمة. تم عرض تلاميذ الأقسام المسندة إليك فقط.');
+ }catch(err){button.disabled=false;status.textContent=err.message||'تعذر إكمال التهيئة.';alert(status.textContent);}
+});
+function updateFirstRunGate(){
+ const complete=db.settings.setupComplete===true;document.body.classList.toggle('setup-required',!complete);$('#firstRunSetup')?.classList.toggle('hidden',complete);
+ if(!complete){
+  $('#setupEducationLevel').value=db.settings.educationLevel||'';
+  $('#setupSchool').value=db.settings.school||'';
+  $('#setupLocation').value=db.settings.location||'';
+  if(!setupSections.length&&db.students.length){
+   const seen=new Set();
+   db.students.forEach(st=>{const p=studentAcademicParts(st),item={schoolYear:p.schoolYear,branch:p.branch||'عام',sectionNumber:p.sectionNumber},key=assignedSectionKey(item);if(item.schoolYear&&item.sectionNumber&&!seen.has(key)){seen.add(key);setupSections.push(item);}});
+   renderSetupSections();
+  }
+  setupBranchVisibility();
+ }
+}
+$('#saveEducationProfile')?.addEventListener('click',()=>{
+ const level=$('#educationLevelSetting').value;if(!['primary','middle','secondary'].includes(level)){alert('اختر طوراً تعليمياً صحيحاً.');return;}
+ const previous=db.settings.educationLevel;db.settings.educationLevel=level;if(!save()){db.settings.educationLevel=previous;render();return;}
+ refreshStudentSectionOptions();renderAssignedSections();alert('تم حفظ الطور التعليمي دون حذف أي تلميذ أو سجل. راجع الأقسام المسندة بعد تغييره.');
+});
 render();
 
 function refreshLicenseStatus(){
@@ -1260,6 +1561,7 @@ $('#validateLicenseBtn')?.addEventListener('click',()=>{
  AndroidBridge.validateLicense('validate-'+Date.now());
 });
 refreshLicenseStatus();
+updateFirstRunGate();
 
 </script>
 
