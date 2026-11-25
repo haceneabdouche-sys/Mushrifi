@@ -117,6 +117,8 @@ jobs:
         run: node tests/audit-log-integrity.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
+      - name: Run comprehensive student PDF report regression tests
+        run: node tests/student-comprehensive-report.test.cjs
       - name: Run CSV import identity safety regression tests
         run: node tests/csv-import-identity-safety.test.cjs
       - name: Run easy navigation layout regression tests
