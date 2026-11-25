@@ -1476,28 +1476,120 @@ function agendaDateRange(view,v){if(!agendaValidDate(v)||!['day','week','month']
 function agendaTypeLabel(t){return ({summons:'استدعاء ولي',meeting:'اجتماع',task:'مهمة يومية',followup:'متابعة تلميذ',personal:'موعد آخر'})[t]||'موعد';}
 function agendaPriorityLabel(p){return ({normal:'عادية',high:'مرتفعة',urgent:'عاجلة'})[p]||'عادية';}
 function agendaFormatDate(v,opts){if(!agendaValidDate(v))return 'تاريخ غير محدد';const [y,m,d]=v.split('-').map(Number);return new Date(y,m-1,d,12).toLocaleDateString('ar-DZ',opts||{weekday:'long',year:'numeric',month:'long',day:'numeric'});}
+
+function agendaRepeatRule(item){
+ const frequency=String(item?.repeatFrequency||'none');
+ if(frequency==='none')return {valid:true,frequency:'none',interval:1,until:''};
+ if(!['daily','weekly','monthly'].includes(frequency))return {valid:false,frequency,interval:0,until:''};
+ const interval=Number(item?.repeatInterval??1),until=String(item?.repeatUntil||''),base=String(item?.date||'');
+ if(!Number.isInteger(interval)||interval<1||interval>12||!agendaValidDate(base)||!agendaValidDate(until)||until<base)return {valid:false,frequency,interval,until};
+ const maximum=agendaShiftDate(base,1826);
+ if(!maximum||until>maximum)return {valid:false,frequency,interval,until};
+ return {valid:true,frequency,interval,until};
+}
+function agendaRepeatDateAt(base,index,frequency,interval){
+ if(!agendaValidDate(base)||!Number.isInteger(index)||index<0||!Number.isInteger(interval)||interval<1)return '';
+ if(frequency==='daily')return agendaShiftDate(base,index*interval);
+ if(frequency==='weekly')return agendaShiftDate(base,index*interval*7);
+ if(frequency!=='monthly')return '';
+ const [year,month,day]=base.split('-').map(Number),monthIndex=year*12+(month-1)+index*interval,targetYear=Math.floor(monthIndex/12),targetMonth=monthIndex%12;
+ const last=new Date(0);last.setUTCHours(0,0,0,0);last.setUTCFullYear(targetYear,targetMonth+1,0);
+ const result=new Date(0);result.setUTCHours(0,0,0,0);result.setUTCFullYear(targetYear,targetMonth,Math.min(day,last.getUTCDate()));
+ return String(result.getUTCFullYear()).padStart(4,'0')+'-'+String(result.getUTCMonth()+1).padStart(2,'0')+'-'+String(result.getUTCDate()).padStart(2,'0');
+}
+function agendaRepeatOrdinal(value){
+ if(!agendaValidDate(value))return NaN;
+ const [year,month,day]=value.split('-').map(Number),date=new Date(0);date.setUTCHours(0,0,0,0);date.setUTCFullYear(year,month-1,day);
+ return Math.floor(date.getTime()/86400000);
+}
+function agendaOccurrenceId(id,date){return String(id).slice(0,100)+'::'+String(date);}
+function agendaRepeatFrequencyLabel(item){
+ const rule=agendaRepeatRule(item);if(!rule.valid||rule.frequency==='none')return '';
+ const n=rule.interval;
+ if(rule.frequency==='daily')return n===1?'يتكرر يومياً':'يتكرر كل '+n+' أيام';
+ if(rule.frequency==='weekly')return n===1?'يتكرر أسبوعياً':'يتكرر كل '+n+' أسابيع';
+ return n===1?'يتكرر شهرياً':'يتكرر كل '+n+' أشهر';
+}
+function agendaExpandOccurrences(items,from,to,limit=1500){
+ const source=Array.isArray(items)?items:[],out=[],seen=new Set(),cap=Math.max(1,Math.min(10000,Math.floor(Number(limit)||1500)));
+ let invalid=0,truncated=0;
+ if(!agendaValidDate(from)||!agendaValidDate(to)||from>to)return {items:[],invalid:source.length,truncated:0};
+ const fromOrdinal=agendaRepeatOrdinal(from),toOrdinal=agendaRepeatOrdinal(to);
+ for(const item of source){
+  if(!item||typeof item!=='object'||Array.isArray(item)||!String(item.id||'').trim()||!agendaValidDate(item.date)||!String(item.title||'').trim()){invalid++;continue;}
+  const id=String(item.id);if(seen.has(id)){invalid++;continue;}seen.add(id);
+  const rule=agendaRepeatRule(item);if(!rule.valid){invalid++;continue;}
+  if(rule.frequency==='none'){
+   if(item.date>=from&&item.date<=to){
+    const status=['planned','done','cancelled'].includes(item.status)?item.status:'planned';
+    out.push({...item,id,baseId:id,eventId:id,occurrenceDate:item.date,repeatOccurrence:false,status});
+   }
+   continue;
+  }
+  if(item.status==='done'||item.status==='cancelled')continue;
+  const completed=new Set(Array.isArray(item.repeatCompletedDates)?item.repeatCompletedDates.filter(agendaValidDate):[]);
+  const skipped=new Set(Array.isArray(item.repeatSkippedDates)?item.repeatSkippedDates.filter(agendaValidDate):[]);
+  const baseOrdinal=agendaRepeatOrdinal(item.date);
+  let firstIndex=0;
+  if(rule.frequency==='daily'||rule.frequency==='weekly'){
+   const step=rule.frequency==='daily'?rule.interval:rule.interval*7;
+   firstIndex=Math.max(0,Math.ceil((fromOrdinal-baseOrdinal)/step));
+  }else{
+   const [fy,fm]=from.split('-').map(Number),[by,bm]=item.date.split('-').map(Number);
+   firstIndex=Math.max(0,Math.floor(((fy-by)*12+(fm-bm))/rule.interval)-1);
+  }
+  let index=firstIndex,iterations=0;
+  while(iterations<2000){
+   const date=agendaRepeatDateAt(item.date,index,rule.frequency,rule.interval);
+   if(!date||date>rule.until||date>to)break;
+   iterations++;index++;
+   if(date<from||skipped.has(date))continue;
+   if(out.length>=cap){truncated++;break;}
+   const eventId=agendaOccurrenceId(id,date);
+   out.push({...item,id:eventId,baseId:id,eventId,occurrenceDate:date,date,repeatOccurrence:true,status:completed.has(date)?'done':'planned'});
+  }
+  if(iterations>=2000)truncated++;
+ }
+ out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.startTime||'99:99').localeCompare(String(b.startTime||'99:99'))||String(a.title||'').localeCompare(String(b.title||''),'ar'));
+ return {items:out,invalid,truncated};
+}
+
 function agendaReminderLeadLabel(lead){return Number(lead)===1440?'قبل الموعد بيوم':Number(lead)===60?'قبل الموعد بساعة':'عند الموعد';}
 function buildAgendaReminderPlan(items,nowValue){
- const now=Number.isFinite(Number(nowValue))?Number(nowValue):Date.now(),reminders=[];
+ const now=Number.isFinite(Number(nowValue))?Number(nowValue):Date.now(),reminders=[],source=Array.isArray(items)?items:[],todayDate=agendaLocalISODate(now),horizon=agendaShiftDate(todayDate,365),candidates=[];
  let disabled=0,invalid=0,expired=0,completed=0;
- (Array.isArray(items)?items:[]).forEach(item=>{
+ source.forEach(item=>{
   if(!item||item.reminderEnabled!==true){disabled++;return;}
   if(item.status==='done'||item.status==='cancelled'){completed++;return;}
-  if(!item.id||!String(item.title||'').trim()||!agendaValidDate(item.date)){invalid++;return;}
-  const lead=Number(item.reminderLeadMinutes??1440);
-  if(![0,60,1440].includes(lead)){invalid++;return;}
-  const rawTime=String(item.startTime||''),time=rawTime||'08:00';
-  if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)){invalid++;return;}
-  const [year,month,day]=String(item.date).split('-').map(Number),[hour,minute]=time.split(':').map(Number);
-  const appointment=new Date(year,month-1,day,hour,minute,0,0);
-  if(appointment.getFullYear()!==year||appointment.getMonth()!==month-1||appointment.getDate()!==day||appointment.getHours()!==hour||appointment.getMinutes()!==minute){invalid++;return;}
-  const reminder=new Date(appointment.getTime());
-  if(lead===1440)reminder.setDate(reminder.getDate()-1);
-  else if(lead===60)reminder.setHours(reminder.getHours()-1);
-  if(!Number.isFinite(reminder.getTime())||appointment.getTime()<=now||reminder.getTime()<=now-24*60*60*1000){expired++;return;}
-  reminders.push({id:String(item.id),title:String(item.title).trim().slice(0,100),eventDate:String(item.date),eventTime:rawTime,leadMinutes:lead,triggerAtMillis:reminder.getTime()});
+  const rule=agendaRepeatRule(item);
+  if(!String(item.id||'').trim()||!String(item.title||'').trim()||!agendaValidDate(item.date)||!rule.valid){invalid++;return;}
+  const occurrences=rule.frequency==='none'
+   ?(item.date>=todayDate?[{...item,id:String(item.id),date:item.date,repeatOccurrence:false}]:[])
+   :agendaExpandOccurrences([item],todayDate,horizon,700).items;
+  if(rule.frequency!=='none'&&!occurrences.length&&rule.until<todayDate){expired++;return;}
+  if(rule.frequency==='none'&&item.date<todayDate){expired++;return;}
+  occurrences.forEach(occurrence=>{
+   const lead=Number(item.reminderLeadMinutes??1440);
+   if(![0,60,1440].includes(lead)){invalid++;return;}
+   const rawTime=String(item.startTime||''),time=rawTime||'08:00';
+   if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)){invalid++;return;}
+   const [year,month,day]=String(occurrence.date).split('-').map(Number),[hour,minute]=time.split(':').map(Number);
+   const appointment=new Date(year,month-1,day,hour,minute,0,0);
+   if(appointment.getFullYear()!==year||appointment.getMonth()!==month-1||appointment.getDate()!==day||appointment.getHours()!==hour||appointment.getMinutes()!==minute){invalid++;return;}
+   const reminder=new Date(appointment.getTime());
+   if(lead===1440)reminder.setDate(reminder.getDate()-1);
+   else if(lead===60)reminder.setHours(reminder.getHours()-1);
+   if(!Number.isFinite(reminder.getTime())||appointment.getTime()<=now||reminder.getTime()<=now-24*60*60*1000){expired++;return;}
+   candidates.push({id:occurrence.repeatOccurrence?occurrence.eventId:String(item.id),title:String(item.title).trim().slice(0,100),eventDate:String(occurrence.date),eventTime:rawTime,leadMinutes:lead,triggerAtMillis:reminder.getTime()});
+  });
  });
- return {reminders,disabled,completed,invalid,expired};
+ candidates.sort((a,b)=>a.triggerAtMillis-b.triggerAtMillis||a.eventDate.localeCompare(b.eventDate)||a.id.localeCompare(b.id));
+ const maxReminders=500;reminders.push(...candidates.slice(0,maxReminders));
+ return {reminders,disabled,completed,invalid,expired,truncated:Math.max(0,candidates.length-maxReminders)};
+}
+function agendaLocalISODate(timestamp){
+ const d=new Date(timestamp);
+ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 let lastAgendaReminderPayload='';
 let lastAgendaReminderSyncResult=null;
@@ -1522,6 +1614,7 @@ function renderAgendaNotificationStatus(plan,result){
  if(result&&result.ok===false)message+=' تعذرت مزامنة جدول التنبيهات: '+String(result.error||'خطأ غير معروف');
  else if(result&&Number(result.failedToSchedule||0)>0)message+=' تعذر ضبط '+Number(result.failedToSchedule).toLocaleString('ar-DZ')+' تنبيهات؛ راجع صلاحيات الهاتف ثم أعد فتح الأجندة.';
  else if(plan&&plan.expired)message+=' لم تُجدول '+plan.expired+' مواعيد لأن وقت تذكيرها أصبح في الماضي.';
+ else if(plan&&plan.truncated)message+=' توجد تنبيهات مستقبلية إضافية؛ تُجدول أقرب 500 مرة أولاً، ثم تُحدّث القائمة عند فتح الأجندة أو حفظها.';
  else if(result&&result.active!==undefined)message+=' التنبيهات المحفوظة: '+Number(result.active).toLocaleString('ar-DZ')+'.';
  status.textContent=message;status.classList.toggle('status-ok',notifications&&channelEnabled&&exact&&!(result&&result.ok===false));status.classList.toggle('status-warn',!notifications||!channelEnabled||!exact||!!(result&&result.ok===false));
 }
@@ -1537,15 +1630,23 @@ window.openAgendaFromNotification=(id,date)=>{
 };
 function buildAgendaSnapshot(manualItems,documents,from,to,resolveStudent){
  if(!agendaValidDate(from)||!agendaValidDate(to)||from>to)return {valid:false,items:[],manualCount:0,summonsCount:0,invalidManual:0,invalidSummons:0};
- const out=[],manual=Array.isArray(manualItems)?manualItems:[],docs=Array.isArray(documents)?documents:[],resolve=typeof resolveStudent==='function'?resolveStudent:()=>null,seenManual=new Set();let invalidManual=0,invalidSummons=0;
- manual.forEach(x=>{if(!x||typeof x!=='object'||Array.isArray(x)||!String(x.id||'').trim()||!agendaValidDate(x.date)||!String(x.title||'').trim()){invalidManual++;return;}const manualId=String(x.id);if(seenManual.has(manualId)){invalidManual++;return;}seenManual.add(manualId);if(x.date<from||x.date>to)return;let linked=null;try{linked=x.studentId?resolve(String(x.studentId)):null;}catch(_){}
- out.push({id:String(x.id),source:'manual',title:String(x.title),type:['meeting','task','followup','personal'].includes(x.type)?x.type:'task',date:x.date,startTime:String(x.startTime||''),endTime:String(x.endTime||''),location:String(x.location||''),priority:['normal','high','urgent'].includes(x.priority)?x.priority:'normal',status:['planned','done','cancelled'].includes(x.status)?x.status:'planned',notes:String(x.notes||''),studentId:String(x.studentId||''),student:linked});});
- const seen=new Set();
- docs.forEach(x=>{const ap=String(x?.appointment||''),date=ap.slice(0,10);if(!String(x?.type||'').includes('استدعاء'))return;if(!x.id||!agendaValidDate(date)||!ap.includes('T')){if(ap)invalidSummons++;return;}const id=String(x.id);if(seen.has(id))return;seen.add(id);if(date<from||date>to)return;let linked=null;try{linked=x.student?resolve(String(x.student),x):null;}catch(_){}
- const studentName=linked?(String(linked.last||'')+' '+String(linked.first||'')).trim():String(x.studentName||'تلميذ غير محدد');
- out.push({id:'summons:'+id,documentId:id,source:'summons',readOnly:true,title:'حضور ولي: '+studentName,type:'summons',date,startTime:ap.slice(11,16),endTime:'',location:'المؤسسة',priority:'high',status:'planned',student:linked,studentId:String(x.student||'')});});
+ const manual=Array.isArray(manualItems)?manualItems:[],docs=Array.isArray(documents)?documents:[],resolve=typeof resolveStudent==='function'?resolveStudent:()=>null;
+ const expanded=agendaExpandOccurrences(manual,from,to,2000),out=[];
+ expanded.items.forEach(x=>{
+  let linked=null;try{linked=x.studentId?resolve(String(x.studentId)):null;}catch(_){}
+  out.push({id:x.eventId,baseId:x.baseId,occurrenceDate:x.occurrenceDate,repeatOccurrence:!!x.repeatOccurrence,source:'manual',title:String(x.title),type:['meeting','task','followup','personal'].includes(x.type)?x.type:'task',date:x.date,startTime:String(x.startTime||''),endTime:String(x.endTime||''),location:String(x.location||''),priority:['normal','high','urgent'].includes(x.priority)?x.priority:'normal',status:x.status,notes:String(x.notes||''),studentId:String(x.studentId||''),student:linked,repeatLabel:agendaRepeatFrequencyLabel(x)});
+ });
+ const seen=new Set();let invalidSummons=0;
+ docs.forEach(x=>{
+  const ap=String(x?.appointment||''),date=ap.slice(0,10);if(!String(x?.type||'').replace(/\s+/g,'').includes('استدعاء'))return;
+  if(!x.id||!agendaValidDate(date)||!ap.includes('T')){if(ap)invalidSummons++;return;}
+  const id=String(x.id);if(seen.has(id))return;seen.add(id);if(date<from||date>to)return;
+  let linked=null;try{linked=x.student?resolve(String(x.student),x):null;}catch(_){}
+  const studentName=linked?(String(linked.last||'')+' '+String(linked.first||'')).trim():String(x.studentName||'تلميذ غير محدد');
+  out.push({id:'summons:'+id,baseId:'summons:'+id,occurrenceDate:date,repeatOccurrence:false,documentId:id,source:'summons',readOnly:true,title:'حضور ولي: '+studentName,type:'summons',date,startTime:ap.slice(11,16),endTime:'',location:'المؤسسة',priority:'high',status:'planned',student:linked,studentId:String(x.student||'')});
+ });
  out.sort((a,b)=>a.date.localeCompare(b.date)||String(a.startTime||'99:99').localeCompare(String(b.startTime||'99:99'))||a.title.localeCompare(b.title,'ar'));
- return {valid:true,items:out,manualCount:out.filter(x=>x.source==='manual').length,summonsCount:out.filter(x=>x.source==='summons').length,invalidManual,invalidSummons};
+ return {valid:true,items:out,manualCount:out.filter(x=>x.source==='manual').length,summonsCount:out.filter(x=>x.source==='summons').length,invalidManual:expanded.invalid,invalidSummons};
 }
 let agendaCurrentView='month',agendaSelectedDate=(new Date()).getFullYear()+'-'+String((new Date()).getMonth()+1).padStart(2,'0')+'-'+String((new Date()).getDate()).padStart(2,'0'),agendaCurrentTypeFilter='all';
 function agendaRange(){if(agendaCurrentView==='month'){const x=agendaMonthGrid(agendaSelectedDate);return x?{from:x.start,to:x.end,month:x.month}:null;}return agendaDateRange(agendaCurrentView,agendaSelectedDate);}
