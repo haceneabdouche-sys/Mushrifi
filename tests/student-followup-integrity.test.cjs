@@ -70,6 +70,8 @@ assert.ok(data.timeline.some(x=>x.source==='violations'&&x.recordId==='v-1'),'ex
 const view=sandbox.profileStudentFollowupView(followups);
 assert.equal(view.total,2);
 assert.equal(view.pending,1);
+assert.equal(view.completed,1,'completed follow-ups appear in interactive status summary');
+assert.equal(view.closed,0,'closed follow-up count is independent');
 assert.ok(view.html.includes('تعديل المتابعة')&&view.html.includes('data-followup-action="delete"'),'follow-up list exposes direct edit and delete controls');
 assert.ok(view.html.includes('تم التواصل')&&view.html.includes('2026-11-27'),'follow-up view displays action and next-review date');
 const escapedRecord={...records[0],observation:'<img src=x onerror=alert(1)>'};
@@ -126,8 +128,10 @@ for(const privateValue of ['تكرر غياب التلميذ خلال الأسب
 
 assert.ok(html.includes('id="studentFollowupForm"')&&html.includes('name="observation"')&&html.includes('name="actionTaken"'),'student profile provides a structured follow-up form');
 assert.ok(html.includes('name="nextDate"')&&html.includes('name="status"'),'follow-up form includes next-review date and status');
-assert.ok(html.includes('window.saveStudentFollowup=event=>')&&html.includes('window.deleteStudentFollowup='),'follow-up form has wired create and delete actions');
+assert.ok(html.includes('window.saveStudentFollowup=event=>')&&html.includes('window.deleteStudentFollowup=')&&html.includes('window.editStudentFollowup='),'follow-up form has wired create, edit, and delete actions');
+assert.ok(html.includes("if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن حفظ المتابعة قبل تجديد الترخيص.')")&&html.includes("if(licenseReadOnly)followupForm.querySelectorAll('input,select,textarea,button')"),'follow-up controls respect license read-only mode');
 assert.ok(html.includes('<option value="followups">المتابعات التربوية</option>'),'timeline filter includes follow-ups');
+assert.ok(html.includes('<option value="followups">المتابعات التربوية</option>')&&html.includes('id="auditEntityFilter"'),'audit filter also includes follow-up records');
 assert.ok(html.includes('followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[])'),'legacy backup restore preserves current follow-ups instead of erasing them');
 assert.ok(html.includes('db.followups=Array.isArray(data.followups)?data.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[])'),'undoing a legacy snapshot preserves current follow-ups');
 assert.ok(html.includes('followups:followupsMissingInBackup?(Array.isArray(db.followups)?db.followups.slice():[]):obj.followups'),'legacy backup import retains existing follow-ups');
