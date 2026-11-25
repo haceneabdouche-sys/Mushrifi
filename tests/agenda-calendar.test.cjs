@@ -131,7 +131,7 @@ for(const id of ['agendaStoredCount','agendaTodayCount','agendaWeekCount','agend
  assert.equal(count,1,'agenda control ID must be unique: '+id);
 }
 assert.ok(html.includes('<section id="agenda" class="page hidden">'),'agenda is a dedicated page');
-assert.ok(html.includes('data-go="agenda"')&&html.includes("['violations','reports','settings','audit','agenda'].includes(page)"),'agenda is accessible from More and bottom-nav state stays aligned');
+assert.ok(html.includes('data-go="agenda"')&&html.includes("['reports','settings','audit','agenda'].includes(route)"),'agenda is accessible from More and the secondary navigation state stays aligned');
 assert.ok(html.includes('data-agenda-view="day"')&&html.includes('data-agenda-view="week"')&&html.includes('data-agenda-view="month"'),'day, week and month view selectors are present');
 assert.ok(html.includes('function renderAgenda()')&&html.includes("if(activePage==='agenda')renderAgenda();"),'agenda refreshes when opened or data is saved');
 assert.ok(html.includes("renderAgendaHome(today);")&&html.includes('id="upcomingAgenda"'),'upcoming agenda items are surfaced on the home dashboard');
