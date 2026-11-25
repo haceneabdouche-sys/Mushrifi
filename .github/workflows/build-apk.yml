@@ -109,6 +109,8 @@ jobs:
         run: node tests/summons-notification-permissions.test.cjs
       - name: Run CSV import identity safety regression tests
         run: node tests/csv-import-identity-safety.test.cjs
+      - name: Run easy navigation layout regression tests
+        run: node tests/easy-navigation-layout.test.cjs
       - name: Run mobile performance regression tests
         run: node tests/mobile-performance.test.cjs
       - name: Package complete Android project
