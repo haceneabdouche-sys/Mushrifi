@@ -8,9 +8,12 @@ const dailyStart=html.indexOf('function smartDashboardDateShift(');
 const dailyEnd=html.indexOf('function openDailyDashboardTask(',dailyStart);
 assert.ok(dailyStart>=0&&dailyEnd>dailyStart,'daily dashboard pure helpers exist before navigation actions');
 
-const sandbox={Date,Map,Set,Number,String,Array,Math};
+const agendaStart=html.indexOf('function agendaValidDate(v){');
+const agendaEnd=html.indexOf('let agendaCurrentView=',agendaStart);
+assert.ok(agendaStart>=0&&agendaEnd>agendaStart,'agenda occurrence expansion helpers exist before the daily dashboard');
+const sandbox={Date,Map,Set,Number,String,Array,Math,window:{},document:{querySelectorAll:()=>[]}};
 vm.createContext(sandbox);
-vm.runInContext(html.slice(dailyStart,dailyEnd),sandbox);
+vm.runInContext(html.slice(agendaStart,agendaEnd)+'\\n'+html.slice(dailyStart,dailyEnd),sandbox);
 const today='2026-11-25';
 const now=Date.parse('2026-11-25T08:00:00+01:00');
 
@@ -68,6 +71,12 @@ assert.equal(snap.tasks[1].kind,'summons','both upcoming guardian visits remain 
 assert.ok(snap.tasks.some(x=>x.kind==='unlinked'&&x.recordId==='a8'),'unlinked pending justification is surfaced for identity verification');
 assert.ok(snap.tasks.some(x=>x.kind==='summons'&&x.documentId==='d2'&&!x.studentId),'unlinked summons retains the original document action without an unsafe student link');
 assert.ok(snap.tasks.some(x=>x.kind==='agenda'&&x.title==='اجتماع مجلس التربية'&&x.studentId==='s3'),'today agenda tasks retain safe student linkage');
+const recurringAgenda={id:'daily-series',title:'مراجعة يومية',date:'2026-11-20',type:'task',repeatFrequency:'daily',repeatInterval:1,repeatUntil:today,status:'planned',studentId:'s2'};
+const recurringSnap=sandbox.buildDailyFollowupSnapshot([],[],[recurringAgenda],[],today,now,resolve);
+assert.ok(recurringSnap.tasks.some(x=>x.kind==='agenda'&&x.title==='مراجعة يومية'&&x.studentId==='s2'),'a recurring agenda series contributes a task on its actual selected occurrence date');
+const completedRecurring={...recurringAgenda,repeatCompletedDates:[today]};
+const completedRecurringSnap=sandbox.buildDailyFollowupSnapshot([],[],[completedRecurring],[],today,now,resolve);
+assert.ok(!completedRecurringSnap.tasks.some(x=>x.title==='مراجعة يومية'),'a completed recurring occurrence does not remain in the daily action list');
 assert.ok(!snap.tasks.some(x=>x.title==='مهمة منجزة'||x.title==='موعد الغد'),'completed and non-today appointments are excluded');
 
 const empty=sandbox.buildDailyFollowupSnapshot(null,null,null,null,'invalid',now,resolve);
