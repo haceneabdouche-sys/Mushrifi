@@ -72,7 +72,7 @@ assert.equal(plan.invalid,4,'invalid date, time, lead and nonexistent DST local 
 
 assert.ok(html.includes('id="agendaReminderEnabled"')&&html.includes('id="agendaReminderLead"'),'each agenda item has an independent reminder toggle and lead selector');
 assert.ok(html.includes('item?item.reminderEnabled===true:true'),'old agenda items do not silently start sending reminders after update');
-assert.ok(html.includes('reminderEnabled:$(\\'#agendaReminderEnabled\\').checked===true'),'the reminder choice is saved with the agenda item');
+assert.ok(html.includes("reminderEnabled:$('#agendaReminderEnabled').checked===true"),'the reminder choice is saved with the agenda item');
 assert.ok(html.includes("if(isAndroidApp)syncAgendaRemindersWithAndroid(false);"),'successful local database saves synchronize agenda alarms with Android');
 assert.ok(html.includes("syncAgendaRemindersWithAndroid(true);"),'startup rebuilds the complete desired agenda alarm list');
 assert.ok(html.includes('function renderAgendaNotificationStatus')&&html.includes('agendaRequestExactAlarmPermission'),'agenda page reports notification and exact-alarm permission states');
