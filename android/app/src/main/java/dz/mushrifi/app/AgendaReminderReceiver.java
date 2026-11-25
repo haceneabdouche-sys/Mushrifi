@@ -1,6 +1,5 @@
 package dz.mushrifi.app;
 
-import android.app.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.app.Notification;
