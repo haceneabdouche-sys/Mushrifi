@@ -1837,7 +1837,7 @@ function renderAgendaConflicts(result,range){
  hint.textContent='نتيجة فحص '+scope+'. تُقارن المواعيد التي لها ساعة بداية؛ الموعد ذو ساعة واحدة بلا نهاية يُعامل كنقطة زمنية. لا تُحسب المهام طوال اليوم أو السجلات ذات الوقت غير الصالح.';
  if(result?.ignoredWithoutTime)hint.textContent+=' تم استبعاد '+Number(result.ignoredWithoutTime).toLocaleString('ar-DZ')+' مهام بلا ساعة بداية.';
  if(result?.ignoredInvalidTime)hint.textContent+=' تم استبعاد '+Number(result.ignoredInvalidTime).toLocaleString('ar-DZ')+' سجلات ذات أوقات غير صالحة.';
- if(!total){list.innerHTML='<p class="agenda-conflict-empty">لا توجد تعارضات زمنية مؤكدة في الفترة المعروضة.</p>';return;}
+ if(!total){list.innerHTML='<p class="agenda-conflict-empty">لا توجد تعارضات زمنية مؤكدة في الفترة المعروضة.</p>';const emptyAlternatives=$('#agendaAlternativeList');if(emptyAlternatives)emptyAlternatives.innerHTML='<p class="agenda-alternative-empty">لا توجد تعارضات تحتاج إلى اقتراح أوقات بديلة.</p>';return;}
  list.innerHTML=conflicts.map(conflict=>{
   const first=conflict.first,second=conflict.second;
   const sourceLabel=event=>event.source==='summons'?'استدعاء ولي':'أجندة';
@@ -1846,7 +1846,6 @@ function renderAgendaConflicts(result,range){
  }).join('');
  const alternatives=$('#agendaAlternativeList');
  if(!alternatives)return;
- if(!total){alternatives.innerHTML='<p class="agenda-alternative-empty">ستظهر الأوقات البديلة هنا عند وجود تعارض.</p>';return;}
  if(!agendaAlternativeComputed||!agendaAlternativeOptions){alternatives.innerHTML='<p class="agenda-alternative-empty">حدد فترة العمل المتاحة ثم اضغط «احسب الأوقات البديلة» لعرض الخيارات.</p>';return;}
  const groups=[];
  conflicts.forEach(conflict=>{
