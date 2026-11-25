@@ -973,8 +973,8 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
  <h4>اقتراح أوقات بديلة</h4>
  <p class="muted">حدد فترة العمل المتاحة لهذا اليوم. سيبحث التطبيق عن أوقات خالية دون تعديل الموعدين الأصليين.</p>
  <div class="agenda-alternative-fields">
-  <div><label for="agendaAlternativeStart">بداية الفترة المتاحة</label><input type="time" id="agendaAlternativeStart" value="08:00"></div>
-  <div><label for="agendaAlternativeEnd">نهاية الفترة المتاحة</label><input type="time" id="agendaAlternativeEnd" value="16:00"></div>
+  <div><label for="agendaAlternativeStart">بداية الفترة المتاحة</label><input type="time" id="agendaAlternativeStart"></div>
+  <div><label for="agendaAlternativeEnd">نهاية الفترة المتاحة</label><input type="time" id="agendaAlternativeEnd"></div>
   <div><label for="agendaAlternativeDuration">مدة الموعد دون وقت نهاية</label><select id="agendaAlternativeDuration"><option value="15">15 دقيقة</option><option value="30" selected>30 دقيقة</option><option value="45">45 دقيقة</option><option value="60">ساعة</option><option value="90">ساعة ونصف</option><option value="120">ساعتان</option><option value="150">ساعتان ونصف</option><option value="180">3 ساعات</option><option value="240">4 ساعات</option></select></div>
   <div><label for="agendaAlternativeBuffer">فاصل أمان بين المواعيد</label><select id="agendaAlternativeBuffer"><option value="0">دون فاصل</option><option value="5">5 دقائق</option><option value="10" selected>10 دقائق</option><option value="15">15 دقيقة</option><option value="20">20 دقيقة</option><option value="30">30 دقيقة</option></select></div>
  </div>
@@ -1817,6 +1817,15 @@ function agendaEventMarkup(x,compact=false){
 }
 
 
+let agendaAlternativeOptions=null;
+let agendaAlternativeComputed=false;
+function agendaAlternativeSourceLabel(event){return event?.source==='summons'?'استدعاء ولي':'موعد أجندة';}
+function computeAgendaAlternatives(){
+ const startTime=String($('#agendaAlternativeStart')?.value||''),endTime=String($('#agendaAlternativeEnd')?.value||''),defaultDuration=Number($('#agendaAlternativeDuration')?.value||30),bufferMinutes=Number($('#agendaAlternativeBuffer')?.value||0);
+ if(agendaConflictTimeMinutes(startTime)===null||agendaConflictTimeMinutes(endTime)===null||agendaConflictTimeMinutes(endTime)<=agendaConflictTimeMinutes(startTime)){alert('أدخل بداية ونهاية صحيحتين لفترة العمل، على أن تكون النهاية بعد البداية.');return;}
+ if(![15,30,45,60,90,120,150,180,240].includes(defaultDuration)||![0,5,10,15,20,30].includes(bufferMinutes)){alert('تحقق من مدة الموعد وفاصل الأمان.');return;}
+ agendaAlternativeOptions={startTime,endTime,defaultDuration,bufferMinutes};agendaAlternativeComputed=true;renderAgenda();
+}
 function renderAgendaConflicts(result,range){
  const panel=$('#agendaConflictPanel'),count=$('#agendaConflictCount'),hint=$('#agendaConflictHint'),list=$('#agendaConflictList');
  if(!panel||!count||!hint||!list)return;
@@ -1835,6 +1844,27 @@ function renderAgendaConflicts(result,range){
   const timeLabel=event=>String(event.startTime||'وقت غير محدد')+(event.endTime?' — '+String(event.endTime):'');
   return '<article class="agenda-conflict-item" data-agenda-conflict-id="'+esc(conflict.id)+'"><div class="agenda-conflict-time">'+esc(agendaFormatDate(conflict.date))+' · '+esc(agendaConflictTimeLabel(conflict))+'</div><div class="agenda-conflict-pair"><div class="agenda-conflict-event"><strong>'+esc(first.title||'موعد دون عنوان')+'</strong><small>'+esc(sourceLabel(first))+' · '+esc(timeLabel(first))+'</small></div><span class="agenda-conflict-vs">يتعارض مع</span><div class="agenda-conflict-event"><strong>'+esc(second.title||'موعد دون عنوان')+'</strong><small>'+esc(sourceLabel(second))+' · '+esc(timeLabel(second))+'</small></div></div><button type="button" class="btn small" data-agenda-conflict-focus="true" data-conflict-date="'+esc(conflict.date)+'" data-conflict-first-id="'+esc(first.id)+'" data-conflict-second-id="'+esc(second.id)+'">عرض الموعدين في التقويم</button></article>';
  }).join('');
+ const alternatives=$('#agendaAlternativeList');
+ if(!alternatives)return;
+ if(!total){alternatives.innerHTML='<p class="agenda-alternative-empty">ستظهر الأوقات البديلة هنا عند وجود تعارض.</p>';return;}
+ if(!agendaAlternativeComputed||!agendaAlternativeOptions){alternatives.innerHTML='<p class="agenda-alternative-empty">حدد فترة العمل المتاحة ثم اضغط «احسب الأوقات البديلة» لعرض الخيارات.</p>';return;}
+ const groups=[];
+ conflicts.forEach(conflict=>{
+  [conflict.first,conflict.second].forEach(target=>{
+   const suggestion=agendaAlternativeSlots(result.events,target,agendaAlternativeOptions);
+   const recurrence=!!target.repeatOccurrence;
+   const durationText=suggestion.duration+' دقيقة';
+   const slots=suggestion.slots.map(slot=>'<span class="agenda-alternative-slot">'+esc(slot.startTime)+' – '+esc(slot.endTime)+'</span>').join('');
+   let note='';
+   if(!suggestion.valid)note='تعذر حساب مدة هذا الموعد؛ تحقق من أوقاته.';
+   else if(!suggestion.slots.length)note='لم يُعثر على فترة خالية بهذه المدة داخل ساعات العمل المحددة.';
+   groups.push('<div class="agenda-alternative-group"><strong>'+esc(target.title||'موعد دون عنوان')+' · '+esc(agendaAlternativeSourceLabel(target))+' · '+esc(agendaFormatDate(target.date))+'</strong><small class="muted">مدة الاقتراح: '+esc(durationText)+(recurrence?' · هذا الموعد جزء من سلسلة متكررة؛ الاقتراح لا يغيّر السلسلة':'')+'</small>'+(slots?'<div class="agenda-alternative-slots">'+slots+'</div>':'<p class="agenda-alternative-empty">'+esc(note)+'</p>')+'</div>');
+  });
+ });
+ alternatives.innerHTML=groups.join('');
+ const ignored=Number(result.ignoredWithoutTime||0);
+ if(ignored)alternatives.insertAdjacentHTML('beforeend','<p class="agenda-alternative-empty">تنبيه: توجد '+ignored.toLocaleString('ar-DZ')+' مهام أو مواعيد بلا وقت بداية؛ لم تدخل في حساب الفترات الخالية.</p>');
+}
 }
 function agendaFocusConflict(date,firstId,secondId){
  if(!agendaValidDate(date))return;
@@ -1967,6 +1997,8 @@ function initAgendaControls(){
  $('#agendaToday')?.addEventListener('click',()=>{const x=new Date();agendaSelectedDate=x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');renderAgenda();});
  $('#agendaSelectedDate')?.addEventListener('change',e=>{if(agendaValidDate(e.target.value)){agendaSelectedDate=e.target.value;renderAgenda();}});
  $('#agendaTypeFilter')?.addEventListener('change',e=>{agendaCurrentTypeFilter=e.target.value||'all';renderAgenda();});
+ $('#agendaComputeAlternatives')?.addEventListener('click',computeAgendaAlternatives);
+ ['agendaAlternativeStart','agendaAlternativeEnd','agendaAlternativeDuration','agendaAlternativeBuffer'].forEach(id=>$('#'+id)?.addEventListener('change',()=>{agendaAlternativeComputed=false;agendaAlternativeOptions=null;const output=$('#agendaAlternativeList');if(output)output.innerHTML='<p class="agenda-alternative-empty">تغيّرت إعدادات البحث؛ أعد حساب الأوقات البديلة.</p>';}));
  $('#agendaRepeatFrequency')?.addEventListener('change',syncAgendaRepeatControls);
  $('#agendaAdd')?.addEventListener('click',()=>showAgendaForm(''));$('#agendaCancel')?.addEventListener('click',closeAgendaForm);$('#agendaCancelBottom')?.addEventListener('click',closeAgendaForm);
  $('#agendaForm')?.addEventListener('submit',agendaHandleSubmit);
