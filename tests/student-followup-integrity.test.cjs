@@ -28,7 +28,7 @@ vm.runInContext(html.slice(helperStart,helperEnd),sandbox);
 const valid={
  date:'2026-11-20',category:'المواظبة والحضور',observation:'تكرر غياب التلميذ خلال الأسبوع',
  actionTaken:'تم التواصل مع الولي وتوجيه تنبيه بضرورة المتابعة',
- status:'قيد المتابعة',nextDate:'2026-11-27',result:''
+ status:'قيد المتابعة',nextDate:'2026-11-27',result:'تحسن الالتزام بالحضور بعد التواصل الأولي'
 };
 assert.equal(sandbox.validateStudentFollowupInput(valid).valid,true,'valid structured follow-up is accepted');
 assert.equal(sandbox.validateStudentFollowupInput({...valid,date:'2026-02-30'}).valid,false,'impossible follow-up date is rejected');
@@ -122,7 +122,7 @@ assert.ok(followupEvent.restrictedFields.includes('مضمون الملاحظة �
 assert.ok(followupEvent.restrictedFields.includes('الإجراء التربوي المتخذ'),'action content is redacted from the audit log');
 assert.ok(followupEvent.restrictedFields.includes('نتيجة المتابعة'),'result content is redacted from the audit log');
 const auditText=JSON.stringify(audit);
-for(const privateValue of ['تكرر غياب التلميذ خلال الأسبوع','تم التواصل مع الولي وتوجيه تنبيه','student-1']){
+for(const privateValue of ['تكرر غياب التلميذ خلال الأسبوع','تم التواصل مع الولي وتوجيه تنبيه','تحسن الالتزام بالحضور بعد التواصل الأولي','student-1']){
  assert.ok(!auditText.includes(privateValue),'audit history must not expose private follow-up content or student identifiers: '+privateValue);
 }
 
