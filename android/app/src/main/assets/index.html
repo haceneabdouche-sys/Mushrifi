@@ -633,6 +633,26 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 .student-profile-info .stat{min-width:0}
 .student-report-method-note{padding:9px 11px;background:#f8f7f0;border-right:3px solid var(--gold);border-radius:7px;color:#6e5b2d;font-size:11px;line-height:1.8}
 .student-report-footnote{margin-top:16px;padding-top:9px;border-top:1px solid #cbd5dc;color:#586b78;font-size:10px;line-height:1.8}
+
+.student-timeline-panel{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface,#fff)}
+.student-timeline-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.student-timeline-heading h3{margin:0}
+.student-timeline-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:10px 0}
+.student-timeline-controls select{min-width:0;max-width:100%;padding:7px 10px}
+.student-timeline-list{display:grid;gap:9px}
+.student-timeline-item{min-width:0;padding:10px 12px;border:1px solid var(--line);border-right:4px solid #9ab7c8;border-radius:9px;background:var(--card,#fbfcfd)}
+.student-timeline-item[data-timeline-kind="violations"]{border-right-color:#c58a7c}
+.student-timeline-item[data-timeline-kind="documents"]{border-right-color:#c5a45c}
+.student-timeline-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:11px}
+.student-timeline-badge{display:inline-flex;padding:3px 8px;border-radius:20px;background:#eef3f6;color:#29475b;font-weight:700}
+.student-timeline-item h4{margin:6px 0 3px;font-size:14px;overflow-wrap:anywhere}
+.student-timeline-item p{margin:3px 0;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.student-timeline-item .student-timeline-note{padding-top:5px;border-top:1px dashed var(--line);color:var(--muted)}
+.student-timeline-actions{display:flex;justify-content:flex-start;margin-top:7px}
+.student-timeline-more-wrap{text-align:center;margin-top:10px}
+@media(max-width:560px){.student-timeline-item{padding:9px}.student-timeline-controls{align-items:stretch}.student-timeline-controls select{width:100%}.student-timeline-actions .btn{width:100%}}
+@media print{.student-timeline-controls,.student-timeline-actions,.student-timeline-more-wrap{display:none!important}}
+
 .student-report-document{color:#172b3a;line-height:1.75;font-size:10.5pt}
 .student-report-main-title{text-align:center;padding:0 0 10px;border-bottom:2px solid #d6b46b;margin-bottom:14px}
 .student-report-main-title h1{margin:0;font-size:21px;color:#173b58}
@@ -1859,7 +1879,7 @@ if(activePage==='attendance'){
 $('#attLogCount').textContent=db.attendance.length+' سجل';$('#attRows').innerHTML=db.attendance.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).map(x=>{const duration=x.type==='حضور'?'حضور مسجل':x.type==='تأخر'?((x.minutes!==null&&x.minutes!==undefined&&x.minutes!==''?Number(x.minutes):Math.round(Number(x.hours||0)*60))+' دقيقة'):(x.hours!==undefined&&x.hours!==''?x.hours+' ساعة':'—');return `<tr data-att-id="${esc(x.id)}"><td data-label="التلميذ"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(x.studentName||name(x.student))}</button></td><td data-label="القسم">${esc(x.class||x.studentClass||student(x.student)?.class||'غير محدد')}</td><td data-label="التاريخ">${esc(x.date)}</td><td data-label="الحالة">${esc(x.type)} ${esc(x.period||'')} · ${esc(duration)}</td><td data-label="التبرير">${esc(x.justified||'غير مبرر')}</td><td data-label="ملاحظات">${esc(x.notes||'—')}</td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="editAttendance('${x.id}')">تعديل السجل</button><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">لا توجد سجلات.</td></tr>';
 }
 if(activePage==='violations'){
-$('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr><td data-label="التاريخ"><span class="viol-field">${esc(x.date)}</span></td><td data-label="التلميذ" class="viol-student"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="النوع"><span class="viol-field">${esc(x.type)}</span></td><td data-label="الوصف"><span class="viol-field">${esc(x.description)}</span>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td data-label="الإجراء"><span class="viol-field">${esc(x.action||'—')}</span></td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
+$('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr data-violation-id="${esc(x.id)}"><td data-label="التاريخ"><span class="viol-field">${esc(x.date)}</span></td><td data-label="التلميذ" class="viol-student"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="النوع"><span class="viol-field">${esc(x.type)}</span></td><td data-label="الوصف"><span class="viol-field">${esc(x.description)}</span>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td data-label="الإجراء"><span class="viol-field">${esc(x.action||'—')}</span></td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
 }
 if(activePage==='documents'){
 $('#docsRows').innerHTML=db.documents.length?`<div class="tablewrap"><table class="documents-table"><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>الموضوع</th><th>موعد الحضور</th><th>الصورة</th><th>الإجراءات</th></tr></thead><tbody>${db.documents.slice().reverse().map(x=>`<tr data-doc-id="${esc(x.id)}"><td data-label="تاريخ الوثيقة"><span class="doc-field">${esc(x.date)}</span></td><td data-label="التلميذ" class="doc-student"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="نوع الوثيقة"><span class="doc-field">${esc(x.type)}</span></td><td data-label="السبب"><span class="doc-field">${esc(x.reason)}</span></td><td data-label="موعد الحضور"><span class="doc-field doc-date" dir="ltr">${esc(x.appointment||'—')}</span></td><td data-label="وقت التنبيه"><span class="doc-field doc-date" dir="ltr">${esc(x.reminderAt||'—')}</span></td><td data-label="الصورة">${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td><td data-label="الإجراءات" class="doc-actions"><div class="actions"><button class="btn small primary" onclick="editDocument('${x.id}')">تعديل</button><button class="btn small" onclick="printDoc('${x.id}')">طباعة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد وثائق.</div>';
@@ -2525,6 +2545,7 @@ function buildStudentReportData(target,database){
  notes.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
  return {
   student:target,attendance,absences,lateness,violations,documents,summons,absenceNotices,alerts,otherDocuments,notes,
+  timeline:buildStudentTimeline(target,database),
   summary:{
    absences:absences.length,absenceStatus,absenceHours:knownAbsence.reduce((n,x)=>n+x,0),knownAbsenceHoursRecords:knownAbsence.length,unknownAbsenceHours:absences.length-knownAbsence.length,
    lateness:lateness.length,latenessStatus,latenessMinutes:knownLateness.reduce((n,x)=>n+x,0),knownLatenessMinutesRecords:knownLateness.length,unknownLatenessMinutes:lateness.length-knownLateness.length,
@@ -2532,6 +2553,82 @@ function buildStudentReportData(target,database){
   }
  };
 }
+
+function profileTimelineValidDate(value){
+ const m=String(value??'').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ if(!m)return false;
+ const y=Number(m[1]),month=Number(m[2]),day=Number(m[3]),date=new Date(Date.UTC(y,month-1,day));
+ return date.getUTCFullYear()===y&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;
+}
+function profileTimelineDate(record){
+ const raw=String(record?.date??'').trim(),match=raw.match(/^(\d{4}-\d{2}-\d{2})(?:$|T)/);
+ if(match&&profileTimelineValidDate(match[1]))return match[1];
+ const appointment=String(record?.appointment??'').trim(),fallback=appointment.match(/^(\d{4}-\d{2}-\d{2})(?:$|T)/);
+ return fallback&&profileTimelineValidDate(fallback[1])?fallback[1]:'';
+}
+function profileTimelineText(value,maxLength){
+ return String(value??'').replace(/\s+/g,' ').trim().slice(0,maxLength||500);
+}
+function buildStudentTimeline(target,database){
+ const students=Array.isArray(database?.students)?database.students:[],events=[];
+ const matches=record=>profileRecordBelongsToStudent(record,target,students);
+ const add=(source,sourceLabel,record,index,title,detail,appointment)=>{
+  const recordId=profileTimelineText(record?.id,120),date=profileTimelineDate(record);
+  events.push({source,sourceLabel,recordId,date,title:profileTimelineText(title,140)||'حدث مسجل',detail:profileTimelineText(detail,700),appointment:profileTimelineText(appointment,80),notes:profileTimelineText(record?.notes??record?.note,600),_order:index});
+ };
+ (Array.isArray(database?.attendance)?database.attendance:[]).forEach((record,index)=>{
+  if(!record||typeof record!=='object'||!matches(record))return;
+  const type=profileTimelineText(record.type,80),normalized=type.replace(/\s+/g,'');
+  let title=normalized==='غياب'?'غياب مسجل':normalized==='تأخر'?'تأخر مسجل':normalized==='حضور'?'حضور مسجل':(type?'متابعة: '+type:'سجل متابعة');
+  const details=[];
+  if(record.period)details.push('الفترة: '+profileTimelineText(record.period,100));
+  if(normalized==='غياب'){
+   const hours=profileKnownAbsenceHours(record);
+   details.push(hours===null?'مدة الغياب غير مسجلة':'المدة: '+hours+' ساعة');
+   details.push('حالة التبرير: '+profileJustificationLabel(record));
+  }else if(normalized==='تأخر'){
+   const minutes=profileKnownLatenessMinutes(record);
+   details.push(minutes===null?'مدة التأخر غير مسجلة':'المدة: '+minutes+' دقيقة');
+   details.push('حالة التبرير: '+profileJustificationLabel(record));
+  }else if(record.justified)details.push('الحالة: '+profileTimelineText(record.justified,60));
+  add('attendance','غياب وتأخر وحضور',record,index,title,details.join(' · '),'');
+ });
+ (Array.isArray(database?.violations)?database.violations:[]).forEach((record,index)=>{
+  if(!record||typeof record!=='object'||!matches(record))return;
+  const type=profileTimelineText(record.type,100),details=[record.description?'الوصف: '+profileTimelineText(record.description,260):'',record.action?'الإجراء: '+profileTimelineText(record.action,180):''].filter(Boolean);
+  add('violations','مخالفة',record,index,'مخالفة مسجلة'+(type?' · '+type:''),details.join(' · '),'');
+ });
+ (Array.isArray(database?.documents)?database.documents:[]).forEach((record,index)=>{
+  if(!record||typeof record!=='object'||!matches(record))return;
+  const type=profileTimelineText(record.type,100),details=[
+   record.reason?'الموضوع: '+profileTimelineText(record.reason,260):'',
+   record.reminderAt?'موعد التنبيه: '+profileTimelineText(record.reminderAt,60):'',
+   record.deliveryDate?'تاريخ التبليغ: '+profileTimelineText(record.deliveryDate,30):'',
+   record.deliveryProof?'إثبات التبليغ: '+profileTimelineText(record.deliveryProof,160):''
+  ].filter(Boolean);
+  add('documents','وثيقة أو استدعاء',record,index,type||'وثيقة مسجلة',details.join(' · '),record.appointment||'');
+ });
+ events.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.appointment||'').localeCompare(String(a.appointment||''))||b._order-a._order);
+ events.forEach(event=>delete event._order);
+ return events;
+}
+function profileTimelineDateLabel(value){
+ if(!profileTimelineValidDate(value))return 'تاريخ غير محدد';
+ const parts=String(value).split('-').map(Number);
+ return new Date(parts[0],parts[1]-1,parts[2],12).toLocaleDateString('ar-DZ',{year:'numeric',month:'short',day:'numeric'});
+}
+function profileTimelineView(events,filter,limit){
+ const allowed=['all','attendance','violations','documents'],selected=allowed.includes(filter)?filter:'all';
+ const source=Array.isArray(events)?events:[],filtered=selected==='all'?source:source.filter(event=>event.source===selected);
+ const cap=Math.max(1,Math.min(200,Math.floor(Number(limit)||30))),visible=filtered.slice(0,cap);
+ const html=visible.map(event=>{
+  const actionLabel=event.source==='attendance'?'فتح سجل المتابعة':event.source==='documents'?'فتح الوثيقة':'عرض المخالفة';
+  const action=event.recordId?'<button type="button" class="btn small" data-timeline-action="'+esc(event.source)+'" data-timeline-record-id="'+esc(event.recordId)+'">'+actionLabel+'</button>':'';
+  return '<article class="student-timeline-item" data-timeline-kind="'+esc(event.source)+'"><div class="student-timeline-meta"><span class="student-timeline-badge">'+esc(event.sourceLabel)+'</span><time>'+esc(profileTimelineDateLabel(event.date))+'</time></div><h4>'+esc(event.title)+'</h4>'+(event.detail?'<p>'+esc(event.detail)+'</p>':'')+(event.appointment?'<p><b>موعد الحضور:</b> '+esc(event.appointment)+'</p>':'')+(event.notes?'<p class="student-timeline-note"><b>ملاحظة:</b> '+esc(event.notes)+'</p>':'')+(action?'<div class="student-timeline-actions">'+action+'</div>':'')+'</article>';
+ }).join('');
+ return {total:filtered.length,shown:visible.length,html:html||'<p class="empty">لا توجد أحداث في هذا التصنيف.</p>'};
+}
+
 function profilePrintableTable(rows,headers,renderRow,emptyMessage){
  if(!rows.length)return '<p class="student-report-empty">'+esc(emptyMessage||'لا توجد سجلات ضمن هذا القسم.')+'</p>';
  return '<div class="student-report-table-wrap"><table class="student-report-table"><thead><tr>'+headers.map(header=>'<th>'+esc(header)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(renderRow).join('')+'</tbody></table></div>';
@@ -2558,10 +2655,12 @@ function buildStudentPrintableReportMarkup(data){
  const violationRows=profilePrintableTable(data.violations,['التاريخ','نوع المخالفة','الوصف','الإجراء والمتابعة','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.description||'—')+'</td><td>'+esc(x.action||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
  const documentRows=items=>profilePrintableTable(items,['التاريخ','نوع الوثيقة','السبب / الموضوع','موعد الحضور','التذكير','إثبات التبليغ','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+esc(x.reminderAt||'—')+'</td><td>'+esc([x.deliveryDate,x.deliveryProof].filter(Boolean).join(' — ')||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
  const noteRows=profilePrintableTable(data.notes,['التاريخ','القسم','الملاحظة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.note)+'</td></tr>');
+ const timelineRows=profilePrintableTable(data.timeline,['التاريخ','نوع الحدث','التفاصيل'],x=>'<tr><td>'+esc(x.date||'غير محدد')+'</td><td>'+esc(x.sourceLabel+' · '+x.title)+'</td><td>'+esc([x.detail,x.appointment?'موعد الحضور: '+x.appointment:'',x.notes?'ملاحظة: '+x.notes:''].filter(Boolean).join(' · ')||'—')+'</td></tr>');
  return '<div class="student-report-document" dir="rtl">'+
   '<div class="student-report-main-title"><h1>التقرير الشامل للتلميذ</h1><p>ملخص السجل المدرسي والمتابعة التربوية</p></div>'+
   '<section class="student-report-section"><h2>البيانات التعريفية</h2><div class="student-report-info-grid">'+infoMarkup+'</div></section>'+
   '<section class="student-report-section"><h2>الحصيلة الإجمالية</h2><div class="student-report-kpi-grid">'+cardMarkup+'</div><p class="student-report-method-note">الساعات والدقائق المعروضة هي المدد المقروءة من السجلات فقط. السجلات التي لا تتضمن مدة واضحة تظهر منفصلة ولا تُحتسب بصفر على أنها مدة مؤكدة. كما أن حالة التبرير غير المحددة لا تُصنّف تلقائياً على أنها غير مبررة.</p></section>'+
+  '<section class="student-report-section"><h2>الخط الزمني الشامل ('+data.timeline.length+')</h2>'+timelineRows+'</section>'+ 
   '<section class="student-report-section"><h2>تفصيل الغيابات ('+sum.absences+')</h2>'+profilePrintableStatusSummary(sum.absenceStatus)+absenceRows+'</section>'+
   '<section class="student-report-section"><h2>تفصيل التأخرات ('+sum.lateness+')</h2>'+profilePrintableStatusSummary(sum.latenessStatus)+latenessRows+'</section>'+
   '<section class="student-report-section"><h2>سجل المخالفات ('+sum.violations+')</h2>'+violationRows+'</section>'+
@@ -2581,6 +2680,11 @@ window.openStudentProfileDocumentEdit=id=>{
  go('documents');
  if(typeof window.editDocument==='function')window.editDocument(String(id));
 };
+window.openStudentProfileViolation=id=>{
+ go('violations');
+ const row=[...document.querySelectorAll('[data-violation-id]')].find(item=>String(item.getAttribute('data-violation-id'))===String(id));
+ if(row){if(typeof row.scrollIntoView==='function')row.scrollIntoView({behavior:'smooth',block:'center'});row.classList.add('daily-task-focus');}
+};
 window.studentHistory=id=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
   const belongsToStudent=record=>profileRecordBelongsToStudent(record,s,db.students);
@@ -2596,6 +2700,7 @@ window.studentHistory=id=>{
   const pending=items=>items.filter(x=>profileJustificationCategory(x)==='pending').length;
   const unknown=items=>items.filter(x=>profileJustificationCategory(x)==='unknown').length;
   const v=db.violations.filter(belongsToStudent),d=db.documents.filter(belongsToStudent);
+  const timeline=buildStudentTimeline(s,db);
   const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
   const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));
@@ -2608,10 +2713,39 @@ window.studentHistory=id=>{
   $('#reportOutput').innerHTML=`<div class="no-print"><button class="btn" onclick="go('students')">العودة إلى قائمة التلاميذ</button> <button class="btn primary" onclick="window.printReport()">طباعة / حفظ التقرير الشامل PDF</button></div>
   <h2>الملف الفردي للتلميذ</h2><h3>${esc(s.last)} ${esc(s.first)}</h3><div class="grid"><div class="stat"><small>الاسم</small><strong style="font-size:16px">${esc(s.first||'—')}</strong></div><div class="stat"><small>اللقب</small><strong style="font-size:16px">${esc(s.last||'—')}</strong></div><div class="stat"><small>المستوى</small><strong style="font-size:16px">${esc(studentAcademicParts(s).schoolYear||'—')}</strong></div><div class="stat"><small>الشعبة</small><strong style="font-size:16px">${esc(studentAcademicParts(s).branch||'—')}</strong></div><div class="stat"><small>القسم</small><strong style="font-size:16px">${esc(studentAcademicParts(s).sectionNumber||s.class||'—')}</strong></div><div class="stat"><small>الصفة</small><strong style="font-size:16px">${esc(s.attribute||s.status||'—')}</strong></div><div class="stat"><small>تاريخ الميلاد</small><strong style="font-size:16px">${esc(s.birthDate||'—')}</strong></div><div class="stat"><small>اسم الولي</small><strong style="font-size:16px">${esc(s.guardian||'—')}</strong></div><div class="stat"><small>رقم الهاتف</small><strong style="font-size:16px">${esc(s.phone||'—')}</strong></div></div>
   <div class="no-print"><button class="btn" onclick="editStudent('${s.id}')">تعديل بطاقة التلميذ</button> <button class="btn primary" onclick="openGuardianWhatsApp('${s.id}')">مراسلة الولي عبر واتساب</button></div>
+  <section class="panel student-timeline-panel" aria-labelledby="studentTimelineHeading"><div class="student-timeline-heading"><h3 id="studentTimelineHeading">الخط الزمني الشامل للتلميذ</h3><span class="pill" id="studentTimelineCount">عدد الأحداث: 0</span></div><p class="muted">جميع سجلات هذا التلميذ مرتبة من الأحدث إلى الأقدم، مع روابط إلى السجل الأصلي. لا تُدمج الأحداث المتشابهة ولا تُنسب السجلات غير المؤكدة إلى هذا الملف.</p><div class="student-timeline-controls no-print"><label for="studentTimelineFilter">تصفية الأحداث</label><select id="studentTimelineFilter"><option value="all">كل الأحداث</option><option value="attendance">الغياب والتأخر والحضور</option><option value="violations">المخالفات</option><option value="documents">الوثائق والاستدعاءات</option></select></div><div id="studentTimelineList" class="student-timeline-list" aria-live="polite"></div><div class="student-timeline-more-wrap no-print"><button type="button" id="studentTimelineMore" class="btn small" hidden>عرض المزيد</button></div></section>
   <h3>الحصيلة الإجمالية</h3><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>غيابات قيد التبرير</small><strong>${pending(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>تأخرات قيد التبرير</small><strong>${pending(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب المعروفة</small><strong>${absHours}</strong><small>مدد غير مسجلة: ${unknownAbsenceHours}</small></div><div class="stat"><small>مجموع دقائق التأخر المعروفة</small><strong>${lateMinutes}</strong><small>مدد غير مسجلة: ${unknownLatenessMinutes}</small><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div>
   <h3>تفصيل الغيابات (${abs.length})</h3>${statusSummary(abs)}${attendanceList(abs,false)}
   <h3>تفصيل التأخرات (${late.length})</h3>${statusSummary(late)}${attendanceList(late,true)}
   <h3>المخالفات (${v.length})</h3>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع المخالفة</th><th>الوصف</th><th>الإجراء والمتابعة</th><th>الصورة</th></tr></thead><tbody>${v.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.description||'—')}</td><td>${esc(x.action||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد مخالفات.</p>'}<h3>الإشعارات والاستدعاءات (${d.length})</h3>${documentList(d)}`;
+
+  const timelineFilter=$('#studentTimelineFilter'),timelineList=$('#studentTimelineList'),timelineMore=$('#studentTimelineMore');
+  let timelineMode='all',timelineLimit=30;
+  const refreshTimeline=()=>{
+   const view=profileTimelineView(timeline,timelineMode,timelineLimit);
+   timelineList.innerHTML=view.html;
+   $('#studentTimelineCount').textContent='عدد الأحداث: '+view.total.toLocaleString('ar-DZ')+' · المعروض: '+view.shown.toLocaleString('ar-DZ');
+   timelineMore.hidden=view.shown>=view.total;
+  };
+  timelineFilter.addEventListener('change',()=>{
+   timelineMode=timelineFilter.value;
+   timelineLimit=30;
+   refreshTimeline();
+  });
+  timelineMore.addEventListener('click',()=>{
+   timelineLimit=Math.min(200,timelineLimit+30);
+   refreshTimeline();
+  });
+  timelineList.addEventListener('click',event=>{
+   const button=event.target.closest('[data-timeline-action]');
+   if(!button)return;
+   const id=String(button.dataset.timelineRecordId||''),source=String(button.dataset.timelineAction||'');
+   if(!id)return;
+   if(source==='attendance')window.openStudentProfileAttendanceEdit(id);
+   else if(source==='documents')window.openStudentProfileDocumentEdit(id);
+   else if(source==='violations')window.openStudentProfileViolation(id);
+  });
+  refreshTimeline();
 };
 window.closeMushrifiPrintPreview=(fromPop=false)=>{const preview=$('#mushrifiPrintPreview');if(preview)preview.remove();window.mushrifiPrintOpen=false;if(!fromPop&&history.state?.mushrifiPrintPreview){try{history.back();}catch(e){}}};
 window.printDoc=id=>{const d=db.documents.find(x=>String(x.id)===String(id));if(!d)return;const s=student(d.student);window.closeMushrifiPrintPreview(true);const preview=document.createElement('section');preview.id='mushrifiPrintPreview';preview.className='print-preview-overlay';preview.innerHTML='<div class="print-preview-tools no-print"><button type="button" class="btn primary" id="mushrifiPrintNow">طباعة / حفظ PDF</button><button type="button" class="btn" id="mushrifiPrintBack">عودة إلى الوثائق</button></div><article class="print-preview-paper" dir="rtl"><h3>'+esc(db.settings.school||'ثانوية الشيخ بوعمامة')+'</h3><p>'+esc(db.settings.location||'بوسكن – ولاية المدية')+'</p><h2>'+esc(d.type)+'</h2><p>إلى ولي التلميذ: '+esc(s?.guardian||'ولي التلميذ المحترم')+'</p><p>التلميذ(ة): <b>'+esc(s?.last||'')+' '+esc(s?.first||'')+'</b></p><p>القسم: '+esc(s?.class||'')+'</p><p>التاريخ: '+esc(d.date)+'</p><p>الموضوع: '+esc(d.reason)+'</p>'+(d.appointment?'<p>موعد الحضور: '+esc(d.appointment)+'</p>':'')+(d.photo?'<h3>صورة الوثيقة المرفقة</h3><img src="'+esc(d.photo)+'" style="max-width:100%;max-height:420px;object-fit:contain">':'')+'<p>يرجى الاطلاع واتخاذ ما يلزم.</p><div class="sig"><span>إمضاء الولي</span><span>إمضاء وختم الإدارة</span></div></article>';
