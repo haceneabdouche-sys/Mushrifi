@@ -965,6 +965,7 @@ function parseMushrifiDatabase(raw){
  if(Object.prototype.hasOwnProperty.call(parsed,'auditLog')&&!Array.isArray(parsed.auditLog))throw new Error('سجل العمليات تالف أو ليس قائمة صالحة.');
  if(!Array.isArray(parsed.auditLog))parsed.auditLog=[];
  if(!parsed.agenda.every(item=>item&&typeof item==='object'&&!Array.isArray(item)))throw new Error('تحتوي أجندة المشرف على عنصر غير صالح. لم تُعدّل قاعدة البيانات الأصلية.');
+ if(!parsed.agenda.every(item=>item&&typeof item==='object'&&!Array.isArray(item)))throw new Error('تحتوي أجندة المشرف على عنصر غير صالح. لم تُعدّل قاعدة البيانات الأصلية.');
  if(!parsed.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry)))throw new Error('يحتوي سجل العمليات على عنصر غير صالح.');
  return parsed;
 }
@@ -1236,6 +1237,7 @@ function clearStoredRecoverySnapshot(){
 function parseRecoverySnapshot(raw){
  if(!raw)return null;const item=JSON.parse(raw),data=item&&item.database;
  if(!item||item.version!==1||!data||!Array.isArray(data.students)||!Array.isArray(data.attendance)||!Array.isArray(data.documents)||!Array.isArray(data.violations)||!data.settings||typeof data.settings!=='object')return null;
+ if(data.agenda!==undefined&&(!Array.isArray(data.agenda)||!data.agenda.every(item=>item&&typeof item==='object'&&!Array.isArray(item))))return null;
  if(data.auditLog!==undefined&&(!Array.isArray(data.auditLog)||!data.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))return null;
  return item;
 }
@@ -1265,7 +1267,7 @@ window.undoLastDelete=()=>{
  if(!confirm(summary))return;
  const oldDb=db;
  if(!clearStoredRecoverySnapshot()){alert('تعذر إغلاق نقطة التراجع بأمان. لم تتغير البيانات.');return;}
- db={...data,auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]};
+ db={...data,agenda:Array.isArray(data.agenda)?data.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]};
  if(!save()){
   db=oldDb;try{writeStoredRecoverySnapshot(raw);}catch(_){}render();refreshUndoPanel();
   alert('تعذر حفظ الاسترجاع؛ بقيت البيانات السابقة كما هي، وأُعيدت نقطة التراجع للمحاولة لاحقاً.');return;
@@ -1291,11 +1293,11 @@ function applyLicenseAccess(state){
  const allowed=new Set(['exportData','exportAuditLog','makeReport','validateLicenseBtn','activateLicenseBtn']);
  if(licenseReadOnly){
   $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
-  document.querySelectorAll('select').forEach(el=>setLicenseControlDisabled(el,!el.closest('#auditLogFilters')));
+  document.querySelectorAll('select').forEach(el=>setLicenseControlDisabled(el,!el.closest('#auditLogFilters')&&el.id!=='agendaTypeFilter'));
   $$('#settings-pane-data input,#settings-pane-data select,#settings-pane-data textarea').forEach(el=>setLicenseControlDisabled(el,true));
   $$('button').forEach(el=>{
    const action=el.getAttribute('onclick')||'';
-   const keep=allowed.has(el.id)||!!el.closest('nav')||el.matches('[data-settings-tab],.student-name')||action.includes('studentHistory')||action.includes('window.print')||action.includes('goPreviousPage');
+   const keep=allowed.has(el.id)||!!el.closest('nav')||el.matches('[data-settings-tab],.student-name,.agenda-read-only-control,[data-agenda-view]')||action.includes('studentHistory')||action.includes('window.print')||action.includes('goPreviousPage');
    setLicenseControlDisabled(el,!keep);
   });
   const importButton=$('#importBackupNative');if(importButton)setLicenseControlDisabled(importButton,true);
@@ -2586,21 +2588,22 @@ function updateBackupHealth(timestamp,verified){
 }
 window.onMushrifiBackupVerified=timestamp=>{try{localStorage.setItem('mushrifi_backup_export_requested',String(timestamp));}catch(_){}updateBackupHealth(timestamp,true);};
 (function initBackupHealth(){try{if(window.AndroidBridge&&typeof AndroidBridge.getLastVerifiedBackupTime==='function'){const verified=Number(AndroidBridge.getLastVerifiedBackupTime()||0);if(verified){updateBackupHealth(verified,true);return;}}const requested=Number(localStorage.getItem('mushrifi_backup_export_requested')||0);updateBackupHealth(requested,false);}catch(_){updateBackupHealth(0,false);}})();
-$('#exportData').onclick=()=>{if(!licenseReadOnly&&!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();const requestedAt=Date.now();try{localStorage.setItem('mushrifi_backup_export_requested',String(requestedAt));}catch(_){}updateBackupHealth(requestedAt,false);setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
+$('#exportData').onclick=()=>{if(!licenseReadOnly&&!save()){alert('تعذر تجهيز النسخة الاحتياطية لأن حفظ البيانات لم يكتمل. لم يتم إنشاء ملف فارغ.');return;}const json=JSON.stringify(db,null,2);try{const check=JSON.parse(json);if(!json||!check||!Array.isArray(check.students)||!!Array.isArray(check.attendance)||!Array.isArray(check.documents)||!Array.isArray(check.violations)||!Array.isArray(check.agenda)||!check.settings||typeof check.settings!=='object')throw new Error('بنية البيانات غير مكتملة');const counts={students:check.students.length,attendance:check.attendance.length,documents:check.documents.length,violations:check.violations.length,agenda:check.agenda.length};const total=Object.values(counts).reduce((n,v)=>n+v,0);if(total===0&&!confirm('قاعدة البيانات لا تحتوي على سجلات. هل تريد تصدير نسخة فارغة على أي حال؟'))return;if(window.AndroidBridge&&typeof AndroidBridge.saveBackup==='function'){AndroidBridge.saveBackup(json);return;}const blob=new Blob([json],{type:'application/json'});if(blob.size<2)throw new Error('حجم النسخة غير صالح');const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='mushrifi-backup.json';link.click();const requestedAt=Date.now();try{localStorage.setItem('mushrifi_backup_export_requested',String(requestedAt));}catch(_){}updateBackupHealth(requestedAt,false);setTimeout(()=>URL.revokeObjectURL(url),2000);}catch(err){alert('تعذر إنشاء النسخة الاحتياطية: '+(err?.message||'خطأ غير معروف'));}};
 let pendingBackupData=null;
 let pendingBackupInfo=null;
 function showBackupPreview(data,bytes){
- const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[];
+ const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[],agenda=Array.isArray(data.agenda)?data.agenda:[];
  const classes={},attributes={};
  students.forEach(st=>{const c=String(st.class||st.section||'غير محدد');classes[c]=(classes[c]||0)+1;const a=String(st.attribute||st.status||'غير محدد');attributes[a]=(attributes[a]||0)+1;});
  const abs=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='غياب').length;
  const late=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='تأخر').length;
  const summons=documents.filter(x=>String(x.type||'').includes('استدعاء')).length;
- const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length};
- const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length};
+ const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length,agenda:Array.isArray(db.agenda)?db.agenda.length:0};
+ const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length,agenda:Array.isArray(data.agenda)?data.agenda.length:(Array.isArray(db.agenda)?db.agenda.length:0)};
  const reducedKeys=Object.keys(currentCounts).filter(k=>incomingCounts[k]<currentCounts[k]);
- const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations}`;
+ const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations} · الأجندة: ${currentCounts.agenda}`;
  const reducedWarning=reducedKeys.length?'<p class="notice"><b>تنبيه مهم:</b> تحتوي النسخة المختارة على سجلات أقل من الموجودة حالياً في الهاتف في بعض الأقسام. راجع الأعداد أدناه وتأكد من أنك اخترت النسخة الصحيحة قبل الاستعادة.</p>':'';
+ const agendaRecoveryNote=pendingBackupInfo&&pendingBackupInfo.agendaMissingInBackup?'<p class="notice"><b>الأجندة:</b> النسخة المختارة قديمة ولا تحتوي على قسم الأجندة؛ احتفظ التطبيق بمواعيد الأجندة الموجودة حالياً على هذا الهاتف بدلاً من حذفها.</p>':'';
  const recoveryNote=pendingBackupInfo&&pendingBackupInfo.recoveredCount?'<p class="notice"><b>استعادة الأسماء:</b> لم تكن قائمة التلاميذ موجودة في الملف؛ أُعيد تكوين '+pendingBackupInfo.recoveredCount+' ملفاً من الأسماء المحفوظة داخل سجلات المتابعة. '+(pendingBackupInfo.missingClassCount?'قسم '+pendingBackupInfo.missingClassCount+' تلميذاً غير محفوظ في السجلات، لذلك سيبقى حقل القسم فارغاً. ':'')+'قد لا تشمل هذه الأسماء تلاميذ لم تكن لهم سجلات متابعة.</p>':'';
  const sample=students.slice(0,8).map(st=>'<li>'+esc((st.last||st.name||st.fullName||'')+' '+(st.first||''))+' <span class="muted">— القسم '+esc(st.class||'؟')+' · '+esc(st.attribute||st.status||'دون صفة')+'</span></li>').join('');
  const classText=Object.keys(classes).sort((a,b)=>a.localeCompare(b,'ar',{numeric:true})).map(k=>'القسم '+esc(k)+': '+classes[k]).join('، ');
@@ -2610,8 +2613,9 @@ function showBackupPreview(data,bytes){
  '<div class="stat"><small>التلاميذ</small><strong>'+students.length+'</strong></div>'+
  '<div class="stat"><small>سجلات الغياب والتأخر</small><strong>'+attendance.length+'</strong></div>'+
  '<div class="stat"><small>الوثائق والاستدعاءات</small><strong>'+documents.length+'</strong></div>'+
- '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div></div>'+
- '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+recoveryNote+
+ '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div>'+
+ '<div class="stat"><small>مواعيد الأجندة</small><strong>'+agenda.length+'</strong></div></div>'+
+ '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+agendaRecoveryNote+recoveryNote+
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
@@ -2672,14 +2676,16 @@ async function importBackupText(raw,bytes){
   }
   if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students))throw new Error('لم أجد قائمة التلاميذ داخل الملف. لا يبدو أنه ملف نسخة احتياطية متوافق مع مُشرفي.');
   for(const key of ['students','attendance','documents','violations'])if(!Array.isArray(obj[key]))throw new Error('النسخة غير مكتملة: قائمة '+key+' مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
+  if(obj.agenda!==undefined&&(!Array.isArray(obj.agenda)||!obj.agenda.every(item=>item&&typeof item==='object'&&!Array.isArray(item))))throw new Error('قائمة الأجندة داخل النسخة الاحتياطية غير صالحة. لم يتم تغيير بيانات الهاتف.');
   if(obj.auditLog!==undefined&&(!Array.isArray(obj.auditLog)||!obj.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))throw new Error('سجل العمليات داخل النسخة الاحتياطية غير صالح. لم يتم تغيير بيانات الهاتف.');
   if(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw new Error('النسخة غير مكتملة: إعدادات التطبيق مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
   for(const key of ['students','attendance','documents','violations'])if(!obj[key].every(x=>x&&typeof x==='object'&&!Array.isArray(x)))throw new Error('تحتوي قائمة '+key+' على سجل غير صالح. لم يتم استيراد أي بيانات.');
   const recovered=recoverStudentsFromHistory(obj);
   if(!obj.students.length&&!recovered.recoveredCount)throw new Error('قائمة التلاميذ فارغة، ولم أجد أسماء محفوظة داخل سجلات الغياب أو التأخر أو الوثائق أو المخالفات. لم يتم تغيير بيانات الهاتف. احتفظ بالنسخة الأصلية ولا تحذفها.');
-  const normalized={...obj,students:recovered.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,settings:obj.settings};
+  const agendaMissingInBackup=!Array.isArray(obj.agenda);
+  const normalized={...obj,students:recovered.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,agenda:agendaMissingInBackup?(Array.isArray(db.agenda)?db.agenda.slice():[]):obj.agenda,settings:obj.settings};
   pendingBackupData=normalized;
-  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount};
+  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup};
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
  }catch(err){pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
 }
@@ -2688,7 +2694,7 @@ function restorePendingBackup(){
  if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
  if(!confirm('تأكيد أخير: هل توافق على استبدال بيانات الهاتف بالنسخة التي تمت معاينتها؟'))return;
  if(!saveUndoSnapshot('استبدال البيانات عند استعادة نسخة احتياطية'))return;
- const oldDb=db;const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;db={...pendingBackupData,auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
+ const oldDb=db;const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;db={...pendingBackupData,agenda:Array.isArray(pendingBackupData.agenda)?pendingBackupData.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
  if(!save()){db=oldDb;clearStoredRecoverySnapshot();refreshUndoPanel();render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
