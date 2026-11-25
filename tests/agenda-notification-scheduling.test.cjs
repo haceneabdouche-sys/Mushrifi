@@ -89,10 +89,17 @@ assert.ok(scheduler.includes('rescheduleAll')&&scheduler.includes('waitingForPer
 assert.ok(scheduler.includes('sameSchedule(old, next)')&&scheduler.includes('put("delivered", true)'),'delivered reminders are not re-armed by ordinary saves or title-only edits');
 assert.ok(scheduler.includes('notifications.cancel(("agenda:" + id).hashCode())'),'changing or disabling an event cancels an already posted agenda notification');
 assert.ok(scheduler.includes('failedToSchedule'),'native alarm scheduling failures are surfaced to the user');
+assert.ok(scheduler.includes('areAgendaNotificationsEnabled')&&scheduler.includes('manager.areNotificationsEnabled()')&&scheduler.includes('channel.getImportance()'),'global notification disablement and agenda channel disablement are both detected');
+assert.ok(scheduler.includes('!areAgendaNotificationsEnabled(context)'),'due reminders remain pending when the notification channel is disabled');
 assert.ok(scheduler.includes('FLAG_NO_CREATE'),'cancel uses the same stable PendingIntent identity without creating a new alarm');
 const receiver=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/AgendaReminderReceiver.java','utf8');
 assert.ok(receiver.includes('Notification.VISIBILITY_PRIVATE'),'agenda reminder content is private on the lock screen');
+assert.ok(receiver.includes('AgendaReminderScheduler.areAgendaNotificationsEnabled(context)'),'neither test nor real notification claims success when the channel is disabled');
 assert.ok(receiver.includes('agenda_notification_date'),'notification tap returns the intended agenda date');
+const main=fs.readFileSync('android/app/src/main/java/dz/mushrifi/app/MainActivity.java','utf8');
+assert.ok(main.includes('hasAgendaNotificationChannelEnabled()')&&main.includes('openAgendaNotificationSettings()'),'native bridge reports and opens the dedicated Android notification channel settings');
+assert.ok(main.includes('Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS')&&main.includes('Settings.EXTRA_CHANNEL_ID'),'settings shortcut opens the agenda notification channel directly on Android 8+');
+assert.ok(html.includes('id="agendaOpenNotificationSettings"')&&html.includes('channelEnabled'),'agenda page displays channel state and provides a settings shortcut');
 const manifest=fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
 assert.ok(manifest.includes('.AgendaReminderReceiver')&&manifest.includes('android.intent.action.TIMEZONE_CHANGED')&&manifest.includes('android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED'),'manifest registers agenda delivery and rescheduling broadcasts');
 
