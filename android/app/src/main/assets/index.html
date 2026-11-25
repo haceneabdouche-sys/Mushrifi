@@ -808,6 +808,7 @@ function parseMushrifiDatabase(raw){
  parsed.settings=parsed.settings&&typeof parsed.settings==='object'?parsed.settings:{};
  if(Object.prototype.hasOwnProperty.call(parsed,'auditLog')&&!Array.isArray(parsed.auditLog))throw new Error('سجل العمليات تالف أو ليس قائمة صالحة.');
  if(!Array.isArray(parsed.auditLog))parsed.auditLog=[];
+ if(!parsed.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry)))throw new Error('يحتوي سجل العمليات على عنصر غير صالح.');
  return parsed;
 }
 let db;
@@ -1030,6 +1031,7 @@ function clearStoredRecoverySnapshot(){
 function parseRecoverySnapshot(raw){
  if(!raw)return null;const item=JSON.parse(raw),data=item&&item.database;
  if(!item||item.version!==1||!data||!Array.isArray(data.students)||!Array.isArray(data.attendance)||!Array.isArray(data.documents)||!Array.isArray(data.violations)||!data.settings||typeof data.settings!=='object')return null;
+ if(data.auditLog!==undefined&&(!Array.isArray(data.auditLog)||!data.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))return null;
  return item;
 }
 function refreshUndoPanel(){
@@ -1058,7 +1060,7 @@ window.undoLastDelete=()=>{
  if(!confirm(summary))return;
  const oldDb=db;
  if(!clearStoredRecoverySnapshot()){alert('تعذر إغلاق نقطة التراجع بأمان. لم تتغير البيانات.');return;}
- db=data;
+ db={...data,auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]};
  if(!save()){
   db=oldDb;try{writeStoredRecoverySnapshot(raw);}catch(_){}render();refreshUndoPanel();
   alert('تعذر حفظ الاسترجاع؛ بقيت البيانات السابقة كما هي، وأُعيدت نقطة التراجع للمحاولة لاحقاً.');return;
@@ -2047,6 +2049,7 @@ async function importBackupText(raw,bytes){
   }
   if(!obj||typeof obj!=='object'||Array.isArray(obj)||!Array.isArray(obj.students))throw new Error('لم أجد قائمة التلاميذ داخل الملف. لا يبدو أنه ملف نسخة احتياطية متوافق مع مُشرفي.');
   for(const key of ['students','attendance','documents','violations'])if(!Array.isArray(obj[key]))throw new Error('النسخة غير مكتملة: قائمة '+key+' مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
+  if(obj.auditLog!==undefined&&(!Array.isArray(obj.auditLog)||!obj.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))throw new Error('سجل العمليات داخل النسخة الاحتياطية غير صالح. لم يتم تغيير بيانات الهاتف.');
   if(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw new Error('النسخة غير مكتملة: إعدادات التطبيق مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
   for(const key of ['students','attendance','documents','violations'])if(!obj[key].every(x=>x&&typeof x==='object'&&!Array.isArray(x)))throw new Error('تحتوي قائمة '+key+' على سجل غير صالح. لم يتم استيراد أي بيانات.');
   const recovered=recoverStudentsFromHistory(obj);
@@ -2062,7 +2065,7 @@ function restorePendingBackup(){
  if(!confirm('هل تريد استعادة النسخة التي تمت معاينتها؟ سيتم استبدال البيانات الحالية على هذا الهاتف. ننصح بتصدير نسخة حالية أولاً.'))return;
  if(!confirm('تأكيد أخير: هل توافق على استبدال بيانات الهاتف بالنسخة التي تمت معاينتها؟'))return;
  if(!saveUndoSnapshot('استبدال البيانات عند استعادة نسخة احتياطية'))return;
- const oldDb=db;db=pendingBackupData;
+ const oldDb=db;const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;db={...pendingBackupData,auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
  if(!save()){db=oldDb;clearStoredRecoverySnapshot();refreshUndoPanel();render();alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي.');return;}
  pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');$('#backupPreview').innerHTML='';
  if(window.AndroidBridge&&typeof AndroidBridge.clearSummonsReminders==='function')AndroidBridge.clearSummonsReminders();
