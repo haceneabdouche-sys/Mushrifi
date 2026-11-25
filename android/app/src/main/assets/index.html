@@ -852,6 +852,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 <section id="agenda" class="page hidden">
   <div class="panel agenda-heading">
     <div class="panel-title-row"><h2>أجندة المشرف التربوي</h2><span class="pill" id="agendaStoredCount">0 موعد محفوظ</span></div>
+    <div class="agenda-notification-permission" id="agendaNotificationPanel"><p id="agendaNotificationStatus" class="muted" role="status" aria-live="polite">جارٍ التحقق من صلاحيات تنبيهات الأجندة...</p><div class="agenda-permission-actions"><button type="button" class="btn small" id="agendaRequestNotificationPermission">السماح بالإشعارات</button><button type="button" class="btn small" id="agendaRequestExactAlarmPermission">تفعيل التوقيت الدقيق</button><button type="button" class="btn small" id="agendaTestNotification">اختبار التنبيه</button></div><small class="muted">عند عدم السماح بالتنبيهات الدقيقة، قد يؤخر Android وصول الإشعار. وتؤثر إعدادات توفير البطارية الخاصة بالهاتف في توقيت بعض التنبيهات.</small></div>
     <p class="muted">نظّم الاجتماعات والمهام اليومية ومواعيد المتابعة. تظهر استدعاءات الأولياء المسجلة في قسم الوثائق هنا تلقائياً دون إنشاء نسخة مكررة منها.</p>
     <p class="notice">المواعيد والمهام تحفظ محلياً ضمن بيانات مُشرِفي وتدخل في النسخ الاحتياطية. تظهر تذكيرات الأجندة داخل التطبيق ولوحة الرئيسية؛ أما تنبيهات استدعاءات الأولياء فتبقى مرتبطة بنظام التذكير الموجود في الوثائق.</p>
     <div class="agenda-summary-grid" id="agendaSummary">
@@ -890,6 +891,7 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
       <div class="row"><div><label for="agendaDate">التاريخ</label><input type="date" id="agendaDate" name="date" required></div><div><label for="agendaStartTime">وقت البداية</label><input type="time" id="agendaStartTime" name="startTime"></div><div><label for="agendaEndTime">وقت النهاية</label><input type="time" id="agendaEndTime" name="endTime"></div></div>
       <div class="row"><div><label for="agendaLocation">المكان</label><input id="agendaLocation" name="location" maxlength="100" placeholder="قاعة الاجتماعات أو المكتب"></div><div><label for="agendaStudent">التلميذ المرتبط بالمتابعة (اختياري)</label><select id="agendaStudent" name="studentId"><option value="">لا يوجد تلميذ محدد</option></select></div></div>
       <div class="row"><div><label for="agendaPriority">الأولوية</label><select id="agendaPriority" name="priority"><option value="normal">عادية</option><option value="high">مرتفعة</option><option value="urgent">عاجلة</option></select></div><div><label for="agendaNotes">ملاحظات خاصة (تبقى داخل بيانات التطبيق)</label><textarea id="agendaNotes" name="notes" rows="2" maxlength="1200" placeholder="ملاحظات المتابعة أو التحضير"></textarea></div></div>
+      <div class="agenda-reminder-options"><label class="agenda-reminder-toggle"><input type="checkbox" id="agendaReminderEnabled" name="reminderEnabled" checked> تفعيل إشعار Android لهذا الموعد</label><div><label for="agendaReminderLead">وقت إرسال التنبيه</label><select id="agendaReminderLead" name="reminderLeadMinutes"><option value="1440">قبل الموعد بيوم (بنفس الساعة)</option><option value="60">قبل الموعد بساعة</option><option value="0">عند حلول الموعد</option></select></div><p class="muted">للموعد دون ساعة محددة، يعتمد التنبيه الساعة 08:00 صباحاً. لا تُرسل إشعارات للمهام المنجزة أو الملغاة. المواعيد القديمة لا تُفعّل تنبيهاتها تلقائياً؛ فعّلها عند تعديل كل موعد.</p></div>
       <div class="actions"><button type="submit" class="btn primary">حفظ الموعد</button><button type="button" class="btn" id="agendaCancelBottom">إلغاء</button></div>
     </form>
   </div>
@@ -1061,7 +1063,7 @@ const AUDIT_FIELD_DEFINITIONS={
  attendance:[['class','القسم'],['date','التاريخ'],['type','نوع المتابعة'],['period','الفترة'],['hours','ساعات الغياب'],['minutes','دقائق التأخر'],['justified','حالة التبرير'],['fullDay','غياب يوم كامل'],['schoolYear','المستوى'],['branch','الشعبة'],['sectionLabel','وصف القسم'],['studentClass','القسم']],
  documents:[['date','تاريخ الوثيقة'],['type','نوع الوثيقة'],['appointment','موعد حضور الولي'],['reminderAt','موعد التنبيه'],['absenceStage','مرحلة التبليغ'],['deliveryDate','تاريخ التبليغ']],
  violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']],
- agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة']]
+ agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة'],['reminderEnabled','تنبيه الهاتف'],['reminderLeadMinutes','موعد التذكير']]
 };
 const AUDIT_PRIVATE_FIELDS={
  students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',notes:'ملاحظات خاصة'},
@@ -1075,7 +1077,7 @@ const AUDIT_REVERSIBLE_FIELDS={
  attendance:['class','date','type','period','hours','minutes','justified','fullDay','schoolYear','branch','sectionLabel','studentClass'],
  documents:['date','type','appointment','reminderAt','absenceStage','deliveryDate'],
  violations:['date','type','action'],
- agenda:['title','type','date','startTime','endTime','location','priority','status']
+ agenda:['title','type','date','startTime','endTime','location','priority','status','reminderEnabled','reminderLeadMinutes']
 };
 const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة',agenda:'موعد في أجندة المشرف',settings:'إعدادات التطبيق'};
 const AUDIT_SAFE_SETTING_FIELDS={school:'اسم المؤسسة',location:'موقع المؤسسة',summonsReminderTime:'وقت تنبيه الاستدعاءات'};
