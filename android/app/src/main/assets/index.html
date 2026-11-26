@@ -3638,7 +3638,7 @@ window.studentHistory=(id,focusFollowupId)=>{
     <button type="button" class="btn" data-profile-action="violation"${licenseReadOnly?' disabled aria-disabled="true"':''}>تسجيل مخالفة</button>
     <button type="button" class="btn" data-profile-action="summons"${licenseReadOnly?' disabled aria-disabled="true"':''}>إنشاء استدعاء</button>
     <button type="button" class="btn" data-profile-action="edit"${licenseReadOnly?' disabled aria-disabled="true"':''}>تعديل البطاقة</button>
-    <button type="button" class="btn" data-profile-action="whatsapp">مراسلة الولي عبر واتساب</button>
+    <button type="button" class="btn" data-profile-action="whatsapp" onclick="openGuardianWhatsApp('${s.id}')">مراسلة الولي عبر واتساب</button>
     <button type="button" class="btn" data-profile-action="print">طباعة التقرير</button>
    </div>
    <p id="studentProfileActionStatus" class="muted no-print" role="status" aria-live="polite"></p>
@@ -3721,7 +3721,7 @@ window.studentHistory=(id,focusFollowupId)=>{
     return;
    }
    if(action==='edit'){window.editStudent(sid);return;}
-   if(action==='whatsapp'){openGuardianWhatsApp(sid);return;}
+   if(action==='whatsapp')return;
    if(action==='print'){window.printReport();return;}
   });
   const followupForm=$('#studentFollowupForm'),followupList=$('#studentFollowupList');

@@ -59,8 +59,10 @@ assert.ok(handlers.includes('window.studentAction(action,sid)'),
  'record creation reuses the existing student-aware action dispatcher');
 assert.ok(handlers.includes("window.editStudent(sid)"),
  'editing reuses the existing student editor and identity');
-assert.ok(handlers.includes('openGuardianWhatsApp(sid)')&&handlers.includes('window.printReport()'),
- 'guardian messaging and printing reuse the existing workflows');
+assert.ok(profile.includes("openGuardianWhatsApp('${s.id}')"),
+ 'guardian messaging uses the selected student ID through the established direct handler');
+assert.ok(handlers.includes('window.printReport()'),
+ 'printing reuses the existing workflow');
 assert.ok(handlers.includes('if(!button||button.disabled)return'),
  'disabled actions cannot be triggered by the profile event handler');
 
