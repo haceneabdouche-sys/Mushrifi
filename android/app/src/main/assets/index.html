@@ -976,7 +976,21 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 .student-profile-identity-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:7px;margin:10px 0}
 .student-profile-identity-grid>div{min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:11px;background:var(--surface-soft)}
 .student-profile-identity-grid small{display:block;color:var(--muted);font-size:10px;line-height:1.5}
-.student-profile-identity-grid strong{display:block;margin-top:3px;color:var(--ink);font-size:12px;overflow-wrap:anywhere}
+.student-profile-identity-grid strong{display:block;margin-top:3px;color:var(--ink);font-size:12px;overflow-wrap:anywhere;white-space:pre-wrap}
+.guardian-address-field{margin-top:10px}
+.student-privacy-fieldset{margin:12px 0;padding:11px;border:1px solid var(--line);border-radius:12px;min-width:0}
+.student-privacy-fieldset legend{padding:0 6px;color:var(--navy);font-weight:800;font-size:13px}
+.student-privacy-fieldset>p{margin:0 0 9px;font-size:11px;line-height:1.7}
+.student-privacy-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:7px}
+.student-privacy-choice{display:flex;align-items:center;gap:8px;min-height:42px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft);font-size:12px;font-weight:700}
+.student-privacy-choice input{width:18px;min-width:18px;height:18px;min-height:18px;margin:0;accent-color:var(--navy)}
+.student-profile-private-flags{margin:8px 0 12px;padding:11px;border:1px solid #d8e0e6;border-radius:12px;background:#f7f9fa}
+.student-profile-private-flags-head{display:flex;align-items:center;justify-content:space-between;gap:7px;flex-wrap:wrap}
+.student-profile-private-flags-head strong{font-size:12px;color:var(--navy)}
+.student-profile-private-flags-head small{font-size:10px;color:var(--muted)}
+.student-profile-private-flags-list{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.student-profile-private-flag{display:inline-flex;align-items:center;padding:6px 9px;border:1px solid #d7dfe5;border-radius:20px;background:#fff;color:#334b5c;font-size:11px;font-weight:800}
+@media(max-width:420px){.student-privacy-options{grid-template-columns:1fr}}
 .student-profile-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0}
 .student-profile-kpis .stat{padding:10px;min-width:0}
 .student-profile-kpis .stat strong{display:block;font-size:clamp(20px,3vw,25px)}
@@ -1260,7 +1274,14 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <div class="row"><div><label>الاسم</label><input name="first" required></div><div><label>اللقب</label><input name="last" required></div></div>
 <div class="row"><div><label>المستوى</label><select name="schoolYear" id="studentYearSelect" required><option value="">اختر المستوى</option></select></div><div><label>الشعبة</label><select name="branch" id="studentBranchSelect" required><option value="">اختر الشعبة</option></select></div><div><label>القسم</label><select name="sectionNumber" id="studentClassSelect" required><option value="">اختر القسم</option></select><input type="hidden" name="class" id="studentClassValue"></div></div>
 <div class="row"><div><label>الصفة</label><input name="attribute" placeholder="أدخل صفة التلميذ"></div><div><label>تاريخ الميلاد</label><input name="birthDate" type="date"></div></div>
-<div class="row"><div><label>اسم الولي</label><input name="guardian"></div><div><label>رقم الهاتف</label><input name="phone" type="tel" inputmode="tel" autocomplete="tel"></div></div>
+<div class="row"><div><label>اسم الولي</label><input name="guardian" autocomplete="name"></div><div><label>رقم الهاتف</label><input name="phone" type="tel" inputmode="tel" autocomplete="tel"></div></div>
+<div class="guardian-address-field"><label for="studentGuardianAddress">عنوان الولي</label><textarea id="studentGuardianAddress" name="guardianAddress" rows="2" maxlength="300" autocomplete="street-address" placeholder="الحي، الشارع، رقم المنزل أو أي توضيح مفيد"></textarea></div>
+<fieldset class="student-privacy-fieldset"><legend>علامات الخصوصية</legend><p class="muted">تظهر العلامات داخل ملف التلميذ فقط. بالنسبة للحالة المرضية، اختر العلامة دون كتابة التشخيص أو تفاصيل طبية.</p><div class="student-privacy-options">
+<label class="student-privacy-choice"><input type="checkbox" name="privacyFlags" value="orphan"><span>يتيم</span></label>
+<label class="student-privacy-choice"><input type="checkbox" name="privacyFlags" value="medical"><span>حالة مرضية</span></label>
+<label class="student-privacy-choice"><input type="checkbox" name="privacyFlags" value="peExempt"><span>معفى من التربية البدنية</span></label>
+<label class="student-privacy-choice"><input type="checkbox" name="privacyFlags" value="repeatYear"><span>معيد للسنة</span></label>
+</div></fieldset>
 <div class="actions"><button class="btn primary" id="studentSubmit" type="submit">حفظ بطاقة التلميذ</button><button class="btn hidden" id="cancelStudentEdit" type="button">إلغاء التعديل</button></div></form></div></details>
 <details class="panel attendance-log section-setup"><summary><strong>إعداد المستويات والشعب والأقسام</strong><span class="muted">إضافة أو مراجعة القوائم الدراسية</span></summary><div class="section-setup-content"><p class="muted">أضف تركيبة جديدة عند الحاجة، وسيُدرج المستوى والشعبة والقسم تلقائيًا في القوائم المتدرجة.</p><form id="sectionForm"><div class="row"><div><label>المستوى</label><input name="schoolYear" placeholder="مثال: أولى" required></div><div><label>الشعبة</label><input name="branch" placeholder="مثال: علوم تجريبية" required></div><div><label>رقم القسم</label><input name="sectionNumber" placeholder="مثال: 2" required></div></div><button class="btn primary" type="submit">إضافة إلى القوائم</button></form><div id="sectionList" class="muted"></div></div></details>
 <div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count" role="status" aria-live="polite">0 تلميذ</span></div><input id="studentSearch" class="student-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="بحث في ملفات التلاميذ" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>اللقب والاسم</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
@@ -1344,7 +1365,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 </div>
 <div class="settings-pane hidden" id="settings-pane-data" role="tabpanel">
 <div class="panel"><h2>إعدادات المؤسسة</h2><p class="muted">أدخل معلومات مؤسستك يدوياً، وستظهر في أعلى واجهة التطبيق مباشرة فوق اسمك وإمضائك المتحركين.</p><label for="schoolName">اسم المؤسسة</label><input id="schoolName" type="text" maxlength="120" placeholder="أدخل اسم المؤسسة"><label for="schoolLocation">الموقع (البلدية والولاية)</label><input id="schoolLocation" type="text" maxlength="120" placeholder="أدخل البلدية والولاية"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button></div>
-<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><p class="notice"><b>تنبيه مهم لحماية بياناتك:</b> تُحفظ بيانات التلاميذ وسجلات المتابعة محلياً ومشفّرة على هذا الهاتف، وصلاحية الترخيص ليست نسخة احتياطية. قبل حذف التطبيق أو الانتقال إلى هاتف آخر، صدّر نسخة احتياطية واحفظها في مكان خارجي آمن. بعد إعادة التثبيت اختر «قراءة نسخة احتياطية» لاسترجاعها، ولا تحذف النسخة القديمة إلا بعد التأكد من نجاح الاستعادة.</p><div id="backupHealthStatus" class="notice" role="status" aria-live="polite">حالة النسخ الاحتياطي: لم يُسجّل بعد تصدير نسخة مؤكدة. أنشئ نسخة واحفظها خارج الهاتف.</div><div id="databaseIntegrityStatus" class="notice" role="status" aria-live="polite" data-health-status="not-checked">سلامة قاعدة بيانات الهاتف: لم يُجرَ الفحص بعد.</div><button class="btn" id="inspectDatabaseHealth" type="button">فحص سلامة قاعدة بيانات الهاتف</button><small class="muted">الفحص تشخيصي للقراءة فقط؛ لا يصلح البيانات ولا يحذفها ولا يستبدلها.</small><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
+<div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><p class="notice"><b>تنبيه مهم لحماية بياناتك:</b> تُحفظ بيانات التلاميذ وسجلات المتابعة محلياً ومشفّرة على هذا الهاتف، وصلاحية الترخيص ليست نسخة احتياطية. قبل حذف التطبيق أو الانتقال إلى هاتف آخر، صدّر نسخة احتياطية واحفظها في مكان خارجي آمن. بعد إعادة التثبيت اختر «قراءة نسخة احتياطية» لاسترجاعها، ولا تحذف النسخة القديمة إلا بعد التأكد من نجاح الاستعادة.</p><p class="notice"><b>خصوصية بيانات التلاميذ:</b> قد تتضمن النسخة الاحتياطية عنوان الولي وعلامات الخصوصية. ملف النسخة بصيغة JSON غير مشفّر بكلمة مرور؛ احفظه في مكان خاص وآمن، ولا ترسله إلى غير المخوّلين.</p><div id="backupHealthStatus" class="notice" role="status" aria-live="polite">حالة النسخ الاحتياطي: لم يُسجّل بعد تصدير نسخة مؤكدة. أنشئ نسخة واحفظها خارج الهاتف.</div><div id="databaseIntegrityStatus" class="notice" role="status" aria-live="polite" data-health-status="not-checked">سلامة قاعدة بيانات الهاتف: لم يُجرَ الفحص بعد.</div><button class="btn" id="inspectDatabaseHealth" type="button">فحص سلامة قاعدة بيانات الهاتف</button><small class="muted">الفحص تشخيصي للقراءة فقط؛ لا يصلح البيانات ولا يحذفها ولا يستبدلها.</small><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
 <div class="panel" id="undoLastDeletePanel"><h2>التراجع عن آخر حذف أو استعادة</h2><p class="muted" id="undoLastDeleteStatus">لا توجد عملية حذف محفوظة للتراجع عنها حالياً.</p><button class="btn" id="undoLastDelete" type="button">التراجع عن آخر عملية</button><p class="muted">تُحفظ نقطة التراجع مشفّرة على الهاتف، وتبقى متاحة إلى أن تحفظ تعديلاً جديداً. عندها تُلغى تلقائياً حتى لا تُستبدل بيانات أحدث.</p></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
 <div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
@@ -1422,7 +1443,7 @@ const AUDIT_FIELD_DEFINITIONS={
  agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة'],['reminderEnabled','تنبيه الهاتف'],['reminderLeadMinutes','موعد التذكير'],['repeatFrequency','نمط التكرار'],['repeatInterval','الفاصل بين مرات التكرار'],['repeatUntil','نهاية التكرار'],['repeatCompletedDates','تواريخ إنجاز المرات المتكررة'],['repeatSkippedDates','تواريخ تخطي المرات المتكررة']]
 };
 const AUDIT_PRIVATE_FIELDS={
- students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',notes:'ملاحظات خاصة'},
+ students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',guardianAddress:'عنوان الولي',privacyFlags:'علامات الخصوصية',notes:'ملاحظات خاصة'},
  attendance:{student:'ارتباط السجل بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',notes:'الملاحظات'},
  documents:{student:'ارتباط الوثيقة بملف التلميذ',reason:'موضوع الوثيقة وتفاصيلها',photo:'صورة الوثيقة',deliveryProof:'إثبات التبليغ'},
  violations:{student:'ارتباط الواقعة بملف التلميذ',description:'تفاصيل الواقعة',photo:'صورة التقرير'},
@@ -2805,12 +2826,33 @@ $('#startVoiceBtn').onclick=()=>{
  $('#voiceStatus').textContent='ميزة التحدث المباشر متاحة في نسخة Android المُحدّثة من التطبيق.';
 };
 
+const STUDENT_PRIVACY_FLAG_DEFINITIONS=Object.freeze([
+ {value:'orphan',label:'يتيم'},
+ {value:'medical',label:'حالة مرضية'},
+ {value:'peExempt',label:'معفى من التربية البدنية'},
+ {value:'repeatYear',label:'معيد للسنة'}
+]);
+const STUDENT_PRIVACY_FLAG_VALUES=new Set(STUDENT_PRIVACY_FLAG_DEFINITIONS.map(item=>item.value));
+function normalizeStudentPrivacyFlags(value){
+ if(!Array.isArray(value))return [];
+ return [...new Set(value.filter(flag=>typeof flag==='string'&&STUDENT_PRIVACY_FLAG_VALUES.has(flag)))];
+}
+function studentPrivacyFlagLabel(value){
+ const item=STUDENT_PRIVACY_FLAG_DEFINITIONS.find(flag=>flag.value===value);
+ return item?item.label:'';
+}
 let editingStudentId=null;
-const studentCardFieldNames=['first','last','schoolYear','branch','sectionNumber','class','attribute','birthDate','guardian','phone'];
-function readStudentForm(form){const f=new FormData(form),v={};for(const key of studentCardFieldNames)v[key]=String(f.get(key)||'').trim();v.class=v.sectionNumber;return v;}
+const studentCardFieldNames=['first','last','schoolYear','branch','sectionNumber','class','attribute','birthDate','guardian','phone','guardianAddress'];
+function readStudentForm(form){
+ const f=new FormData(form),v={};
+ for(const key of studentCardFieldNames)v[key]=String(f.get(key)||'').trim();
+ v.class=v.sectionNumber;
+ v.privacyFlags=normalizeStudentPrivacyFlags(Array.from(form.querySelectorAll('input[name="privacyFlags"]:checked'),input=>input.value));
+ return v;
+}
 function studentAcademicLabel(st){const p=studentAcademicParts(st);const code=[shortBranch(p.branch),p.sectionNumber].filter(Boolean).join(' ');return [p.schoolYear,code].filter(Boolean).join(' — ')||'—';}
 function resetStudentEditor(){editingStudentId=null;$('#studentForm').reset();refreshStudentSectionOptions({schoolYear:'',branch:'',sectionNumber:''});$('#studentFormTitle').textContent='بطاقة التلميذ – إضافة بيانات';$('#studentSubmit').textContent='حفظ بطاقة التلميذ';$('#cancelStudentEdit').classList.add('hidden');const editor=$('#studentEditorDisclosure');if(editor)editor.open=false;}
-window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['attribute','birthDate','guardian','phone'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');const editor=$('#studentEditorDisclosure');if(editor)editor.open=true;go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
+window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['attribute','birthDate','guardian','phone','guardianAddress'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');const selectedPrivacyFlags=new Set(normalizeStudentPrivacyFlags(s.privacyFlags));$('#studentForm').querySelectorAll('input[name="privacyFlags"]').forEach(input=>{input.checked=selectedPrivacyFlags.has(input.value);});$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');const editor=$('#studentEditorDisclosure');if(editor)editor.open=true;go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
 $('#cancelStudentEdit').onclick=resetStudentEditor;
 $('#sectionForm').onsubmit=e=>{e.preventDefault();const f=e.target,y=String(f.elements.schoolYear.value||'').trim().replace(/\s+/g,' '),b=canonicalBranch(String(f.elements.branch.value||'').trim().replace(/\s+/g,' ')),c=String(f.elements.sectionNumber.value||'').trim().replace(/\s+/g,' ');if(!y||!b||!c){alert('أدخل المستوى والشعبة ورقم القسم.');return;}const list=academicStructure(),key=[y,b,c].map(academicNorm).join('¦');if(list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join('¦')===key)){alert('هذا القسم موجود مسبقًا ضمن المستوى والشعبة المحددين.');return;}list.push({schoolYear:y,branch:b,sectionNumber:c});if(!save()){list.pop();return;}f.reset();refreshStudentSectionOptions();alert('تمت إضافة المستوى والشعبة والقسم إلى القوائم بنجاح.');};
 $('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.last||!values.first||!values.schoolYear||!values.branch||!values.sectionNumber){alert('الاسم واللقب والمستوى والشعبة والقسم حقول إلزامية.');return;}const norm=v=>String(v||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');const duplicate=db.students.find(s=>norm(s.first)===norm(values.first)&&norm(s.last)===norm(values.last)&&norm(s.class)===norm(values.class)&&norm(s.schoolYear)===norm(values.schoolYear)&&norm(s.branch)===norm(values.branch)&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('هذا التلميذ مسجل مسبقاً بالاسم واللقب والقسم نفسيهما. لم تُضف بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ مع الحفاظ على بياناته وسجلات متابعته السابقة.');}else{const record={id:crypto.randomUUID(),identityNumber:'',...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
@@ -3608,6 +3650,8 @@ window.studentHistory=(id,focusFollowupId)=>{
   const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
   const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));
+  const privacyFlags=normalizeStudentPrivacyFlags(s.privacyFlags);
+  const privacyFlagMarkup=privacyFlags.length?privacyFlags.map(flag=>'<span class="student-profile-private-flag">'+esc(studentPrivacyFlagLabel(flag))+'</span>').join(''):'<span class="muted">لا توجد علامات خصوصية مسجلة.</span>';
   const statusSummary=items=>`<p>مبررة: <b>${justified(items)}</b> · غير مبررة: <b>${unjustified(items)}</b> · قيد التبرير: <b>${pending(items)}</b> · غير محددة: <b>${unknown(items)}</b></p>`;
   const attendanceList=(items,isLate=false)=>items.length?'<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الفترة</th><th>المدة</th><th>حالة التبرير</th><th>ملاحظات</th><th class="no-print">الإجراء</th></tr></thead><tbody>'+items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>'<tr data-profile-att-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(isLate?(profileKnownLatenessMinutes(x)===null?'غير مسجلة':profileLatenessMinutes(x)+' دقيقة'):(profileKnownAbsenceHours(x)===null?'غير مسجلة':profileAbsenceHours(x)+' ساعة'))+'</td><td>'+esc(statusOf(x))+'</td><td>'+esc(x.notes||'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileAttendanceEdit(this.dataset.id)">تعديل السجل</button></td></tr>').join('')+'</tbody></table></div>':'<p class="empty">لا توجد سجلات.</p>';
   const documentList=items=>items.length?'<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th><th class="no-print">الإجراءات</th></tr></thead><tbody>'+items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>'<tr data-profile-doc-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+(x.photo?'<img class="record-photo" src="'+esc(x.photo)+'" alt="صورة الوثيقة">':'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileDocumentEdit(this.dataset.id)">تعديل الوثيقة</button> <button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="printDoc(this.dataset.id)">طباعة</button></td></tr>').join('')+'</tbody></table></div>':'<p class="empty">لا توجد وثائق.</p>';
@@ -3623,7 +3667,11 @@ window.studentHistory=(id,focusFollowupId)=>{
    <div class="student-profile-identity-grid">
     <div><small>الاسم</small><strong>${esc(s.first||'—')}</strong></div><div><small>اللقب</small><strong>${esc(s.last||'—')}</strong></div>
     <div><small>الصفة</small><strong>${esc(s.attribute||s.status||'—')}</strong></div><div><small>اسم الولي</small><strong>${esc(s.guardian||'—')}</strong></div>
-    <div><small>رقم الهاتف</small><strong dir="ltr">${esc(s.phone||'—')}</strong></div><div><small>تاريخ الميلاد</small><strong>${esc(s.birthDate||'—')}</strong></div>
+    <div><small>رقم الهاتف</small><strong dir="ltr">${esc(s.phone||'—')}</strong></div><div><small>عنوان الولي</small><strong>${esc(s.guardianAddress||'—')}</strong></div><div><small>تاريخ الميلاد</small><strong>${esc(s.birthDate||'—')}</strong></div>
+   </div>
+   <div class="student-profile-private-flags no-print" aria-label="علامات الخصوصية الخاصة بالتلميذ">
+    <div class="student-profile-private-flags-head"><strong>علامات الخصوصية</strong><small>تظهر داخل ملف التلميذ فقط</small></div>
+    <div class="student-profile-private-flags-list">${privacyFlagMarkup}</div>
    </div>
    <div class="student-profile-kpis" aria-label="ملخص سجلات التلميذ">
     <div class="stat"><small>الغيابات</small><strong>${abs.length.toLocaleString('ar-DZ')}</strong><span>${absHours.toLocaleString('ar-DZ')} ساعة معروفة</span></div>
@@ -4450,7 +4498,7 @@ $('#csvImport').onchange=async e=>{
         }
         updated++;
       }else{
-        const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:''};
+        const record={id:makeStudentImportId(),...data,code:data.enrollmentNumber||'',guardian:'',phone:'',guardianAddress:'',privacyFlags:[]};
         db.students.push(record);
         if(!existingById.has(incomingId))existingById.set(incomingId,[]);
         existingById.get(incomingId).push(record);
