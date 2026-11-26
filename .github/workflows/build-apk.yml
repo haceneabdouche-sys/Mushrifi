@@ -170,6 +170,8 @@ jobs:
         run: node tests/ui-organization-stage13.test.cjs
       - name: Run Stage 14 unified design system and responsive UI tests
         run: node tests/ui-design-system-stage14.test.cjs
+      - name: Run Stage 15 unified student profile workflow tests
+        run: node tests/student-profile-hub-stage15.test.cjs
       - name: Run mobile performance regression tests
         run: node tests/mobile-performance.test.cjs
       - name: Package complete Android project
