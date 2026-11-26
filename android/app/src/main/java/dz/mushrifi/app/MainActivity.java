@@ -183,9 +183,12 @@ public class MainActivity extends Activity {
         return new String(c.doFinal(ciphertext), java.nio.charset.StandardCharsets.UTF_8);
     }
     private static class LocalDb extends SQLiteOpenHelper {
-        LocalDb(Context c) { super(c, "mushrifi_local.db", null, 1); }
+        LocalDb(Context c) { super(c, "mushrifi_local.db", null, 2); }
         @Override public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE appdata (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL)"); ensureRecoveryTable(db); }
-        @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) { ensureRecoveryTable(db); }
+        @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            // Additive migration only: preserve appdata and any existing recovery row.
+            ensureRecoveryTable(db);
+        }
         private void ensureRecoveryTable(SQLiteDatabase db) { db.execSQL("CREATE TABLE IF NOT EXISTS recovery_snapshot (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL, updated_at INTEGER NOT NULL)"); }
         synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? decryptData(c.getString(0)) : null; } catch (Exception e) { return "!MUSHRIFI_DB_ERROR!"; } }
         private String lastError = "";
@@ -340,28 +343,150 @@ public class MainActivity extends Activity {
             }
             return restored;
         }
-        synchronized boolean saveRecoverySnapshot(String json) {
-            try {
-                if (json == null || json.trim().isEmpty()) return false;
-                SQLiteDatabase db = getWritableDatabase(); ensureRecoveryTable(db);
-                android.content.ContentValues v = new android.content.ContentValues();
-                v.put("id", 1); v.put("json", encryptData(json)); v.put("updated_at", System.currentTimeMillis());
-                return db.insertWithOnConflict("recovery_snapshot", null, v, SQLiteDatabase.CONFLICT_REPLACE) != -1;
-            } catch (Exception e) { android.util.Log.e("MushrifiDB", "Recovery snapshot write failed", e); return false; }
+        private void validateRecoverySnapshotJson(String json) throws Exception {
+            if (json == null || json.trim().isEmpty()) {
+                throw new IOException("نقطة التراجع فارغة.");
+            }
+            org.json.JSONObject envelope = new org.json.JSONObject(json);
+            if (envelope.optInt("version", -1) != 1
+                || !(envelope.opt("database") instanceof org.json.JSONObject)) {
+                throw new IOException("صيغة نقطة التراجع أو إصدارها غير صالح.");
+            }
+            org.json.JSONObject snapshotDatabase = envelope.getJSONObject("database");
+            for (String key : new String[]{"students", "attendance", "documents", "violations"}) {
+                if (!(snapshotDatabase.opt(key) instanceof org.json.JSONArray)) {
+                    throw new IOException("قائمة نقطة التراجع غير صالحة: " + key);
+                }
+            }
+            if (!(snapshotDatabase.opt("settings") instanceof org.json.JSONObject)) {
+                throw new IOException("إعدادات نقطة التراجع غير صالحة.");
+            }
+            for (String key : new String[]{"agenda", "followups", "auditLog"}) {
+                if (snapshotDatabase.has(key) && !(snapshotDatabase.opt(key) instanceof org.json.JSONArray)) {
+                    throw new IOException("قائمة نقطة التراجع غير صالحة: " + key);
+                }
+            }
+            for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "auditLog"}) {
+                org.json.JSONArray records = snapshotDatabase.optJSONArray(key);
+                if (records == null) continue;
+                for (int i = 0; i < records.length(); i++) {
+                    if (!(records.opt(i) instanceof org.json.JSONObject)) {
+                        throw new IOException("يحتوي سجل نقطة التراجع على عنصر غير صالح: " + key);
+                    }
+                }
+            }
         }
+
+        synchronized boolean saveRecoverySnapshot(String json) {
+            SQLiteDatabase database = null;
+            boolean transactionStarted = false;
+            boolean saved = false;
+            try {
+                // Validate and encrypt before touching the existing recovery point.
+                validateRecoverySnapshotJson(json);
+                String encryptedJson = encryptData(json);
+                database = getWritableDatabase();
+                ensureRecoveryTable(database);
+                database.beginTransaction();
+                transactionStarted = true;
+
+                android.content.ContentValues values = new android.content.ContentValues();
+                values.put("id", 1);
+                values.put("json", encryptedJson);
+                values.put("updated_at", System.currentTimeMillis());
+                long row = database.insertWithOnConflict(
+                    "recovery_snapshot", null, values, SQLiteDatabase.CONFLICT_REPLACE
+                );
+                if (row == -1) {
+                    throw new IOException("SQLite لم يقبل حفظ نقطة التراجع.");
+                }
+
+                String verifiedJson = null;
+                try (Cursor cursor = database.rawQuery("SELECT json FROM recovery_snapshot WHERE id=1", null)) {
+                    if (cursor.moveToFirst()) verifiedJson = decryptData(cursor.getString(0));
+                }
+                validateRecoverySnapshotJson(verifiedJson);
+                if (!json.equals(verifiedJson)) {
+                    throw new IOException("فشل التحقق من نقطة التراجع بعد الحفظ؛ أُبقيت النقطة السابقة.");
+                }
+
+                database.setTransactionSuccessful();
+                saved = true;
+            } catch (Exception error) {
+                lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                android.util.Log.e("MushrifiDB", "Verified recovery snapshot write failed; transaction will roll back", error);
+            } finally {
+                if (transactionStarted && database != null) {
+                    try {
+                        // A failed save has no successful marker, so SQLite restores the previous snapshot.
+                        database.endTransaction();
+                    } catch (Exception error) {
+                        saved = false;
+                        lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                        android.util.Log.e("MushrifiDB", "Recovery snapshot write transaction could not finish", error);
+                    }
+                }
+            }
+            if (saved) lastError = "";
+            return saved;
+        }
+
         synchronized String readRecoverySnapshot() {
             try {
-                SQLiteDatabase db = getWritableDatabase(); ensureRecoveryTable(db);
-                try (Cursor c = db.rawQuery("SELECT json FROM recovery_snapshot WHERE id=1", null)) {
-                    return c.moveToFirst() ? decryptData(c.getString(0)) : null;
+                // Version 2 migration ensures the table exists; reading does not create or modify it.
+                SQLiteDatabase database = getReadableDatabase();
+                try (Cursor cursor = database.rawQuery("SELECT json FROM recovery_snapshot WHERE id=1", null)) {
+                    if (!cursor.moveToFirst()) {
+                        lastError = "";
+                        return null;
+                    }
+                    String json = decryptData(cursor.getString(0));
+                    validateRecoverySnapshotJson(json);
+                    lastError = "";
+                    return json;
                 }
-            } catch (Exception e) { android.util.Log.e("MushrifiDB", "Recovery snapshot read failed", e); return null; }
+            } catch (Exception error) {
+                lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                android.util.Log.e("MushrifiDB", "Recovery snapshot read or validation failed", error);
+                return null;
+            }
         }
+
         synchronized boolean clearRecoverySnapshot() {
+            SQLiteDatabase database = null;
+            boolean transactionStarted = false;
+            boolean cleared = false;
             try {
-                SQLiteDatabase db = getWritableDatabase(); ensureRecoveryTable(db);
-                db.delete("recovery_snapshot", "id=1", null); return true;
-            } catch (Exception e) { android.util.Log.e("MushrifiDB", "Recovery snapshot clear failed", e); return false; }
+                database = getWritableDatabase();
+                ensureRecoveryTable(database);
+                database.beginTransaction();
+                transactionStarted = true;
+
+                database.delete("recovery_snapshot", "id=1", null);
+                try (Cursor cursor = database.rawQuery("SELECT 1 FROM recovery_snapshot WHERE id=1", null)) {
+                    if (cursor.moveToFirst()) {
+                        throw new IOException("تعذر تأكيد حذف نقطة التراجع.");
+                    }
+                }
+
+                database.setTransactionSuccessful();
+                cleared = true;
+            } catch (Exception error) {
+                lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                android.util.Log.e("MushrifiDB", "Recovery snapshot clear failed; transaction will roll back", error);
+            } finally {
+                if (transactionStarted && database != null) {
+                    try {
+                        database.endTransaction();
+                    } catch (Exception error) {
+                        cleared = false;
+                        lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                        android.util.Log.e("MushrifiDB", "Recovery snapshot clear transaction could not finish", error);
+                    }
+                }
+            }
+            if (cleared) lastError = "";
+            return cleared;
         }
     }
     private LocalDb localDb;
@@ -447,7 +572,7 @@ public class MainActivity extends Activity {
             return localDb.saveRecoverySnapshot(json);
         }
         @JavascriptInterface public String loadRecoverySnapshot() { return localDb.readRecoverySnapshot(); }
-        @JavascriptInterface public boolean clearRecoverySnapshot() { return localDb.clearRecoverySnapshot(); }
+        @JavascriptInterface public boolean clearRecoverySnapshot() { if (!LicenseManager.canWrite(MainActivity.this)) return false; return localDb.clearRecoverySnapshot(); }
         @JavascriptInterface public boolean hasPassword() { return securityPrefs.contains("hash") && securityPrefs.contains("salt"); }
         @JavascriptInterface public boolean setPassword(String password) { if (password == null || password.length() < 6) return false; try { byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt); securityPrefs.edit().putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP)).putString("hash", derive(password, salt)).commit(); return hasPassword(); } catch (Exception e) { return false; } }
         @JavascriptInterface public boolean verifyPassword(String password) { if (!hasPassword() || password == null) return false; try { byte[] salt = Base64.decode(securityPrefs.getString("salt", ""), Base64.NO_WRAP); String actual = derive(password, salt), expected = securityPrefs.getString("hash", ""); return java.security.MessageDigest.isEqual(actual.getBytes(java.nio.charset.StandardCharsets.UTF_8), expected.getBytes(java.nio.charset.StandardCharsets.UTF_8)); } catch (Exception e) { return false; } }
