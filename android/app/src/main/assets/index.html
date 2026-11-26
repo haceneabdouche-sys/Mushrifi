@@ -889,6 +889,85 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 @media(max-width:420px){.agenda-permission-actions .btn{flex:1 1 100%}.agenda-reminder-toggle{align-items:flex-start!important}}
 
 </style>
+<style id="mushrifi-stage14-design-system">
+/* Stage 14: unified visual language */
+:root{--navy:#102a43;--blue:#286b91;--gold:#c9a85b;--bg:#f3f6f8;--ink:#1d3040;--muted:#687a87;--line:#dce5eb;--white:#fff;--surface:#fff;--surface-soft:#f7fafc;--shadow:0 7px 22px rgba(16,42,67,.065);--radius-lg:17px;--control-height:44px}
+body{color:var(--ink);background:linear-gradient(180deg,#f7f9fb,#eff3f6);font-family:Tahoma,"Noto Sans Arabic",system-ui,Arial,sans-serif;line-height:1.65}
+body::before{opacity:.04;background-size:min(68vw,400px) auto;background-position:center 54%}
+header{padding:16px 14px 14px;background:linear-gradient(128deg,#0b1f33,#102a43 54%,#183b63);border-bottom:3px solid var(--gold);box-shadow:0 5px 17px rgba(12,34,52,.13)}
+header h1{font-size:clamp(23px,4vw,29px);line-height:1.35}
+.wrap{width:100%;max-width:1120px;margin:0 auto;padding:14px 16px 104px}
+.app-data-note,.license-advisory{border-radius:13px}
+.panel,.stat{min-width:0;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--surface);box-shadow:var(--shadow)}
+.panel{padding:16px;margin-top:12px}
+.panel h2{margin:0 0 9px;color:var(--navy);font-size:clamp(16px,2.5vw,19px);line-height:1.55;font-weight:800}
+.panel p.muted,.panel .muted{line-height:1.7}
+.stat{position:relative;overflow:hidden;padding:12px;background:var(--surface-soft);box-shadow:none}
+.stat:before{width:2px;opacity:.82}
+.stat small{color:var(--muted);font-size:11px;line-height:1.5}
+.stat strong{margin-top:4px;color:var(--navy);font-size:clamp(22px,4vw,27px);line-height:1.3}
+.home-heading{padding:15px 17px;border-right:3px solid var(--gold);border-radius:var(--radius-lg);background:linear-gradient(115deg,#fff,#f8fafb 76%,#f7f3e9)}
+.home-heading h2{margin:2px 0 4px}.home-heading p{margin:0;line-height:1.65}
+.home-kpis{gap:9px;margin-top:10px}.home-kpis .stat{min-height:78px;padding:12px}
+.daily-tasks-panel{margin-top:12px;border-right:3px solid var(--gold)}
+.daily-today-grid .stat,.daily-followup-review-grid .stat{padding:11px 10px;border-radius:13px;background:var(--surface-soft)}
+.page-context-bar{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.96);box-shadow:0 3px 12px rgba(16,42,67,.045)}
+.page-back-button{min-height:var(--control-height);border-radius:11px;border-color:var(--line);background:#f5f8fa}
+.followup-tabs{gap:6px;padding:5px;border:1px solid var(--line);border-radius:14px;background:#edf3f7}
+.followup-tab{min-height:var(--control-height);border-radius:11px;font-weight:800}
+.followup-tab.active{color:#fff;border-color:#173b58;background:linear-gradient(135deg,#102a43,#24516b);box-shadow:0 3px 9px rgba(16,42,67,.13)}
+.attendance-workspace{padding:15px;border-top:3px solid var(--blue)}
+.attendance-workspace>h2{margin-bottom:5px}
+.attendance-workspace>.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr));align-items:end;gap:8px;margin:8px 0}
+.attendance-workspace label{display:block;margin-bottom:2px;color:#465e6d;font-size:12px;font-weight:800}
+.attendance-workspace .actions{align-items:center;gap:8px;margin-top:10px}
+.daily-roster{gap:8px;margin-top:11px}.daily-student{min-height:58px;padding:11px;border-radius:12px;background:#f8fafb}
+.daily-student input[type=checkbox]{width:19px;height:19px;margin-top:2px;accent-color:var(--blue)}
+.attendance-log{margin-top:10px;border-radius:15px}
+.attendance-log>summary{min-height:48px;gap:8px;padding:3px 0;color:var(--navy);font-size:14px;line-height:1.5}
+.attendance-log>summary::before{width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:#eaf1f5;color:var(--navy)}
+.attendance-log>summary strong{font-size:15px;line-height:1.5}
+.attendance-log>summary .pill{padding:4px 9px;font-size:11px}
+.attendance-log>summary .muted{flex-basis:100%;padding-right:36px;font-size:11px;line-height:1.55}
+.attendance-log[open]{border-color:#cbdbe5;box-shadow:0 5px 17px rgba(16,42,67,.055)}
+.attendance-log[open]>summary{padding-bottom:8px;border-bottom:1px solid #edf1f4}
+.individual-attendance-content{padding-top:12px}
+.voice-panel{border-radius:var(--radius-lg);background:linear-gradient(120deg,#fff,#f5f9fb)}
+.tile{min-width:0;border-color:var(--line);border-radius:14px;background:linear-gradient(145deg,#fff,#f6f9fb);color:var(--navy);line-height:1.55}
+.tile b{color:var(--navy)}
+.btn{min-height:var(--control-height);padding:10px 14px;border-radius:12px;font:inherit;font-size:13px;font-weight:800;line-height:1.4;transition:background-color .16s,border-color .16s,box-shadow .16s}
+.btn.primary{color:#fff;background:linear-gradient(135deg,#102a43,#286b91);box-shadow:0 3px 10px rgba(16,42,67,.12)}
+.btn.small{min-height:var(--control-height);padding:8px 10px;font-size:12px}
+input:not([type=checkbox]):not([type=radio]),select,textarea{min-height:var(--control-height);border:1px solid #d2dde5;border-radius:11px;background:#fff;color:var(--ink);font-family:inherit;font-size:15px;line-height:1.5}
+textarea{min-height:88px;padding:10px 11px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,.tile:focus-visible{outline:3px solid rgba(40,107,145,.32);outline-offset:2px}
+.student-search{min-height:46px;border-radius:13px;background:#fff}
+.students-list-panel{overflow:hidden}.students-list-panel .tablewrap{border:1px solid #e6edf1;border-radius:12px}
+footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--muted);font-size:10px;line-height:1.7;text-align:center}
+#nav button{min-height:50px;border-radius:11px;font-weight:800}
+@media(min-width:701px){.wrap{padding-bottom:24px}#nav{border-radius:0 0 13px 13px}}
+@media(max-width:700px){
+ header{padding:11px 10px 10px}.wrap{padding:10px 10px calc(98px + env(safe-area-inset-bottom))}
+ .panel{padding:13px;margin-top:10px;border-radius:15px}.panel h2{font-size:16px;margin-bottom:7px}
+ .stat{padding:10px}.home-heading{padding:13px 14px}
+ .home-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.home-kpis .stat{min-height:72px;padding:10px}
+ .home-kpis .stat small{font-size:10px}.home-kpis .stat strong{font-size:23px}
+ .daily-tasks-panel{padding:13px}.daily-today-grid,.daily-followup-review-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .daily-today-grid .stat,.daily-followup-review-grid .stat{padding:9px}
+ .followup-tab{min-height:44px;padding:8px 5px;font-size:12px}
+ .attendance-workspace{padding:12px}.attendance-workspace>.row{grid-template-columns:repeat(auto-fit,minmax(min(100%,132px),1fr));gap:7px}
+ .attendance-workspace .actions .btn{width:100%}.daily-roster{grid-template-columns:minmax(0,1fr)}
+ .daily-student{padding:10px}.attendance-log>summary{font-size:13px}.attendance-log>summary strong{font-size:14px}
+ .attendance-log>summary .muted{padding-right:34px}.voice-panel{align-items:stretch;gap:9px}
+ .voice-panel .btn{width:100%}.more-groups{grid-template-columns:minmax(0,1fr)}
+ .more-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.more-tiles .tile{min-height:92px}
+ #nav{left:0!important;right:0!important;width:100%!important;max-width:none!important;transform:none!important}
+ #nav button{min-height:54px;padding:5px 1px}
+}
+@media(max-width:380px){.wrap{padding-inline:8px}.attendance-workspace .row{grid-template-columns:minmax(0,1fr)}.attendance-log>summary .muted{font-size:10px}#nav button{font-size:9px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+@media print{body{background:#fff}.panel,.stat{box-shadow:none}}
+</style>
 </head>
 <body>
 <header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><span class="credit-name-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><svg class="credit-name-glint" viewBox="0 0 360 48" preserveAspectRatio="none" aria-hidden="true"><defs><filter id="mushrifi-glint-glow" x="-180%" y="-180%" width="460%" height="460%"><feGaussianBlur stdDeviation="2.4" result="halo"/><feMerge><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path id="mushrifi-name-trace" d="M 5 27 C 22 19 40 20 57 26 S 91 33 111 26 S 145 19 165 25 S 199 33 220 26 S 255 19 276 25 S 316 32 337 25 S 350 23 356 25" fill="none"/><g class="glint-point"><animateMotion dur="4.8s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-name-trace"/></animateMotion><path d="M0-7 L2-2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2-2 Z"/><circle class="glint-core" r="2.1"/></g></svg></span><span class="credit-rule" aria-hidden="true"></span><span class="credit-signature-wrap"><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"><svg class="credit-signature-glint" viewBox="0 0 512 512" aria-hidden="true"><defs><radialGradient id="mushrifi-signature-halo"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".18" stop-color="#fff9d9" stop-opacity=".98"/><stop offset=".46" stop-color="#ffd36a" stop-opacity=".72"/><stop offset="1" stop-color="#ffc247" stop-opacity="0"/></radialGradient><filter id="mushrifi-signature-glow" x="-300%" y="-300%" width="700%" height="700%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="soft"/><feGaussianBlur in="SourceGraphic" stdDeviation="5.2" result="wide"/><feMerge><feMergeNode in="wide"/><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path id="mushrifi-signature-upper" d="M 12 144 C 55 144 109 146 162 150 S 278 159 332 145 C 386 133 438 111 449 79 C 461 45 440 20 405 17 C 362 14 339 43 331 81 C 325 107 325 130 325 151" fill="none"/><path id="mushrifi-signature-left" d="M 55 314 C 40 306 43 268 55 235 C 78 183 111 115 140 58 C 155 28 170 18 183 34 C 203 60 214 120 215 170 C 216 196 217 213 218 224" fill="none"/><path id="mushrifi-signature-middle" d="M 118 305 C 136 268 159 242 177 248 C 196 253 211 294 229 310 C 245 287 258 250 277 249 C 295 247 315 286 333 310 C 344 327 357 339 370 342 C 358 300 352 249 348 198 C 345 175 344 158 344 148" fill="none"/><path id="mushrifi-signature-sweep" d="M 42 309 C 100 308 164 309 224 310 C 302 311 383 306 454 302 C 471 301 477 306 463 319 C 430 344 382 364 332 385 C 264 415 195 445 131 468 C 108 478 91 469 92 449 C 94 417 108 369 128 311" fill="none"/><g class="glint-point signature-glint-point" data-glint="1" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.6s" begin="0s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-upper"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="2" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.6s" begin="-2.2s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-upper"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="3" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.6s" begin="-4.4s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-upper"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="4" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.1s" begin="-0.8s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-left"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="5" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.1s" begin="-4.35s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-left"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="6" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.4s" begin="-0.6s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-middle"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="7" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.4s" begin="-3.8s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-middle"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="8" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.4s" begin="-0.7s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-sweep"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="9" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.4s" begin="-3.15s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-sweep"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="10" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.4s" begin="-5.6s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-sweep"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g></svg></span></div>

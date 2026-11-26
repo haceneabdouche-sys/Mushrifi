@@ -168,6 +168,8 @@ jobs:
         run: node tests/student-directory-search.test.cjs
       - name: Run Stage 13 navigation and information architecture tests
         run: node tests/ui-organization-stage13.test.cjs
+      - name: Run Stage 14 unified design system and responsive UI tests
+        run: node tests/ui-design-system-stage14.test.cjs
       - name: Run mobile performance regression tests
         run: node tests/mobile-performance.test.cjs
       - name: Package complete Android project
