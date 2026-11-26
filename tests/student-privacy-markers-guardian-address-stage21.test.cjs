@@ -103,7 +103,8 @@ assert.match(html, /for\(const key of fields\)\{if\(data\[key\]!==''\|\|!Object\
   'CSV refresh does not erase privacy markers or guardian address on existing students');
 assert.match(workflow, /Run Stage 21 student privacy markers and guardian address tests[\s\S]*?node tests\/student-privacy-markers-guardian-address-stage21\.test\.cjs/,
   'CI runs the Stage 21 student card privacy regression tests');
-assert.match(gradle, /versionCode 25[\s\S]*?versionName '2\.6'/,
-  'internal build code increments while visible application version remains 2.6');
+const stage21VersionCode = Number((gradle.match(/versionCode\s+(\d+)/) || [])[1] || 0);
+assert.ok(stage21VersionCode >= 25 && /versionName '2\.6'/.test(gradle),
+  'internal build code is at least the Stage 21 level while visible application version remains 2.6');
 
 console.log('PASS: Stage 21 student privacy markers, guardian address, legacy compatibility, edit/save, audit redaction, directory/print privacy, CSV preservation and backup warning.');

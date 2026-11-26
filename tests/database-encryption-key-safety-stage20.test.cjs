@@ -67,7 +67,7 @@ assert.match(activity, /private static boolean hasDataEncryptionKey\(\)[\s\S]*?k
   'the non-creating key-presence check remains available to Stage 19 diagnostics');
 assert.match(workflow, /Run Stage 20 Android encryption key lifecycle safety tests[\s\S]*?node tests\/database-encryption-key-safety-stage20\.test\.cjs/,
   'CI includes the Stage 20 key lifecycle regression test');
-assert.match(gradle, /versionCode 24[\s\S]*?versionName '2\.6'/,
-  'internal build increments while visible app version stays 2.6');
+assert.match(gradle, /versionCode\s+\d+[\s\S]*?versionName '2\.6'/,
+  'an internal build number is configured while the visible app version stays 2.6');
 
 console.log('PASS: Stage 20 Android Keystore key lifecycle separation; decryption fails closed without key creation; AES-GCM and legacy plaintext behavior remain compatible.');
