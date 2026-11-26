@@ -978,6 +978,13 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 .student-profile-identity-grid small{display:block;color:var(--muted);font-size:10px;line-height:1.5}
 .student-profile-identity-grid strong{display:block;margin-top:3px;color:var(--ink);font-size:12px;overflow-wrap:anywhere;white-space:pre-wrap}
 .guardian-address-field{margin-top:10px}
+.student-identity-field{max-width:460px;min-width:0}
+.guardian-address-import-body{padding-top:12px}
+.guardian-address-import-controls{align-items:end}
+.guardian-address-import-preview{margin-top:12px;padding:10px}
+.guardian-address-import-table{min-width:640px}
+.guardian-address-import-table td{white-space:normal;overflow-wrap:anywhere;vertical-align:top}
+.guardian-address-import-actions{margin-top:10px}
 .student-privacy-fieldset{margin:12px 0;padding:11px;border:1px solid var(--line);border-radius:12px;min-width:0}
 .student-privacy-fieldset legend{padding:0 6px;color:var(--navy);font-weight:800;font-size:13px}
 .student-privacy-fieldset>p{margin:0 0 9px;font-size:11px;line-height:1.7}
@@ -1270,8 +1277,9 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
   <div id="auditLogEntries" class="audit-log-list"><p class="empty">لا توجد عمليات مسجلة بعد.</p></div>
 </section>
 <section id="students" class="page hidden">
-<details class="panel attendance-log student-editor-disclosure" id="studentEditorDisclosure"><summary><strong>إضافة أو تعديل بطاقة تلميذ</strong><span class="muted">افتح البطاقة عند الحاجة</span></summary><div class="student-editor-content"><h2 id="studentFormTitle">بطاقة التلميذ – إضافة بيانات</h2><p class="muted">تتضمن بطاقة التلميذ الاسم واللقب والمستوى والشعبة والقسم والصفة وتاريخ الميلاد واسم الولي ورقم هاتفه.</p><form id="studentForm">
+<details class="panel attendance-log student-editor-disclosure" id="studentEditorDisclosure"><summary><strong>إضافة أو تعديل بطاقة تلميذ</strong><span class="muted">افتح البطاقة عند الحاجة</span></summary><div class="student-editor-content"><h2 id="studentFormTitle">بطاقة التلميذ – إضافة بيانات</h2><p class="muted">تتضمن بطاقة التلميذ بياناته الدراسية والشخصية وبيانات الولي. رقم التعريف يُحفظ كنص للمطابقة الدقيقة.</p><form id="studentForm">
 <div class="row"><div><label>الاسم</label><input name="first" required></div><div><label>اللقب</label><input name="last" required></div></div>
+<div class="row"><div class="student-identity-field"><label for="studentIdentityNumber">رقم التعريف (16 رقمًا، اختياري)</label><input id="studentIdentityNumber" name="identityNumber" type="text" inputmode="numeric" dir="ltr" autocomplete="off" maxlength="32" placeholder="رقم التعريف كما ورد في القائمة الرسمية"><small class="muted">يُستخدم لربط العنوان ببطاقة صاحبه فقط؛ لا يُعرض في القائمة المطبوعة.</small></div></div>
 <div class="row"><div><label>المستوى</label><select name="schoolYear" id="studentYearSelect" required><option value="">اختر المستوى</option></select></div><div><label>الشعبة</label><select name="branch" id="studentBranchSelect" required><option value="">اختر الشعبة</option></select></div><div><label>القسم</label><select name="sectionNumber" id="studentClassSelect" required><option value="">اختر القسم</option></select><input type="hidden" name="class" id="studentClassValue"></div></div>
 <div class="row"><div><label>الصفة</label><input name="attribute" placeholder="أدخل صفة التلميذ"></div><div><label>تاريخ الميلاد</label><input name="birthDate" type="date"></div></div>
 <div class="row"><div><label>اسم الولي</label><input name="guardian" autocomplete="name"></div><div><label>رقم الهاتف</label><input name="phone" type="tel" inputmode="tel" autocomplete="tel"></div></div>
@@ -1283,6 +1291,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <label class="student-privacy-choice"><input type="checkbox" name="privacyFlags" value="repeatYear"><span>معيد للسنة</span></label>
 </div></fieldset>
 <div class="actions"><button class="btn primary" id="studentSubmit" type="submit">حفظ بطاقة التلميذ</button><button class="btn hidden" id="cancelStudentEdit" type="button">إلغاء التعديل</button></div></form></div></details>
+<details class="panel attendance-log" id="guardianAddressImportDisclosure"><summary><strong>استيراد عناوين الأولياء</strong><span class="muted">مطابقة آمنة برقم التعريف فقط</span></summary><div class="guardian-address-import-body"><p class="muted">اختر ملفًا يحتوي على عمودين على الأقل: «رقم التعريف» و«عنوان الولي». يقبل CSV أو جدول Excel المحفوظ بصيغة HTML. لا يقبل ملف Excel ثنائي XLS/XLSX؛ احفظه بصيغة CSV أو Excel HTML. يجب حفظ أرقام التعريف كنص من 16 رقمًا، لا بصيغة علمية أو رقمية مقربة.</p><div class="row guardian-address-import-controls"><div><button class="btn" id="downloadGuardianAddressTemplate" type="button">تنزيل نموذج العناوين CSV</button></div><div><label for="guardianAddressImportFile">ملف عناوين الأولياء</label><input id="guardianAddressImportFile" type="file" accept=".csv,.xls,.html,text/csv,text/html,*/*"></div></div><p id="guardianAddressImportStatus" class="muted" role="status" aria-live="polite">لم يتم اختيار ملف. لن تُحفظ أي بيانات قبل معاينة النتائج والضغط على زر الحفظ.</p><div id="guardianAddressImportPreview" class="guardian-address-import-preview hidden" aria-live="polite"></div><div class="actions guardian-address-import-actions"><button class="btn primary" id="applyGuardianAddressImport" type="button" disabled>حفظ العناوين المطابقة فقط</button><button class="btn" id="cancelGuardianAddressImport" type="button">إلغاء المعاينة</button></div></div></details>
 <details class="panel attendance-log section-setup"><summary><strong>إعداد المستويات والشعب والأقسام</strong><span class="muted">إضافة أو مراجعة القوائم الدراسية</span></summary><div class="section-setup-content"><p class="muted">أضف تركيبة جديدة عند الحاجة، وسيُدرج المستوى والشعبة والقسم تلقائيًا في القوائم المتدرجة.</p><form id="sectionForm"><div class="row"><div><label>المستوى</label><input name="schoolYear" placeholder="مثال: أولى" required></div><div><label>الشعبة</label><input name="branch" placeholder="مثال: علوم تجريبية" required></div><div><label>رقم القسم</label><input name="sectionNumber" placeholder="مثال: 2" required></div></div><button class="btn primary" type="submit">إضافة إلى القوائم</button></form><div id="sectionList" class="muted"></div></div></details>
 <div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count" role="status" aria-live="polite">0 تلميذ</span></div><input id="studentSearch" class="student-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="بحث في ملفات التلاميذ" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>اللقب والاسم</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
 </section>
@@ -1742,7 +1751,7 @@ function applyLicenseAccess(state){
  licenseReadOnly=!!(!state||!state.hasLicense||!state.activated);
  document.body.classList.toggle('license-readonly',licenseReadOnly);
  const advisory=$('#licenseAdvisory');if(advisory)advisory.classList.toggle('hidden',!licenseReadOnly);
- const allowed=new Set(['exportData','exportAuditLog','makeReport','validateLicenseBtn','activateLicenseBtn','agendaRequestNotificationPermission','agendaRequestExactAlarmPermission','agendaTestNotification','agendaOpenNotificationSettings','pageBackButton','licenseAdvisoryOpen']);
+ const allowed=new Set(['exportData','exportAuditLog','makeReport','downloadGuardianAddressTemplate','cancelGuardianAddressImport','validateLicenseBtn','activateLicenseBtn','agendaRequestNotificationPermission','agendaRequestExactAlarmPermission','agendaTestNotification','agendaOpenNotificationSettings','pageBackButton','licenseAdvisoryOpen']);
  if(licenseReadOnly){
   $$('form input,form select,form textarea,form button').forEach(el=>setLicenseControlDisabled(el,true));
   document.querySelectorAll('select').forEach(el=>setLicenseControlDisabled(el,!el.closest('#auditLogFilters')&&el.id!=='agendaTypeFilter'));
@@ -1753,12 +1762,14 @@ function applyLicenseAccess(state){
    setLicenseControlDisabled(el,!keep);
   });
   const importButton=$('#importBackupNative');if(importButton)setLicenseControlDisabled(importButton,true);
+  const guardianAddressFile=$('#guardianAddressImportFile');if(guardianAddressFile)setLicenseControlDisabled(guardianAddressFile,true);
   const importInput=$('#importData');if(importInput)setLicenseControlDisabled(importInput,true);
   const saveSettings=$('#saveSettings');if(saveSettings)setLicenseControlDisabled(saveSettings,true);
  }else{
   $('[data-license-was-disabled]').forEach(el=>setLicenseControlDisabled(el,false));
  }
  refreshUndoPanel();
+ if(typeof refreshGuardianAddressImportControls==='function')refreshGuardianAddressImportControls();
 }
 const parseHours=value=>{let s=String(value??'').trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٫،]/g,'.').replace(/\s*(ساعة|ساعات|ساعتان|ساعتين)\s*/g,'').trim();if(s==='')return '';if(!/^\d+(?:\.\d+)?$/.test(s))return NaN;return Number(s)};
 const isFullDayAbsence=(type,period)=>type==='غياب'&&['اليومكاملاً','اليومكاملا','يومكامل'].includes(String(period||'').replace(/[\u0640\s]/g,''));
@@ -2842,20 +2853,21 @@ function studentPrivacyFlagLabel(value){
  return item?item.label:'';
 }
 let editingStudentId=null;
-const studentCardFieldNames=['first','last','schoolYear','branch','sectionNumber','class','attribute','birthDate','guardian','phone','guardianAddress'];
+const studentCardFieldNames=['first','last','identityNumber','schoolYear','branch','sectionNumber','class','attribute','birthDate','guardian','phone','guardianAddress'];
 function readStudentForm(form){
  const f=new FormData(form),v={};
  for(const key of studentCardFieldNames)v[key]=String(f.get(key)||'').trim();
+ v.identityNumber=normalizeStudentIdentityNumber(v.identityNumber);
  v.class=v.sectionNumber;
  v.privacyFlags=normalizeStudentPrivacyFlags(Array.from(form.querySelectorAll('input[name="privacyFlags"]:checked'),input=>input.value));
  return v;
 }
 function studentAcademicLabel(st){const p=studentAcademicParts(st);const code=[shortBranch(p.branch),p.sectionNumber].filter(Boolean).join(' ');return [p.schoolYear,code].filter(Boolean).join(' — ')||'—';}
 function resetStudentEditor(){editingStudentId=null;$('#studentForm').reset();refreshStudentSectionOptions({schoolYear:'',branch:'',sectionNumber:''});$('#studentFormTitle').textContent='بطاقة التلميذ – إضافة بيانات';$('#studentSubmit').textContent='حفظ بطاقة التلميذ';$('#cancelStudentEdit').classList.add('hidden');const editor=$('#studentEditorDisclosure');if(editor)editor.open=false;}
-window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['attribute','birthDate','guardian','phone','guardianAddress'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');const selectedPrivacyFlags=new Set(normalizeStudentPrivacyFlags(s.privacyFlags));$('#studentForm').querySelectorAll('input[name="privacyFlags"]').forEach(input=>{input.checked=selectedPrivacyFlags.has(input.value);});$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');const editor=$('#studentEditorDisclosure');if(editor)editor.open=true;go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
+window.editStudent=id=>{const s=db.students.find(x=>String(x.id)===String(id));if(!s)return;editingStudentId=String(s.id);const p=studentAcademicParts(s);$('#studentForm [name="first"]').value=s.first||'';$('#studentForm [name="last"]').value=s.last||'';refreshStudentSectionOptions(p);for(const key of ['identityNumber','attribute','birthDate','guardian','phone','guardianAddress'])$('#studentForm [name="'+key+'"]').value=s[key]??(key==='attribute'?(s.status||''):'');const selectedPrivacyFlags=new Set(normalizeStudentPrivacyFlags(s.privacyFlags));$('#studentForm').querySelectorAll('input[name="privacyFlags"]').forEach(input=>{input.checked=selectedPrivacyFlags.has(input.value);});$('#studentFormTitle').textContent='تعديل بطاقة التلميذ';$('#studentSubmit').textContent='حفظ التعديلات';$('#cancelStudentEdit').classList.remove('hidden');const editor=$('#studentEditorDisclosure');if(editor)editor.open=true;go('students');$('#studentForm').scrollIntoView({behavior:'smooth',block:'start'});};
 $('#cancelStudentEdit').onclick=resetStudentEditor;
 $('#sectionForm').onsubmit=e=>{e.preventDefault();const f=e.target,y=String(f.elements.schoolYear.value||'').trim().replace(/\s+/g,' '),b=canonicalBranch(String(f.elements.branch.value||'').trim().replace(/\s+/g,' ')),c=String(f.elements.sectionNumber.value||'').trim().replace(/\s+/g,' ');if(!y||!b||!c){alert('أدخل المستوى والشعبة ورقم القسم.');return;}const list=academicStructure(),key=[y,b,c].map(academicNorm).join('¦');if(list.some(x=>[x.schoolYear,x.branch,x.sectionNumber].map(academicNorm).join('¦')===key)){alert('هذا القسم موجود مسبقًا ضمن المستوى والشعبة المحددين.');return;}list.push({schoolYear:y,branch:b,sectionNumber:c});if(!save()){list.pop();return;}f.reset();refreshStudentSectionOptions();alert('تمت إضافة المستوى والشعبة والقسم إلى القوائم بنجاح.');};
-$('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.last||!values.first||!values.schoolYear||!values.branch||!values.sectionNumber){alert('الاسم واللقب والمستوى والشعبة والقسم حقول إلزامية.');return;}const norm=v=>String(v||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');const duplicate=db.students.find(s=>norm(s.first)===norm(values.first)&&norm(s.last)===norm(values.last)&&norm(s.class)===norm(values.class)&&norm(s.schoolYear)===norm(values.schoolYear)&&norm(s.branch)===norm(values.branch)&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('هذا التلميذ مسجل مسبقاً بالاسم واللقب والقسم نفسيهما. لم تُضف بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ مع الحفاظ على بياناته وسجلات متابعته السابقة.');}else{const record={id:crypto.randomUUID(),identityNumber:'',...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
+$('#studentForm').onsubmit=e=>{e.preventDefault();const values=readStudentForm(e.target);if(!values.last||!values.first||!values.schoolYear||!values.branch||!values.sectionNumber){alert('الاسم واللقب والمستوى والشعبة والقسم حقول إلزامية.');return;}if(values.identityNumber&&!/^\d{16}$/.test(values.identityNumber)){alert('رقم التعريف يجب أن يتكون من 16 رقمًا صحيحًا. اتركه فارغًا إن لم يكن متوفرًا.');return;}const identityDuplicate=values.identityNumber&&db.students.find(s=>normalizeStudentIdentityNumber(s.identityNumber)===values.identityNumber&&String(s.id)!==String(editingStudentId||''));if(identityDuplicate){alert('رقم التعريف مسجل في بطاقة تلميذ أخرى. لم يتم حفظ التعديل لتجنب ربط عنوان أو سجل بتلميذ غير صحيح.');return;}const norm=v=>String(v||'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');const duplicate=db.students.find(s=>norm(s.first)===norm(values.first)&&norm(s.last)===norm(values.last)&&norm(s.class)===norm(values.class)&&norm(s.schoolYear)===norm(values.schoolYear)&&norm(s.branch)===norm(values.branch)&&String(s.id)!==String(editingStudentId||''));if(duplicate){alert('هذا التلميذ مسجل مسبقاً بالاسم واللقب والقسم نفسيهما. لم تُضف بطاقة مكررة.');return;}const current=editingStudentId?db.students.find(s=>String(s.id)===editingStudentId):null;if(editingStudentId&&!current){alert('تعذر العثور على بطاقة التلميذ التي تريد تعديلها.');resetStudentEditor();return;}if(current){const before={...current};Object.assign(current,values,{id:current.id});if(!save()){Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,before);render();return;}resetStudentEditor();alert('تم تحديث بطاقة التلميذ مع الحفاظ على بياناته وسجلات متابعته السابقة.');}else{const record={id:crypto.randomUUID(),...values};db.students.push(record);if(!save()){db.students.pop();return;}resetStudentEditor();alert('تم حفظ بطاقة التلميذ بنجاح.');}};
 
 const attendanceWeekdays=[['sun','الأحد'],['mon','الإثنين'],['tue','الثلاثاء'],['wed','الأربعاء'],['thu','الخميس']];
 const dateISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
@@ -4347,6 +4359,133 @@ function parseCSV(text, delimiter){
   return rows;
 }
 function normHeader(v){return String(v||'').trim().toLowerCase().replace(/[\u0640\s_\-]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي');}
+
+function normalizeStudentIdentityNumber(value){
+ if(typeof value==='number'&&!Number.isSafeInteger(value))return '';
+ return String(value??'').normalize('NFKC')
+  .replace(/[\u0640\u200B-\u200D\uFEFF]/g,'')
+  .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+  .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+  .replace(/[\s.-]/g,'');
+}
+function normalizeGuardianAddressText(value){
+ return String(value??'').normalize('NFKC').replace(/\s+/g,' ').trim();
+}
+function guardianAddressHeaderIndexes(headers){
+ const normalized=headers.map(normHeader);
+ const collect=aliases=>{
+  const allowed=new Set(aliases.map(normHeader));
+  return normalized.map((value,index)=>allowed.has(value)?index:-1).filter(index=>index>=0);
+ };
+ const identity=collect(['رقم التعريف','رقم التعريف الوطني','matricule','identifiant','identity number']);
+ const address=collect(['عنوان الولي','عنوان ولي التلميذ','عنوان ولي الأمر','عنوان الوصي','guardian address','guardianAddress','parent address','parentAddress']);
+ if(identity.length===0)throw new Error('الملف لا يحتوي على عمود «رقم التعريف».');
+ if(identity.length>1)throw new Error('يوجد أكثر من عمود محتمل لرقم التعريف؛ أزل الالتباس ثم أعد المحاولة.');
+ if(address.length===0)throw new Error('الملف لا يحتوي على عمود واضح باسم «عنوان الولي». لم تُعدّل أي بطاقة.');
+ if(address.length>1)throw new Error('يوجد أكثر من عمود محتمل لعنوان الولي؛ أزل الالتباس ثم أعد المحاولة.');
+ return {identityNumber:identity[0],guardianAddress:address[0]};
+}
+function parseGuardianAddressImportSource(rawText){
+ const raw=String(rawText??'').replace(/^\uFEFF/,'');
+ if(!raw.trim())throw new Error('الملف فارغ أو تعذرت قراءة محتواه.');
+ if(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(raw))throw new Error('يبدو أن الملف بصيغة Excel ثنائية غير مدعومة. احفظه بصيغة CSV أو Excel HTML ثم أعد اختياره.');
+ let rows=null,columns=null,headerRowIndex=0;
+ const isHtml=/<(?:!doctype\s+html|html|table|tr|td|th)\b/i.test(raw);
+ if(isHtml){
+  if(typeof DOMParser==='undefined')throw new Error('تعذر قراءة جدول Excel HTML في هذا الإصدار من المتصفح.');
+  const doc=new DOMParser().parseFromString(raw,'text/html');
+  const tables=Array.from(doc.querySelectorAll('table'));
+  const matches=[];
+  for(const table of tables){
+   const tableRows=Array.from(table.querySelectorAll('tr'))
+    .map(tr=>Array.from(tr.querySelectorAll('th,td')).map(cell=>String(cell.textContent||'').trim()))
+    .filter(cells=>cells.length>0);
+   for(let headerAt=0;headerAt<Math.min(6,Math.max(0,tableRows.length-1));headerAt++){
+    try{matches.push({rows:tableRows,columns:guardianAddressHeaderIndexes(tableRows[headerAt]),headerRowIndex:headerAt});}catch(_){}
+   }
+  }
+  if(matches.length===0)throw new Error('لم أجد في جدول Excel العمودين «رقم التعريف» و«عنوان الولي». الملف الحالي لا يحتوي على عناوين الأولياء.');
+  if(matches.length!==1)throw new Error('عُثر على أكثر من جدول أو صف عناوين محتمل؛ لم تتم أي مطابقة لتجنب إسناد عنوان خاطئ.');
+  rows=matches[0].rows;columns=matches[0].columns;headerRowIndex=matches[0].headerRowIndex;
+ }else{
+  const candidates=[],parseErrors=[];
+  for(const delimiter of [',',';','\t']){
+   try{
+    const candidateRows=parseCSV(raw,delimiter);
+    if(candidateRows.length<2)continue;
+    for(let headerAt=0;headerAt<Math.min(6,Math.max(0,candidateRows.length-1));headerAt++){
+     try{candidates.push({rows:candidateRows,columns:guardianAddressHeaderIndexes(candidateRows[headerAt]),headerRowIndex:headerAt,delimiter});}catch(_){}
+    }
+   }catch(error){parseErrors.push(error);}
+  }
+  if(candidates.length===0){
+   if(parseErrors.length)throw new Error(parseErrors[0].message||'تعذرت قراءة صيغة CSV.');
+   throw new Error('يجب أن يحتوي CSV على عمودين واضحين: «رقم التعريف» و«عنوان الولي».');
+  }
+  candidates.sort((a,b)=>(b.rows[a.headerRowIndex].length-a.rows[b.headerRowIndex].length)||(b.rows.length-a.rows.length));
+  if(candidates.length>1&&candidates[0].rows[candidates[0].headerRowIndex].length===candidates[1].rows[candidates[1].headerRowIndex].length&&candidates[0].delimiter!==candidates[1].delimiter)throw new Error('تعذر تحديد فاصل أعمدة CSV بشكل وحيد. احفظ الملف بفاصل واحد واضح ثم أعد المحاولة.');
+  rows=candidates[0].rows;columns=candidates[0].columns;headerRowIndex=candidates[0].headerRowIndex;
+ }
+ const result=rows.slice(headerRowIndex+1).map((cells,index)=>({
+  identityNumber:String(cells[columns.identityNumber]??'').trim(),
+  guardianAddress:String(cells[columns.guardianAddress]??'').trim(),
+  sourceRow:headerRowIndex+index+2
+ }));
+ if(result.length===0)throw new Error('الملف يحتوي على عناوين الأعمدة فقط ولا يحتوي على سجلات.');
+ return result;
+}
+function buildGuardianAddressImportPlan(students,sourceRows){
+ const list=Array.isArray(students)?students:[];
+ const incoming=Array.isArray(sourceRows)?sourceRows:[];
+ const sourceIndex=new Map(),studentIndex=new Map();
+ for(const row of incoming){
+  const key=normalizeStudentIdentityNumber(row&&row.identityNumber);
+  if(/^\d{16}$/.test(key)){
+   if(!sourceIndex.has(key))sourceIndex.set(key,[]);
+   sourceIndex.get(key).push(row);
+  }
+ }
+ for(const student of list){
+  const key=normalizeStudentIdentityNumber(student&&student.identityNumber);
+  if(/^\d{16}$/.test(key)){
+   if(!studentIndex.has(key))studentIndex.set(key,[]);
+   studentIndex.get(key).push(student);
+  }
+ }
+ const counts={total:incoming.length,ready:0,same:0,unmatched:0,duplicate:0,conflict:0,invalid:0,empty:0};
+ const plannedRows=[],updates=[];
+ for(let index=0;index<incoming.length;index++){
+  const source=incoming[index]||{},identityNumber=normalizeStudentIdentityNumber(source.identityNumber),address=normalizeGuardianAddressText(source.guardianAddress);
+  let status='invalid',student=null,reason='رقم التعريف غير صالح';
+  if(!/^\d{16}$/.test(identityNumber)){status='invalid';reason='رقم التعريف يجب أن يكون 16 رقمًا';}
+  else if((sourceIndex.get(identityNumber)||[]).length>1){status='duplicate';reason='رقم التعريف مكرر داخل الملف؛ رُفضت كل نسخه';}
+  else if(!address){status='empty';reason='العنوان فارغ؛ لم يُستبدل أي عنوان';}
+  else if(address.length>300){status='invalid';reason='العنوان يتجاوز الحد الأقصى البالغ 300 حرف';}
+  else{
+   const matches=studentIndex.get(identityNumber)||[];
+   if(matches.length===0){status='unmatched';reason='لا توجد بطاقة تحمل رقم التعريف نفسه';}
+   else if(matches.length!==1){status='conflict';reason='رقم التعريف موجود في أكثر من بطاقة داخل التطبيق';}
+   else{
+    student=matches[0];
+    if(!student.id){status='conflict';reason='البطاقة لا تحمل معرّفًا داخليًا ثابتًا';student=null;}
+    else{
+     const oldAddress=normalizeGuardianAddressText(student.guardianAddress);
+     if(oldAddress&&oldAddress===address){status='same';reason='العنوان مطابق لما هو محفوظ بالفعل';}
+     else if(oldAddress){status='conflict';reason='يوجد عنوان محفوظ مختلف؛ لم يتم استبداله';}
+     else{
+      status='ready';reason='مطابقة وحيدة ورقم تعريف صحيح؛ جاهز لإضافة العنوان';
+      updates.push({studentId:String(student.id),identityNumber,guardianAddress:address,sourceRow:source.sourceRow??index+2});
+     }
+    }
+   }
+  }
+  counts[status]++;
+  const studentName=student?([student.last||'',student.first||''].join(' ').trim()||student.name||student.fullName||'—'):'—';
+  const sectionLabel=student?[student.schoolYear||'',student.branch||'',student.sectionNumber??student.class??''].filter(Boolean).join(' — '):'—';
+  plannedRows.push({sourceRow:source.sourceRow??index+2,identityNumber,guardianAddress:address,studentId:student?String(student.id):'',studentName,sectionLabel,status,reason});
+ }
+ return {rows:plannedRows,updates,counts};
+}
 function normName(v){return String(v||'').normalize('NFKC').replace(/[\u0640]/g,'').replace(/\s+/g,' ').trim().toLowerCase();}
 function isCompatibleImportIdentity(existingValue,incomingValue){const normalize=value=>String(value??'').normalize('NFKC').replace(/[\u0640\u064B-\u065F\u0670]/g,'').replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d))).replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/[\s.-]/g,'').trim().toLocaleLowerCase('ar');const existing=normalize(existingValue),incoming=normalize(incomingValue);return !existing||!!incoming&&existing===incoming;}
 $('#clearStudents').onclick=()=>{
@@ -4510,6 +4649,103 @@ $('#csvImport').onchange=async e=>{
   }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
   finally{input.value='';}
 };
+
+
+let pendingGuardianAddressImport=null;
+function refreshGuardianAddressImportControls(){
+ const apply=$('#applyGuardianAddressImport');
+ if(apply)apply.disabled=!!licenseReadOnly||!pendingGuardianAddressImport||!pendingGuardianAddressImport.updates.length;
+ const file=$('#guardianAddressImportFile');
+ if(file&&typeof setLicenseControlDisabled==='function')setLicenseControlDisabled(file,!!licenseReadOnly);
+}
+function clearGuardianAddressImportPreview(message){
+ pendingGuardianAddressImport=null;
+ const file=$('#guardianAddressImportFile');if(file)file.value='';
+ const preview=$('#guardianAddressImportPreview');if(preview){preview.classList.add('hidden');preview.innerHTML='';}
+ const status=$('#guardianAddressImportStatus');if(status)status.textContent=message||'تم إلغاء المعاينة. لم يتم تغيير أي بطاقة.';
+ refreshGuardianAddressImportControls();
+}
+function renderGuardianAddressImportPreview(plan){
+ const labels={ready:'جاهز للإضافة',same:'مطابق محفوظ',unmatched:'غير موجود',duplicate:'مكرر في الملف',conflict:'تعارض يحتاج مراجعة',invalid:'بيانات غير صالحة',empty:'عنوان فارغ'};
+ const c=plan.counts;
+ const status=$('#guardianAddressImportStatus');
+ if(status)status.textContent='سجلات الملف: '+c.total+' | جاهز للإضافة: '+c.ready+' | مطابق محفوظ: '+c.same+' | غير موجود: '+c.unmatched+' | مكرر: '+c.duplicate+' | تعارض: '+c.conflict+' | غير صالح: '+c.invalid+' | عنوان فارغ: '+c.empty+'.';
+ const visible=plan.rows.slice(0,12);
+ const body=visible.map(row=>{
+  const masked=/^\d{16}$/.test(row.identityNumber)?'••••'+row.identityNumber.slice(-4):'غير صالح';
+  return '<tr><td>'+esc(row.sourceRow)+'</td><td dir="ltr">'+esc(masked)+'</td><td>'+esc(row.studentName)+'</td><td>'+esc(row.sectionLabel)+'</td><td>'+esc(row.guardianAddress||'—')+'</td><td>'+esc(labels[row.status]||row.status)+'</td></tr>';
+ }).join('');
+ const preview=$('#guardianAddressImportPreview');
+ if(preview){
+  preview.innerHTML='<p class="muted">المعاينة فقط: لا يتم الحفظ تلقائيًا. سيُضاف العنوان إلى البطاقة إذا كان رقم التعريف فريدًا والعنوان الحالي فارغًا. لن تُنشأ بطاقات جديدة، ولن تُستبدل العناوين الحالية المختلفة.</p><div class="tablewrap"><table class="guardian-address-import-table"><thead><tr><th>السطر</th><th>رقم التعريف</th><th>التلميذ</th><th>القسم</th><th>العنوان الوارد</th><th>النتيجة</th></tr></thead><tbody>'+body+'</tbody></table></div>'+(plan.rows.length>visible.length?'<p class="muted">عُرضت أول '+visible.length+' سجلات فقط؛ تم فحص '+plan.rows.length+' سجلًا كاملًا.</p>':'');
+  preview.classList.remove('hidden');
+ }
+ refreshGuardianAddressImportControls();
+}
+$('#downloadGuardianAddressTemplate')?.addEventListener('click',()=>{
+ const content='\uFEFF"رقم التعريف","عنوان الولي"\r\n';
+ const blob=new Blob([content],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='mushrifi-guardian-address-template.csv';
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1500);
+});
+$('#guardianAddressImportFile')?.addEventListener('change',async event=>{
+ const input=event.target,file=input.files&&input.files[0];if(!file)return;
+ pendingGuardianAddressImport=null;
+ const preview=$('#guardianAddressImportPreview');if(preview){preview.classList.add('hidden');preview.innerHTML='';}
+ const status=$('#guardianAddressImportStatus');if(status)status.textContent='جارٍ فحص الملف والتحقق من أرقام التعريف...';
+ refreshGuardianAddressImportControls();
+ try{
+  const raw=await new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onload=()=>resolve(String(reader.result||''));
+   reader.onerror=()=>reject(new Error('تعذرت قراءة ملف العناوين من الهاتف.'));
+   reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));
+   reader.readAsText(file,'UTF-8');
+  });
+  const rows=parseGuardianAddressImportSource(raw);
+  const plan=buildGuardianAddressImportPlan(db.students,rows);
+  pendingGuardianAddressImport=plan;
+  renderGuardianAddressImportPreview(plan);
+  if(!plan.updates.length&&status)status.textContent+=' لا توجد عناوين جديدة آمنة للحفظ؛ لم يتغير أي سجل.';
+ }catch(error){
+  pendingGuardianAddressImport=null;
+  if(status)status.textContent=(error&&error.message)||'تعذر فحص الملف. لم تتغير أي بطاقة.';
+  refreshGuardianAddressImportControls();
+ }
+});
+$('#cancelGuardianAddressImport')?.addEventListener('click',()=>clearGuardianAddressImportPreview());
+$('#applyGuardianAddressImport')?.addEventListener('click',()=>{
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن تعديل العناوين قبل تفعيل الترخيص.');return;}
+ const plan=pendingGuardianAddressImport;
+ if(!plan||!plan.updates.length){alert('لا توجد عناوين جديدة مطابقة وآمنة للحفظ.');return;}
+ const originalDatabase=JSON.parse(JSON.stringify(db));
+ try{
+  const targets=[],seen=new Set();
+  for(const update of plan.updates){
+   if(seen.has(update.studentId))throw new Error('تكرر معرّف البطاقة داخل خطة الحفظ؛ أُلغيت العملية كاملة.');
+   seen.add(update.studentId);
+   const matches=db.students.filter(student=>String(student.id)===update.studentId);
+   if(matches.length!==1)throw new Error('تغيرت قائمة التلاميذ بعد المعاينة. ألغيت العملية؛ أعد اختيار الملف لمعاينة جديدة.');
+   const target=matches[0];
+   if(normalizeStudentIdentityNumber(target.identityNumber)!==update.identityNumber)throw new Error('تغير رقم تعريف إحدى البطاقات بعد المعاينة. لم يتم حفظ أي عنوان.');
+   if(normalizeGuardianAddressText(target.guardianAddress))throw new Error('تغير عنوان إحدى البطاقات بعد المعاينة. ألغيت العملية لتجنب استبدال عنوان محفوظ.');
+   targets.push({student:target,address:update.guardianAddress});
+  }
+  targets.forEach(item=>{item.student.guardianAddress=item.address;});
+  if(!save()){db=originalDatabase;render();throw new Error('تعذر حفظ العملية. أُعيدت قاعدة البيانات إلى حالتها السابقة ولم يُعتمد أي عنوان.');}
+  const count=targets.length;
+  clearGuardianAddressImportPreview('تم الحفظ بنجاح: '+count+' عنوانًا جديدًا. لم تُستبدل العناوين المحفوظة ولم تُنشأ بطاقات تلاميذ جديدة.');
+  render();
+  alert('اكتمل استيراد عناوين الأولياء.\nالعناوين المضافة: '+count+'\nالعناوين المطابقة المحفوظة والتعارضات والسجلات غير المطابقة لم تُغيّر.\nتم الحفاظ على بيانات التلاميذ وسجلات الغياب والتأخر والمخالفات والوثائق.');
+ }catch(error){
+  db=originalDatabase;render();
+  clearGuardianAddressImportPreview((error&&error.message)||'أُلغيت العملية حفاظًا على البيانات. لم يُعتمد أي عنوان.');
+  alert((error&&error.message)||'أُلغيت العملية حفاظًا على البيانات. لم يُعتمد أي عنوان.');
+ }
+});
+refreshGuardianAddressImportControls();
 
 render();refreshUndoPanel();
 
