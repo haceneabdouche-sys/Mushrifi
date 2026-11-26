@@ -190,7 +190,66 @@ public class MainActivity extends Activity {
         synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? decryptData(c.getString(0)) : null; } catch (Exception e) { return "!MUSHRIFI_DB_ERROR!"; } }
         private String lastError = "";
         synchronized String getLastError() { return lastError; }
-        synchronized boolean write(String json) { try { android.content.ContentValues v = new android.content.ContentValues(); v.put("id", 1); v.put("json", encryptData(json)); long result = getWritableDatabase().insertWithOnConflict("appdata", null, v, SQLiteDatabase.CONFLICT_REPLACE); if (result == -1) { lastError = "SQLite لم يقبل حفظ السجل (insertWithOnConflict أعاد -1)."; return false; } lastError = ""; return true; } catch (Exception e) { lastError = e.getClass().getSimpleName() + ": " + String.valueOf(e.getMessage()); android.util.Log.e("MushrifiDB", "Database write failed", e); return false; } }
+        synchronized boolean write(String json) {
+            SQLiteDatabase database = null;
+            boolean transactionStarted = false;
+            boolean saved = false;
+            try {
+                if (json == null) {
+                    throw new IOException("بيانات الحفظ فارغة.");
+                }
+
+                // Encrypt before opening the transaction. Any encryption/key failure
+                // therefore leaves the currently stored row untouched.
+                String encryptedJson = encryptData(json);
+                database = getWritableDatabase();
+                database.beginTransaction();
+                transactionStarted = true;
+
+                android.content.ContentValues values = new android.content.ContentValues();
+                values.put("id", 1);
+                values.put("json", encryptedJson);
+                long result = database.insertWithOnConflict(
+                    "appdata", null, values, SQLiteDatabase.CONFLICT_REPLACE
+                );
+                if (result == -1) {
+                    throw new IOException("SQLite لم يقبل حفظ السجل (insertWithOnConflict أعاد -1).");
+                }
+
+                // Do not report success until the stored ciphertext can be read,
+                // authenticated by AES-GCM decryption, and compared byte-for-byte
+                // with the exact JSON submitted by the application.
+                String verifiedJson = null;
+                try (Cursor cursor = database.rawQuery("SELECT json FROM appdata WHERE id=1", null)) {
+                    if (cursor.moveToFirst()) {
+                        verifiedJson = decryptData(cursor.getString(0));
+                    }
+                }
+                if (!json.equals(verifiedJson)) {
+                    throw new IOException("فشل التحقق من قاعدة البيانات بعد الحفظ؛ أُلغيت المعاملة.");
+                }
+
+                database.setTransactionSuccessful();
+                saved = true;
+            } catch (Exception error) {
+                lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                android.util.Log.e("MushrifiDB", "Verified database write failed; transaction will roll back", error);
+            } finally {
+                if (transactionStarted && database != null) {
+                    try {
+                        // Without setTransactionSuccessful(), SQLite rolls the old row back in.
+                        database.endTransaction();
+                    } catch (Exception error) {
+                        saved = false;
+                        lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                        android.util.Log.e("MushrifiDB", "Database write transaction could not finish", error);
+                    }
+                }
+            }
+
+            if (saved) lastError = "";
+            return saved;
+        }
         synchronized boolean restoreSafely(String json) {
             SQLiteDatabase database = null;
             boolean transactionStarted = false;
