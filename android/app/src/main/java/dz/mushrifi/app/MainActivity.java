@@ -169,11 +169,49 @@ public class MainActivity extends Activity {
         ks.load(null);
         return ks.containsAlias("mushrifi_data_key");
     }
-    private static SecretKey dataKey() throws Exception {
-        KeyStore ks = KeyStore.getInstance("AndroidKeyStore"); ks.load(null);
-        if (ks.containsAlias("mushrifi_data_key")) return ((KeyStore.SecretKeyEntry) ks.getEntry("mushrifi_data_key", null)).getSecretKey();
+    /**
+     * Read an existing data key only. Decryption must never create a replacement key:
+     * doing so would permanently make an otherwise recoverable encrypted database
+     * appear to belong to a new key.
+     */
+    private static SecretKey existingDataKey() throws Exception {
+        KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+        ks.load(null);
+        if (!ks.containsAlias("mushrifi_data_key")) {
+            throw new java.security.GeneralSecurityException(
+                "مفتاح التشفير الأصلي غير موجود في AndroidKeyStore؛ لم يتم إنشاء مفتاح بديل."
+            );
+        }
+        KeyStore.Entry entry = ks.getEntry("mushrifi_data_key", null);
+        if (!(entry instanceof KeyStore.SecretKeyEntry)) {
+            throw new java.security.GeneralSecurityException(
+                "تعذر قراءة مفتاح التشفير الأصلي من AndroidKeyStore؛ لم يتم استبداله."
+            );
+        }
+        SecretKey key = ((KeyStore.SecretKeyEntry) entry).getSecretKey();
+        if (key == null) {
+            throw new java.security.GeneralSecurityException(
+                "مفتاح التشفير الأصلي غير متاح؛ لم يتم إنشاء مفتاح بديل."
+            );
+        }
+        return key;
+    }
+
+    /**
+     * Obtain a key for encryption. Creation is permitted only on the first
+     * encryption operation; all decryption paths use existingDataKey().
+     */
+    private static synchronized SecretKey dataKey() throws Exception {
+        if (hasDataEncryptionKey()) return existingDataKey();
         KeyGenerator kg = KeyGenerator.getInstance("AES", "AndroidKeyStore");
-        kg.init(new android.security.keystore.KeyGenParameterSpec.Builder("mushrifi_data_key", android.security.keystore.KeyProperties.PURPOSE_ENCRYPT | android.security.keystore.KeyProperties.PURPOSE_DECRYPT).setBlockModes("GCM").setEncryptionPaddings("NoPadding").setRandomizedEncryptionRequired(true).build());
+        kg.init(new android.security.keystore.KeyGenParameterSpec.Builder(
+            "mushrifi_data_key",
+            android.security.keystore.KeyProperties.PURPOSE_ENCRYPT
+                | android.security.keystore.KeyProperties.PURPOSE_DECRYPT
+        ).setBlockModes("GCM")
+         .setEncryptionPaddings("NoPadding")
+         .setRandomizedEncryptionRequired(true)
+         .build());
         return kg.generateKey();
     }
     private static String encryptData(String plain) throws Exception {
@@ -185,7 +223,7 @@ public class MainActivity extends Activity {
     private static String decryptData(String stored) throws Exception {
         if (stored == null || !stored.startsWith("enc:")) return stored;
         byte[] packed = Base64.decode(stored.substring(4), Base64.NO_WRAP); byte[] iv = java.util.Arrays.copyOfRange(packed,0,12); byte[] ciphertext = java.util.Arrays.copyOfRange(packed,12,packed.length);
-        Cipher c = Cipher.getInstance("AES/GCM/NoPadding"); c.init(Cipher.DECRYPT_MODE, dataKey(), new GCMParameterSpec(128,iv));
+        Cipher c = Cipher.getInstance("AES/GCM/NoPadding"); c.init(Cipher.DECRYPT_MODE, existingDataKey(), new GCMParameterSpec(128,iv));
         return new String(c.doFinal(ciphertext), java.nio.charset.StandardCharsets.UTF_8);
     }
     private static class LocalDb extends SQLiteOpenHelper {

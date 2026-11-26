@@ -107,6 +107,8 @@ jobs:
         run: node tests/recovery-snapshot-transaction-stage18.test.cjs
       - name: Run Stage 19 read-only database health diagnostics tests
         run: node tests/database-health-stage19.test.cjs
+      - name: Run Stage 20 Android encryption key lifecycle safety tests
+        run: node tests/database-encryption-key-safety-stage20.test.cjs
       - name: Run backup identity integrity and restore rollback tests
         run: node tests/backup-restore-integrity.test.cjs
       - name: Run backup manifest integrity and legacy compatibility tests
