@@ -99,7 +99,8 @@ const students=[
  {id:'b',identityNumber:idB,guardianAddress:'حي النصر',last:'ب',first:'ب'},
  {id:'c',identityNumber:idC,guardianAddress:'عنوان محفوظ مختلف',last:'ج',first:'ج'},
  {id:'d1',identityNumber:idD,guardianAddress:'',last:'د',first:'د'},
- {id:'d2',identityNumber:idD,guardianAddress:'',last:'د2',first:'د2'}
+ {id:'d2',identityNumber:idD,guardianAddress:'',last:'د2',first:'د2'},
+ {id:'g',identityNumber:'8234567890123456',guardianAddress:'عنوان مطابق محفوظ'}
 ];
 const rows=[
  {identityNumber:idA,guardianAddress:'عنوان جديد'},
@@ -110,8 +111,9 @@ const rows=[
  {identityNumber:idE,guardianAddress:'عنوان مكرر 2'},
  {identityNumber:'123456789012345',guardianAddress:'عنوان برقم ناقص'},
  {identityNumber:idD,guardianAddress:'عنوان رقم تعريف غير فريد'},
- {identityNumber:idB,guardianAddress:''},
- {identityNumber:idF,guardianAddress:'ع'.repeat(301)}
+ {identityNumber:'8234567890123456',guardianAddress:' عنوان   مطابق محفوظ '},
+ {identityNumber:idF,guardianAddress:'ع'.repeat(301)},
+ {identityNumber:'9234567890123456',guardianAddress:''}
 ];
 const plan=JSON.parse(JSON.stringify(context.buildGuardianAddressImportPlan(students,rows)));
 assert.equal(plan.counts.ready,1);
@@ -119,7 +121,8 @@ assert.equal(plan.counts.same,1);
 assert.equal(plan.counts.conflict,2);
 assert.equal(plan.counts.unmatched,1,
  'an unknown identity remains unmatched even when a name resembles a known student');
-assert.equal(plan.counts.duplicate,2);
+assert.equal(plan.counts.duplicate,4,
+ 'all occurrences of a source identity repeated in the file are rejected');
 assert.equal(plan.counts.invalid,2);
 assert.equal(plan.counts.empty,1);
 assert.equal(plan.counts.total,rows.length);
