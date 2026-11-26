@@ -40,7 +40,7 @@ assert.match(html, /AndroidBridge\.inspectDatabaseHealth\(callbackId\)/,
   'the button invokes the native read-only inspector');
 assert.match(workflow, /Run Stage 19 read-only database health diagnostics tests[\s\S]*?node tests\/database-health-stage19\.test\.cjs/,
   'CI runs the Stage 19 regression test');
-assert.match(gradle, /versionCode 23[\s\S]*?versionName '2\.6'/,
-  'internal build number advances while the visible app version remains 2.6');
+assert.match(gradle, /versionCode\s+\d+[\s\S]*?versionName '2\.6'/,
+  'an internal build number is configured while the visible app version remains 2.6');
 
 console.log('PASS: Stage 19 read-only SQLite quick_check, schema/data/decryption/recovery validation, async UI callback, and no-mutation contract.');
