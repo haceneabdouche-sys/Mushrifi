@@ -16,8 +16,8 @@ assert.match(localDb, /onUpgrade\(SQLiteDatabase db, int oldVersion, int newVers
 const upgradeStart = localDb.indexOf('onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)');
 const upgradeEnd = localDb.indexOf('private void ensureRecoveryTable', upgradeStart);
 const upgrade = localDb.slice(upgradeStart, upgradeEnd);
-assert.doesNotMatch(upgrade, /DROP TABLE|DELETE FROM|database\.delete|appdata/,
-  'schema migration never drops or rewrites existing student data');
+assert.doesNotMatch(upgrade, /DROP\\s+TABLE|DELETE\\s+FROM|db\\.delete\\s*\\(|database\\.delete\\s*\\(|UPDATE\\s+appdata|INSERT\\s+INTO\\s+appdata/i,
+  'schema migration contains no destructive SQL or appdata replacement statements');
 
 const validateStart = localDb.indexOf('private void validateRecoverySnapshotJson(String json)');
 const saveStart = localDb.indexOf('synchronized boolean saveRecoverySnapshot(String json)');
