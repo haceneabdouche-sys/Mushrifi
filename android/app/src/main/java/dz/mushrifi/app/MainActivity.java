@@ -61,6 +61,7 @@ public class MainActivity extends Activity {
     private String pendingAgendaNotificationId;
     private String pendingAgendaNotificationDate;
     private final ExecutorService licenseExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService databaseHealthExecutor = Executors.newSingleThreadExecutor();
 
     /**
      * The Android JavaScript bridge is intended only for the packaged Mushrifi page.
@@ -163,6 +164,11 @@ public class MainActivity extends Activity {
         }
     }
 
+    private static boolean hasDataEncryptionKey() throws Exception {
+        KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+        ks.load(null);
+        return ks.containsAlias("mushrifi_data_key");
+    }
     private static SecretKey dataKey() throws Exception {
         KeyStore ks = KeyStore.getInstance("AndroidKeyStore"); ks.load(null);
         if (ks.containsAlias("mushrifi_data_key")) return ((KeyStore.SecretKeyEntry) ks.getEntry("mushrifi_data_key", null)).getSecretKey();
@@ -183,7 +189,11 @@ public class MainActivity extends Activity {
         return new String(c.doFinal(ciphertext), java.nio.charset.StandardCharsets.UTF_8);
     }
     private static class LocalDb extends SQLiteOpenHelper {
-        LocalDb(Context c) { super(c, "mushrifi_local.db", null, 2); }
+        private final Context databaseContext;
+        LocalDb(Context c) {
+            super(c, "mushrifi_local.db", null, 2);
+            databaseContext = c.getApplicationContext() != null ? c.getApplicationContext() : c;
+        }
         @Override public void onCreate(SQLiteDatabase db) { db.execSQL("CREATE TABLE appdata (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL)"); ensureRecoveryTable(db); }
         @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // Additive migration only: preserve appdata and any existing recovery row.
@@ -488,6 +498,150 @@ public class MainActivity extends Activity {
             if (cleared) lastError = "";
             return cleared;
         }
+
+        private boolean hasExpectedColumns(SQLiteDatabase database, String table, String[] expected) {
+            java.util.HashSet<String> columns = new java.util.HashSet<>();
+            try (Cursor cursor = database.rawQuery("PRAGMA table_info(" + table + ")", null)) {
+                int nameColumn = cursor.getColumnIndex("name");
+                if (nameColumn < 0) return false;
+                while (cursor.moveToNext()) columns.add(cursor.getString(nameColumn));
+            }
+            return columns.containsAll(java.util.Arrays.asList(expected));
+        }
+
+        private void validateApplicationDatabaseJson(String json) throws Exception {
+            if (json == null || json.trim().isEmpty()) throw new IOException("سجل البيانات الرئيسي فارغ.");
+            org.json.JSONObject data = new org.json.JSONObject(json);
+            for (String key : new String[]{"students", "attendance", "documents", "violations"}) {
+                if (!(data.opt(key) instanceof org.json.JSONArray)) {
+                    throw new IOException("قائمة البيانات الأساسية غير صالحة: " + key);
+                }
+            }
+            for (String key : new String[]{"agenda", "followups", "auditLog"}) {
+                if (data.has(key) && !(data.opt(key) instanceof org.json.JSONArray)) {
+                    throw new IOException("قائمة البيانات الاختيارية غير صالحة: " + key);
+                }
+            }
+            if (!(data.opt("settings") instanceof org.json.JSONObject)) {
+                throw new IOException("إعدادات قاعدة البيانات غير صالحة.");
+            }
+            for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "auditLog"}) {
+                org.json.JSONArray records = data.optJSONArray(key);
+                if (records == null) continue;
+                for (int i = 0; i < records.length(); i++) {
+                    if (!(records.opt(i) instanceof org.json.JSONObject)) {
+                        throw new IOException("يوجد سجل غير صالح داخل القائمة: " + key);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Non-destructive health inspection. Opens the existing database directly
+         * with OPEN_READONLY, so this diagnostic never creates or migrates a database.
+         */
+        synchronized String inspectHealth() {
+            org.json.JSONObject report = new org.json.JSONObject();
+            org.json.JSONObject checks = new org.json.JSONObject();
+            SQLiteDatabase database = null;
+            boolean warning = false;
+            try {
+                report.put("readOnly", true);
+                report.put("checkedAt", System.currentTimeMillis());
+                java.io.File databaseFile = databaseContext.getDatabasePath("mushrifi_local.db");
+                if (databaseFile == null || !databaseFile.isFile() || databaseFile.length() == 0) {
+                    throw new IOException("ملف قاعدة البيانات غير موجود أو فارغ؛ لم ينشئ الفحص ملفاً بديلاً.");
+                }
+                database = SQLiteDatabase.openDatabase(
+                    databaseFile.getAbsolutePath(), null, SQLiteDatabase.OPEN_READONLY
+                );
+
+                boolean integrityResultFound = false;
+                try (Cursor cursor = database.rawQuery("PRAGMA quick_check(1)", null)) {
+                    while (cursor.moveToNext()) {
+                        integrityResultFound = true;
+                        String integrity = cursor.getString(0);
+                        if (!"ok".equalsIgnoreCase(integrity)) {
+                            throw new IOException("أبلغ SQLite عن خلل في سلامة الملف.");
+                        }
+                    }
+                }
+                if (!integrityResultFound) throw new IOException("لم يُرجع SQLite نتيجة لفحص سلامة الملف.");
+                checks.put("sqlite", "ok");
+
+                if (!hasExpectedColumns(database, "appdata", new String[]{"id", "json"})) {
+                    throw new IOException("بنية جدول البيانات الرئيسي غير مكتملة.");
+                }
+                checks.put("schema", "ok");
+
+                String dataState = "empty";
+                boolean keyAvailable = hasDataEncryptionKey();
+                try (Cursor cursor = database.rawQuery("SELECT id, json FROM appdata", null)) {
+                    if (cursor.moveToFirst()) {
+                        int rowId = cursor.getInt(0);
+                        String stored = cursor.getString(1);
+                        if (rowId != 1 || stored == null || stored.trim().isEmpty() || cursor.moveToNext()) {
+                            throw new IOException("سجل قاعدة البيانات الرئيسي مفقود أو مكرر أو غير صالح.");
+                        }
+                        if (stored.startsWith("enc:") && !keyAvailable) {
+                            throw new IOException("مفتاح تشفير البيانات غير متاح؛ أوقف الفحص دون إنشاء مفتاح بديل.");
+                        }
+                        validateApplicationDatabaseJson(decryptData(stored));
+                        dataState = "valid";
+                    }
+                }
+                checks.put("data", dataState);
+                if ("empty".equals(dataState)) warning = true;
+
+                String recoveryState = "absent";
+                if (hasExpectedColumns(database, "recovery_snapshot", new String[]{"id", "json", "updated_at"})) {
+                    try (Cursor cursor = database.rawQuery("SELECT id, json FROM recovery_snapshot", null)) {
+                        if (cursor.moveToFirst()) {
+                            int rowId = cursor.getInt(0);
+                            String stored = cursor.getString(1);
+                            if (rowId != 1 || stored == null || stored.trim().isEmpty() || cursor.moveToNext()) {
+                                recoveryState = "invalid";
+                            } else if (stored.startsWith("enc:") && !keyAvailable) {
+                                recoveryState = "unreadable";
+                            } else {
+                                try {
+                                    validateRecoverySnapshotJson(decryptData(stored));
+                                    recoveryState = "valid";
+                                } catch (Exception invalidSnapshot) {
+                                    recoveryState = "invalid";
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    recoveryState = "unavailable";
+                    warning = true;
+                }
+                if ("invalid".equals(recoveryState) || "unreadable".equals(recoveryState)) warning = true;
+                checks.put("recovery", recoveryState);
+
+                report.put("checks", checks);
+                report.put("status", warning ? "warning" : "healthy");
+                report.put("message", warning
+                    ? "اجتاز ملف SQLite الفحص الأساسي، لكن توجد ملاحظة على السجل الرئيسي أو نقطة التراجع. احتفظ بنسخة احتياطية ولا تحذف التطبيق."
+                    : "اجتازت قاعدة البيانات فحص SQLite والتحقق من بنية البيانات والتشفير. لم يُعدّل الفحص أي سجل.");
+            } catch (Exception error) {
+                android.util.Log.e("MushrifiDB", "Read-only database health inspection failed", error);
+                try {
+                    report.put("checks", checks);
+                    report.put("status", "error");
+                    report.put("message", "تعذر إكمال فحص قاعدة البيانات. لم يُجرِ الفحص أي إصلاح أو حذف. لا تحذف التطبيق ولا تمسح بياناته واحتفظ بالنسخ الاحتياطية.");
+                } catch (org.json.JSONException ignored) {}
+            } finally {
+                if (database != null && database.isOpen()) {
+                    try { database.close(); }
+                    catch (Exception closeError) {
+                        android.util.Log.w("MushrifiDB", "Read-only health database close failed", closeError);
+                    }
+                }
+            }
+            return report.toString();
+        }
     }
     private LocalDb localDb;
     private android.content.SharedPreferences securityPrefs;
@@ -567,6 +721,15 @@ public class MainActivity extends Activity {
             return getSharedPreferences("mushrifi_backup_status", MODE_PRIVATE).getLong("last_verified_backup", 0L);
         }
         @JavascriptInterface public String getDatabaseError() { return localDb.getLastError(); }
+        @JavascriptInterface public void inspectDatabaseHealth(String callbackId) {
+            if (callbackId == null || callbackId.length() > 100) return;
+            databaseHealthExecutor.execute(() -> {
+                String result = localDb.inspectHealth();
+                String script = "window.onMushrifiDatabaseHealth && window.onMushrifiDatabaseHealth("
+                    + org.json.JSONObject.quote(callbackId) + "," + result + ");";
+                runOnUiThread(() -> { if (web != null) web.evaluateJavascript(script, null); });
+            });
+        }
         @JavascriptInterface public boolean saveRecoverySnapshot(String json) {
             if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
             return localDb.saveRecoverySnapshot(json);
