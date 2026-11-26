@@ -22,7 +22,7 @@ for (const [value, label] of [
     'privacy checkbox exists: ' + value);
   assert.ok(form.includes(label), 'privacy label is present: ' + label);
 }
-assert.match(form, /لا تكتب التشخيص أو تفاصيل طبية/,
+assert.match(form, /دون كتابة التشخيص أو تفاصيل طبية/,
   'medical status does not solicit a diagnosis or free-form clinical detail');
 
 const modelStart = html.indexOf('const STUDENT_PRIVACY_FLAG_DEFINITIONS');
