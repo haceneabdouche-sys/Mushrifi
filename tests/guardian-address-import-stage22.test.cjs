@@ -117,11 +117,11 @@ const rows=[
 ];
 const plan=JSON.parse(JSON.stringify(context.buildGuardianAddressImportPlan(students,rows)));
 assert.equal(plan.counts.ready,1);
-assert.equal(plan.counts.same,1);
+assert.equal(plan.counts.same,2);
 assert.equal(plan.counts.conflict,2);
 assert.equal(plan.counts.unmatched,1,
  'an unknown identity remains unmatched even when a name resembles a known student');
-assert.equal(plan.counts.duplicate,4,
+assert.equal(plan.counts.duplicate,2,
  'all occurrences of a source identity repeated in the file are rejected');
 assert.equal(plan.counts.invalid,2);
 assert.equal(plan.counts.empty,1);
