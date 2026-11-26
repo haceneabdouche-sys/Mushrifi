@@ -16,7 +16,7 @@ assert.match(localDb, /onUpgrade\(SQLiteDatabase db, int oldVersion, int newVers
 const upgradeStart = localDb.indexOf('onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)');
 const upgradeEnd = localDb.indexOf('private void ensureRecoveryTable', upgradeStart);
 const upgrade = localDb.slice(upgradeStart, upgradeEnd);
-assert.doesNotMatch(upgrade, /DROP\\s+TABLE|DELETE\\s+FROM|db\\.delete\\s*\\(|database\\.delete\\s*\\(|UPDATE\\s+appdata|INSERT\\s+INTO\\s+appdata/i,
+assert.doesNotMatch(upgrade, /DROP\s+TABLE|DELETE\s+FROM|db\.delete\s*\(|database\.delete\s*\(|UPDATE\s+appdata|INSERT\s+INTO\s+appdata/i,
   'schema migration contains no destructive SQL or appdata replacement statements');
 
 const validateStart = localDb.indexOf('private void validateRecoverySnapshotJson(String json)');
