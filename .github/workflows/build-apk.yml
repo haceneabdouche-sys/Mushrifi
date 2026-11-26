@@ -172,6 +172,13 @@ jobs:
         run: node tests/ui-design-system-stage14.test.cjs
       - name: Run Stage 15 unified student profile workflow tests
         run: node tests/student-profile-hub-stage15.test.cjs
+      - name: Run Stage 16 WebView navigation policy tests
+        run: |
+          mkdir -p /tmp/mushrifi-webview-policy
+          javac -d /tmp/mushrifi-webview-policy android/app/src/main/java/dz/mushrifi/app/WebViewNavigationPolicy.java tests/WebViewNavigationPolicyTest.java
+          java -cp /tmp/mushrifi-webview-policy dz.mushrifi.app.WebViewNavigationPolicyTest
+      - name: Run Stage 16 native WebView security wiring tests
+        run: node tests/webview-security-stage16.test.cjs
       - name: Run mobile performance regression tests
         run: node tests/mobile-performance.test.cjs
       - name: Package complete Android project

@@ -35,6 +35,7 @@ import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.widget.Toast;
 import android.widget.EditText;
@@ -61,6 +62,24 @@ public class MainActivity extends Activity {
     private String pendingAgendaNotificationDate;
     private final ExecutorService licenseExecutor = Executors.newSingleThreadExecutor();
 
+    /**
+     * The Android JavaScript bridge is intended only for the packaged Mushrifi page.
+     * Keep that exact asset loaded in the WebView; send approved HTTPS navigation to
+     * an external browser/app so remote documents never share the bridge context.
+     */
+    private boolean handleWebViewNavigation(String rawUrl) {
+        if (WebViewNavigationPolicy.isTrustedAppPage(rawUrl)) return false;
+        if (!WebViewNavigationPolicy.isAllowedExternalHttps(rawUrl)) return true;
+        try {
+            Intent external = new Intent(Intent.ACTION_VIEW, Uri.parse(rawUrl));
+            external.addCategory(Intent.CATEGORY_BROWSABLE);
+            startActivity(external);
+        } catch (Exception error) {
+            Toast.makeText(this, "تعذر فتح الرابط الخارجي. تحقق من وجود متصفح أو تطبيق مناسب.", Toast.LENGTH_LONG).show();
+        }
+        return true;
+    }
+
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         localDb = new LocalDb(this);
@@ -72,11 +91,27 @@ public class MainActivity extends Activity {
         WebSettings settings = web.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        // Keep packaged assets and the Storage Access Framework working, but do not
+        // let file-origin scripts read arbitrary file URLs or make universal requests.
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
+        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileURLs(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) settings.setSafeBrowsingEnabled(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
+        settings.setSupportMultipleWindows(false);
         web.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
         captureAgendaNotificationIntent(getIntent());
         web.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                return handleWebViewNavigation(request == null ? null : request.getUrl().toString());
+            }
+
+            @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleWebViewNavigation(url);
+            }
+
             @Override public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 webPageReady = true;
