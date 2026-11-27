@@ -180,6 +180,8 @@ jobs:
           java -cp /tmp/mushrifi-followup-planner dz.mushrifi.app.StudentFollowupReminderPlannerTest
       - name: Run audit log integrity regression tests
         run: node tests/audit-log-integrity.test.cjs
+      - name: Run audit student lookup save-path performance tests
+        run: node tests/audit-student-lookup-performance.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests

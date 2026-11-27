@@ -1877,19 +1877,28 @@ function auditValuesEqual(a,b){
  if(typeof a!=='object'||typeof b!=='object')return false;
  try{return JSON.stringify(a)===JSON.stringify(b);}catch(_){return false;}
 }
-function auditRecordStudentName(record,snapshot){
+function auditBuildStudentLookup(snapshot){
+ const lookup=new Map(),students=snapshot&&Array.isArray(snapshot.students)?snapshot.students:[];
+ students.forEach(student=>{
+  if(!student||typeof student!=='object')return;
+  const id=String(student.id);
+  if(!lookup.has(id))lookup.set(id,student);
+ });
+ return lookup;
+}
+function auditRecordStudentName(record,snapshot,studentLookup){
  const id=String(record&&record.student||'');
- const matched=(snapshot&&Array.isArray(snapshot.students)?snapshot.students:[]).find(st=>String(st.id)===id);
+ const matched=studentLookup?studentLookup.get(id):(snapshot&&Array.isArray(snapshot.students)?snapshot.students:[]).find(st=>String(st.id)===id);
  if(matched)return (String(matched.last||'')+' '+String(matched.first||'')).trim()||String(matched.name||matched.fullName||'');
  return String(record&&record.studentName||'').trim();
 }
-function auditRecordLabel(entity,record,snapshot){
+function auditRecordLabel(entity,record,snapshot,studentLookup){
  if(!record)return '';
  if(entity==='students')return (String(record.last||'')+' '+String(record.first||'')).trim()||String(record.name||record.fullName||'تلميذ');
  if(entity==='agenda')return String(record.title||'موعد دون عنوان');
  if(entity==='supervisionLogs')return [record.type||'مهمة إشرافية',record.location,record.section].filter(Boolean).join(' · ');
  if(entity==='guardianReceptions')return [record.purpose||'استقبال ولي',record.date].filter(Boolean).join(' · ');
- return auditRecordStudentName(record,snapshot)||'تلميذ غير محدد';
+ return auditRecordStudentName(record,snapshot,studentLookup)||'تلميذ غير محدد';
 }
 function auditValueForChange(value){
  if(value===undefined)return null;
@@ -1931,6 +1940,7 @@ function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
  const before=opts.precomputedSnapshots?(beforeSnapshot||{}):auditComparableDatabase(beforeSnapshot||{});
  const after=opts.precomputedSnapshots?(opts.afterSnapshot||{}):auditComparableDatabase(afterDatabase);
  const makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2),events=[];
+ let beforeStudentLookup=null,afterStudentLookup=null;
  for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs','guardianReceptions']){
   const oldList=Array.isArray(before[collection])?before[collection]:[],newList=Array.isArray(after[collection])?after[collection]:[];
   const oldMap=new Map(),newMap=new Map();
@@ -1962,7 +1972,12 @@ function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
    let diff=op.diff||auditFieldDiff(collection,null,null),changes=diff.changes||[],restrictedFields=diff.restrictedFields||[];
    if(op.action==='add'){diff=auditFieldDiff(collection,null,item);changes=diff.changes;restrictedFields=diff.restrictedFields;}
    if(op.action==='delete'){diff=auditFieldDiff(collection,item,null);changes=diff.changes;restrictedFields=diff.restrictedFields;}
-   const entityLabel=auditRecordLabel(collection,item,op.after?after:before);
+   let studentLookup=null;
+   if(collection==='attendance'||collection==='documents'||collection==='violations'||collection==='followups'){
+    if(op.after){if(!afterStudentLookup)afterStudentLookup=auditBuildStudentLookup(after);studentLookup=afterStudentLookup;}
+    else{if(!beforeStudentLookup)beforeStudentLookup=auditBuildStudentLookup(before);studentLookup=beforeStudentLookup;}
+   }
+   const entityLabel=auditRecordLabel(collection,item,op.after?after:before,studentLookup);
    const title=AUDIT_ENTITY_LABELS[collection]||'سجل';
    const verb=opts.revertsId?'revert':op.action;
    const summary=auditActionLabel(verb)+' '+title+(entityLabel?': '+entityLabel:'');
