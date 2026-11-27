@@ -8,7 +8,7 @@ const html = fs.readFileSync(path.join(root, 'android/app/src/main/assets/index.
 const gradle = fs.readFileSync(path.join(root, 'android/app/build.gradle'), 'utf8');
 
 const policyStart = html.indexOf('function absenceWorkflowGroupKey(record){');
-const policyEnd = html.indexOf('let absenceAutomationRunning=false;', policyStart);
+const policyEnd = html.indexOf('function absenceStageLabel(', policyStart);
 assert.ok(policyStart >= 0 && policyEnd > policyStart, 'Stage 28 and 29 absence workflow policy must be present.');
 
 const context = {
