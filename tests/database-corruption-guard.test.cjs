@@ -38,16 +38,19 @@ for(const raw of [
   'malformed or structurally invalid data must be rejected instead of silently replaced with empty arrays');
 }
 
-const initStart=html.indexOf('const legacyJson=localStorage.getItem(DBKEY);');
-const initEnd=html.indexOf("if(isAndroidApp){if(!nativeJson&&legacyJson",initStart);
-assert.notEqual(initStart,-1);
-assert.notEqual(initEnd,-1);
-const init=html.slice(initStart,initEnd);
-assert.match(init,/try\{db=parseMushrifiDatabase\(nativeJson\|\|legacyJson\|\|EMPTY_DB\);\}/,
- 'native or legacy data must pass validation before app initialization');
-assert.match(init,/توقّف مُشرِفي لحماية بياناتك/,
- 'corrupt data must show a clear protective screen');
-assert.match(init,/لم ينشئ قاعدة فارغة ولم يحفظ فوق الملف الأصلي/,
- 'the error screen must explicitly confirm no empty replacement was saved');
+const guardStart=html.indexOf('const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;');
+const guardEnd=html.indexOf('const legacyJson=localStorage.getItem(DBKEY);',guardStart);
+assert.ok(guardStart>=0&&guardEnd>guardStart,'native storage is checked before reading legacy browser storage');
+const guard=html.slice(guardStart,guardEnd);
+assert.match(guard,/if\(nativeJson==='!MUSHRIFI_DB_ERROR!'\)\{showMushrifiDatabaseRecoveryScreen\(\);throw new Error\(/,
+ 'a missing or unreadable native database blocks normal initialization before EMPTY_DB can be selected');
+assert.match(guard,/function showMushrifiDatabaseRecoveryScreen\(\)/,
+ 'corrupt or missing native data shows a dedicated recovery screen');
+assert.match(guard,/أوقف التشغيل بدلاً من إنشاء قائمة فارغة أو حفظ بيانات فوق الملف الموجود/,
+ 'the recovery screen explains that no empty replacement will be created or saved');
+assert.match(guard,/AndroidBridge\.loadRecoverySnapshot/,
+ 'the protective screen checks the encrypted recovery point');
+assert.match(guard,/AndroidBridge\.restoreDatabaseSafely\(JSON\.stringify\(recoveryDatabase\)\)/,
+ 'the recovery point can only be written after explicit user confirmation');
 
 console.log('PASS: malformed database payloads are rejected safely without replacing original data.');
