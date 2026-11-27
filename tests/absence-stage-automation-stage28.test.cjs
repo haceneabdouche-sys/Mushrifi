@@ -157,6 +157,24 @@ test('packaged UI runs automation after licence status is known and exposes an i
   assert.match(html, /notifyAbsenceStage\(String\(st\.id\)/);
 });
 
+test('monthly repetition alerts keep the dashboard compact and reveal dates only on demand', () => {
+  assert.ok(html.includes('function renderMonthlyAbsenceDateDetails(item)'), 'A shared collapsible date-details renderer must exist.');
+  assert.ok(html.includes('class="monthly-occurrence-details"'), 'Recorded dates must be inside a collapsible details element.');
+  assert.ok(html.includes('عرض الأيام المسجلة ('), 'The user must have a clear way to expand the dates.');
+  assert.ok(html.includes('monthly-occurrence-count'), 'The number of affected days must be prominent.');
+  const dashboardStart = html.indexOf('function renderAbsenceStageDashboard()');
+  const dashboardEnd = html.indexOf('function renderAbsenceFollowup()', dashboardStart);
+  const followupStart = dashboardEnd;
+  const followupEnd = html.indexOf('function renderSchoolHolidays()', followupStart);
+  assert.ok(dashboardStart >= 0 && dashboardEnd > dashboardStart && followupEnd > followupStart);
+  const dashboard = html.slice(dashboardStart, dashboardEnd);
+  const followup = html.slice(followupStart, followupEnd);
+  assert.ok(!dashboard.includes('esc(item.dates.join('), 'The home screen must not print the full date list by default.');
+  assert.ok(!followup.includes('esc(item.dates.join('), 'The follow-up page must not print the full date list by default.');
+  assert.ok(dashboard.includes('renderMonthlyAbsenceDateDetails(item)'));
+  assert.ok(followup.includes('renderMonthlyAbsenceDateDetails(item)'));
+});
+
 test('formal print templates exist for the monthly warning, both notices, registered warning and internal review', () => {
   for (const phrase of [
     'إنذار كتابي بسبب تكرار الغيابات والتأخرات غير المبررة',
@@ -182,6 +200,6 @@ test('pending absence-stage reminders are retried after notification permission 
 });
 
 test('internal build code increments while public application version remains 2.6', () => {
-  assert.match(gradle, /versionCode 37/);
+  assert.match(gradle, /versionCode 38/);
   assert.match(gradle, /versionName '2\.6'/);
 });

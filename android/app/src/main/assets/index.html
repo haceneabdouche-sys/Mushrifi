@@ -1117,6 +1117,16 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 .guardian-reception-entry .student-label{font-weight:700;color:var(--navy)}
 @media(max-width:700px){.guardian-reception-form-grid{grid-template-columns:1fr}.guardian-reception-form-grid .wide{grid-column:auto}.guardian-reception-summary{gap:8px}}
 
+.monthly-occurrence-card .monthly-occurrence-count{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin:7px 0 5px}
+.monthly-occurrence-count strong{font-size:20px;color:var(--navy)}
+.monthly-occurrence-count span{font-size:12px;color:var(--muted)}
+.monthly-occurrence-details{margin:6px 0 9px;padding:7px 9px;border:1px solid var(--line);border-radius:10px;background:#f8fafc}
+.monthly-occurrence-details>summary{cursor:pointer;list-style:none;font-size:12px;font-weight:700;color:var(--navy)}
+.monthly-occurrence-details>summary::-webkit-details-marker{display:none}
+.monthly-occurrence-details>summary:after{content:"＋";float:left;color:var(--blue);font-weight:700}
+.monthly-occurrence-details[open]>summary:after{content:"−"}
+.monthly-occurrence-dates{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin-top:8px}
+.monthly-occurrence-dates span{display:inline-block;padding:4px 7px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:11px;color:var(--muted);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -3824,6 +3834,11 @@ function absenceStageCurrentStatus(streak){
  const eligible=getEligibleAbsenceStages(streak).includes(stage);
  return {stage,label:absenceStageLabel(stage),message:eligible?'بلغت المرحلة؛ ستُنشأ المسودة بعد تأكيد الحفظ.':getAbsenceStageBlockReason(streak,stage),doc:null};
 }
+function renderMonthlyAbsenceDateDetails(item){
+ const dates=Array.isArray(item&&item.dates)?item.dates:[];
+ if(!dates.length)return '';
+ return '<details class="monthly-occurrence-details"><summary>عرض الأيام المسجلة ('+dates.length+')</summary><div class="monthly-occurrence-dates" dir="ltr">'+dates.map(date=>'<span>'+esc(date)+'</span>').join('')+'</div></details>';
+}
 function renderAbsenceStageDashboard(){
  const box=$('#absenceStageDashboardList'),count=$('#absenceStageAlertCount');if(!box)return;
  const streaks=getUnjustifiedStreaks().filter(item=>Number(item.days)>=4);
@@ -3833,9 +3848,10 @@ function renderAbsenceStageDashboard(){
   const status=absenceStageCurrentStatus(streak);
   items.push('<div class="followup-card"><h3>'+esc((streak.student.last||'')+' '+(streak.student.first||''))+' — '+esc(attendanceGroupLabel(streak.student))+'</h3><p>بداية الغياب: '+esc(streak.start)+' · المدة: <b>'+Number(streak.days)+' أيام تقويمية</b></p><p><b>'+esc(status.label)+'</b> — '+esc(status.message)+'</p>'+(status.doc?'<button type="button" class="btn small primary" onclick="openAbsenceStageDocument(\''+esc(status.doc.id)+'\')">'+(status.stage===32?'عرض مذكرة المراجعة':'مراجعة وطباعة المسودة')+'</button>':'')+'</div>');
  }
+
  for(const item of monthly){
   const doc=db.documents.find(d=>String(d.student)===String(item.student.id)&&Number(d.absenceStage)===17&&String(d.absenceMonth||'')===item.month);
-  items.push('<div class="followup-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — '+esc(attendanceGroupLabel(item.student))+'</h3><p>المادة 17 · '+esc(item.month)+' · '+item.dates.length+' أيام مختلفة بها غياب/تأخر غير مبرر</p><p>'+esc(item.dates.join('، '))+'</p><p><b>'+(doc?'أُعدّ الإنذار الكتابي كمسودة آلية.':'بلغ ثلاث مرات؛ راجع التبريرات قبل اعتماد الإنذار.')+'</b></p>'+(doc?'<button type="button" class="btn small primary" onclick="openAbsenceStageDocument(\''+esc(doc.id)+'\')">مراجعة وطباعة الإنذار</button>':'')+'</div>');
+  items.push('<div class="followup-card monthly-occurrence-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — '+esc(attendanceGroupLabel(item.student))+'</h3><p class="muted">إنذار المادة 17 · '+esc(item.month)+'</p><p class="monthly-occurrence-count"><strong>'+item.dates.length+' أيام مختلفة</strong><span>بها غياب أو تأخر غير مبرر</span></p>'+renderMonthlyAbsenceDateDetails(item)+'<p><b>'+(doc?'مسودة الإنذار جاهزة للمراجعة.':'بلغت العتبة؛ راجع الوقائع والتبريرات قبل اعتماد الإنذار.')+'</b></p>'+(doc?'<button type="button" class="btn small primary" onclick="openAbsenceStageDocument(\\''+esc(doc.id)+'\\')">مراجعة وطباعة الإنذار</button>':'')+'</div>');
  }
  if(count)count.textContent=String(items.length)+' حالة';
  box.innerHTML=items.length?items.join(''):'<p class="empty">لا توجد حالياً حالات بلغت عتبات الإشعار أو الإنذار الكتابي.</p>';
@@ -3851,7 +3867,7 @@ function renderAbsenceFollowup(){
  const monthly=getMonthlyUnjustifiedOccurrences(dateISO().slice(0,7));
  const monthlyCards=monthly.map(item=>{
   const doc=db.documents.find(d=>String(d.student)===String(item.student.id)&&Number(d.absenceStage)===17&&String(d.absenceMonth||'')===item.month);
-  return '<div class="followup-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — إنذار المادة 17</h3><p>ثلاث مرات على الأقل في أيام مختلفة خلال '+esc(item.month)+': '+esc(item.dates.join('، '))+'</p>'+(doc?'<p>المسودة محفوظة وتنتظر المراجعة والتبليغ.</p><button type="button" class="btn small primary" onclick="openAbsenceStageDocument(\''+esc(doc.id)+'\')">مراجعة وطباعة الإنذار</button>':'<p>بلغت العتبة؛ لا تُعتمد الوثيقة قبل مراجعة الوقائع والتبريرات.</p>')+'</div>';
+  return '<div class="followup-card monthly-occurrence-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — إنذار المادة 17</h3><p class="muted">'+esc(item.month)+'</p><p class="monthly-occurrence-count"><strong>'+item.dates.length+' أيام مختلفة</strong><span>بها غياب أو تأخر غير مبرر</span></p>'+renderMonthlyAbsenceDateDetails(item)+(doc?'<p>مسودة الإنذار جاهزة للمراجعة.</p><button type="button" class="btn small primary" onclick="openAbsenceStageDocument(\\''+esc(doc.id)+'\\')">مراجعة وطباعة الإنذار</button>':'<p>بلغت العتبة؛ راجع الوقائع والتبريرات قبل اعتماد الإنذار.</p>')+'</div>';
  }).join('');
  box.innerHTML=(cards||'<p class="empty">لا توجد حالياً سلسلة غياب متواصل.</p>')+(monthlyCards?'<h3>تكرار الغياب والتأخر خلال الشهر (المادة 17)</h3>'+monthlyCards:'');
 }
