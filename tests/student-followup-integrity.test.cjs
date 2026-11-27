@@ -154,7 +154,7 @@ const followupOnlyHistory={students:[],attendance:[],documents:[],violations:[],
 const recoveredFollowup=recoveryStudentsSandbox.recoverStudentsFromHistory(followupOnlyHistory);
 assert.equal(recoveredFollowup.recoveredCount,1,'student names can be recovered safely from follow-up records when necessary');
 assert.equal(recoveredFollowup.students[0].id,'old-student-id','follow-up-linked student identity remains stable');
-assert.ok(html.includes("for(const collection of ['students','attendance','documents','violations','followups','agenda']){"),'audit snapshot and audit event logic include follow-ups');
+assert.ok(html.includes("for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs']){"),'audit snapshot and audit event logic include follow-ups and supervision logs');
 
 console.log('PASS: follow-up validation, student identity and section safety, timeline/report inclusion, audit redaction, legacy database/backup/undo compatibility, and profile UI wiring.');
 
