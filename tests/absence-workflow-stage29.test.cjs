@@ -211,18 +211,71 @@ function streak(days = 11) {
   assert.equal(resultOf("findAbsenceWorkflowReturnEvidence(record,db.attendance)"), null, 'Another unjustified absence is not return evidence.');
 }
 
+
+{
+  const record = stageDoc('quick-delivery', 4);
+  context.db.documents = [record];
+  context.record = record;
+  context.input = { deliveryConfirmed: true, deliveryDate: '2026-11-05', guardianResponseStatus: 'غير مسجل', guardianResponseDate: '' };
+  const saved = resultOf("applyAbsenceWorkflowQuickUpdate(record,input,'2026-11-27')");
+  assert.equal(saved.ok, true, 'A brief delivery confirmation and date should be sufficient.');
+  assert.equal(record.deliveryConfirmed, true);
+  assert.equal(record.deliveryDate, '2026-11-05');
+  assert.equal(record.deliveryProof, '', 'The app must not invent a receipt or proof reference.');
+  context.db.documents = [record];
+  context.streak = streak(11);
+  assert.deepEqual(resultOf('getEligibleAbsenceStages(streak)'), [], 'No guardian outcome means no escalation yet.');
+}
+
+{
+  const record = stageDoc('quick-no-show', 4, { deliveryConfirmed: true, deliveryDate: '2026-11-05' });
+  context.db.documents = [record];
+  context.record = record;
+  context.input = { deliveryConfirmed: true, deliveryDate: '2026-11-05', guardianResponseStatus: 'لم يحضر', guardianResponseDate: '2026-11-11' };
+  const early = resultOf("applyAbsenceWorkflowQuickUpdate(record,input,'2026-11-27')");
+  assert.equal(early.ok, false, 'The no-show outcome must respect the seven-day period.');
+  context.input.guardianResponseDate = '2026-11-12';
+  const saved = resultOf("applyAbsenceWorkflowQuickUpdate(record,input,'2026-11-27')");
+  assert.equal(saved.ok, true);
+  assert.equal(record.guardianResponseStatus, 'لم يحضر');
+  assert.equal(record.guardianResponseDate, '2026-11-12');
+  context.streak = streak(11);
+  assert.deepEqual(resultOf('getEligibleAbsenceStages(streak)'), [11], 'A recorded no-show can unlock the next eligible stage after the time gate.');
+}
+
+{
+  const record = stageDoc('quick-attended', 4, { deliveryConfirmed: true, deliveryDate: '2026-11-05' });
+  context.db.documents = [record];
+  context.record = record;
+  context.input = { deliveryConfirmed: true, deliveryDate: '2026-11-05', guardianResponseStatus: 'حضر الولي', guardianResponseDate: '2026-11-06' };
+  assert.equal(resultOf("applyAbsenceWorkflowQuickUpdate(record,input,'2026-11-27')").ok, true);
+  context.streak = streak(11);
+  assert.deepEqual(resultOf('getEligibleAbsenceStages(streak)'), [], 'A guardian who attended must not be treated as a no-show.');
+}
+
+{
+  const record = stageDoc('quick-excuse', 4, { deliveryConfirmed: true, deliveryDate: '2026-11-05' });
+  context.db.documents = [record];
+  context.record = record;
+  context.input = { deliveryConfirmed: true, deliveryDate: '2026-11-05', guardianResponseStatus: 'قدّم تبريراً', guardianResponseDate: '2026-11-06' };
+  assert.equal(resultOf("applyAbsenceWorkflowQuickUpdate(record,input,'2026-11-27')").ok, true);
+  context.streak = streak(11);
+  assert.deepEqual(resultOf('getEligibleAbsenceStages(streak)'), [], 'A submitted excuse must be reviewed instead of escalating automatically.');
+}
+
 assert.ok(html.includes('id="absenceWorkflowBoard"'), 'The document page must expose the workflow management panel.');
-assert.ok(html.includes('data-absence-action="delivery"'), 'The panel must provide a real delivery-recording action.');
-assert.ok(html.includes('data-absence-action="response"'), 'The panel must provide a guardian-response action.');
-assert.ok(html.includes('data-absence-action="settle"'), 'The panel must provide a settlement action.');
-assert.ok(html.includes('أؤكد أن التبليغ تم فعلياً'), 'The delivery operation must require explicit confirmation.');
+assert.ok(html.includes('data-absence-action="quick-save"'), 'The panel must provide one compact save action.');
+assert.ok(html.includes('data-field="deliveryConfirmed"'), 'The simple flow must distinguish an actual delivery from a draft.');
+assert.ok(html.includes('حضر الولي') && html.includes('لم يحضر') && html.includes('قدّم تبريراً'), 'The simplified guardian outcomes must be available.');
+assert.ok(!html.includes('إدارة بيانات التبليغ ونتيجة رد الولي'), 'The former multi-step editor must be removed from the primary panel.');
+assert.ok(!html.includes('تسجيل عودة التلميذ أو تسوية الملف'), 'The old settlement form must be removed from the primary board.');
 assert.ok(html.includes('تنبيه مراجعة: يوجد سجل '), 'The board must flag potential attendance evidence after the absence cycle start.');
 assert.ok(html.includes('guardianResponseNotes'), 'The workflow history must preserve dated response details for review.');
 assert.ok(html.includes('أؤكد مراجعة الملف وتوثيق العودة/التسوية'), 'The settlement operation must require explicit confirmation.');
 assert.match(html, /absenceWorkflowHistory/);
 assert.match(html, /absenceWorkflowCycleIsClosed\(streak\.student\.id,streak\.start\)/);
 assert.match(html, /absenceWorkflowHistory:'تاريخ إجراءات دورة الغياب'/, 'Workflow history must be redacted in audit records.');
-assert.match(gradle, /versionCode 36/);
+assert.match(gradle, /versionCode 37/);
 assert.match(gradle, /versionName '2\.6'/);
 
 console.log('PASS Stage 29 absence workflow delivery, guardian response, settlement, audit privacy and closure tests');
