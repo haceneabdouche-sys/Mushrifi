@@ -28,7 +28,7 @@ const handler=html.slice(start,end);
 const keys=['absence','late','report','violation','summons'];
 const buttons=keys.map(action=>({dataset:{action},disabled:false,listener:null,addEventListener(type,fn){assert.equal(type,'click');this.listener=fn;}}));
 const status={textContent:'',classList:{remove(){},add(){}}};
-const confirm={innerHTML:'',classList:{remove(){this.visible=true;},add(){this.visible=false;}}};
+const confirm={innerHTML:'',visible:false,classList:{remove(){confirm.visible=true;},add(){confirm.visible=false;}}};
 const profileButton={onclick:null};
 const calls=[];
 const context={
