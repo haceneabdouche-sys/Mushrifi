@@ -50,6 +50,7 @@ assert.ok(engravedFooter.includes('ABDOUCHE HACENE'),'the developer name remains
 assert.ok(engravedFooter.includes('src="./signature-color.png"'),'the original approved signature asset remains in use');
 assert.ok(html.includes('.footer-author-credit::before')&&html.includes('.footer-author-credit::after'),'subtle engraved guide lines frame the mark');
 assert.ok(html.includes('grayscale(1) sepia(1)'),'the original signature is rendered in a burnt sepia engraving tone');
-assert.ok(html.includes('mix-blend-mode:multiply'),'the engraved name and signature blend naturally into the background');
+assert.ok(!html.includes('mix-blend-mode:multiply'),'the burnt engraving avoids blend-mode composition on mobile');
+assert.ok(html.includes('filter:grayscale(1) sepia(1) saturate(1.8) brightness(.56) contrast(1.38)'),'the signature gets its burnt tone using a static image filter');
 assert.ok(html.includes('min-height:208px'),'the engraving uses the reserved blank footer area');
 console.log('PASS: Stage 14 unified design tokens, mobile layout, accessible controls and workflow preservation.');
