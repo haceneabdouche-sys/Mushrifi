@@ -275,7 +275,7 @@ assert.ok(html.includes('function applyAbsenceWorkflowSettlement('), 'The legacy
 assert.match(html, /absenceWorkflowHistory/);
 assert.match(html, /absenceWorkflowCycleIsClosed\(streak\.student\.id,streak\.start\)/);
 assert.match(html, /absenceWorkflowHistory:'تاريخ إجراءات دورة الغياب'/, 'Workflow history must be redacted in audit records.');
-assert.match(gradle, /versionCode 45/);
+assert.match(gradle, /versionCode 46/);
 assert.match(gradle, /versionName '2\.6'/);
 
 console.log('PASS Stage 29 absence workflow delivery, guardian response, settlement, audit privacy and closure tests');

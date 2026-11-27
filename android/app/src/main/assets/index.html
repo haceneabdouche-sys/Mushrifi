@@ -2050,6 +2050,7 @@ const save=(options={})=>{
   alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;
  }
  auditBaselineSnapshot=nextAuditSnapshot;
+ if(['students','attendance','documents','violations','followups'].some(entity=>changedEntities.has(entity)))invalidateStudentProfileRecordIndex();
  if(changedEntities.has('students')||changedEntities.has('settings'))invalidateAttendanceGroupCaches();
  if(changedEntities.has('students')||changedEntities.has('attendance')||changedEntities.has('settings'))invalidateAbsenceAnalysisCache();
  else if(changedEntities.has('documents'))absenceAutomationRevision++;
@@ -4405,6 +4406,92 @@ function profileJustificationCategory(record){
 function profileJustificationLabel(record){
  return ({justified:'مبرر',unjustified:'غير مبرر',pending:'قيد التبرير',unknown:'غير محدد'})[profileJustificationCategory(record)];
 }
+const STUDENT_PROFILE_RECORD_COLLECTIONS=['attendance','violations','documents','followups'];
+let studentProfileRecordIndexCache=new WeakMap();
+function invalidateStudentProfileRecordIndex(){studentProfileRecordIndexCache=new WeakMap();}
+function profileStudentNameKey(target){
+ return normalizeProfileStudentName(String(target?.last||'')+' '+String(target?.first||''))||
+  normalizeProfileStudentName(target?.name||target?.fullName||'');
+}
+function profileRecordSectionKey(record){
+ return normalizeProfileStudentSection(record?.class||record?.studentClass||record?.sectionLabel||record?.section||'');
+}
+function profileRecordNameKey(record){
+ return normalizeProfileStudentName(record?.studentName||'')||normalizeProfileStudentName(record?.student??'');
+}
+function profileNameSectionIndexKey(name,section){return String(name)+'\u0000'+String(section);}
+function buildStudentProfileRecordIndex(database){
+ const students=Array.isArray(database?.students)?database.students:[];
+ const sources={};
+ STUDENT_PROFILE_RECORD_COLLECTIONS.forEach(collection=>{sources[collection]=Array.isArray(database?.[collection])?database[collection]:[];});
+ const activeStudentIds=new Set(students.map(item=>String(item?.id)));
+ const studentsByName=new Map();
+ students.forEach(item=>{
+  const key=profileStudentNameKey(item);if(!key)return;
+  const list=studentsByName.get(key)||[];list.push(item);studentsByName.set(key,list);
+ });
+ const collections={};
+ STUDENT_PROFILE_RECORD_COLLECTIONS.forEach(collection=>{
+  const byId=new Map(),legacyByNameSection=new Map(),legacyByNameWithoutSection=new Map();
+  const push=(map,key,entry)=>{if(!key)return;const list=map.get(key)||[];list.push(entry);map.set(key,list);};
+  sources[collection].forEach((record,index)=>{
+   if(!record||typeof record!=='object')return;
+   const recordId=String(record.student??'').trim(),entry={record,index};
+   if(recordId)push(byId,recordId,entry);
+   if(recordId&&activeStudentIds.has(recordId))return;
+   const nameKey=profileRecordNameKey(record);if(!nameKey)return;
+   const sectionKey=profileRecordSectionKey(record);
+   if(sectionKey)push(legacyByNameSection,profileNameSectionIndexKey(nameKey,sectionKey),entry);
+   else push(legacyByNameWithoutSection,nameKey,entry);
+  });
+  collections[collection]={byId,legacyByNameSection,legacyByNameWithoutSection};
+ });
+ return {database,students,studentCount:students.length,sources,collections,studentsByName,profileCache:new Map()};
+}
+function getStudentProfileRecordIndex(database){
+ if(!database||typeof database!=='object')return null;
+ const cached=studentProfileRecordIndexCache.get(database);
+ const students=Array.isArray(database.students)?database.students:[];
+ if(cached&&cached.students===students&&cached.studentCount===students.length&&
+  STUDENT_PROFILE_RECORD_COLLECTIONS.every(collection=>{
+   const current=Array.isArray(database[collection])?database[collection]:[];
+   return cached.sources[collection]===current&&cached.sources[collection].length===current.length;
+  }))return cached;
+ const index=buildStudentProfileRecordIndex(database);
+ studentProfileRecordIndexCache.set(database,index);
+ return index;
+}
+function getStudentProfileRecords(target,database){
+ const empty={attendance:[],violations:[],documents:[],followups:[],entries:{attendance:[],violations:[],documents:[],followups:[]}};
+ if(!target||!database||typeof database!=='object')return empty;
+ const index=getStudentProfileRecordIndex(database);if(!index)return empty;
+ const sid=String(target.id),cached=index.profileCache.get(sid);
+ if(cached&&cached.target===target)return cached.records;
+ const nameKey=profileStudentNameKey(target);
+ const sections=new Set([target.class,attendanceGroupLabel(target),target.section,target.className].map(normalizeProfileStudentSection).filter(Boolean));
+ const uniquelyNamed=!!nameKey&&(index.studentsByName.get(nameKey)||[]).length===1;
+ const output={attendance:[],violations:[],documents:[],followups:[],entries:{}};
+ STUDENT_PROFILE_RECORD_COLLECTIONS.forEach(collection=>{
+  const lookup=index.collections[collection],matches=(lookup.byId.get(sid)||[]).slice();
+  if(nameKey){
+   sections.forEach(section=>{
+    const candidates=lookup.legacyByNameSection.get(profileNameSectionIndexKey(nameKey,section));
+    if(candidates)matches.push(...candidates);
+   });
+   if(uniquelyNamed){
+    const candidates=lookup.legacyByNameWithoutSection.get(nameKey);
+    if(candidates)matches.push(...candidates);
+   }
+  }
+  matches.sort((a,b)=>a.index-b.index);
+  output.entries[collection]=matches;
+  output[collection]=matches.map(entry=>entry.record);
+ });
+ index.profileCache.set(sid,{target,records:output});
+ if(index.profileCache.size>32)index.profileCache.delete(index.profileCache.keys().next().value);
+ return output;
+}
+
 function profileKnownAbsenceHours(record){
  let hours=parseHours(record?.hours);
  if(hours===''||Number.isNaN(hours))hours=parseHours(record?.period);
@@ -4420,42 +4507,28 @@ function profileKnownLatenessMinutes(record){
 function profileAbsenceHours(record){return profileKnownAbsenceHours(record)??0;}
 function profileLatenessMinutes(record){return profileKnownLatenessMinutes(record)??0;}
 function buildStudentReportData(target,database){
- const students=Array.isArray(database?.students)?database.students:[];
- const matches=record=>profileRecordBelongsToStudent(record,target,students);
+ const profileRecords=getStudentProfileRecords(target,database);
  const sortRecent=items=>items.slice().sort((a,b)=>String(b?.date||'').localeCompare(String(a?.date||'')));
- const allAttendance=sortRecent((Array.isArray(database?.attendance)?database.attendance:[]).filter(matches));
+ const allAttendance=sortRecent(profileRecords.attendance);
  const attendance=allAttendance.filter(x=>['غياب','تأخر'].includes(String(x.type||'').trim()));
  const absences=attendance.filter(x=>String(x.type||'').trim()==='غياب');
  const lateness=attendance.filter(x=>String(x.type||'').trim()==='تأخر');
- const violations=sortRecent((Array.isArray(database?.violations)?database.violations:[]).filter(matches));
- const documents=sortRecent((Array.isArray(database?.documents)?database.documents:[]).filter(matches));
- const followups=sortRecent((Array.isArray(database?.followups)?database.followups:[]).filter(matches));
+ const violations=sortRecent(profileRecords.violations),documents=sortRecent(profileRecords.documents),followups=sortRecent(profileRecords.followups);
  const summons=documents.filter(x=>String(x.type||'').includes('استدعاء'));
  const absenceNotices=documents.filter(x=>String(x.type||'').includes('إشعار غياب'));
  const alerts=documents.filter(x=>String(x.type||'').includes('تنبيه'));
  const otherDocuments=documents.filter(x=>!summons.includes(x)&&!absenceNotices.includes(x));
- const countStatuses=items=>{
-  const counts={justified:0,unjustified:0,pending:0,unknown:0};
-  items.forEach(item=>counts[profileJustificationCategory(item)]++);
-  return counts;
- };
+ const countStatuses=items=>{const counts={justified:0,unjustified:0,pending:0,unknown:0};items.forEach(item=>counts[profileJustificationCategory(item)]++);return counts;};
  const absenceStatus=countStatuses(absences),latenessStatus=countStatuses(lateness);
  const knownAbsence=absences.map(profileKnownAbsenceHours).filter(value=>value!==null);
  const knownLateness=lateness.map(profileKnownLatenessMinutes).filter(value=>value!==null);
  const notes=[];
- const addNotes=(items,category)=>{
-  items.forEach(item=>{
-   const note=String(item.notes??item.note??'').trim();
-   if(note)notes.push({date:String(item.date||''),category,note,id:String(item.id||'')});
-  });
- };
- addNotes(attendance,'الغياب والتأخر');
- addNotes(violations,'المخالفات');
- addNotes(documents,'الوثائق والاستدعاءات');
+ const addNotes=(items,category)=>items.forEach(item=>{const note=String(item.notes??item.note??'').trim();if(note)notes.push({date:String(item.date||''),category,note,id:String(item.id||'')});});
+ addNotes(attendance,'الغياب والتأخر');addNotes(violations,'المخالفات');addNotes(documents,'الوثائق والاستدعاءات');
  notes.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
  return {
   student:target,attendance,absences,lateness,violations,documents,followups,summons,absenceNotices,alerts,otherDocuments,notes,
-  timeline:buildStudentTimeline(target,database),
+  timeline:buildStudentTimeline(target,database,profileRecords),
   summary:{
    absences:absences.length,absenceStatus,absenceHours:knownAbsence.reduce((n,x)=>n+x,0),knownAbsenceHoursRecords:knownAbsence.length,unknownAbsenceHours:absences.length-knownAbsence.length,
    lateness:lateness.length,latenessStatus,latenessMinutes:knownLateness.reduce((n,x)=>n+x,0),knownLatenessMinutesRecords:knownLateness.length,unknownLatenessMinutes:lateness.length-knownLateness.length,
@@ -4463,7 +4536,6 @@ function buildStudentReportData(target,database){
   }
  };
 }
-
 function profileTimelineValidDate(value){
  const m=String(value??'').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
  if(!m)return false;
@@ -4479,63 +4551,42 @@ function profileTimelineDate(record){
 function profileTimelineText(value,maxLength){
  return String(value??'').replace(/\s+/g,' ').trim().slice(0,maxLength||500);
 }
-function buildStudentTimeline(target,database){
- const students=Array.isArray(database?.students)?database.students:[],events=[];
- const matches=record=>profileRecordBelongsToStudent(record,target,students);
+function buildStudentTimeline(target,database,profileRecords){
+ const records=profileRecords||getStudentProfileRecords(target,database),events=[];
  const add=(source,sourceLabel,record,index,title,detail,appointment)=>{
   const recordId=profileTimelineText(record?.id,120),date=profileTimelineDate(record);
   events.push({source,sourceLabel,recordId,date,title:profileTimelineText(title,140)||'حدث مسجل',detail:profileTimelineText(detail,700),appointment:profileTimelineText(appointment,80),notes:profileTimelineText(record?.notes??record?.note,600),_order:index});
  };
- (Array.isArray(database?.attendance)?database.attendance:[]).forEach((record,index)=>{
-  if(!record||typeof record!=='object'||!matches(record))return;
+ records.entries.attendance.forEach(({record,index})=>{
   const type=profileTimelineText(record.type,80),normalized=type.replace(/\s+/g,'');
   let title=normalized==='غياب'?'غياب مسجل':normalized==='تأخر'?'تأخر مسجل':normalized==='حضور'?'حضور مسجل':(type?'متابعة: '+type:'سجل متابعة');
-  const details=[];
-  if(record.period)details.push('الفترة: '+profileTimelineText(record.period,100));
-  if(normalized==='غياب'){
-   const hours=profileKnownAbsenceHours(record);
-   details.push(hours===null?'مدة الغياب غير مسجلة':'المدة: '+hours+' ساعة');
-   details.push('حالة التبرير: '+profileJustificationLabel(record));
-  }else if(normalized==='تأخر'){
-   const minutes=profileKnownLatenessMinutes(record);
-   details.push(minutes===null?'مدة التأخر غير مسجلة':'المدة: '+minutes+' دقيقة');
-   details.push('حالة التبرير: '+profileJustificationLabel(record));
-  }else if(record.justified)details.push('الحالة: '+profileTimelineText(record.justified,60));
+  const details=[];if(record.period)details.push('الفترة: '+profileTimelineText(record.period,100));
+  if(normalized==='غياب'){const hours=profileKnownAbsenceHours(record);details.push(hours===null?'مدة الغياب غير مسجلة':'المدة: '+hours+' ساعة');details.push('حالة التبرير: '+profileJustificationLabel(record));}
+  else if(normalized==='تأخر'){const minutes=profileKnownLatenessMinutes(record);details.push(minutes===null?'مدة التأخر غير مسجلة':'المدة: '+minutes+' دقيقة');details.push('حالة التبرير: '+profileJustificationLabel(record));}
+  else if(record.justified)details.push('الحالة: '+profileTimelineText(record.justified,60));
   add('attendance','غياب وتأخر وحضور',record,index,title,details.join(' · '),'');
  });
- (Array.isArray(database?.violations)?database.violations:[]).forEach((record,index)=>{
-  if(!record||typeof record!=='object'||!matches(record))return;
+ records.entries.violations.forEach(({record,index})=>{
   const type=profileTimelineText(record.type,100),details=[record.description?'الوصف: '+profileTimelineText(record.description,260):'',record.action?'الإجراء: '+profileTimelineText(record.action,180):''].filter(Boolean);
   add('violations','مخالفة',record,index,'مخالفة مسجلة'+(type?' · '+type:''),details.join(' · '),'');
  });
- (Array.isArray(database?.documents)?database.documents:[]).forEach((record,index)=>{
-  if(!record||typeof record!=='object'||!matches(record))return;
+ records.entries.documents.forEach(({record,index})=>{
   const type=profileTimelineText(record.type,100),details=[
-   record.reason?'الموضوع: '+profileTimelineText(record.reason,260):'',
-   record.reminderAt?'موعد التنبيه: '+profileTimelineText(record.reminderAt,60):'',
-   record.deliveryDate?'تاريخ التبليغ: '+profileTimelineText(record.deliveryDate,30):'',
-   record.deliveryProof?'إثبات التبليغ: '+profileTimelineText(record.deliveryProof,160):''
+   record.reason?'الموضوع: '+profileTimelineText(record.reason,260):'',record.reminderAt?'موعد التنبيه: '+profileTimelineText(record.reminderAt,60):'',
+   record.deliveryDate?'تاريخ التبليغ: '+profileTimelineText(record.deliveryDate,30):'',record.deliveryProof?'إثبات التبليغ: '+profileTimelineText(record.deliveryProof,160):''
   ].filter(Boolean);
   add('documents','وثيقة أو استدعاء',record,index,type||'وثيقة مسجلة',details.join(' · '),record.appointment||'');
  });
- (Array.isArray(database?.followups)?database.followups:[]).forEach((record,index)=>{
-  if(!record||typeof record!=='object'||!matches(record))return;
+ records.entries.followups.forEach(({record,index})=>{
   const details=[
-   record.observation?'الملاحظة: '+profileTimelineText(record.observation,240):'',
-   record.actionTaken?'الإجراء المتخذ: '+profileTimelineText(record.actionTaken,200):'',
-   record.result?'النتيجة: '+profileTimelineText(record.result,180):'',
-   record.status?'الحالة: '+profileTimelineText(record.status,60):''
+   record.observation?'الملاحظة: '+profileTimelineText(record.observation,240):'',record.actionTaken?'الإجراء المتخذ: '+profileTimelineText(record.actionTaken,200):'',
+   record.result?'النتيجة: '+profileTimelineText(record.result,180):'',record.status?'الحالة: '+profileTimelineText(record.status,60):''
   ].filter(Boolean);
   add('followups','متابعة تربوية',record,index,'متابعة تربوية · '+profileTimelineText(record.category,80),details.join(' · '),record.nextDate||'');
  });
  events.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.appointment||'').localeCompare(String(a.appointment||''))||b._order-a._order);
  events.forEach(event=>delete event._order);
  return events;
-}
-function profileTimelineDateLabel(value){
- if(!profileTimelineValidDate(value))return 'تاريخ غير محدد';
- const parts=String(value).split('-').map(Number);
- return new Date(parts[0],parts[1]-1,parts[2],12).toLocaleDateString('ar-DZ',{year:'numeric',month:'short',day:'numeric'});
 }
 function profileTimelineView(events,filter,limit){
  const allowed=['all','attendance','violations','documents','followups'],selected=allowed.includes(filter)?filter:'all';
@@ -4569,10 +4620,8 @@ function validateStudentFollowupInput(input){
  return {valid:true,value:{date,category,status,nextDate,observation,actionTaken,result}};
 }
 function buildStudentFollowupRecords(target,database){
- const students=Array.isArray(database?.students)?database.students:[];
- return (Array.isArray(database?.followups)?database.followups:[])
-  .filter(record=>record&&typeof record==='object'&&profileRecordBelongsToStudent(record,target,students))
-  .slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')));
+ return getStudentProfileRecords(target,database).followups.slice()
+  .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.updatedAt||b.createdAt||'').localeCompare(String(a.updatedAt||a.createdAt||'')));
 }
 function profileStudentFollowupView(records){
  const list=Array.isArray(records)?records:[];
@@ -4713,9 +4762,9 @@ window.openStudentProfileViolation=id=>{
  if(row){if(typeof row.scrollIntoView==='function')row.scrollIntoView({behavior:'smooth',block:'center'});row.classList.add('daily-task-focus');}
 };
 window.studentHistory=(id,focusFollowupId)=>{
-  const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
-  const belongsToStudent=record=>profileRecordBelongsToStudent(record,s,db.students);
-  const a=db.attendance.filter(belongsToStudent).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+  const sid=String(id),s=student(id);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
+  const profileRecords=getStudentProfileRecords(s,db);
+  const a=profileRecords.attendance.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
   const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
   const absHours=abs.reduce((sum,item)=>sum+(profileKnownAbsenceHours(item)??0),0);
   const lateMinutes=late.reduce((sum,item)=>sum+(profileKnownLatenessMinutes(item)??0),0);
@@ -4731,10 +4780,10 @@ window.studentHistory=(id,focusFollowupId)=>{
   const unjustified=items=>items.filter(x=>profileJustificationCategory(x)==='unjustified').length;
   const pending=items=>items.filter(x=>profileJustificationCategory(x)==='pending').length;
   const unknown=items=>items.filter(x=>profileJustificationCategory(x)==='unknown').length;
-  const v=db.violations.filter(belongsToStudent).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))),d=db.documents.filter(belongsToStudent).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
-  const followups=buildStudentFollowupRecords(s,db),followupView=profileStudentFollowupView(followups);
+  const v=profileRecords.violations.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))),d=profileRecords.documents.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+  const followups=profileRecords.followups.slice().sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))||String(y.updatedAt||y.createdAt||'').localeCompare(String(x.updatedAt||x.createdAt||''))),followupView=profileStudentFollowupView(followups);
   const followupToday=(()=>{const date=new Date();return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')})();
-  const timeline=buildStudentTimeline(s,db);
+  const timeline=buildStudentTimeline(s,db,profileRecords);
   const absenceNotices=d.filter(x=>String(x.type||'').includes('إشعار غياب'));
   const summons=d.filter(x=>String(x.type||'').includes('استدعاء'));
   const alerts=d.filter(x=>String(x.type||'').includes('تنبيه'));

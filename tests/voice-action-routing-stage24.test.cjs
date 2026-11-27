@@ -100,7 +100,7 @@ assert.equal(context.window.studentAction('absence', 'missing-student'), false);
 assert.equal(routes.length, beforeRoutes, 'unknown student IDs never navigate or alter a form');
 assert.equal(context.db.students.length, 1, 'navigation actions do not create or mutate student records');
 
-assert.ok(gradle.includes('versionCode 45') && gradle.includes("versionName '2.6'"),
+assert.ok(gradle.includes('versionCode 46') && gradle.includes("versionName '2.6'"),
   'The latest performance build advances the Android update code while preserving public version 2.6');
 console.log('PASS: Stage 24 real student-action routing, disclosure opening, selected-student integrity and focused controls.');
 
