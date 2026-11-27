@@ -75,7 +75,7 @@ assert.match(html,/function renderFollowupCenter\(\)/);
 assert.match(html,/function printFollowupCenter\(\)/);
 assert.ok(html.includes("$('#followupCenterPrint')?.addEventListener('click',()=>printFollowupCenter());"),'the print button invokes the dedicated print function only on user action');
 assert.match(workflow,/node tests\/followup-center-stage30\.test\.cjs/);
-assert.match(gradle,/versionCode 34[\s\S]*versionName '2\.6'/);
+assert.ok(gradle.includes('versionCode 35')&&gradle.includes("versionName '2.6'"),'Stage31 increments the Android build code while retaining public version 2.6');
 console.log('PASS Stage 30 unified follow-up center, filtering, identity safety, privacy redaction, no-mutation and print wiring.');
 
 const activity=fs.readFileSync(path.join(root,'android/app/src/main/java/dz/mushrifi/app/MainActivity.java'),'utf8');
