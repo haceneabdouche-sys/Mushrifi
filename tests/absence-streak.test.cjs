@@ -18,7 +18,7 @@ const source=String.raw`function getUnjustifiedStreaks(){
   const day=item.events.get(date);
   if(r.type==='حضور'||r.type==='تأخر'){day.hasBreak=true;continue;}
   if(r.type!=='غياب')continue;
-  if(String(r.justified||'غير مبرر')==='مبرر'){day.hasBreak=true;continue;}
+  if(String(r.justified||'غير مبرر')!=='غير مبرر'){day.hasBreak=true;continue;}
   const hours=Number(parseHours(r.hours))||0;
   const period=String(r.period||'').replace(/[\u0640\s]/g,'');
   if(r.fullDay===true||['اليومكاملاً','اليومكاملا','يومكامل'].includes(period))day.explicitFullDay=true;
@@ -113,6 +113,7 @@ test('missing timetable prevents extending a streak beyond an unknown school day
 test('new active streak after an unrecorded weekday gap is found',()=>{const x=run([absence('2026-11-16'),absence('2026-11-18')]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-18');assert.equal(x[0].days,1);});
 test('full-day flag is ignored when timetable has zero hours',()=>{const x=run([absence('2026-11-18',{fullDay:true})],[],{'2026-11-18':0});assert.equal(x.length,0);});
 test('justified absence breaks the streak',()=>{const x=run([absence('2026-11-16'),absence('2026-11-17',{justified:'مبرر'}),absence('2026-11-18')]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-18');});
+test('pending justification does not continue an absence streak',()=>{const x=run([absence('2026-11-16'),absence('2026-11-17',{justified:'قيد التبرير'}),absence('2026-11-18')]);assert.equal(x.length,1);assert.equal(x[0].start,'2026-11-18');assert.equal(x[0].days,1);});
 test('valid ISO calendar date is accepted',()=>{assert.equal(vm.runInContext("isValidISODate('2026-11-18')",ctx),true);});
 test('invalid calendar day is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('2026-02-30')",ctx),false);});
 test('invalid month is rejected',()=>{assert.equal(vm.runInContext("isValidISODate('2026-13-01')",ctx),false);});
