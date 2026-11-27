@@ -3490,6 +3490,10 @@ function applyAbsenceWorkflowResponse(record,input,today){
  if(status!=='غير مسجل'){
   if(!isValidISODate(String(record.deliveryDate||''))||!String(record.deliveryProof||'').trim())return {ok:false,changed:false,message:'سجل التبليغ وإثباته أولاً قبل توثيق نتيجة رد الولي.'};
   if(!isValidISODate(checkedAt)||checkedAt>now||checkedAt<String(record.deliveryDate))return {ok:false,changed:false,message:'أدخل تاريخ مراجعة/تسجيل الرد، ويجب ألا يسبق التبليغ أو يتجاوز اليوم.'};
+  if(status==='لم يرد الولي'){
+   const requiredDays=Number(record.absenceStage)===18?14:7;
+   if(calendarDaysBetween(String(record.deliveryDate),checkedAt)<requiredDays)return {ok:false,changed:false,message:'لا تسجل عدم ورود الرد قبل انقضاء المهلة الكاملة من تاريخ التبليغ ('+requiredDays+' يوماً).'};
+  }
  }else if(checkedAt||notes)return {ok:false,changed:false,message:'اترك تاريخ وملاحظة الرد فارغين ما دامت النتيجة غير مسجلة.'};
  const unchanged=String(record.guardianResponseStatus||'غير مسجل')===status&&String(record.guardianResponseDate||'')===checkedAt&&String(record.guardianResponseNotes||'')===notes;
  if(unchanged)return {ok:true,changed:false,message:'نتيجة رد الولي مطابقة لما هو محفوظ.'};
