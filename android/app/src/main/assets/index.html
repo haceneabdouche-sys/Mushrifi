@@ -1074,6 +1074,19 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
  #nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 }
 .profile-history-more-wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;flex-wrap:wrap}
+
+/* Stage 27 — Guardian reception register */
+.guardian-reception-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.guardian-reception-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+.guardian-reception-form-grid .wide{grid-column:1/-1}
+.guardian-reception-entry{background:#fbfcfd;border:1px solid var(--line);border-radius:13px;padding:12px;margin:9px 0}
+.guardian-reception-entry h3{font-size:15px;margin:0 0 8px;color:var(--navy)}
+.guardian-reception-meta{display:flex;flex-wrap:wrap;gap:7px 12px;color:var(--muted);font-size:12px;margin-bottom:8px}
+.guardian-reception-entry p{font-size:13px;line-height:1.75;margin:6px 0}
+.guardian-reception-entry .actions{margin-top:10px}
+.guardian-reception-entry .student-label{font-weight:700;color:var(--navy)}
+@media(max-width:700px){.guardian-reception-form-grid{grid-template-columns:1fr}.guardian-reception-form-grid .wide{grid-column:auto}.guardian-reception-summary{gap:8px}}
+
 </style>
 </head>
 <body>
@@ -1205,6 +1218,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
   <div class="more-groups">
     <section class="panel more-group"><h2>دفاتر العمل</h2><div class="tiles more-tiles">
       <div class="tile" data-go="supervisionLog">🧭<b>دفتر مهام الإشراف</b><small>توثيق المهام اليومية وفق المادة 144</small></div>
+      <div class="tile" data-go="guardianReceptions">🤝<b>دفتر استقبال الأولياء</b><small>توثيق الاستقبال والتوجيه والمتابعة</small></div>
     </div></section>
     <section class="panel more-group">
       <h2>المواعيد والتقارير</h2>
@@ -1335,6 +1349,44 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
  </div>
 </section>
 
+
+<section id="guardianReceptions" class="page hidden" aria-labelledby="guardianReceptionsHeading">
+ <div class="panel">
+  <div class="panel-title-row"><h2 id="guardianReceptionsHeading">دفتر استقبال الأولياء وتوجيههم</h2><span class="pill" id="guardianReceptionCount">0 سجل</span></div>
+  <p class="muted">سجل مساعد لتوثيق استقبال الولي وتوجيهه، مستقل تمامًا عن استدعاءات الأولياء والوثائق وعن سجل المتابعة التربوية للتلميذ.</p>
+  <p class="notice">احفظ الحد الأدنى اللازم للعمل فقط. لا يُطلب اسم الولي أو رقم هاتفه أو عنوانه أو تفاصيل أسرية خاصة. لا تدوّن تشخيصات أو بيانات صحية حساسة. هذا الدفتر لا يعوّض السجلات الرسمية المعتمدة في المؤسسة.</p>
+  <div class="guardian-reception-summary"><div class="stat"><small>استقبالات اليوم</small><strong id="guardianReceptionTodayCount">0</strong></div><div class="stat"><small>نتائج البحث</small><strong id="guardianReceptionFilteredCount">0</strong></div></div>
+ </div>
+ <div class="panel" id="guardianReceptionFormPanel">
+  <h2 id="guardianReceptionFormTitle">تسجيل استقبال جديد</h2>
+  <form id="guardianReceptionForm" novalidate>
+   <input id="guardianReceptionId" type="hidden">
+   <div class="guardian-reception-form-grid">
+    <div><label for="guardianReceptionDate">تاريخ الاستقبال *</label><input id="guardianReceptionDate" type="date" required></div>
+    <div><label for="guardianReceptionTime">وقت الاستقبال *</label><input id="guardianReceptionTime" type="time" required></div>
+    <div><label for="guardianReceptionVisitorType">صفة الزائر *</label><select id="guardianReceptionVisitorType" required><option value="ولي">ولي</option><option value="وصي">وصي</option><option value="مرافق مفوض">مرافق مفوض</option><option value="أخرى">أخرى</option></select></div>
+    <div><label for="guardianReceptionPurpose">الغرض العام من الزيارة *</label><select id="guardianReceptionPurpose" required><option value="">اختر الغرض</option><option value="استفسار حول الوضع الدراسي">استفسار حول الوضع الدراسي</option><option value="متابعة المواظبة والحضور">متابعة المواظبة والحضور</option><option value="طلب توجيه وإرشاد">طلب توجيه وإرشاد</option><option value="متابعة السلوك والانضباط">متابعة السلوك والانضباط</option><option value="طلب لقاء مع الإدارة">طلب لقاء مع الإدارة</option><option value="أخرى">أخرى</option></select></div>
+    <div class="wide"><label for="guardianReceptionStudent">التلميذ المعني (اختياري)</label><select id="guardianReceptionStudent"><option value="">استقبال عام غير مرتبط بملف تلميذ</option></select><small class="muted">يُربط السجل بمعرّف ملف التلميذ فقط، ولا تُنسخ بيانات الولي إلى هذا الدفتر.</small></div>
+    <div class="wide"><label for="guardianReceptionAction">ملخص التوجيه أو الإجراء المتخذ *</label><textarea id="guardianReceptionAction" maxlength="800" rows="3" required placeholder="اكتب إجراءً مهنيًا موجزًا وموضوعيًا دون تفاصيل شخصية غير لازمة"></textarea></div>
+    <div><label for="guardianReceptionStatus">نتيجة الاستقبال *</label><select id="guardianReceptionStatus" required><option value="تم التوجيه">تم التوجيه</option><option value="يحتاج متابعة">يحتاج متابعة</option><option value="أحيل إلى الإدارة">أحيل إلى الإدارة</option></select></div>
+    <div><label for="guardianReceptionNextDate">موعد متابعة لاحق (اختياري)</label><input id="guardianReceptionNextDate" type="date"></div>
+   </div>
+   <p id="guardianReceptionStatusText" class="muted" role="status" aria-live="polite"></p>
+   <div class="actions"><button id="guardianReceptionSaveBtn" type="submit" class="btn primary">حفظ الاستقبال</button><button id="guardianReceptionCancelEdit" type="button" class="btn hidden">إلغاء التعديل</button></div>
+  </form>
+ </div>
+ <div class="panel">
+  <h2>سجل الاستقبالات</h2>
+  <div class="guardian-reception-form-grid">
+   <div><label for="guardianReceptionSearch">بحث</label><input id="guardianReceptionSearch" type="search" placeholder="الغرض أو اسم التلميذ أو الإجراء"></div>
+   <div><label for="guardianReceptionDateFilter">تصفية حسب التاريخ</label><input id="guardianReceptionDateFilter" type="date"></div>
+   <div><label for="guardianReceptionPurposeFilter">تصفية حسب الغرض</label><select id="guardianReceptionPurposeFilter"><option value="">كل الأغراض</option><option value="استفسار حول الوضع الدراسي">استفسار حول الوضع الدراسي</option><option value="متابعة المواظبة والحضور">متابعة المواظبة والحضور</option><option value="طلب توجيه وإرشاد">طلب توجيه وإرشاد</option><option value="متابعة السلوك والانضباط">متابعة السلوك والانضباط</option><option value="طلب لقاء مع الإدارة">طلب لقاء مع الإدارة</option><option value="أخرى">أخرى</option></select></div>
+  </div>
+  <div id="guardianReceptionEntries" aria-live="polite"><p class="empty">لا توجد استقبالات مسجلة بعد.</p></div>
+  <div id="guardianReceptionPagination" class="record-pagination"></div>
+ </div>
+</section>
+
 <section id="audit" class="page hidden">
   <div class="panel audit-heading">
     <div class="panel-title-row"><h2>سجل العمليات والتعديلات</h2><span class="pill" id="auditLogCount">0 عملية</span></div>
@@ -1344,7 +1396,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
     <p class="notice">لأن التطبيق لا يطلب حساب مستخدم مستقلًا، يحدد السجل أن العملية تمت من التطبيق على هذا الجهاز ولا يدّعي معرفة الشخص الذي ضغط الزر. لا تُعرض أرقام الهواتف أو بيانات الولي أو محتوى الصور والملاحظات الخاصة.</p>
     <div class="audit-toolbar" id="auditLogFilters">
       <input id="auditSearch" type="search" placeholder="ابحث باسم التلميذ أو نوع العملية" aria-label="البحث في سجل العمليات">
-      <select id="auditEntityFilter" aria-label="تصفية حسب نوع السجل"><option value="">كل السجلات</option><option value="students">بطاقات التلاميذ</option><option value="attendance">الغياب والتأخر</option><option value="documents">الوثائق والاستدعاءات</option><option value="violations">المخالفات</option><option value="followups">المتابعات التربوية</option><option value="agenda">الأجندة والمواعيد</option><option value="supervisionLogs">دفتر مهام الإشراف</option><option value="settings">الإعدادات</option></select>
+      <select id="auditEntityFilter" aria-label="تصفية حسب نوع السجل"><option value="">كل السجلات</option><option value="students">بطاقات التلاميذ</option><option value="attendance">الغياب والتأخر</option><option value="documents">الوثائق والاستدعاءات</option><option value="violations">المخالفات</option><option value="followups">المتابعات التربوية</option><option value="agenda">الأجندة والمواعيد</option><option value="supervisionLogs">دفتر مهام الإشراف</option><option value="guardianReceptions">استقبال الأولياء</option><option value="settings">الإعدادات</option></select>
       <select id="auditActionFilter" aria-label="تصفية حسب العملية"><option value="">كل العمليات</option><option value="add">إضافة</option><option value="update">تعديل</option><option value="revert">استرجاع تعديل</option><option value="delete">حذف</option><option value="bulk">عملية جماعية</option></select>
       <input id="auditDateFrom" type="date" aria-label="من تاريخ">
       <input id="auditDateTo" type="date" aria-label="إلى تاريخ">
@@ -1469,7 +1521,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
   });
 })();
 const DBKEY='mushrifi_v1';
-const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"agenda":[],"followups":[],"supervisionLogs":[],"settings":{}}';
+const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"agenda":[],"followups":[],"supervisionLogs":[],"guardianReceptions":[],"settings":{}}';
 const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase==='function');
 const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
 if(nativeJson==='!MUSHRIFI_DB_ERROR!'){document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2"><h2>تعذر فتح قاعدة بيانات مُشرفي</h2><p>لم يتم عرض قائمة فارغة حتى لا تُستبدل بياناتك. لا تحذف التطبيق. احتفظ بنسخة احتياطية إن كانت لديك، ثم تواصل مع الدعم.</p></main>';throw new Error('Mushrifi encrypted database could not be read');}
@@ -1477,7 +1529,7 @@ const legacyJson=localStorage.getItem(DBKEY);
 function parseMushrifiDatabase(raw){
  const parsed=JSON.parse(raw);
  if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw new Error('صيغة قاعدة البيانات ليست كائناً صالحاً.');
- for(const key of ['students','attendance','documents','violations','agenda','followups','supervisionLogs']){
+ for(const key of ['students','attendance','documents','violations','agenda','followups','supervisionLogs','guardianReceptions']){
   if(Object.prototype.hasOwnProperty.call(parsed,key)&&!Array.isArray(parsed[key]))throw new Error('حقل '+key+' تالف أو ليس قائمة صالحة.');
   if(!Array.isArray(parsed[key]))parsed[key]=[];
  }
@@ -1490,6 +1542,7 @@ function parseMushrifiDatabase(raw){
  if(!parsed.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry)))throw new Error('يحتوي سجل العمليات على عنصر غير صالح.');
  if(!parsed.followups.every(item=>item&&typeof item==='object'&&!Array.isArray(item)))throw new Error('يحتوي سجل المتابعة التربوية على عنصر غير صالح.');
  if(!parsed.supervisionLogs.every(item=>item&&typeof item==='object'&&!Array.isArray(item)))throw new Error('يحتوي دفتر مهام الإشراف على سجل غير صالح.');
+ if(!parsed.guardianReceptions.every(item=>item&&typeof item==='object'&&!Array.isArray(item)))throw new Error('يحتوي دفتر استقبال الأولياء على سجل غير صالح.');
  return parsed;
 }
 let db;
@@ -1528,7 +1581,8 @@ const AUDIT_FIELD_DEFINITIONS={
  violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']],
  followups:[['date','تاريخ المتابعة'],['category','مجال المتابعة'],['status','حالة المتابعة'],['nextDate','موعد المتابعة التالية']],
  agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة'],['reminderEnabled','تنبيه الهاتف'],['reminderLeadMinutes','موعد التذكير'],['repeatFrequency','نمط التكرار'],['repeatInterval','الفاصل بين مرات التكرار'],['repeatUntil','نهاية التكرار'],['repeatCompletedDates','تواريخ إنجاز المرات المتكررة'],['repeatSkippedDates','تواريخ تخطي المرات المتكررة']],
- supervisionLogs:[['type','نوع المهمة'],['date','التاريخ'],['period','الفترة'],['location','المكان'],['section','القسم']]
+ supervisionLogs:[['type','نوع المهمة'],['date','التاريخ'],['period','الفترة'],['location','المكان'],['section','القسم']],
+ guardianReceptions:[['date','تاريخ الاستقبال'],['time','وقت الاستقبال'],['visitorType','صفة الزائر'],['purpose','غرض الزيارة'],['status','حالة الاستقبال'],['nextDate','موعد المتابعة']]
 };
 const AUDIT_PRIVATE_FIELDS={
  students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',guardianAddress:'عنوان الولي',privacyFlags:'علامات الخصوصية',notes:'ملاحظات خاصة'},
@@ -1537,7 +1591,8 @@ const AUDIT_PRIVATE_FIELDS={
  violations:{student:'ارتباط الواقعة بملف التلميذ',description:'تفاصيل الواقعة',photo:'صورة التقرير'},
  followups:{student:'ارتباط المتابعة بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',class:'القسم المرتبط بالمتابعة',schoolYear:'المستوى المرتبط بالمتابعة',branch:'الشعبة المرتبطة بالمتابعة',observation:'مضمون الملاحظة التربوية',actionTaken:'الإجراء التربوي المتخذ',result:'نتيجة المتابعة',createdAt:'بيانات إنشاء المتابعة',updatedAt:'بيانات تحديث المتابعة'},
  agenda:{studentId:'ارتباط الموعد بملف التلميذ',notes:'ملاحظات الأجندة',details:'تفاصيل الموعد'},
- supervisionLogs:{notes:'ملاحظة المهمة',actionTaken:'الإجراء المدوّن',createdAt:'تاريخ الإنشاء',updatedAt:'تاريخ التعديل'}
+ supervisionLogs:{notes:'ملاحظة المهمة',actionTaken:'الإجراء المدوّن',createdAt:'تاريخ الإنشاء',updatedAt:'تاريخ التعديل'},
+ guardianReceptions:{student:'ارتباط الاستقبال بملف التلميذ',actionTaken:'التوجيه أو الإجراء المدوّن',createdAt:'تاريخ الإنشاء',updatedAt:'تاريخ التعديل'}
 };
 const AUDIT_REVERSIBLE_FIELDS={
  students:['last','first','schoolYear','branch','class','attribute','status'],
@@ -1546,9 +1601,10 @@ const AUDIT_REVERSIBLE_FIELDS={
  violations:['date','type','action'],
  followups:['date','category','status','nextDate'],
  agenda:['title','type','date','startTime','endTime','location','priority','status','reminderEnabled','reminderLeadMinutes','repeatFrequency','repeatInterval','repeatUntil','repeatCompletedDates','repeatSkippedDates'],
- supervisionLogs:['type','date','period','location','section']
+ supervisionLogs:['type','date','period','location','section'],
+ guardianReceptions:['date','time','visitorType','purpose','status','nextDate']
 };
-const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة',followups:'متابعة تربوية',agenda:'موعد في أجندة المشرف',supervisionLogs:'مهمة إشرافية',settings:'إعدادات التطبيق'};
+const AUDIT_ENTITY_LABELS={students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'سجل مخالفة',followups:'متابعة تربوية',agenda:'موعد في أجندة المشرف',supervisionLogs:'مهمة إشرافية',guardianReceptions:'استقبال ولي',settings:'إعدادات التطبيق'};
 const AUDIT_SAFE_SETTING_FIELDS={school:'اسم المؤسسة',location:'موقع المؤسسة',summonsReminderTime:'وقت تنبيه الاستدعاءات'};
 const AUDIT_REVERSIBLE_SETTINGS=new Set(Object.keys(AUDIT_SAFE_SETTING_FIELDS));
 const AUDIT_SETTING_LABELS={...AUDIT_SAFE_SETTING_FIELDS,timetables:'جداول التوقيت',schoolHolidays:'العطل المدرسية',sectionNames:'تسميات الأقسام',academicStructure:'الهيكل الدراسي'};
@@ -1564,9 +1620,9 @@ function auditFingerprintValue(value){
 function auditComparableDatabase(source,options){
  const opts=options||{};
  const input=source&&typeof source==='object'?source:{};
- const result={students:[],attendance:[],documents:[],violations:[],followups:[],agenda:[],supervisionLogs:[],settings:{}};
- const auxiliary={students:['name','fullName'],attendance:['student','studentName'],documents:['student','studentName'],violations:['student','studentName'],followups:['student','studentName'],agenda:[],supervisionLogs:[]};
- for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs']){
+ const result={students:[],attendance:[],documents:[],violations:[],followups:[],agenda:[],supervisionLogs:[],guardianReceptions:[],settings:{}};
+ const auxiliary={students:['name','fullName'],attendance:['student','studentName'],documents:['student','studentName'],violations:['student','studentName'],followups:['student','studentName'],agenda:[],supervisionLogs:[],guardianReceptions:[]};
+ for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs','guardianReceptions']){
   const safe=new Set(['id',...(AUDIT_FIELD_DEFINITIONS[collection]||[]).map(field=>field[0]),...(auxiliary[collection]||[])]);
   const records=Array.isArray(input[collection])?input[collection]:[];
   result[collection]=records.map(record=>{
@@ -1605,6 +1661,7 @@ function auditRecordLabel(entity,record,snapshot){
  if(entity==='students')return (String(record.last||'')+' '+String(record.first||'')).trim()||String(record.name||record.fullName||'تلميذ');
  if(entity==='agenda')return String(record.title||'موعد دون عنوان');
  if(entity==='supervisionLogs')return [record.type||'مهمة إشرافية',record.location,record.section].filter(Boolean).join(' · ');
+ if(entity==='guardianReceptions')return [record.purpose||'استقبال ولي',record.date].filter(Boolean).join(' · ');
  return auditRecordStudentName(record,snapshot)||'تلميذ غير محدد';
 }
 function auditValueForChange(value){
@@ -1647,7 +1704,7 @@ function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
  const before=opts.precomputedSnapshots?(beforeSnapshot||{}):auditComparableDatabase(beforeSnapshot||{});
  const after=opts.precomputedSnapshots?(opts.afterSnapshot||{}):auditComparableDatabase(afterDatabase);
  const makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2),events=[];
- for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs']){
+ for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs','guardianReceptions']){
   const oldList=Array.isArray(before[collection])?before[collection]:[],newList=Array.isArray(after[collection])?after[collection]:[];
   const oldMap=new Map(),newMap=new Map();
   oldList.forEach((record,index)=>oldMap.set(auditRecordIdentity(record,index),record));
@@ -1770,7 +1827,7 @@ const save=(options={})=>{
  auditNextRevertsId='';preserveUndoOnNextSave=false;
  if(changedEntities.has('students'))rebuildStudentIndexes();
  else if(changedEntities.has('attendance')||changedEntities.has('documents')||changedEntities.has('violations'))rebuildRecordNameIndex();
- invalidateRecordOrderCache(['attendance','documents','violations','supervisionLogs'].filter(collection=>changedEntities.has(collection)));
+ invalidateRecordOrderCache(['attendance','documents','violations','supervisionLogs','guardianReceptions'].filter(collection=>changedEntities.has(collection)));
  if(clearUndoAfterSave&&!atomicRecoveryClear){try{undoKnownEmpty=clearStoredRecoverySnapshot()===true;}catch(e){console.warn('Mushrifi recovery cleanup failed',e);}}
  try{if(isAndroidApp&&changedEntities.has('agenda'))syncAgendaRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi agenda reminder sync failed',e);}
  try{if(isAndroidApp&&(changedEntities.has('students')||changedEntities.has('followups')))syncStudentFollowupRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi educational follow-up reminder sync failed',e);}
@@ -1797,6 +1854,7 @@ function parseRecoverySnapshot(raw){
  if(data.auditLog!==undefined&&(!Array.isArray(data.auditLog)||!data.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))return null;
  if(data.followups!==undefined&&(!Array.isArray(data.followups)||!data.followups.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))return null;
  if(data.supervisionLogs!==undefined&&(!Array.isArray(data.supervisionLogs)||!data.supervisionLogs.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))return null;
+ if(data.guardianReceptions!==undefined&&(!Array.isArray(data.guardianReceptions)||!data.guardianReceptions.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))return null;
  return item;
 }
 function refreshUndoPanel(knownEmpty=false){
@@ -1826,7 +1884,7 @@ window.undoLastDelete=()=>{
  if(!confirm(summary))return;
  const oldDb=db;
  if(!clearStoredRecoverySnapshot()){alert('تعذر إغلاق نقطة التراجع بأمان. لم تتغير البيانات.');return;}
- db={...data,agenda:Array.isArray(data.agenda)?data.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),supervisionLogs:Array.isArray(data.supervisionLogs)?data.supervisionLogs:(Array.isArray(oldDb.supervisionLogs)?oldDb.supervisionLogs.slice():[]),auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]};
+ db={...data,agenda:Array.isArray(data.agenda)?data.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),supervisionLogs:Array.isArray(data.supervisionLogs)?data.supervisionLogs:(Array.isArray(oldDb.supervisionLogs)?oldDb.supervisionLogs.slice():[]),guardianReceptions:Array.isArray(data.guardianReceptions)?data.guardianReceptions:(Array.isArray(oldDb.guardianReceptions)?oldDb.guardianReceptions.slice():[]),auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]};
  db.followups=Array.isArray(data.followups)?data.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]);
  if(!save()){
   db=oldDb;try{writeStoredRecoverySnapshot(raw);}catch(_){}render();refreshUndoPanel();
@@ -1953,6 +2011,7 @@ const PAGE_CONTEXT={
  documents:['الوثائق والإشعارات','إشعارات الغياب واستدعاءات الأولياء'],
  agenda:['الأجندة والمواعيد','المهام والاجتماعات ومواعيد الأولياء'],
  supervisionLog:['دفتر مهام الإشراف','توثيق المهام اليومية وفق المادة 144'],
+ guardianReceptions:['استقبال الأولياء','تسجيل الاستقبال والتوجيه دون تكرار الاستدعاءات'],
  reports:['التقارير والطباعة','الإحصاءات والتقارير الفردية والجماعية'],
  settings:['الإعدادات والترخيص','المؤسسة والتنبيهات والبيانات والحماية'],
  audit:['سجل العمليات','مراجعة الإضافات والتعديلات والحذف']
@@ -1994,7 +2053,7 @@ function go(page,addHistory=true){
  }
  document.querySelectorAll('.page').forEach(element=>element.classList.toggle('hidden',element.id!==target));
  if(target==='attendance')setFollowupView(route==='violations'?'violations':'attendance');
- const secondary=['reports','settings','audit','agenda','supervisionLog'].includes(route);
+ const secondary=['reports','settings','audit','agenda','supervisionLog','guardianReceptions'].includes(route);
  document.querySelectorAll('nav button').forEach(button=>{
   button.classList.toggle('active',button.dataset.page===target||(button.dataset.page==='more'&&secondary));
  });
@@ -2950,6 +3009,7 @@ const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';
 if(activePage==='audit')renderAuditLog();
 if(activePage==='agenda')renderAgenda();
 if(activePage==='supervisionLog')renderSupervisionLogs();
+if(activePage==='guardianReceptions'){refreshGuardianReceptionStudentOptions();renderGuardianReceptions();}
 if(activePage==='reports'){ensureStudentAnalyticsDates();renderStudentAnalytics();}
 if(activePage==='students')refreshStudentSectionOptions();
 const schoolName=String(db.settings.school||'ثانوية الشيخ بوعمامة'),schoolLocation=String(db.settings.location||'بوسكن – ولاية المدية');
@@ -4362,19 +4422,20 @@ $('#exportData').onclick=async()=>{
 let pendingBackupData=null;
 let pendingBackupInfo=null;
 function showBackupPreview(data,bytes){
- const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[],agenda=Array.isArray(data.agenda)?data.agenda:[],followups=Array.isArray(data.followups)?data.followups:[];
+ const students=data.students||[],attendance=data.attendance||[],documents=data.documents||[],violations=data.violations||[],agenda=Array.isArray(data.agenda)?data.agenda:[],followups=Array.isArray(data.followups)?data.followups:[],guardianReceptions=Array.isArray(data.guardianReceptions)?data.guardianReceptions:[];
  const classes={},attributes={};
  students.forEach(st=>{const c=String(st.class||st.section||'غير محدد');classes[c]=(classes[c]||0)+1;const a=String(st.attribute||st.status||'غير محدد');attributes[a]=(attributes[a]||0)+1;});
  const abs=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='غياب').length;
  const late=attendance.filter(x=>String(x.type||'').replace(/\\s/g,'')==='تأخر').length;
  const summons=documents.filter(x=>String(x.type||'').includes('استدعاء')).length;
- const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length,agenda:Array.isArray(db.agenda)?db.agenda.length:0,followups:Array.isArray(db.followups)?db.followups.length:0};
- const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length,agenda:Array.isArray(data.agenda)?data.agenda.length:(Array.isArray(db.agenda)?db.agenda.length:0),followups:Array.isArray(data.followups)?data.followups.length:(Array.isArray(db.followups)?db.followups.length:0)};
+ const currentCounts={students:db.students.length,attendance:db.attendance.length,documents:db.documents.length,violations:db.violations.length,agenda:Array.isArray(db.agenda)?db.agenda.length:0,followups:Array.isArray(db.followups)?db.followups.length:0,guardianReceptions:Array.isArray(db.guardianReceptions)?db.guardianReceptions.length:0};
+ const incomingCounts={students:students.length,attendance:attendance.length,documents:documents.length,violations:violations.length,agenda:Array.isArray(data.agenda)?data.agenda.length:(Array.isArray(db.agenda)?db.agenda.length:0),followups:Array.isArray(data.followups)?data.followups.length:(Array.isArray(db.followups)?db.followups.length:0),guardianReceptions:Array.isArray(data.guardianReceptions)?data.guardianReceptions.length:(Array.isArray(db.guardianReceptions)?db.guardianReceptions.length:0)};
  const reducedKeys=Object.keys(currentCounts).filter(k=>incomingCounts[k]<currentCounts[k]);
- const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations} · الأجندة: ${currentCounts.agenda} · المتابعات التربوية: ${currentCounts.followups}`;
+ const currentSummary=`التلاميذ: ${currentCounts.students} · الغياب والتأخر: ${currentCounts.attendance} · الوثائق: ${currentCounts.documents} · المخالفات: ${currentCounts.violations} · الأجندة: ${currentCounts.agenda} · المتابعات التربوية: ${currentCounts.followups} · استقبال الأولياء: ${currentCounts.guardianReceptions}`;
  const reducedWarning=reducedKeys.length?'<p class="notice"><b>تنبيه مهم:</b> تحتوي النسخة المختارة على سجلات أقل من الموجودة حالياً في الهاتف في بعض الأقسام. راجع الأعداد أدناه وتأكد من أنك اخترت النسخة الصحيحة قبل الاستعادة.</p>':'';
  const agendaRecoveryNote=pendingBackupInfo&&pendingBackupInfo.agendaMissingInBackup?'<p class="notice"><b>الأجندة:</b> النسخة المختارة قديمة ولا تحتوي على قسم الأجندة؛ احتفظ التطبيق بمواعيد الأجندة الموجودة حالياً على هذا الهاتف بدلاً من حذفها.</p>':'';
  const followupRecoveryNote=pendingBackupInfo&&pendingBackupInfo.followupsMissingInBackup?'<p class="notice"><b>سجل المتابعة التربوية:</b> النسخة المختارة لا تحتوي على هذا السجل؛ سيحتفظ التطبيق بالمتابعات الموجودة حالياً على الهاتف بدلاً من حذفها.</p>':'';
+ const guardianReceptionRecoveryNote=pendingBackupInfo&&pendingBackupInfo.guardianReceptionsMissingInBackup?'<p class="notice"><b>دفتر استقبال الأولياء:</b> النسخة المختارة أقدم ولا تحتوي على هذا الدفتر؛ سيحتفظ التطبيق بسجلات الاستقبال الموجودة حالياً على الهاتف بدلاً من حذفها.</p>':'';
  const recoveryNote=pendingBackupInfo&&pendingBackupInfo.recoveredCount?'<p class="notice"><b>استعادة الأسماء:</b> لم تكن قائمة التلاميذ موجودة في الملف؛ أُعيد تكوين '+pendingBackupInfo.recoveredCount+' ملفاً من الأسماء المحفوظة داخل سجلات المتابعة. '+(pendingBackupInfo.missingClassCount?'قسم '+pendingBackupInfo.missingClassCount+' تلميذاً غير محفوظ في السجلات، لذلك سيبقى حقل القسم فارغاً. ':'')+'قد لا تشمل هذه الأسماء تلاميذ لم تكن لهم سجلات متابعة.</p>':'';
  const manifestInfo=pendingBackupInfo&&pendingBackupInfo.manifest?pendingBackupInfo.manifest:null;
  let manifestNote='';
@@ -4400,8 +4461,8 @@ function showBackupPreview(data,bytes){
  '<div class="stat"><small>الوثائق والاستدعاءات</small><strong>'+documents.length+'</strong></div>'+
  '<div class="stat"><small>المخالفات</small><strong>'+violations.length+'</strong></div>'+
  '<div class="stat"><small>مواعيد الأجندة</small><strong>'+agenda.length+'</strong></div>'+
- '<div class="stat"><small>المتابعات التربوية</small><strong>'+followups.length+'</strong></div></div>'+
- '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+manifestNote+agendaRecoveryNote+followupRecoveryNote+recoveryNote+integrityNote+
+ '<div class="stat"><small>المتابعات التربوية</small><strong>'+followups.length+'</strong></div><div class="stat"><small>استقبالات الأولياء</small><strong>'+guardianReceptions.length+'</strong></div></div>'+
+ '<h4>مقارنة مع بيانات الهاتف الحالية</h4><p>'+currentSummary+'</p>'+reducedWarning+manifestNote+agendaRecoveryNote+followupRecoveryNote+guardianReceptionRecoveryNote+recoveryNote+integrityNote+
  '<p><b>تفصيل الغياب:</b> '+abs+' غياب، '+late+' تأخر.</p><p><b>الاستدعاءات:</b> '+summons+'</p>'+
  '<p><b>الأقسام:</b> '+(classText||'لا توجد بيانات أقسام')+'</p><p><b>الصفات:</b> '+(attrText||'لا توجد بيانات صفات')+'</p>'+
  '<h4>عينة من أسماء التلاميذ</h4><ul>'+(sample||'<li>لا توجد أسماء في النسخة</li>')+'</ul>'+
@@ -4464,7 +4525,7 @@ function inspectBackupIdentityIntegrity(data){
  });
  if(missingStudentIds)blockers.push('يوجد '+missingStudentIds+' ملف تلميذ دون معرّف ثابت.');
  if(duplicateStudentIds.length)blockers.push('توجد معرّفات تلاميذ مكررة ('+duplicateStudentIds.length+').');
- for(const collection of ['attendance','documents','violations','agenda','followups','supervisionLogs']){
+ for(const collection of ['attendance','documents','violations','agenda','followups','supervisionLogs','guardianReceptions']){
   const seen=new Set(),items=Array.isArray(data&&data[collection])?data[collection]:[];
   items.forEach(record=>{
    const id=String(record&&record.id!==undefined&&record.id!==null?record.id:'').trim();
@@ -4477,7 +4538,7 @@ function inspectBackupIdentityIntegrity(data){
   const collections=[...new Set(duplicateRecordIds.map(item=>item.collection))].join('، ');
   blockers.push('توجد معرّفات سجلات مكررة في: '+collections+'.');
  }
- for(const collection of ['attendance','documents','violations','followups']){
+ for(const collection of ['attendance','documents','violations','followups','guardianReceptions']){
   const items=Array.isArray(data&&data[collection])?data[collection]:[];
   items.forEach(record=>{
    const raw=record&&record.student!==undefined&&record.student!==null?record.student:'';
@@ -4504,6 +4565,7 @@ function backupPayloadCounts(data){
  const counts={};
  const keys=['students','attendance','documents','violations','agenda','followups'];
  if(data&&Object.prototype.hasOwnProperty.call(data,'supervisionLogs'))keys.push('supervisionLogs');
+ if(data&&Object.prototype.hasOwnProperty.call(data,'guardianReceptions'))keys.push('guardianReceptions');
  keys.push('auditLog');
  for(const key of keys)counts[key]=Array.isArray(data&&data[key])?data[key].length:null;
  return counts;
@@ -4626,6 +4688,7 @@ async function importBackupText(raw,bytes){
   if(obj.agenda!==undefined&&(!Array.isArray(obj.agenda)||!obj.agenda.every(item=>item&&typeof item==='object'&&!Array.isArray(item))))throw new Error('قائمة الأجندة داخل النسخة الاحتياطية غير صالحة. لم يتم تغيير بيانات الهاتف.');
   if(obj.followups!==undefined&&(!Array.isArray(obj.followups)||!obj.followups.every(item=>item&&typeof item==='object'&&!Array.isArray(item))))throw new Error('سجل المتابعة التربوية داخل النسخة الاحتياطية غير صالح. لم يتم تغيير بيانات الهاتف.');
   if(obj.supervisionLogs!==undefined&&(!Array.isArray(obj.supervisionLogs)||!obj.supervisionLogs.every(item=>item&&typeof item==='object'&&!Array.isArray(item))))throw new Error('دفتر مهام الإشراف داخل النسخة الاحتياطية غير صالح. لم يتم تغيير بيانات الهاتف.');
+  if(obj.guardianReceptions!==undefined&&(!Array.isArray(obj.guardianReceptions)||!obj.guardianReceptions.every(item=>item&&typeof item==='object'&&!Array.isArray(item))))throw new Error('دفتر استقبال الأولياء داخل النسخة الاحتياطية غير صالح. لم يتم تغيير بيانات الهاتف.');
   if(obj.auditLog!==undefined&&(!Array.isArray(obj.auditLog)||!obj.auditLog.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))throw new Error('سجل العمليات داخل النسخة الاحتياطية غير صالح. لم يتم تغيير بيانات الهاتف.');
   if(!obj.settings||typeof obj.settings!=='object'||Array.isArray(obj.settings))throw new Error('النسخة غير مكتملة: إعدادات التطبيق مفقودة أو غير صالحة. لم يتم تغيير بيانات الهاتف.');
   for(const key of ['students','attendance','documents','violations'])if(!obj[key].every(x=>x&&typeof x==='object'&&!Array.isArray(x)))throw new Error('تحتوي قائمة '+key+' على سجل غير صالح. لم يتم استيراد أي بيانات.');
@@ -4634,11 +4697,12 @@ async function importBackupText(raw,bytes){
   const agendaMissingInBackup=!Array.isArray(obj.agenda);
   const followupsMissingInBackup=!Array.isArray(obj.followups);
   const supervisionLogsMissingInBackup=!Array.isArray(obj.supervisionLogs);
-  const normalized={...obj,students:recovered.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,agenda:agendaMissingInBackup?(Array.isArray(db.agenda)?db.agenda.slice():[]):obj.agenda,followups:followupsMissingInBackup?(Array.isArray(db.followups)?db.followups.slice():[]):obj.followups,supervisionLogs:supervisionLogsMissingInBackup?(Array.isArray(db.supervisionLogs)?db.supervisionLogs.slice():[]):obj.supervisionLogs,settings:obj.settings};
+  const guardianReceptionsMissingInBackup=!Array.isArray(obj.guardianReceptions);
+  const normalized={...obj,students:recovered.students,attendance:obj.attendance,documents:obj.documents,violations:obj.violations,agenda:agendaMissingInBackup?(Array.isArray(db.agenda)?db.agenda.slice():[]):obj.agenda,followups:followupsMissingInBackup?(Array.isArray(db.followups)?db.followups.slice():[]):obj.followups,supervisionLogs:supervisionLogsMissingInBackup?(Array.isArray(db.supervisionLogs)?db.supervisionLogs.slice():[]):obj.supervisionLogs,guardianReceptions:guardianReceptionsMissingInBackup?(Array.isArray(db.guardianReceptions)?db.guardianReceptions.slice():[]):obj.guardianReceptions,settings:obj.settings};
   const integrity=inspectBackupIdentityIntegrity(normalized);
   if(!integrity.ok)throw new Error('أوقف التطبيق الاستعادة لأن فحص المعرّفات كشف تعارضاً قد يربط السجلات بتلميذ غير صحيح: '+integrity.blockers.join(' ')+ ' لم تتغير بيانات الهاتف. أصلح النسخة أو اختر نسخة أخرى.');
   pendingBackupData=normalized;
-  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup,integrity,manifest:{present:manifestCheck.present,legacy:manifestCheck.legacy,formatVersion:manifestCheck.formatVersion||0,integrityLevel:manifestCheck.integrityLevel||'none',strongHashVerified:!!manifestCheck.strongHashVerified,exportedAt:manifestCheck.exportedAt||'',appVersion:manifestCheck.appVersion||'',payloadBytes:manifestCheck.payloadBytes||0,counts:manifestCheck.counts||null}};
+  pendingBackupInfo={recoveredCount:recovered.recoveredCount,missingClassCount:recovered.missingClassCount,agendaMissingInBackup,followupsMissingInBackup,guardianReceptionsMissingInBackup,integrity,manifest:{present:manifestCheck.present,legacy:manifestCheck.legacy,formatVersion:manifestCheck.formatVersion||0,integrityLevel:manifestCheck.integrityLevel||'none',strongHashVerified:!!manifestCheck.strongHashVerified,exportedAt:manifestCheck.exportedAt||'',appVersion:manifestCheck.appVersion||'',payloadBytes:manifestCheck.payloadBytes||0,counts:manifestCheck.counts||null}};
   showBackupPreview(normalized,bytes||new Blob([raw]).size);
  }catch(err){pendingBackupData=null;pendingBackupInfo=null;$('#backupPreview').classList.add('hidden');alert('تعذرت قراءة النسخة الاحتياطية:\\n'+(err?.message||'خطأ غير معروف'));}
 }
@@ -4659,7 +4723,7 @@ function restorePendingBackup(){
  try{
   const importedAudit=Array.isArray(pendingBackupData.auditLog)?pendingBackupData.auditLog:[];
   const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit;
-  db={...pendingBackupData,agenda:Array.isArray(pendingBackupData.agenda)?pendingBackupData.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]),auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
+  db={...pendingBackupData,agenda:Array.isArray(pendingBackupData.agenda)?pendingBackupData.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),followups:Array.isArray(pendingBackupData.followups)?pendingBackupData.followups:(Array.isArray(oldDb.followups)?oldDb.followups.slice():[]),guardianReceptions:Array.isArray(pendingBackupData.guardianReceptions)?pendingBackupData.guardianReceptions:(Array.isArray(oldDb.guardianReceptions)?oldDb.guardianReceptions.slice():[]),auditLog:retainedAudit.slice(-AUDIT_LOG_LIMIT)};
   if(!save({restore:true})){
    db=oldDb;resetRestoreState();refreshUndoPanel();render();
    alert('تعذر حفظ النسخة المستوردة؛ بقيت البيانات السابقة كما هي، وتم الإبقاء على نقطة الاسترجاع المشفّرة تحسباً لأي تعثر في التخزين. لا تحذف التطبيق.');return;
@@ -5131,6 +5195,124 @@ $('#supervisionLogForm')?.addEventListener('submit',event=>{
 });
 $('#cancelSupervisionLogEdit')?.addEventListener('click',()=>resetSupervisionLogForm('تم إلغاء التعديل؛ لم تتغير البيانات.'));
 ['supervisionLogSearch','supervisionLogDateFilter','supervisionLogTypeFilter'].forEach(id=>{const el=$('#'+id);if(!el)return;el.addEventListener(id==='supervisionLogSearch'?'input':'change',()=>{supervisionLogPage=0;renderSupervisionLogs();});});
+
+
+let editingGuardianReceptionId='';
+let guardianReceptionPage=0;
+const GUARDIAN_RECEPTION_VISITOR_TYPES=['ولي','وصي','مرافق مفوض','أخرى'];
+const GUARDIAN_RECEPTION_PURPOSES=['استفسار حول الوضع الدراسي','متابعة المواظبة والحضور','طلب توجيه وإرشاد','متابعة السلوك والانضباط','طلب لقاء مع الإدارة','أخرى'];
+const GUARDIAN_RECEPTION_STATUSES=['تم التوجيه','يحتاج متابعة','أحيل إلى الإدارة'];
+const GUARDIAN_RECEPTION_PAGE_SIZE=20;
+function refreshGuardianReceptionStudentOptions(){
+ const select=$('#guardianReceptionStudent');if(!select)return;
+ ensureStudentIndexes();
+ const key=String(studentSelectOptionsRevision)+':'+db.students.length;
+ if(select.dataset.optionsKey===key)return;
+ const old=select.value;
+ select.innerHTML='<option value="">استقبال عام غير مرتبط بملف تلميذ</option>'+studentDirectorySorted.map(student=>'<option value="'+esc(student.id)+'">'+esc(student.last)+' '+esc(student.first)+' – '+esc(studentAcademicLabel(student))+'</option>').join('');
+ select.dataset.optionsKey=key;
+ if([...select.options].some(option=>option.value===old))select.value=old;else select.value='';
+}
+function guardianReceptionStudentLabel(id){
+ const student=(Array.isArray(db.students)?db.students:[]).find(item=>String(item.id)===String(id||''));
+ return student?(String(student.last||'')+' '+String(student.first||'')+' – '+studentAcademicLabel(student)):'';
+}
+function guardianReceptionFilteredRecords(){
+ const source=orderedRecords('guardianReceptions','date-desc'),query=normalizeDirectorySearch($('#guardianReceptionSearch')?.value||'');
+ const date=$('#guardianReceptionDateFilter')?.value||'',purpose=$('#guardianReceptionPurposeFilter')?.value||'';
+ return source.filter(item=>{
+  if(date&&String(item.date||'')!==date)return false;
+  if(purpose&&String(item.purpose||'')!==purpose)return false;
+  return !query||normalizeDirectorySearch([item.date,item.time,item.visitorType,item.purpose,item.status,item.nextDate,item.actionTaken,guardianReceptionStudentLabel(item.student)].join(' ')).includes(query);
+ });
+}
+function renderGuardianReceptions(){
+ const records=Array.isArray(db.guardianReceptions)?db.guardianReceptions:[],today=dateISO(),filtered=guardianReceptionFilteredRecords();
+ const pages=Math.max(1,Math.ceil(filtered.length/GUARDIAN_RECEPTION_PAGE_SIZE));
+ guardianReceptionPage=Math.max(0,Math.min(guardianReceptionPage,pages-1));
+ const visible=filtered.slice(guardianReceptionPage*GUARDIAN_RECEPTION_PAGE_SIZE,(guardianReceptionPage+1)*GUARDIAN_RECEPTION_PAGE_SIZE);
+ $('#guardianReceptionCount').textContent=records.length.toLocaleString('ar-DZ')+' سجل';
+ $('#guardianReceptionTodayCount').textContent=records.reduce((n,item)=>n+(String(item.date||'')===today?1:0),0).toLocaleString('ar-DZ');
+ $('#guardianReceptionFilteredCount').textContent=filtered.length.toLocaleString('ar-DZ');
+ const list=$('#guardianReceptionEntries');list.className=filtered.length?'':'empty';
+ list.innerHTML=visible.length?visible.map(item=>{
+  const student=guardianReceptionStudentLabel(item.student);
+  const studentHtml=student?'<p class="student-label">التلميذ: '+esc(student)+'</p>':'';
+  const next=item.nextDate?'<p><b>موعد المتابعة:</b> '+esc(item.nextDate)+'</p>':'';
+  const statusClass=item.status==='يحتاج متابعة'?'status-warn':'status-ok';
+  return '<article class="guardian-reception-entry"><h3>'+esc(item.purpose||'استقبال ولي')+'</h3><div class="guardian-reception-meta"><span>'+esc(item.date||'')+'</span><span>'+esc(item.time||'')+'</span><span>'+esc(item.visitorType||'زائر')+'</span></div>'+studentHtml+'<p><b>التوجيه أو الإجراء:</b> '+esc(item.actionTaken||'')+'</p><p><b>النتيجة:</b> <span class="'+statusClass+'">'+esc(item.status||'')+'</span></p>'+next+'<div class="actions"><button type="button" class="btn small primary" data-reception-edit="'+esc(item.id)+'">تعديل</button><button type="button" class="btn small danger" data-reception-delete="'+esc(item.id)+'">حذف</button></div></article>';
+ }).join(''):'لا توجد استقبالات مطابقة للبحث أو عوامل التصفية.';
+ renderRecordPagination('guardianReceptionPagination',guardianReceptionPage,filtered.length,GUARDIAN_RECEPTION_PAGE_SIZE,next=>{guardianReceptionPage=next;});
+ list.querySelectorAll('[data-reception-edit]').forEach(button=>button.addEventListener('click',()=>beginGuardianReceptionEdit(button.dataset.receptionEdit)));
+ list.querySelectorAll('[data-reception-delete]').forEach(button=>button.addEventListener('click',()=>deleteGuardianReception(button.dataset.receptionDelete)));
+}
+function resetGuardianReceptionForm(message){
+ const form=$('#guardianReceptionForm');if(!form)return;
+ form.reset();editingGuardianReceptionId='';$('#guardianReceptionId').value='';
+ $('#guardianReceptionDate').value=dateISO();$('#guardianReceptionTime').value=new Date().toTimeString().slice(0,5);
+ $('#guardianReceptionVisitorType').value='ولي';$('#guardianReceptionStatus').value='تم التوجيه';
+ $('#guardianReceptionFormTitle').textContent='تسجيل استقبال جديد';$('#guardianReceptionSaveBtn').textContent='حفظ الاستقبال';
+ $('#guardianReceptionCancelEdit').classList.add('hidden');
+ $('#guardianReceptionStatusText').textContent=message||'';
+ refreshGuardianReceptionStudentOptions();
+}
+function beginGuardianReceptionEdit(id){
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن تعديل دفتر الاستقبال قبل تفعيل الترخيص.');return;}
+ const item=(Array.isArray(db.guardianReceptions)?db.guardianReceptions:[]).find(row=>String(row.id)===String(id));if(!item)return;
+ editingGuardianReceptionId=String(item.id);$('#guardianReceptionId').value=editingGuardianReceptionId;
+ refreshGuardianReceptionStudentOptions();
+ $('#guardianReceptionDate').value=String(item.date||dateISO());$('#guardianReceptionTime').value=String(item.time||'');
+ $('#guardianReceptionVisitorType').value=GUARDIAN_RECEPTION_VISITOR_TYPES.includes(item.visitorType)?item.visitorType:'أخرى';
+ $('#guardianReceptionPurpose').value=GUARDIAN_RECEPTION_PURPOSES.includes(item.purpose)?item.purpose:'أخرى';
+ $('#guardianReceptionStudent').value=String(item.student||'');
+ $('#guardianReceptionAction').value=String(item.actionTaken||'');
+ $('#guardianReceptionStatus').value=GUARDIAN_RECEPTION_STATUSES.includes(item.status)?item.status:'تم التوجيه';
+ $('#guardianReceptionNextDate').value=String(item.nextDate||'');
+ $('#guardianReceptionFormTitle').textContent='تعديل سجل استقبال';$('#guardianReceptionSaveBtn').textContent='حفظ التعديلات';
+ $('#guardianReceptionCancelEdit').classList.remove('hidden');
+ $('#guardianReceptionStatusText').textContent='تعديل السجل نفسه؛ لن يُنشأ سجل مكرر.';
+ $('#guardianReceptionFormPanel').scrollIntoView({behavior:'auto',block:'start'});$('#guardianReceptionDate').focus({preventScroll:true});
+}
+function deleteGuardianReception(id){
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن حذف سجل قبل تفعيل الترخيص.');return;}
+ const records=Array.isArray(db.guardianReceptions)?db.guardianReceptions:[],index=records.findIndex(item=>String(item.id)===String(id));
+ if(index<0)return;
+ const item=records[index];
+ if(!confirm('هل تريد حذف سجل استقبال بتاريخ '+String(item.date||'')+'؟'))return;
+ if(!saveUndoSnapshot('حذف سجل استقبال ولي'))return;
+ const before=records.slice();records.splice(index,1);
+ if(!save()){db.guardianReceptions=before;preserveUndoOnNextSave=false;clearStoredRecoverySnapshot();refreshUndoPanel();render();$('#guardianReceptionStatusText').textContent='تعذر الحذف؛ أُعيد السجل إلى القائمة.';return;}
+ if(editingGuardianReceptionId===String(id))resetGuardianReceptionForm('تم حذف السجل.');
+}
+$('#guardianReceptionForm')?.addEventListener('submit',event=>{
+ event.preventDefault();
+ if(licenseReadOnly){$('#guardianReceptionStatusText').textContent='وضع القراءة فقط: لم تُحفظ أي تغييرات.';return;}
+ const date=$('#guardianReceptionDate').value,time=$('#guardianReceptionTime').value;
+ const visitorType=$('#guardianReceptionVisitorType').value,purpose=$('#guardianReceptionPurpose').value;
+ const student=$('#guardianReceptionStudent').value,actionTaken=$('#guardianReceptionAction').value.trim();
+ const status=$('#guardianReceptionStatus').value,nextDate=$('#guardianReceptionNextDate').value;
+ if(!isValidISODate(date)){$('#guardianReceptionStatusText').textContent='أدخل تاريخ استقبال صحيحًا.';$('#guardianReceptionDate').focus();return;}
+ if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)){$('#guardianReceptionStatusText').textContent='أدخل وقتًا صحيحًا للاستقبال.';$('#guardianReceptionTime').focus();return;}
+ if(!GUARDIAN_RECEPTION_VISITOR_TYPES.includes(visitorType)){$('#guardianReceptionStatusText').textContent='اختر صفة زائر صحيحة.';return;}
+ if(!GUARDIAN_RECEPTION_PURPOSES.includes(purpose)){$('#guardianReceptionStatusText').textContent='اختر غرض الزيارة من القائمة.';$('#guardianReceptionPurpose').focus();return;}
+ if(student&&!db.students.some(item=>String(item.id)===String(student))){$('#guardianReceptionStatusText').textContent='ملف التلميذ المحدد غير موجود؛ حدّث القائمة أو اختر استقبالًا عامًا.';return;}
+ if(!actionTaken||actionTaken.length>800){$('#guardianReceptionStatusText').textContent='اكتب ملخصًا مهنيًا موجزًا لا يتجاوز 800 حرف.';$('#guardianReceptionAction').focus();return;}
+ if(!GUARDIAN_RECEPTION_STATUSES.includes(status)){$('#guardianReceptionStatusText').textContent='اختر نتيجة استقبال صحيحة.';return;}
+ if(nextDate&&(!isValidISODate(nextDate)||nextDate<date)){$('#guardianReceptionStatusText').textContent='موعد المتابعة يجب أن يكون تاريخًا صحيحًا لا يسبق تاريخ الاستقبال.';$('#guardianReceptionNextDate').focus();return;}
+ const records=Array.isArray(db.guardianReceptions)?db.guardianReceptions:(db.guardianReceptions=[]),before=records.slice();
+ const index=editingGuardianReceptionId?records.findIndex(item=>String(item.id)===editingGuardianReceptionId):-1;
+ if(editingGuardianReceptionId&&index<0){resetGuardianReceptionForm('تعذر العثور على السجل الأصلي؛ لم يُنشأ سجل جديد.');return;}
+ const old=index>=0?records[index]:null,now=new Date().toISOString();
+ const record={id:old?old.id:crypto.randomUUID(),date,time,visitorType,purpose,student,actionTaken,status,nextDate,createdAt:old?.createdAt||now,updatedAt:now};
+ if(index>=0)records[index]=record;else records.push(record);
+ if(!save()){db.guardianReceptions=before;render();$('#guardianReceptionStatusText').textContent='تعذر تأكيد الحفظ؛ أُعيد السجل إلى حالته السابقة.';return;}
+ resetGuardianReceptionForm(index>=0?'تم تحديث سجل الاستقبال.':'تم حفظ سجل الاستقبال.');
+});
+$('#guardianReceptionCancelEdit')?.addEventListener('click',()=>resetGuardianReceptionForm('تم إلغاء التعديل؛ لم تتغير البيانات.'));
+['guardianReceptionSearch','guardianReceptionDateFilter','guardianReceptionPurposeFilter'].forEach(id=>{
+ const control=$('#'+id);if(!control)return;
+ control.addEventListener(id==='guardianReceptionSearch'?'input':'change',()=>{guardianReceptionPage=0;renderGuardianReceptions();});
+});
 
 render();refreshUndoPanel();
 
