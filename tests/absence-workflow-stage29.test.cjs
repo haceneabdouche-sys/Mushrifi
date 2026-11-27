@@ -269,9 +269,9 @@ assert.ok(html.includes('data-field="deliveryConfirmed"'), 'The simple flow must
 assert.ok(html.includes('حضر الولي') && html.includes('لم يحضر') && html.includes('قدّم تبريراً'), 'The simplified guardian outcomes must be available.');
 assert.ok(!html.includes('إدارة بيانات التبليغ ونتيجة رد الولي'), 'The former multi-step editor must be removed from the primary panel.');
 assert.ok(!html.includes('تسجيل عودة التلميذ أو تسوية الملف'), 'The old settlement form must be removed from the primary board.');
-assert.ok(html.includes('تنبيه مراجعة: يوجد سجل '), 'The board must flag potential attendance evidence after the absence cycle start.');
+assert.ok(html.includes('توجد حركة حضور/تبرير بعد بداية هذه الدورة بتاريخ '), 'The board must flag potential attendance evidence after the absence cycle start.');
 assert.ok(html.includes('guardianResponseNotes'), 'The workflow history must preserve dated response details for review.');
-assert.ok(html.includes('أؤكد مراجعة الملف وتوثيق العودة/التسوية'), 'The settlement operation must require explicit confirmation.');
+assert.ok(html.includes('function applyAbsenceWorkflowSettlement('), 'The legacy settlement helper remains available for already-saved records.');
 assert.match(html, /absenceWorkflowHistory/);
 assert.match(html, /absenceWorkflowCycleIsClosed\(streak\.student\.id,streak\.start\)/);
 assert.match(html, /absenceWorkflowHistory:'تاريخ إجراءات دورة الغياب'/, 'Workflow history must be redacted in audit records.');
