@@ -63,5 +63,7 @@ assert.ok(html.includes("licenseReadOnly){$('#supervisionLogStatus').textContent
 assert.ok(html.includes("invalidateRecordOrderCache(['attendance','documents','violations','supervisionLogs','guardianReceptions']"));
 assert.ok(java.includes('new String[]{"agenda", "followups", "supervisionLogs", "guardianReceptions", "auditLog"}'));
 assert.ok(java.includes('"students", "attendance", "documents", "violations", "agenda", "followups", "supervisionLogs", "guardianReceptions", "auditLog"'));
-assert.match(gradle,/versionCode 47[\s\S]*versionName '2\.6'/);
+const versionLine = gradle.split('\n').find(line => line.trim().startsWith('versionCode '));
+const internalVersionCode = Number((versionLine || '').trim().slice('versionCode '.length));
+assert.ok(internalVersionCode >= 48 && gradle.includes("versionName '2.6'"));
 console.log('PASS: Stage26 supervisor duty register, parser migration, audit privacy, undo, recovery and backup compatibility.');
