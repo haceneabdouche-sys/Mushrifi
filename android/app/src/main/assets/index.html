@@ -1811,6 +1811,9 @@ const AUDIT_FIELD_DEFINITIONS={
  supervisionLogs:[['type','نوع المهمة'],['date','التاريخ'],['period','الفترة'],['location','المكان'],['section','القسم']],
  guardianReceptions:[['date','تاريخ الاستقبال'],['time','وقت الاستقبال'],['visitorType','صفة الزائر'],['purpose','غرض الزيارة'],['status','حالة الاستقبال'],['nextDate','موعد المتابعة']]
 };
+const AUDIT_FIELD_KEY_SETS=Object.create(null);
+Object.keys(AUDIT_FIELD_DEFINITIONS).forEach(entity=>{AUDIT_FIELD_KEY_SETS[entity]=new Set(AUDIT_FIELD_DEFINITIONS[entity].map(field=>field[0]));});
+const AUDIT_EMPTY_FIELD_KEY_SET=new Set();
 const AUDIT_PRIVATE_FIELDS={
  students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',guardianAddress:'عنوان الولي',privacyFlags:'علامات الخصوصية',notes:'ملاحظات خاصة'},
  attendance:{student:'ارتباط السجل بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',notes:'الملاحظات'},
@@ -1848,18 +1851,26 @@ function auditComparableDatabase(source,options){
  const opts=options||{};
  const input=source&&typeof source==='object'?source:{};
  const result={students:[],attendance:[],documents:[],violations:[],followups:[],agenda:[],supervisionLogs:[],guardianReceptions:[],settings:{}};
+ const indexes={collections:Object.create(null),studentsById:new Map()};
  const auxiliary={students:['name','fullName'],attendance:['student','studentName'],documents:['student','studentName'],violations:['student','studentName'],followups:['student','studentName'],agenda:[],supervisionLogs:[],guardianReceptions:[]};
  for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs','guardianReceptions']){
   const safe=new Set(['id',...(AUDIT_FIELD_DEFINITIONS[collection]||[]).map(field=>field[0]),...(auxiliary[collection]||[])]);
   const records=Array.isArray(input[collection])?input[collection]:[];
-  result[collection]=records.map(record=>{
+  const recordIndex=new Map();
+  indexes.collections[collection]=recordIndex;
+  result[collection]=records.map((record,index)=>{
    const projected={};
    Object.keys(record||{}).forEach(key=>{
     const value=record[key];
     if(safe.has(key)){projected[key]=value;return;}
-    if(value!==undefined&&value!==null&&value!==''&&value!==false){if(opts.retainLargeAttachments&&typeof value==='string'&&value.length>4096&&/^data:image\//i.test(value))projected[key]=value;else projected[key]=auditFingerprintValue(value);}
+    if(value!==undefined&&value!==null&&value!==''&&value!==false){if(opts.retainLargeAttachments&&typeof value==='string'&&value.length>4096&&/^data:image\\//i.test(value))projected[key]=value;else projected[key]=auditFingerprintValue(value);}
     else if(Object.prototype.hasOwnProperty.call(record,key))projected[key]=value;
    });
+   recordIndex.set(auditRecordIdentity(projected,index),projected);
+   if(collection==='students'){
+    const studentId=String(projected.id);
+    if(!indexes.studentsById.has(studentId))indexes.studentsById.set(studentId,projected);
+   }
    return projected;
   });
  }
@@ -1869,6 +1880,7 @@ function auditComparableDatabase(source,options){
   if(safeField&&(typeof value==='string'||typeof value==='number'||typeof value==='boolean')&&String(value).length<=120)result.settings[key]=value;
   else result.settings[key]=auditFingerprintValue(value);
  });
+ Object.defineProperty(result,'__auditIndexes',{value:indexes,enumerable:false,configurable:false,writable:false});
  return result;
 }
 function auditValuesEqual(a,b){
@@ -1878,6 +1890,8 @@ function auditValuesEqual(a,b){
  try{return JSON.stringify(a)===JSON.stringify(b);}catch(_){return false;}
 }
 function auditBuildStudentLookup(snapshot){
+ const indexed=snapshot&&snapshot.__auditIndexes&&snapshot.__auditIndexes.studentsById;
+ if(indexed instanceof Map)return indexed;
  const lookup=new Map(),students=snapshot&&Array.isArray(snapshot.students)?snapshot.students:[];
  students.forEach(student=>{
   if(!student||typeof student!=='object')return;
@@ -1906,7 +1920,7 @@ function auditValueForChange(value){
  try{return JSON.stringify(value).slice(0,160);}catch(_){return '[قيمة محفوظة]';}
 }
 function auditFieldDiff(entity,beforeRecord,afterRecord){
- const fields=AUDIT_FIELD_DEFINITIONS[entity]||[],safeKeys=new Set(fields.map(x=>x[0]));
+ const fields=AUDIT_FIELD_DEFINITIONS[entity]||[],safeKeys=AUDIT_FIELD_KEY_SETS[entity]||AUDIT_EMPTY_FIELD_KEY_SET;
  const changes=[],restricted=new Set(),before=beforeRecord||{},after=afterRecord||{};
  for(const [key,label] of fields){
   const beforeMissing=!Object.prototype.hasOwnProperty.call(before,key),afterMissing=!Object.prototype.hasOwnProperty.call(after,key);
@@ -1943,9 +1957,11 @@ function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
  let beforeStudentLookup=null,afterStudentLookup=null;
  for(const collection of ['students','attendance','documents','violations','followups','agenda','supervisionLogs','guardianReceptions']){
   const oldList=Array.isArray(before[collection])?before[collection]:[],newList=Array.isArray(after[collection])?after[collection]:[];
-  const oldMap=new Map(),newMap=new Map();
-  oldList.forEach((record,index)=>oldMap.set(auditRecordIdentity(record,index),record));
-  newList.forEach((record,index)=>newMap.set(auditRecordIdentity(record,index),record));
+  const beforeIndex=before.__auditIndexes&&before.__auditIndexes.collections&&before.__auditIndexes.collections[collection];
+  const afterIndex=after.__auditIndexes&&after.__auditIndexes.collections&&after.__auditIndexes.collections[collection];
+  const oldMap=beforeIndex instanceof Map?beforeIndex:new Map(),newMap=afterIndex instanceof Map?afterIndex:new Map();
+  if(!(beforeIndex instanceof Map))oldList.forEach((record,index)=>oldMap.set(auditRecordIdentity(record,index),record));
+  if(!(afterIndex instanceof Map))newList.forEach((record,index)=>newMap.set(auditRecordIdentity(record,index),record));
   const operations=[];
   oldMap.forEach((oldRecord,key)=>{
    if(!newMap.has(key)){operations.push({action:'delete',before:oldRecord,after:null});return;}

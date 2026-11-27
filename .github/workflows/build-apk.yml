@@ -182,6 +182,8 @@ jobs:
         run: node tests/audit-log-integrity.test.cjs
       - name: Run audit student lookup save-path performance tests
         run: node tests/audit-student-lookup-performance.test.cjs
+      - name: Run Stage 2 preindexed audit snapshot performance and parity tests
+        run: node tests/audit-snapshot-index-stage2.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests
