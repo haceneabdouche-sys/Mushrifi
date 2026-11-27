@@ -131,7 +131,7 @@ for(const id of ['agendaStoredCount','agendaTodayCount','agendaWeekCount','agend
  assert.equal(count,1,'agenda control ID must be unique: '+id);
 }
 assert.ok(html.includes('<section id="agenda" class="page hidden">'),'agenda is a dedicated page');
-assert.ok(html.includes('data-go="agenda"')&&html.includes('data-go="supervisionLog"')&&html.includes("['reports','settings','audit','agenda','supervisionLog'].includes(route)"),'agenda and the new supervision register are accessible from More and share the secondary navigation state');
+assert.ok(html.includes('data-go="agenda"')&&html.includes('data-go="supervisionLog"')&&html.includes("['reports','settings','audit','agenda','supervisionLog','guardianReceptions'].includes(route)"),'agenda and the new supervision register are accessible from More and share the secondary navigation state');
 assert.ok(html.includes('data-agenda-view="day"')&&html.includes('data-agenda-view="week"')&&html.includes('data-agenda-view="month"'),'day, week and month view selectors are present');
 assert.ok(html.includes('function renderAgenda()')&&html.includes("if(activePage==='agenda')renderAgenda();"),'agenda refreshes when opened or data is saved');
 assert.ok(!html.includes("renderAgendaHome(today);")&&html.includes('id="upcomingAgenda"'),'upcoming agenda remains available on its dedicated page but is not built for the compact home view');
