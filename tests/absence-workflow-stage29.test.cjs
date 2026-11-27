@@ -12,6 +12,7 @@ const policyEnd = html.indexOf('function absenceStageLabel(', policyStart);
 assert.ok(policyStart >= 0 && policyEnd > policyStart, 'Stage 28 and 29 absence workflow policy must be present.');
 
 const context = {
+  window: {},
   db: { documents: [], attendance: [], settings: { schoolHolidays: [] } },
   dateISO: () => '2026-11-27',
   isValidISODate: value => {
