@@ -621,6 +621,8 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
 .absence-workflow-fields .btn{justify-self:start;align-self:end}
 .absence-workflow-history{margin-top:8px;color:var(--muted,#666);font-size:.9em}
 .absence-workflow-history ul{padding-inline-start:22px;margin:6px 0}
+.absence-workflow-history small{display:block;overflow-wrap:anywhere;margin-top:4px}
+.absence-workflow-return-alert{padding:8px;border-inline-start:3px solid #b7791f;background:rgba(183,121,31,.08);border-radius:6px}
 
 <style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}
 /* Brand signature refinement — fixed name and signature with path-following star glints */
@@ -3452,9 +3454,10 @@ function absenceWorkflowCycleIsClosed(studentId,start){
  if(!start||!Array.isArray(db.documents))return false;
  return db.documents.some(record=>String(record.student)===String(studentId)&&String(record.absenceStart||'')===String(start)&&String(record.absenceWorkflowStatus||'')==='مسوى');
 }
-function appendAbsenceWorkflowHistory(record,action,summary,today){
+function appendAbsenceWorkflowHistory(record,action,summary,today,details){
  const history=Array.isArray(record.absenceWorkflowHistory)?record.absenceWorkflowHistory.slice():[];
- history.push({at:new Date().toISOString(),date:String(today||dateISO()),action:String(action||''),summary:String(summary||'')});
+ const safeDetails=details&&typeof details==='object'?JSON.parse(JSON.stringify(details)):{};
+ history.push({at:new Date().toISOString(),date:String(today||dateISO()),action:String(action||''),summary:String(summary||''),details:safeDetails});
  record.absenceWorkflowHistory=history.slice(-40);
 }
 function applyAbsenceWorkflowDelivery(record,input,today){
@@ -3473,7 +3476,7 @@ function applyAbsenceWorkflowDelivery(record,input,today){
  if(unchanged)return {ok:true,changed:false,message:'بيانات التبليغ المسجلة مطابقة؛ لم يحدث تعديل.'};
  record.deliveryDate=delivered;record.deliveryMethod=method;record.deliveryRecipient=recipient;record.deliveryProof=proof;record.deliveryRecordedAt=now;
  record.draftStatus='سُجل التبليغ الفعلي وإثباته';
- appendAbsenceWorkflowHistory(record,'تبليغ','تسجيل بيانات التبليغ وإثباته',now);
+ appendAbsenceWorkflowHistory(record,'تبليغ','تسجيل بيانات التبليغ وإثباته',now,{deliveryDate:delivered,deliveryMethod:method,deliveryRecipient:recipient,deliveryProof:proof});
  return {ok:true,changed:true,message:'تم تسجيل بيانات التبليغ. احتُفظ بتاريخ التبليغ وإثباته.'};
 }
 function applyAbsenceWorkflowResponse(record,input,today){
@@ -3491,7 +3494,7 @@ function applyAbsenceWorkflowResponse(record,input,today){
  const unchanged=String(record.guardianResponseStatus||'غير مسجل')===status&&String(record.guardianResponseDate||'')===checkedAt&&String(record.guardianResponseNotes||'')===notes;
  if(unchanged)return {ok:true,changed:false,message:'نتيجة رد الولي مطابقة لما هو محفوظ.'};
  record.guardianResponseStatus=status;record.guardianResponseDate=checkedAt;record.guardianResponseNotes=notes;
- appendAbsenceWorkflowHistory(record,'رد الولي','تحديث نتيجة متابعة رد الولي',now);
+ appendAbsenceWorkflowHistory(record,'رد الولي','تحديث نتيجة متابعة رد الولي',now,{guardianResponseStatus:status,guardianResponseDate:checkedAt,guardianResponseNotes:notes});
  return {ok:true,changed:true,message:'تم حفظ نتيجة متابعة رد الولي.'};
 }
 function applyAbsenceWorkflowSettlement(records,record,input,today){
@@ -3509,7 +3512,7 @@ function applyAbsenceWorkflowSettlement(records,record,input,today){
  targets.forEach(item=>{
   item.absenceWorkflowStatus='مسوى';item.absenceClosureDate=settlementDate;item.absenceClosureReason=reason;item.absenceClosureNotes=notes;
   if(reason==='التحق بالمؤسسة')item.absenceReturnDate=settlementDate;
-  appendAbsenceWorkflowHistory(item,'تسوية','إغلاق دورة الغياب مع الاحتفاظ بجميع الوثائق والسجلات',now);
+  appendAbsenceWorkflowHistory(item,'تسوية','إغلاق دورة الغياب مع الاحتفاظ بجميع الوثائق والسجلات',now,{absenceClosureDate:settlementDate,absenceClosureReason:reason,absenceClosureNotes:notes});
  });
  return {ok:true,changed:true,count:targets.length,message:'تمت تسوية الملف مع الاحتفاظ بالتاريخ والوثائق السابقة.'};
 }
@@ -3647,6 +3650,21 @@ window.openAbsenceStageDocument=id=>{
  const record=db.documents.find(item=>String(item.id)===String(id));if(!record)return;
  go('documents');window.printDoc(String(id));
 };
+function findAbsenceWorkflowReturnEvidence(record,attendance){
+ const start=String(record&&record.absenceStart||'');
+ if(!start||!record)return null;
+ const records=Array.isArray(attendance)?attendance:[];
+ const candidates=records.filter(item=>{
+  if(String(item.student)!==String(record.student))return false;
+  const date=String(item.date||'');
+  if(!isValidISODate(date)||date<=start||date>dateISO())return false;
+  if(item.type==='حضور'||item.type==='تأخر')return true;
+  return item.type==='غياب'&&String(item.justified||'غير مبرر')!=='غير مبرر';
+ }).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+ if(!candidates.length)return null;
+ const first=candidates[0];
+ return {date:String(first.date),type:String(first.type||''),justified:String(first.justified||''),recordId:String(first.id||'')};
+}
 function absenceWorkflowDeadlineDate(record){
  const stage=Number(record&&record.absenceStage),required=[4,11].includes(stage)?7:stage===18?14:0;
  if(!required||!isValidISODate(String(record.deliveryDate||''))||!String(record.deliveryProof||'').trim())return '';
@@ -3694,16 +3712,18 @@ function renderAbsenceWorkflowBoard(){
   records.sort((a,b)=>Number(a.absenceStage)-Number(b.absenceStage));
   const first=records[0],st=student(first.student),studentName=((st&&st.last||'')+' '+(st&&st.first||'')).trim()||'تلميذ غير محدد';
   const closed=records.some(item=>String(item.absenceWorkflowStatus||'')==='مسوى'),heading=first.absenceStart?'دورة غياب متواصل · البداية '+esc(first.absenceStart):'متابعة تكرار شهري · '+esc(first.absenceMonth||'');
+  const returnEvidence=findAbsenceWorkflowReturnEvidence(first,db.attendance);
+  const returnAlert=returnEvidence?'<p class="absence-workflow-return-alert">تنبيه مراجعة: يوجد سجل '+esc(returnEvidence.type)+' بعد بداية هذه الدورة بتاريخ '+esc(returnEvidence.date)+'. راجع الحضور والوثائق؛ لا يغلق التطبيق الملف تلقائياً.</p>':'';
   const steps=records.map(record=>{
    const stage=Number(record.absenceStage),label=absenceStageLabel(stage),stepStatus=absenceWorkflowStepStatus(record,closed),history=Array.isArray(record.absenceWorkflowHistory)?record.absenceWorkflowHistory:[];
-   const historyHtml=history.length?'<details class="absence-workflow-history"><summary>سجل هذه الوثيقة ('+history.length+')</summary><ul>'+history.slice().reverse().map(event=>'<li><b>'+esc(event.date||'')+'</b> — '+esc(event.summary||event.action||'تحديث مسجل')+'</li>').join('')+'</ul></details>':'';
+   const historyHtml=history.length?'<details class="absence-workflow-history"><summary>سجل هذه الوثيقة ('+history.length+')</summary><ul>'+history.slice().reverse().map(event=>{const meta=event.details||{},parts=[meta.deliveryDate,meta.deliveryMethod,meta.deliveryRecipient,meta.deliveryProof,meta.guardianResponseStatus,meta.guardianResponseDate,meta.absenceClosureReason,meta.absenceClosureDate,meta.guardianResponseNotes,meta.absenceClosureNotes].filter(Boolean).map(value=>String(value));return '<li><b>'+esc(event.date||'')+'</b> — '+esc(event.summary||event.action||'تحديث مسجل')+(parts.length?'<small> · '+esc(parts.join(' · '))+'</small>':'')+'</li>';}).join('')+'</ul></details>':'';
    if(stage===32||closed)return '<div class="absence-workflow-step"><div class="absence-workflow-step-head"><b>'+esc(label)+'</b><span>'+esc(record.date||'')+'</span></div><p>'+esc(stepStatus)+'</p>'+historyHtml+'</div>';
    const methodHtml='<option value="">اختر الطريقة</option>'+methodOptions.map(method=>'<option value="'+esc(method)+'" '+(String(record.deliveryMethod||'')===method?'selected':'')+'>'+esc(method)+'</option>').join('');
    const responseHtml=responseOptions.map(status=>'<option value="'+esc(status)+'" '+(String(record.guardianResponseStatus||'غير مسجل')===status?'selected':'')+'>'+esc(status)+'</option>').join('');
    return '<div class="absence-workflow-step"><div class="absence-workflow-step-head"><b>'+esc(label)+'</b><span>'+esc(record.date||'')+'</span></div><p>'+esc(stepStatus)+'</p><details class="absence-workflow-editor"><summary>إدارة بيانات التبليغ ونتيجة رد الولي</summary><div class="absence-workflow-fields"><label>تاريخ التبليغ الفعلي<input type="date" data-field="deliveryDate" value="'+esc(record.deliveryDate||'')+'"></label><label>طريقة التبليغ<select data-field="deliveryMethod">'+methodHtml+'</select></label><label>اسم المستلم أو الجهة<input type="text" maxlength="120" data-field="deliveryRecipient" value="'+esc(record.deliveryRecipient||'')+'" placeholder="اسم المستلم"></label><label>رقم الوصل أو مرجع الإثبات<input type="text" maxlength="240" data-field="deliveryProof" value="'+esc(record.deliveryProof||'')+'" placeholder="رقم البريد المضمون أو مرجع الإثبات"></label><label class="absence-workflow-confirm"><input type="checkbox" data-field="deliveryConfirmed"> أؤكد أن التبليغ تم فعلياً وأن الإثبات محفوظ لدى المؤسسة.</label><button type="button" class="btn small primary" data-absence-action="delivery" data-doc-id="'+esc(record.id)+'">حفظ بيانات التبليغ</button></div><hr><div class="absence-workflow-fields"><label>نتيجة متابعة رد الولي<select data-field="guardianResponseStatus">'+responseHtml+'</select></label><label>تاريخ توثيق نتيجة الرد أو المراجعة<input type="date" data-field="guardianResponseDate" value="'+esc(record.guardianResponseDate||'')+'"></label><label>ملاحظات مختصرة<textarea rows="2" maxlength="500" data-field="guardianResponseNotes">'+esc(record.guardianResponseNotes||'')+'</textarea></label><button type="button" class="btn small" data-absence-action="response" data-doc-id="'+esc(record.id)+'">حفظ نتيجة الرد</button></div></details>'+historyHtml+'</div>';
   }).join('');
   const settlement=closed?'<p class="absence-workflow-closed">تمت تسوية هذه الدورة بتاريخ '+esc(first.absenceClosureDate||'—')+' · '+esc(first.absenceClosureReason||'')+'. الوثائق محفوظة ولا تُحذف.</p>':'<details class="absence-workflow-editor absence-workflow-settlement"><summary>تسجيل عودة التلميذ أو تسوية الملف</summary><div class="absence-workflow-fields"><label>سبب التسوية<select data-field="settlementReason"><option value="">اختر السبب</option>'+settlementOptions.map(reason=>'<option value="'+esc(reason)+'">'+esc(reason)+'</option>').join('')+'</select></label><label>تاريخ العودة أو التسوية<input type="date" data-field="settlementDate" value="'+esc(dateISO())+'"></label><label>ملاحظات التسوية (اختياري)<textarea rows="2" maxlength="500" data-field="settlementNotes"></textarea></label><label class="absence-workflow-confirm"><input type="checkbox" data-field="settlementConfirmed"> أؤكد مراجعة الملف وتوثيق العودة/التسوية، مع الاحتفاظ بالوثائق السابقة.</label><button type="button" class="btn small primary" data-absence-action="settle" data-doc-id="'+esc(first.id)+'">اعتماد التسوية وإغلاق الدورة</button></div></details>';
-  return '<article class="followup-card absence-workflow-card"><h3>'+esc(studentName)+'</h3><p>'+heading+'</p><p class="absence-workflow-state '+(closed?'is-closed':'')+'">'+(closed?'ملف مسوى':'ملف مفتوح')+' · '+records.length+' وثيقة محفوظة</p>'+steps+settlement+'</article>';
+  return '<article class="followup-card absence-workflow-card"><h3>'+esc(studentName)+'</h3><p>'+heading+'</p><p class="absence-workflow-state '+(closed?'is-closed':'')+'">'+(closed?'ملف مسوى':'ملف مفتوح')+' · '+records.length+' وثيقة محفوظة</p>'+returnAlert+steps+settlement+'</article>';
  }).join('');
  box.querySelectorAll('[data-absence-action]').forEach(button=>button.addEventListener('click',()=>{
   const action=button.dataset.absenceAction,record=db.documents.find(item=>String(item.id)===String(button.dataset.docId));if(!record)return;
