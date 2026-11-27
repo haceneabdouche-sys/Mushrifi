@@ -3839,6 +3839,12 @@ function renderMonthlyAbsenceDateDetails(item){
  if(!dates.length)return '';
  return '<details class="monthly-occurrence-details"><summary>عرض الأيام المسجلة ('+dates.length+')</summary><div class="monthly-occurrence-dates" dir="ltr">'+dates.map(date=>'<span>'+esc(date)+'</span>').join('')+'</div></details>';
 }
+function bindAbsenceDocumentButtons(box){
+ if(!box)return;
+ box.querySelectorAll('[data-open-absence-doc]').forEach(button=>button.addEventListener('click',()=>{
+  const id=String(button.dataset.openAbsenceDoc||'');if(id)openAbsenceStageDocument(id);
+ }));
+}
 function renderAbsenceStageDashboard(){
  const box=$('#absenceStageDashboardList'),count=$('#absenceStageAlertCount');if(!box)return;
  const streaks=getUnjustifiedStreaks().filter(item=>Number(item.days)>=4);
@@ -3851,10 +3857,11 @@ function renderAbsenceStageDashboard(){
 
  for(const item of monthly){
   const doc=db.documents.find(d=>String(d.student)===String(item.student.id)&&Number(d.absenceStage)===17&&String(d.absenceMonth||'')===item.month);
-  items.push('<div class="followup-card monthly-occurrence-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — '+esc(attendanceGroupLabel(item.student))+'</h3><p class="muted">إنذار المادة 17 · '+esc(item.month)+'</p><p class="monthly-occurrence-count"><strong>'+item.dates.length+' أيام مختلفة</strong><span>بها غياب أو تأخر غير مبرر</span></p>'+renderMonthlyAbsenceDateDetails(item)+'<p><b>'+(doc?'مسودة الإنذار جاهزة للمراجعة.':'بلغت العتبة؛ راجع الوقائع والتبريرات قبل اعتماد الإنذار.')+'</b></p>'+(doc?'<button type="button" class="btn small primary" onclick="openAbsenceStageDocument(\\''+esc(doc.id)+'\\')">مراجعة وطباعة الإنذار</button>':'')+'</div>');
+  items.push('<div class="followup-card monthly-occurrence-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — '+esc(attendanceGroupLabel(item.student))+'</h3><p class="muted">إنذار المادة 17 · '+esc(item.month)+'</p><p class="monthly-occurrence-count"><strong>'+item.dates.length+' أيام مختلفة</strong><span>بها غياب أو تأخر غير مبرر</span></p>'+renderMonthlyAbsenceDateDetails(item)+'<p><b>'+(doc?'مسودة الإنذار جاهزة للمراجعة.':'بلغت العتبة؛ راجع الوقائع والتبريرات قبل اعتماد الإنذار.')+'</b></p>'+(doc?'<button type="button" class="btn small primary" data-open-absence-doc="'+esc(doc.id)+'">مراجعة وطباعة الإنذار</button>':'')+'</div>');
  }
  if(count)count.textContent=String(items.length)+' حالة';
  box.innerHTML=items.length?items.join(''):'<p class="empty">لا توجد حالياً حالات بلغت عتبات الإشعار أو الإنذار الكتابي.</p>';
+ bindAbsenceDocumentButtons(box);
 }
 function renderAbsenceFollowup(){
  const box=$('#absenceFollowup');if(!box)return;
@@ -3867,9 +3874,10 @@ function renderAbsenceFollowup(){
  const monthly=getMonthlyUnjustifiedOccurrences(dateISO().slice(0,7));
  const monthlyCards=monthly.map(item=>{
   const doc=db.documents.find(d=>String(d.student)===String(item.student.id)&&Number(d.absenceStage)===17&&String(d.absenceMonth||'')===item.month);
-  return '<div class="followup-card monthly-occurrence-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — إنذار المادة 17</h3><p class="muted">'+esc(item.month)+'</p><p class="monthly-occurrence-count"><strong>'+item.dates.length+' أيام مختلفة</strong><span>بها غياب أو تأخر غير مبرر</span></p>'+renderMonthlyAbsenceDateDetails(item)+(doc?'<p>مسودة الإنذار جاهزة للمراجعة.</p><button type="button" class="btn small primary" onclick="openAbsenceStageDocument(\\''+esc(doc.id)+'\\')">مراجعة وطباعة الإنذار</button>':'<p>بلغت العتبة؛ راجع الوقائع والتبريرات قبل اعتماد الإنذار.</p>')+'</div>';
+  return '<div class="followup-card monthly-occurrence-card"><h3>'+esc((item.student.last||'')+' '+(item.student.first||''))+' — إنذار المادة 17</h3><p class="muted">'+esc(item.month)+'</p><p class="monthly-occurrence-count"><strong>'+item.dates.length+' أيام مختلفة</strong><span>بها غياب أو تأخر غير مبرر</span></p>'+renderMonthlyAbsenceDateDetails(item)+(doc?'<p>مسودة الإنذار جاهزة للمراجعة.</p><button type="button" class="btn small primary" data-open-absence-doc="'+esc(doc.id)+'">مراجعة وطباعة الإنذار</button>':'<p>بلغت العتبة؛ راجع الوقائع والتبريرات قبل اعتماد الإنذار.</p>')+'</div>';
  }).join('');
  box.innerHTML=(cards||'<p class="empty">لا توجد حالياً سلسلة غياب متواصل.</p>')+(monthlyCards?'<h3>تكرار الغياب والتأخر خلال الشهر (المادة 17)</h3>'+monthlyCards:'');
+ bindAbsenceDocumentButtons(box);
 }
 function renderSchoolHolidays(){
  const box=$('#schoolHolidayRows');if(!box)return;
