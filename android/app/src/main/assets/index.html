@@ -3443,7 +3443,6 @@ function getUnjustifiedStreaks(){
  }
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
-function absenceStageDocument(streak,stage){
 function absenceWorkflowGroupKey(record){
  if(record&&record.absenceStart)return 'continuous:'+String(record.student)+':'+String(record.absenceStart);
  if(record&&record.absenceMonth)return 'monthly:'+String(record.student)+':'+String(record.absenceMonth);
@@ -3515,6 +3514,7 @@ function applyAbsenceWorkflowSettlement(records,record,input,today){
  return {ok:true,changed:true,count:targets.length,message:'تمت تسوية الملف مع الاحتفاظ بالتاريخ والوثائق السابقة.'};
 }
 
+function absenceStageDocument(streak,stage){
  return db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===Number(stage));
 }
 function noticeExists(streak,stage){return !!absenceStageDocument(streak,stage);}
