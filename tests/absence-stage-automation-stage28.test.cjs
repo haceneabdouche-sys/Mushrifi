@@ -174,6 +174,13 @@ test('Android notification bridge supports monthly Article 17 and keeps stage al
   assert.match(notifications, /Notification\.VISIBILITY_PRIVATE/);
 });
 
+test('pending absence-stage reminders are retried after notification permission is granted or restored', () => {
+  assert.match(html, /function syncPendingAbsenceStageNotifications\\(\\)/);
+  assert.match(html, /if\\(granted\\)\\{syncPendingAbsenceStageNotifications\\(\\)/);
+  assert.match(html, /if\\(granted\\)syncPendingAbsenceStageNotifications\\(\\)/);
+  assert.match(html, /AndroidBridge\\.notifyAbsenceStage\\(String\\(st\\.id\\)/);
+});
+
 test('internal build code increments while public application version remains 2.6', () => {
   assert.match(gradle, /versionCode 32/);
   assert.match(gradle, /versionName '2\.6'/);
