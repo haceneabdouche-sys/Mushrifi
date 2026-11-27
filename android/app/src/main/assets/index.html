@@ -3532,7 +3532,7 @@ function canCreateAbsenceStage32(streak){
  return !!streak&&Number(streak.days)>=32&&hasVerifiedAbsenceNoticeDelivery(streak,18,14)&&guardianResponseAllowsEscalation(warning);
 }
 function getEligibleAbsenceStages(streak){
- if(!streak||absenceWorkflowCycleIsClosed(streak.student.id,streak.start))return [];
+ if(!streak||(typeof absenceWorkflowCycleIsClosed==='function'&&absenceWorkflowCycleIsClosed(streak.student.id,streak.start)))return [];
  const days=Number(streak.days)||0,eligible=[];
  const first=absenceStageDocument(streak,4),second=absenceStageDocument(streak,11);
  if(days>=4&&!first)eligible.push(4);
@@ -3583,7 +3583,7 @@ function monthlyAbsenceWarningExists(studentId,month){
  return db.documents.some(d=>String(d.student)===String(studentId)&&Number(d.absenceStage)===17&&String(d.absenceStageKind||'')==='monthly-repetition'&&String(d.absenceMonth||'')===String(month));
 }
 function createAbsenceStageNoticeRecord(streak,stage){
- if(absenceWorkflowCycleIsClosed(streak.student.id,streak.start)||noticeExists(streak,stage))return false;
+ if((typeof absenceWorkflowCycleIsClosed==='function'&&absenceWorkflowCycleIsClosed(streak.student.id,streak.start))||noticeExists(streak,stage))return false;
  const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار مضمون بسبب الغياب',32:'مذكرة داخلية - مراجعة انتهاء مهلة الإعذار'};
  const reasons={
   4:'مسودة إشعار أول آلية بعد بلوغ ثلاثة أيام متتالية من الغياب، وفق المادة 21 من القرار رقم 833 المؤرخ في 13 نوفمبر 1991. تُراجع وتُعتمد قبل الإمضاء والتبليغ.',
