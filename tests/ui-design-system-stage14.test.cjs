@@ -32,4 +32,13 @@ const ne=html.indexOf('</nav>',n);
 assert.ok(n>=0&&ne>n,'primary navigation remains present');
 const pages=[...html.slice(n,ne).matchAll(/data-page="([^"]+)"/g)].map(m=>m[1]);
 assert.deepEqual(pages,['home','students','attendance','documents','more'],'primary navigation order is preserved');
+
+const footerStart=html.indexOf('<footer class="app-footer">');
+const footerEnd=html.indexOf('</footer>',footerStart);
+const footer=footerStart>=0&&footerEnd>footerStart?html.slice(footerStart,footerEnd+9):'';
+assert.ok(footer.includes('ABDOUCHE HACENE'),'the developer name is permanently displayed in the footer');
+assert.ok(footer.includes('src="./signature-color.png"'),'the approved signature image is reused in the footer');
+assert.ok(footer.includes('إمضاء Abdouche Hacene'),'the signature has an accessible Arabic description');
+assert.ok(footer.includes('تُحفظ البيانات محلياً على هذا الهاتف'),'the existing local-data notice is preserved');
+assert.ok(html.includes('.footer-author-credit')&&html.includes('.footer-author-signature'),'the footer engraving has its own responsive styling');
 console.log('PASS: Stage 14 unified design tokens, mobile layout, accessible controls and workflow preservation.');

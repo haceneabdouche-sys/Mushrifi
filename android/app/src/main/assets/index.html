@@ -1127,6 +1127,15 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 .monthly-occurrence-details[open]>summary:after{content:"−"}
 .monthly-occurrence-dates{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin-top:8px}
 .monthly-occurrence-dates span{display:inline-block;padding:4px 7px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:11px;color:var(--muted);white-space:nowrap}
+
+/* Permanent author engraving in the application footer. */
+.app-footer{padding:18px 12px max(24px,calc(env(safe-area-inset-bottom,0px) + 12px))}
+.app-footer .footer-app-note{margin:0;color:var(--muted);font-size:11px;line-height:1.7}
+.footer-author-credit{width:min(100%,300px);margin:13px auto 0;padding-top:12px;border-top:1px solid rgba(201,168,91,.34);display:flex;flex-direction:column;align-items:center;gap:3px}
+.footer-author-label{font-size:10px;font-weight:700;color:#8b7b5c;letter-spacing:.5px}
+.footer-author-name{display:inline-block;font-size:14px;line-height:1.4;letter-spacing:1.2px;color:#9b7837;text-shadow:0 1px 0 rgba(255,255,255,.85),0 2px 2px rgba(23,59,88,.12);background:linear-gradient(90deg,#8a672a,#d7b96e,#8d6b32);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.footer-author-signature{display:block;width:68px;height:68px;object-fit:contain;background:transparent;border:0;margin:0 auto;filter:drop-shadow(0 2px 1px rgba(16,42,67,.12))}
+@media(max-width:700px){.app-footer{padding:18px 10px max(26px,calc(env(safe-area-inset-bottom,0px) + 16px))}.footer-author-name{font-size:13px}.footer-author-signature{width:60px;height:60px}}
 </style>
 </head>
 <body>
@@ -1562,7 +1571,14 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
 </section>
 </div>
-</div><footer>مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</footer>
+</div><footer class="app-footer">
+ <p class="footer-app-note">مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</p>
+ <div class="footer-author-credit" aria-label="توقيع مطوّر تطبيق مُشرفي">
+  <span class="footer-author-label">تصميم وتطوير</span>
+  <strong class="footer-author-name" dir="ltr">ABDOUCHE HACENE</strong>
+  <img class="footer-author-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene" loading="eager">
+ </div>
+</footer>
 <script>
 /* MUSHRIFI QUIET DIAGNOSTICS — no test overlay in the user interface */
 (function(){
