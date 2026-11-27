@@ -97,5 +97,5 @@ assert.ok(html.includes('function showMushrifiDatabaseRecoveryScreen()'),'the st
 assert.ok(html.includes('AndroidBridge.loadRecoverySnapshot'),'the encrypted recovery snapshot is checked');
 assert.ok(html.includes('AndroidBridge.restoreDatabaseSafely(JSON.stringify(recoveryDatabase))'),'recovery is written only after explicit confirmation');
 assert.ok(html.includes('writes disabled for data protection'),'normal startup stops while stored data is unavailable');
-assert.match(gradle,/versionCode 35[\\s\\S]*versionName '2\\.6'/,'the corrective APK has a higher version code while retaining visible version 2.6');
+assert.ok(gradle.includes('versionCode 35')&&gradle.includes("versionName '2.6'"),'the corrective APK has a higher version code while retaining visible version 2.6');
 console.log('PASS Stage 31 missing database row protection, genuine first-run distinction and explicit encrypted recovery path.');
