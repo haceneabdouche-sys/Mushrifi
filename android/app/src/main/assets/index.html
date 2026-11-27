@@ -2175,7 +2175,7 @@ $$('nav button').forEach(button=>button.addEventListener('click',()=>go(button.d
  $('#followupCenterReset')?.addEventListener('click',()=>{['followupCenterFrom','followupCenterTo','followupCenterSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value='';});['followupCenterSource','followupCenterStatus','followupCenterSection'].forEach(id=>{const el=$('#'+id);if(el)el.value='all';});if($('#followupCenterSection'))$('#followupCenterSection').value='';renderFollowupCenter();});
  ['followupCenterFrom','followupCenterTo','followupCenterSource','followupCenterStatus','followupCenterSection'].forEach(id=>$('#'+id)?.addEventListener('change',renderFollowupCenter));
  $('#followupCenterSearch')?.addEventListener('input',renderFollowupCenter);
- $('#followupCenterPrint')?.addEventListener('click',()=>window.printFollowupCenter());
+ $('#followupCenterPrint')?.addEventListener('click',()=>printFollowupCenter());
  $$('[data-followup-view]').forEach(button=>button.addEventListener('click',()=>{setFollowupView(button.dataset.followupView);updatePageContextBar(currentAppRoute());render();}));
  $('#pageBackButton')?.addEventListener('click',()=>goPreviousPage());
  $('#licenseAdvisoryOpen')?.addEventListener('click',()=>{go('settings');setSettingsTab('license');});
@@ -3273,7 +3273,7 @@ function renderFollowupCenter(){
  }));
  window.followupCenterLastSnapshot=finalSnapshot;
 }
-window.printFollowupCenter=()=>{
+function printFollowupCenter(){
  const snapshot=window.followupCenterLastSnapshot;
  if(!snapshot||!Array.isArray(snapshot.events)||!snapshot.events.length){alert('اعرض سجلات مطابقة أولاً قبل الطباعة.');return;}
  window.closeMushrifiPrintPreview(true);
