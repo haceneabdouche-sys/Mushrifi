@@ -471,7 +471,7 @@ header .credit-signature{width:72px;height:72px;margin-top:2px}
 #nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:52px;padding:6px 2px;border:0;border-radius:11px;background:transparent;color:var(--muted);font-size:11px;font-weight:800;line-height:1.25;white-space:normal}
 #nav button span:first-child{font-size:18px;line-height:1}
 #nav button.active{background:#edf3f7;color:var(--navy);box-shadow:inset 0 -2px 0 var(--gold)}
-body{padding-bottom:calc(145px + env(safe-area-inset-bottom))}
+body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 .wrap{padding-bottom:16px}
 @media(max-width:760px){
   .home-feature-grid{grid-template-columns:1fr}
@@ -1012,7 +1012,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 #nav button{min-height:50px;border-radius:11px;font-weight:800}
 @media(min-width:701px){.wrap{padding-bottom:24px}#nav{border-radius:0 0 13px 13px}}
 @media(max-width:700px){
- header{padding:11px 10px 10px}.wrap{padding:10px 10px calc(145px + env(safe-area-inset-bottom))}
+ header{padding:11px 10px 10px}.wrap{padding:10px 10px calc(150px + env(safe-area-inset-bottom))}
  .panel{padding:13px;margin-top:10px;border-radius:15px}.panel h2{font-size:16px;margin-bottom:7px}
  .stat{padding:10px}.home-heading{padding:13px 14px}
  .home-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.home-kpis .stat{min-height:72px;padding:10px}
@@ -1128,127 +1128,171 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 .monthly-occurrence-dates{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin-top:8px}
 .monthly-occurrence-dates span{display:inline-block;padding:4px 7px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:11px;color:var(--muted);white-space:nowrap}
 
-/* Persistent graphite-and-antique-bronze author engraving above the navigation bar. */
-.app-author-engraving{
- position:fixed;
- left:50%;
- bottom:calc(66px + env(safe-area-inset-bottom));
- transform:translateX(-50%);
- z-index:9998;
- display:flex;
- flex-direction:row;
- align-items:center;
- justify-content:center;
- gap:clamp(9px,2.5vw,16px);
- direction:rtl;
- box-sizing:border-box;
- width:min(calc(100% - 20px),820px);
- min-height:48px;
- padding:5px 13px;
- overflow:hidden;
- isolation:isolate;
- border:1px solid rgba(166,145,107,.64);
- border-radius:12px;
+
+
+/* Integrated navigation plaque: the author engraving is part of the same background as the buttons. */
+#nav{
+ position:relative!important;
+ display:grid!important;
+ grid-template-columns:repeat(5,minmax(0,1fr))!important;
+ grid-template-rows:36px 54px!important;
+ gap:2px!important;
+ align-items:stretch!important;
+ box-sizing:border-box!important;
+ overflow:hidden!important;
+ padding:4px 7px calc(5px + env(safe-area-inset-bottom))!important;
+ border:1px solid #74664e!important;
+ border-bottom:0!important;
+ border-radius:17px 17px 0 0!important;
  background:
-  radial-gradient(ellipse at 16% 18%,rgba(208,184,137,.14),transparent 42%),
-  linear-gradient(132deg,#3c4449 0%,#252c31 54%,#42494d 100%);
- box-shadow:
-  inset 0 1px 0 rgba(238,224,192,.17),
-  inset 0 -3px 8px rgba(0,0,0,.56),
-  0 3px 12px rgba(10,18,22,.28);
+  radial-gradient(ellipse at 50% 0%,rgba(194,166,113,.14),transparent 56%),
+  linear-gradient(140deg,#394146 0%,#242b30 52%,#343c41 100%)!important;
+ box-shadow:0 -7px 22px rgba(12,18,21,.28),inset 0 1px 0 rgba(225,208,172,.26)!important;
 }
-.app-author-engraving::before{
+#nav::before{
  content:"";
  position:absolute;
  inset:0;
  z-index:0;
  pointer-events:none;
- opacity:.15;
- background:repeating-linear-gradient(116deg,transparent 0 17px,rgba(218,199,163,.36) 18px,transparent 19px 37px);
+ opacity:.13;
+ background:repeating-linear-gradient(118deg,transparent 0 18px,rgba(224,202,158,.38) 19px,transparent 20px 39px);
 }
-.app-author-engraving::after{
- content:"";
+.nav-author-engraving{
  position:absolute;
- inset:3px;
- z-index:0;
- pointer-events:none;
- border:1px solid rgba(207,183,137,.22);
- border-radius:8px;
-}
-.app-author-copy{
- position:relative;
+ top:3px;
+ left:9px;
+ right:9px;
  z-index:1;
- min-width:0;
+ height:35px;
  display:flex;
- flex-direction:column;
- align-items:flex-end;
- gap:0;
+ align-items:center;
+ justify-content:center;
+ gap:clamp(7px,2.6vw,15px);
+ direction:ltr;
+ overflow:hidden;
+ pointer-events:none;
+ border-bottom:1px solid rgba(186,158,111,.24);
 }
-.app-author-caption{
- color:#c4b38e;
- font-size:9px;
- line-height:1.35;
+.nav-author-caption{
+ flex:0 0 auto;
+ color:#b9aa89;
+ font-size:8px;
+ line-height:1.2;
  font-weight:800;
- letter-spacing:.85px;
- text-shadow:0 1px 0 rgba(255,255,255,.14),0 -1px 1px rgba(0,0,0,.8);
+ letter-spacing:.6px;
+ text-shadow:0 1px 0 rgba(235,220,185,.24),0 -1px 1px rgba(0,0,0,.85);
 }
-.app-author-name{
+.nav-author-name{
  display:block;
- max-width:100%;
- color:#c7ad79;
- -webkit-text-fill-color:#c7ad79;
+ max-width:calc(100% - 92px);
+ color:#c9b385;
+ -webkit-text-fill-color:#c9b385;
  font-family:"Arial Black","Franklin Gothic Heavy",Impact,Tahoma,sans-serif;
- font-size:clamp(15px,4.2vw,19px);
+ font-size:clamp(13px,3.8vw,17px);
  font-weight:900;
- letter-spacing:1.6px;
- line-height:1.28;
+ letter-spacing:1.15px;
+ line-height:1.2;
  white-space:nowrap;
- -webkit-text-stroke:.45px rgba(18,22,24,.85);
+ overflow:hidden;
+ text-overflow:clip;
+ -webkit-text-stroke:.38px rgba(15,19,21,.88);
  text-shadow:
-  0 1px 0 rgba(244,226,185,.42),
-  0 -1px 1px rgba(0,0,0,.92),
-  1px 2px 1px rgba(0,0,0,.72),
-  0 2px 4px rgba(0,0,0,.42);
- transform:rotate(-.8deg);
+  0 1px 0 rgba(245,228,188,.40),
+  0 -1px 1px rgba(0,0,0,.96),
+  1px 2px 1px rgba(0,0,0,.75),
+  0 2px 4px rgba(0,0,0,.35);
+ transform:rotate(-.6deg);
 }
-.app-author-signature{
- position:relative;
- z-index:1;
+.nav-author-signature{
  display:block;
- flex:0 0 49px;
- width:49px;
- height:39px;
+ flex:0 0 34px;
+ width:34px;
+ height:29px;
  object-fit:contain;
- margin:0;
- border:0;
- border-radius:0;
- padding:0;
- background:transparent;
- box-shadow:none;
- opacity:.97;
- filter:grayscale(1) sepia(.72) saturate(1.15) brightness(.82) contrast(1.38);
+ opacity:.78;
+ filter:grayscale(1) sepia(.78) saturate(1.08) brightness(.74) contrast(1.42);
 }
-.app-footer{padding:0 10px 12px;text-align:center}
-.app-footer .footer-app-note{margin:0;color:var(--muted);font-size:11px;line-height:1.7}
-@media(max-width:700px){
- .app-author-engraving{
-  bottom:calc(64px + env(safe-area-inset-bottom));
-  width:calc(100% - 14px);
-  min-height:45px;
-  padding:4px 9px;
-  gap:9px;
+#nav>button{
+ position:relative!important;
+ z-index:2!important;
+ grid-row:2!important;
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:center!important;
+ justify-content:center!important;
+ gap:2px!important;
+ min-width:0!important;
+ min-height:50px!important;
+ padding:4px 1px!important;
+ border:1px solid transparent!important;
+ border-radius:10px!important;
+ background:transparent!important;
+ color:#d6d1c4!important;
+ font-size:10px!important;
+ font-weight:800!important;
+ line-height:1.25!important;
+ white-space:normal!important;
+ box-shadow:none!important;
+}
+#nav>button span:first-child{font-size:18px!important;line-height:1.15!important}
+#nav>button span:last-child{font-size:10px!important;color:inherit!important}
+#nav>button.active{
+ background:rgba(222,205,167,.15)!important;
+ border-color:rgba(205,177,124,.42)!important;
+ color:#fff4d9!important;
+ box-shadow:inset 0 -2px 0 #b89b65!important;
+}
+#nav>button:not(.active):hover{background:rgba(255,255,255,.07)!important}
+@media(min-width:701px){
+ #nav{
+  position:sticky!important;
+  top:0!important;
+  width:100%!important;
+  max-width:none!important;
+  left:auto!important;
+  right:auto!important;
+  transform:none!important;
+  margin:0 0 12px!important;
+  border-radius:15px!important;
+  border-bottom:1px solid #74664e!important;
+  padding-bottom:4px!important;
+  box-shadow:0 4px 14px rgba(12,18,21,.16),inset 0 1px 0 rgba(225,208,172,.26)!important;
  }
- .app-author-name{font-size:clamp(14px,4.3vw,17px);letter-spacing:1.1px}
- .app-author-signature{flex-basis:43px;width:43px;height:34px}
+ .nav-author-engraving{left:12px;right:12px}
+}
+@media(max-width:700px){
+ #nav{
+  position:fixed!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  top:auto!important;
+  width:100%!important;
+  max-width:none!important;
+  transform:none!important;
+  grid-template-rows:35px 53px!important;
+  gap:2px!important;
+  padding:4px 6px calc(5px + env(safe-area-inset-bottom))!important;
+  border-radius:15px 15px 0 0!important;
+ }
+ .nav-author-engraving{left:7px;right:7px;height:34px;gap:8px}
+ .nav-author-name{font-size:clamp(12px,3.6vw,15px);letter-spacing:.8px}
+ .nav-author-signature{flex-basis:30px;width:30px;height:26px}
+ #nav>button{min-height:49px!important;font-size:10px!important}
+ #nav>button span:first-child{font-size:18px!important}
 }
 @media(max-width:360px){
- .app-author-engraving{width:calc(100% - 10px);padding:4px 7px;gap:7px}
- .app-author-name{font-size:13px;letter-spacing:.8px}
- .app-author-signature{flex-basis:38px;width:38px;height:31px}
- .app-author-caption{font-size:8px}
+ #nav{grid-template-rows:33px 51px!important;padding-inline:4px!important}
+ .nav-author-engraving{left:5px;right:5px;height:32px;gap:6px}
+ .nav-author-caption{font-size:7px}
+ .nav-author-name{font-size:11.5px;letter-spacing:.55px}
+ .nav-author-signature{flex-basis:26px;width:26px;height:23px}
+ #nav>button{font-size:9px!important}
+ #nav>button span:last-child{font-size:9px!important}
 }
-@media(prefers-reduced-motion:reduce){.app-author-name{transform:none}}
-@media print{.app-author-engraving{display:none!important}}
+@media print{#nav{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -1258,6 +1302,11 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <div class="notice app-data-note"><b>حماية البيانات:</b> سجلاتك محفوظة محلياً ومشفّرة على هذا الهاتف. احتفظ بنسخة احتياطية خارجية بانتظام.</div>
 <div class="notice license-advisory hidden" id="licenseAdvisory" role="note"><b>تنبيه الترخيص:</b> الترخيص غير نشط أو تعذّر التحقق منه؛ يمكنك عرض بياناتك وتصدير نسخة احتياطية. <button type="button" class="btn small" id="licenseAdvisoryOpen">فتح صفحة الترخيص</button></div>
 <nav class="no-print" id="nav" aria-label="التنقل الرئيسي">
+<div id="nav-author-engraving" class="nav-author-engraving" aria-label="تصميم وتطوير Abdouche Hacene">
+ <span class="nav-author-caption">تصميم وتطوير</span>
+ <strong class="nav-author-name" dir="ltr">ABDOUCHE HACENE</strong>
+ <img class="nav-author-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene">
+</div>
 <button class="active" data-page="home" aria-label="اليوم"><span aria-hidden="true">🏠</span><span>اليوم</span></button>
 <button data-page="students" aria-label="التلاميذ"><span aria-hidden="true">👥</span><span>التلاميذ</span></button>
 <button data-page="attendance" aria-label="المتابعة"><span aria-hidden="true">📋</span><span>المتابعة</span></button>
@@ -1685,13 +1734,6 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 </section>
 </div>
 </div><footer class="app-footer">
- <div id="app-author-engraving" class="app-author-engraving" aria-label="اسم وإمضاء مطوّر تطبيق مُشرِفي في جميع صفحات التطبيق">
-  <div class="app-author-copy">
-   <span class="app-author-caption">تصميم وتطوير</span>
-   <strong class="app-author-name" dir="ltr">ABDOUCHE HACENE</strong>
-  </div>
-  <img class="app-author-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene" loading="eager">
- </div>
  <p class="footer-app-note">مُشرِفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</p>
 </footer>
 <script>
