@@ -1863,7 +1863,7 @@ function auditComparableDatabase(source,options){
    Object.keys(record||{}).forEach(key=>{
     const value=record[key];
     if(safe.has(key)){projected[key]=value;return;}
-    if(value!==undefined&&value!==null&&value!==''&&value!==false){if(opts.retainLargeAttachments&&typeof value==='string'&&value.length>4096&&/^data:image\\//i.test(value))projected[key]=value;else projected[key]=auditFingerprintValue(value);}
+    if(value!==undefined&&value!==null&&value!==''&&value!==false){if(opts.retainLargeAttachments&&typeof value==='string'&&value.length>4096&&/^data:image\//i.test(value))projected[key]=value;else projected[key]=auditFingerprintValue(value);}
     else if(Object.prototype.hasOwnProperty.call(record,key))projected[key]=value;
    });
    recordIndex.set(auditRecordIdentity(projected,index),projected);
