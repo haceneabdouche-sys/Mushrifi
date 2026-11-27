@@ -932,7 +932,10 @@ public class MainActivity extends Activity {
         }
         @JavascriptInterface public void startArabicSpeech() {
             runOnUiThread(() -> {
-                if (speechPending) return;
+                if (speechPending) {
+                    notifyArabicSpeechError("المساعد الصوتي يعمل بالفعل. أكمل التحدث أو ألغِ نافذة الاستماع أولاً.");
+                    return;
+                }
                 try {
                     Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -940,17 +943,36 @@ public class MainActivity extends Activity {
                     intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "ar-DZ");
                     intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
                     intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "انطق الاسم واللقب بوضوح، ويمكنك ذكر القسم");
+                    intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "انطق الاسم واللقب بوضوح، ويمكنك ذكر الإجراء المطلوب");
                     speechPending = true;
                     startActivityForResult(intent, SPEECH_REQUEST);
                 } catch (Exception e) {
                     speechPending = false;
+                    notifyArabicSpeechError("تعذر تشغيل خدمة التعرف على الكلام. تحقق من توفر خدمة Google للتحدث ثم أعد المحاولة.");
                     Toast.makeText(MainActivity.this, "خدمة التعرف على الصوت غير متاحة. تحقق من تثبيت خدمة Google للتحدث.", Toast.LENGTH_LONG).show();
                 }
             });
         }
     }
 
+
+    private void notifyArabicSpeechError(String message) {
+        if (web == null) return;
+        final String quoted = org.json.JSONObject.quote(message == null ? "تعذر التعرف على الكلام." : message);
+        runOnUiThread(() -> {
+            if (web != null) web.evaluateJavascript(
+                "window.onArabicSpeechError && window.onArabicSpeechError(" + quoted + ");", null
+            );
+        });
+    }
+
+    private void notifyArabicSpeechCancelled() {
+        runOnUiThread(() -> {
+            if (web != null) web.evaluateJavascript(
+                "window.onArabicSpeechCancelled && window.onArabicSpeechCancelled();", null
+            );
+        });
+    }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= 26) {
@@ -1096,9 +1118,15 @@ public class MainActivity extends Activity {
                 java.util.ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                 if (results != null && !results.isEmpty()) {
                     org.json.JSONArray alternatives = new org.json.JSONArray(results);
-                    web.evaluateJavascript("window.onArabicSpeechResult && window.onArabicSpeechResult(" + alternatives.toString() + ");", null);
-                } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='لم يتم التقاط الكلام. حاول مرة أخرى.';", null);
-            } else web.evaluateJavascript("document.getElementById('voiceStatus').textContent='تم إلغاء التحدث.';", null);
+                    if (web != null) web.evaluateJavascript(
+                        "window.onArabicSpeechResult && window.onArabicSpeechResult(" + alternatives.toString() + ");", null
+                    );
+                } else {
+                    notifyArabicSpeechError("لم يتم التقاط الكلام. تحقق من الميكروفون وحاول مرة أخرى.");
+                }
+            } else {
+                notifyArabicSpeechCancelled();
+            }
         } else if (requestCode == PICK_BACKUP_NATIVE) {
             if (resultCode == RESULT_OK && data != null && data.getData() != null) {
                 try (java.io.InputStream in = getContentResolver().openInputStream(data.getData());

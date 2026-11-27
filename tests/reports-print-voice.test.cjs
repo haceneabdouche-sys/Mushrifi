@@ -16,18 +16,18 @@ const checks = [
   ['old free-floating rectangle sparkle animation is removed', /^(?![\s\S]*mushrifi-signature-only-star)(?![\s\S]*signature-light)/],
   ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
   ['home keeps all detailed metrics available in the expandable statistics panel', /class="[^"]*home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
-  ['daily tasks panel is placed on the dashboard with a live task count', /id="dailyTasksHeading">لوحة المتابعة اليومية الذكية<\/h2>[\s\S]*?id="dailyTasksCount"[\s\S]*?id="dailyTasksList"/],
+  ['large daily tasks and appointments are hidden only from the compact home display', /#home \.daily-tasks-panel,#home \.agenda-home-panel,#home \.home-advanced-panel\{display:none!important\}/],
   ['daily tasks identify summons in the next 24 hours and route to documents', /const summons=D\.filter[\s\S]*?t<=end[\s\S]*?page:'documents'/],
   ['daily tasks surface attendance entries awaiting justification and route to attendance', /pendingAll=A\.filter[\s\S]*?قيد التبرير[\s\S]*?page:'attendance'/],
   ['daily task navigation reuses existing page navigation without altering student records', /function openDailyDashboardTask[\s\S]*?go\('attendance'\)[\s\S]*?row\.scrollIntoView/],
-  ['upcoming parent summons remain visible on the home dashboard', /class="[^"]*upcoming-panel[\s\S]*?id="upcomingSummons"/],
+  ['upcoming summons remain available outside the home dashboard', /id="agenda"[^>]*class="page hidden"/],
   ['the More page exposes only secondary tools and groups them by purpose', /<section id="more" class="page hidden">[\s\S]*?data-go="agenda"[\s\S]*?data-go="reports"[\s\S]*?data-go="settings"[\s\S]*?data-go="audit"/],
   ['violations are inside the Follow-up workspace rather than a separate More-page destination', /<section id="attendance" class="page hidden">[\s\S]*?data-followup-view="attendance"[\s\S]*?data-followup-view="violations"[\s\S]*?<div id="violations" class="followup-view hidden"/],
   ['bottom navigation is fixed and reserves space for mobile safe areas', /#nav\{position:fixed[\s\S]*?env\(safe-area-inset-bottom\)/],
   ['secondary destinations are the only routes assigned to More', /const secondary=\['reports','settings','audit','agenda'\]\.includes\(route\)/],
   ['More selection follows the secondary-route flag', /button\.dataset\.page==='more'&&secondary/],
-  ['quick voice action is present on the home screen', /id="quickVoiceAccess"[^>]*>🎙️<b>التحدث إلى مُشرِفي<\/b>/],
-  ['quick voice action launches the Arabic speech button', /\$\('#quickVoiceAccess'\)\?\.addEventListener\('click',[\s\S]*?\$\('#startVoiceBtn'\)\?\.click\(\)/],
+  ['top dashboard voice launcher is icon-only and located in the heading', /<div class="home-heading panel">[\s\S]*?<section id="voiceAssistant"[\s\S]*?<button[^>]*id="startVoiceBtn"[^>]*aria-label="التحدث إلى مُشرِفي"[^>]*>🎙️<\/button>/],
+  ['duplicate lower voice tile is removed', /^(?![\s\S]*id="quickVoiceAccess")[\s\S]*$/],
   ['report print uses a dedicated preview instead of printing the whole app', /window\.printReport\s*=\s*\(\)=>[\s\S]*?id='mushrifiPrintPreview'[\s\S]*?window\.print\(\)/],
   ['report has summary cards for justified and unjustified absences', /غيابات مبررة[\s\S]*?غيابات غير مبررة/],
   ['report totals absence hours and lateness minutes', /ساعات الغياب[\s\S]*?دقائق التأخر/],
@@ -148,7 +148,7 @@ if (!navBlock) {
   process.stdout.write((ok ? 'PASS ' : 'FAIL ') + 'bottom navigation exposes the five primary app destinations\n');
   if (!ok) failed++;
 }
-const preservedHomeIds = ['sStudents','todayAbs','todayLate','todaySummons','sAbs','sLate','sViol','sDocs','sSummons','sAbsNotices','sRecords','todayViol','upcomingSummons','voiceAssistant','startVoiceBtn','voiceStatus','voiceTranscript','voiceConfirm','quickVoiceAccess','recentCount','recent'];
+const preservedHomeIds = ['sStudents','todayAbs','todayLate','todaySummons','sAbs','sLate','sViol','sDocs','sSummons','sAbsNotices','sRecords','todayViol','upcomingSummons','voiceAssistant','startVoiceBtn','voiceStatus','voiceTranscript','voiceConfirm','smartMonthPeriod','smartMonthAbsences','smartMonthLateness','smartMonthViolations','priorityFollowupCount','priorityFollowupList','recentCount','recent'];
 for (const id of preservedHomeIds) {
   const count = (html.match(new RegExp('id="' + id + '"','g')) || []).length;
   const ok = count === 1;

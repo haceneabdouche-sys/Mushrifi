@@ -570,6 +570,21 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
 @media(prefers-reduced-motion:reduce){
  #nav button,.page-back-button,.followup-tab{transition:none!important}
 }
+
+/* Stage 23: compact home screen and microphone-only voice launcher */
+#home .daily-tasks-panel,#home .agenda-home-panel,#home .home-advanced-panel{display:none!important}
+#voiceAssistant.voice-launch{display:flex;flex:0 0 auto;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px;width:auto;max-width:100%;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
+#voiceAssistant .voice-mic-button{display:grid;place-items:center;width:48px;height:48px;min-height:48px;padding:0;border:2px solid rgba(214,180,107,.75);border-radius:50%;font-size:25px;line-height:1;background:linear-gradient(135deg,#173b58,#286b91);box-shadow:0 4px 12px rgba(23,59,88,.19)}
+#voiceAssistant .voice-mic-button:disabled{opacity:.62;cursor:wait;transform:none}
+#voiceAssistant .voice-status{flex:1 0 100%;margin:3px 0 0;text-align:center;font-size:11px;line-height:1.55}
+#voiceAssistant .voice-transcript,#voiceAssistant .voice-confirm{flex:1 0 100%;width:100%;min-width:0;margin:4px 0 0;padding:10px;border-radius:11px;box-shadow:none}
+#voiceAssistant .voice-confirm h3{font-size:15px;margin:0 0 8px}#voiceAssistant .voice-confirm .actions{gap:6px}#voiceAssistant .voice-confirm .btn{font-size:12px}
+.home-monthly-summary{margin-top:11px;padding:12px}.home-monthly-summary .panel-title-row{margin-bottom:9px}.home-monthly-summary h2{font-size:16px;margin:0}
+.home-monthly-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.home-monthly-grid .stat{min-width:0;padding:10px 8px;background:#f8fafb;box-shadow:none}.home-monthly-grid .stat:before{width:2px}
+.home-monthly-grid .stat small{display:block;font-size:10px;line-height:1.45;min-height:28px}.home-monthly-grid .stat strong{font-size:clamp(19px,5vw,23px);margin-top:3px}.home-monthly-grid .smart-trend{display:block;font-size:9px;line-height:1.4;color:var(--muted);margin-top:4px}
+.monthly-priority-details{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}.monthly-priority-details>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;cursor:pointer;font-size:12px;color:var(--navy)}.monthly-priority-details>summary::-webkit-details-marker{display:none}.monthly-priority-details>summary:after{content:"＋";font-weight:bold;color:var(--blue)}.monthly-priority-details[open]>summary:after{content:"−"}.monthly-priority-details>p{margin:7px 0;font-size:11px}
+.student-followup-author,.student-followup-author-note,.student-report-observation-author{display:block;margin-top:5px;color:#526575;font-size:10px;font-weight:700;text-align:left;direction:ltr}.student-followup-author-note{text-align:right;direction:rtl}.student-followup-observation{margin:6px 0 8px;padding:8px 10px;border-radius:9px;background:#f7f9fb;border-right:2px solid var(--gold)}.student-followup-observation p{margin:0}
+@media(max-width:520px){.home-heading{gap:8px;padding:11px}.home-heading h2{font-size:18px}#voiceAssistant .voice-mic-button{width:44px;height:44px;min-height:44px;font-size:23px}.home-monthly-summary{padding:10px}.home-monthly-grid{gap:5px}.home-monthly-grid .stat{padding:8px 5px}.home-monthly-grid .stat small{font-size:9px}.home-monthly-grid .smart-trend{font-size:8px}}
 </style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}
 /* Brand signature refinement — fixed name and signature with path-following star glints */
 :root{--navy:#102A43}
@@ -1054,8 +1069,14 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
   <div>
     <span class="home-eyebrow">لوحة القيادة</span>
     <h2>متابعة الحياة المدرسية</h2>
-    <p class="muted">ملخص سريع لأهم نشاطات المؤسسة، مع وصول مباشر إلى المهام اليومية.</p>
+    <p class="muted">ملخص سريع لأهم نشاطات المؤسسة.</p>
   </div>
+  <section id="voiceAssistant" class="voice-launch no-print" aria-label="التحدث إلى مُشرِفي">
+    <button type="button" class="btn primary voice-mic-button" id="startVoiceBtn" aria-label="التحدث إلى مُشرِفي" title="التحدث إلى مُشرِفي">🎙️</button>
+    <p id="voiceStatus" class="muted voice-status hidden" aria-live="polite">اضغط على رمز الميكروفون ثم تحدث بالعربية.</p>
+    <div id="voiceTranscript" class="voice-transcript panel hidden" aria-live="polite"></div>
+    <div id="voiceConfirm" class="voice-confirm panel hidden"></div>
+  </section>
 </div>
 
 <div class="home-kpis grid">
@@ -1083,39 +1104,25 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <div class="smart-followup-head"><h3>المهام التي تحتاج إجراءً</h3><span class="muted" id="dailyTasksSubCount">—</span></div>
 <div id="dailyTasksList" class="daily-tasks-list" aria-live="polite"><p class="empty">جارٍ تحديث المهام...</p></div>
 </section>
-<section id="voiceAssistant" class="panel voice-panel no-print">
-  <div class="voice-copy">
-    <span class="home-eyebrow">مساعدك الصوتي</span>
-    <h2>🎙️ التحدث إلى مُشرِفي</h2>
-    <p class="muted">قل أمراً بالعربية، مثل: افتح ملف التلميذ وائل عيسو، أو سجّل غياب تلميذ.</p>
-    <p id="voiceStatus" class="muted" aria-live="polite">اضغط على الميكروفون ثم تحدث بوضوح.</p>
-  </div>
-  <button type="button" class="btn primary" id="startVoiceBtn">🎙️ ابدأ التحدث</button>
-  <div id="voiceTranscript" class="panel hidden"></div>
-  <div id="voiceConfirm" class="panel hidden"></div>
-</section>
-
 <section class="panel agenda-home-panel" aria-labelledby="upcomingAgendaHeading">
  <div class="panel-title-row"><h2 id="upcomingAgendaHeading">مواعيدي ومهامي القادمة</h2><button type="button" class="btn small" data-go="agenda">فتح الأجندة</button></div>
  <p class="muted">مواعيد الأيام السبعة القادمة، بما فيها استدعاءات الأولياء المحفوظة في الوثائق.</p>
  <div id="upcomingAgenda"><p class="empty">جارٍ تحديث المواعيد...</p></div>
 </section>
 
-<details class="panel attendance-log home-advanced-panel">
- <summary id="smartDashboardHeading"><strong>ملخص الأسبوع ومؤشرات المتابعة</strong><span class="pill">آخر 7 أيام</span><span class="muted">الاتجاهات والتلاميذ الذين يستحقون المراجعة</span></summary>
- <div class="home-advanced-content">
-
-<div class="smart-week-grid">
-<div class="stat"><small>سجلات الغياب</small><strong id="smartWeekAbsences">0</strong><span class="smart-trend" id="smartWeekAbsenceTrend">—</span></div>
-<div class="stat"><small>سجلات التأخر</small><strong id="smartWeekLateness">0</strong><span class="smart-trend" id="smartWeekLatenessTrend">—</span></div>
-<div class="stat"><small>المخالفات</small><strong id="smartWeekViolations">0</strong><span class="smart-trend" id="smartWeekViolationTrend">—</span></div>
-</div>
-<div class="smart-followup-head"><h3>تلاميذ يستحقون المراجعة</h3><span class="pill" id="priorityFollowupCount">0 تلميذ</span></div>
-<p class="muted">يظهر المؤشر عند تسجيل غياب أو تأخر غير مبرر في ثلاثة أيام مختلفة على الأقل خلال آخر 7 أيام. هو تنبيه للمراجعة فقط وليس قرارًا إداريًا. لا تُنسب السجلات غير المرتبطة بملف معروف إلى أي تلميذ.</p>
-<div id="priorityFollowupList" class="smart-followup-list" aria-live="polite"><p class="empty">جارٍ تحليل سجلات الأسبوع...</p></div>
-
- </div>
-</details>
+<section class="panel home-monthly-summary" aria-labelledby="smartDashboardHeading">
+  <div class="panel-title-row"><h2 id="smartDashboardHeading">الملخص الشهري</h2><span class="pill" id="smartMonthPeriod">الشهر الجاري</span></div>
+  <div class="home-monthly-grid">
+    <div class="stat"><small>الغيابات هذا الشهر</small><strong id="smartMonthAbsences">0</strong><span class="smart-trend" id="smartMonthAbsenceTrend">—</span></div>
+    <div class="stat"><small>التأخرات هذا الشهر</small><strong id="smartMonthLateness">0</strong><span class="smart-trend" id="smartMonthLatenessTrend">—</span></div>
+    <div class="stat"><small>المخالفات هذا الشهر</small><strong id="smartMonthViolations">0</strong><span class="smart-trend" id="smartMonthViolationTrend">—</span></div>
+  </div>
+  <details class="monthly-priority-details">
+    <summary><strong>حالات تستحق المراجعة</strong><span class="pill" id="priorityFollowupCount">0 تلميذ</span></summary>
+    <p class="muted">يظهر التلميذ هنا عند تسجيل غياب أو تأخر غير مبرر في ثلاثة أيام مختلفة على الأقل خلال الشهر الجاري. هذا مؤشر للمراجعة وليس قرارًا إداريًا.</p>
+    <div id="priorityFollowupList" class="smart-followup-list" aria-live="polite"><p class="empty">لا توجد حالات تستحق المراجعة هذا الشهر.</p></div>
+  </details>
+</section>
 
 
 
@@ -1134,7 +1141,6 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
       <div class="tile" data-go="students">👥<b>ملفات التلاميذ</b><small>بحث وإدارة الملفات</small></div>
       <div class="tile" data-go="attendance">📋<b>الغياب والتأخر</b><small>تسجيل ومراجعة</small></div>
       <div class="tile" data-go="documents">📨<b>الإشعارات والاستدعاءات</b><small>إنشاء ومتابعة الوثائق</small></div>
-      <button type="button" class="tile quick-voice-tile" id="quickVoiceAccess">🎙️<b>التحدث إلى مُشرِفي</b><small>أمر صوتي سريع</small></button>
     </div>
   </div>
 
@@ -2415,15 +2421,36 @@ initAgendaControls();
 
 function smartDashboardDateShift(value,offset){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return '';const y=Number(m[1]),mo=Number(m[2]),d=Number(m[3]),date=new Date(y,mo-1,d,12);if(date.getFullYear()!==y||date.getMonth()!==mo-1||date.getDate()!==d)return '';date.setDate(date.getDate()+Number(offset||0));return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
 function smartDashboardValidDate(v){const s=String(v||'');return /^\d{4}-\d{2}-\d{2}$/.test(s)&&smartDashboardDateShift(s,0)===s;}
-function buildSmartDashboardSnapshot(attendance,violations,today,resolveStudent){
- const start=smartDashboardDateShift(today,-6),priorStart=smartDashboardDateShift(today,-13),priorEnd=smartDashboardDateShift(today,-7),empty={current:{absences:0,lateness:0,violations:0},previous:{absences:0,lateness:0,violations:0},followups:[]};if(!start||!priorStart||!priorEnd)return empty;
- const inRange=(date,a,b)=>smartDashboardValidDate(date)&&date>=a&&date<=b,typeOf=r=>String(r?.type??'').trim().replace(/\s+/g,''),count=(items,a,b,type)=>items.filter(r=>inRange(r?.date,a,b)&&(!type||typeOf(r)===type)).length,A=Array.isArray(attendance)?attendance:[],V=Array.isArray(violations)?violations:[];
- const current={absences:count(A,start,today,'غياب'),lateness:count(A,start,today,'تأخر'),violations:count(V,start,today,'')},previous={absences:count(A,priorStart,priorEnd,'غياب'),lateness:count(A,priorStart,priorEnd,'تأخر'),violations:count(V,priorStart,priorEnd,'')},groups=new Map();
- A.forEach(r=>{if(!inRange(r?.date,start,today)||String(r?.justified??'غير مبرر').trim()!=='غير مبرر')return;const t=typeOf(r);if(t!=='غياب'&&t!=='تأخر')return;const st=typeof resolveStudent==='function'?resolveStudent(r.student,r):null;if(!st||st.id===undefined||st.id===null)return;const id=String(st.id);if(!id)return;if(!groups.has(id))groups.set(id,{student:st,absence:new Set(),late:new Set()});const g=groups.get(id);(t==='غياب'?g.absence:g.late).add(String(r.date));});
- const followups=[...groups.values()].map(g=>({student:g.student,absenceDays:g.absence.size,latenessDays:g.late.size})).filter(x=>x.absenceDays>=3||x.latenessDays>=3).sort((a,b)=>b.absenceDays+b.latenessDays-(a.absenceDays+a.latenessDays)||String(a.student.last||'').localeCompare(String(b.student.last||''),'ar'));
- return {current,previous,followups};
+function smartDashboardMonthWindows(today){
+ if(!smartDashboardValidDate(today))return null;
+ const [year,month,day]=today.split('-').map(Number);
+ const currentStart=year+'-'+String(month).padStart(2,'0')+'-01';
+ const previousMonth=new Date(year,month-2,1,12),previousYear=previousMonth.getFullYear(),previousMonthNumber=previousMonth.getMonth()+1;
+ const previousStart=previousYear+'-'+String(previousMonthNumber).padStart(2,'0')+'-01';
+ const daysInPreviousMonth=new Date(previousYear,previousMonthNumber,0,12).getDate();
+ const previousEnd=previousYear+'-'+String(previousMonthNumber).padStart(2,'0')+'-'+String(Math.min(day,daysInPreviousMonth)).padStart(2,'0');
+ return {currentStart,currentEnd:today,previousStart,previousEnd};
 }
-function smartDashboardTrend(a,b){const n=Number(a||0)-Number(b||0);return n===0?'مثل الأسبوع السابق':(n>0?'زيادة ':'انخفاض ')+Math.abs(n)+' عن الأسبوع السابق';}
+function buildSmartDashboardSnapshot(attendance,violations,today,resolveStudent){
+ const windows=smartDashboardMonthWindows(today),empty={current:{absences:0,lateness:0,violations:0},previous:{absences:0,lateness:0,violations:0},followups:[],windows:null};
+ if(!windows)return empty;
+ const {currentStart,currentEnd,previousStart,previousEnd}=windows,inRange=(d,a,b)=>smartDashboardValidDate(d)&&d>=a&&d<=b,typeOf=r=>String(r?.type??'').trim().replace(/\s+/g,'');
+ const count=(items,a,b,t)=>items.filter(r=>inRange(r?.date,a,b)&&(!t||typeOf(r)===t)).length,A=Array.isArray(attendance)?attendance:[],V=Array.isArray(violations)?violations:[];
+ const current={absences:count(A,currentStart,currentEnd,'غياب'),lateness:count(A,currentStart,currentEnd,'تأخر'),violations:count(V,currentStart,currentEnd,'')};
+ const previous={absences:count(A,previousStart,previousEnd,'غياب'),lateness:count(A,previousStart,previousEnd,'تأخر'),violations:count(V,previousStart,previousEnd,'')},groups=new Map();
+ A.forEach(r=>{
+  if(!inRange(r?.date,currentStart,currentEnd)||String(r?.justified??'غير مبرر').trim()!=='غير مبرر')return;
+  const t=typeOf(r);if(t!=='غياب'&&t!=='تأخر')return;
+  const st=typeof resolveStudent==='function'?resolveStudent(r.student,r):null;
+  if(!st||st.id===undefined||st.id===null)return;
+  const id=String(st.id);if(!id)return;
+  if(!groups.has(id))groups.set(id,{student:st,absence:new Set(),late:new Set()});
+  const g=groups.get(id);(t==='غياب'?g.absence:g.late).add(String(r.date));
+ });
+ const followups=[...groups.values()].map(g=>({student:g.student,absenceDays:g.absence.size,latenessDays:g.late.size})).filter(x=>x.absenceDays>=3||x.latenessDays>=3).sort((a,b)=>b.absenceDays+b.latenessDays-(a.absenceDays+a.latenessDays)||String(a.student.last||'').localeCompare(String(b.student.last||''),'ar'));
+ return {current,previous,followups,windows};
+}
+function smartDashboardTrend(a,b){const n=Number(a||0)-Number(b||0);return n===0?'مثل الفترة المناظرة من الشهر السابق':(n>0?'زيادة ':'انخفاض ')+Math.abs(n)+' عن الفترة المناظرة من الشهر السابق';}
 function buildDailyFollowupSnapshot(attendance,documents,agenda,violations,today,nowValue,resolveStudent,followups,students){
  const empty={today:{absences:0,lateness:0,unjustified:0,pending:0,violations:0},followupReviews:{overdue:0,dueToday:0,upcoming7Days:0,unlinked:0},summonsNext24h:0,unlinkedSummons:0,agendaToday:0,unlinkedPending:0,sections:[],tasks:[],totalTasks:0};
  if(!smartDashboardValidDate(today))return empty;
@@ -2516,12 +2543,14 @@ function renderDailyFollowupDashboard(today,nowValue){
  if(s.totalTasks>10)list.insertAdjacentHTML('beforeend','<p class="muted daily-task-overflow">يُعرض أعلى 10 إجراءات حسب الأولوية من أصل '+s.totalTasks.toLocaleString('ar-DZ')+'؛ بقية السجلات ما زالت محفوظة في صفحاتها الأصلية.</p>');
 }function renderSmartDashboard(today){
  const s=buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
- $('#smartWeekAbsences').textContent=s.current.absences.toLocaleString('ar-DZ');$('#smartWeekLateness').textContent=s.current.lateness.toLocaleString('ar-DZ');$('#smartWeekViolations').textContent=s.current.violations.toLocaleString('ar-DZ');
- $('#smartWeekAbsenceTrend').textContent=smartDashboardTrend(s.current.absences,s.previous.absences);$('#smartWeekLatenessTrend').textContent=smartDashboardTrend(s.current.lateness,s.previous.lateness);$('#smartWeekViolationTrend').textContent=smartDashboardTrend(s.current.violations,s.previous.violations);$('#priorityFollowupCount').textContent=s.followups.length.toLocaleString('ar-DZ')+' تلميذ';
- const list=$('#priorityFollowupList');list.innerHTML=s.followups.length?s.followups.slice(0,6).map(x=>{const detail=[];if(x.absenceDays>=3)detail.push('غياب غير مبرر: '+x.absenceDays+' أيام مختلفة');if(x.latenessDays>=3)detail.push('تأخر غير مبرر: '+x.latenessDays+' أيام مختلفة');return '<div class="smart-followup-item"><div><strong>'+esc(name(x.student.id))+'</strong><small>'+esc(attendanceGroupLabel(x.student))+'</small><small>'+esc(detail.join(' · '))+'</small></div><button type="button" class="btn small" data-smart-student-id="'+esc(x.student.id)+'">فتح ملف التلميذ</button></div>';}).join(''):'<p class="empty">لا توجد حالات تكرار بلغت حد المراجعة خلال آخر 7 أيام.</p>';
+ $('#smartMonthAbsences').textContent=s.current.absences.toLocaleString('ar-DZ');$('#smartMonthLateness').textContent=s.current.lateness.toLocaleString('ar-DZ');$('#smartMonthViolations').textContent=s.current.violations.toLocaleString('ar-DZ');
+ $('#smartMonthAbsenceTrend').textContent=smartDashboardTrend(s.current.absences,s.previous.absences);$('#smartMonthLatenessTrend').textContent=smartDashboardTrend(s.current.lateness,s.previous.lateness);$('#smartMonthViolationTrend').textContent=smartDashboardTrend(s.current.violations,s.previous.violations);
+ $('#smartMonthPeriod').textContent=new Date(Number(today.slice(0,4)),Number(today.slice(5,7))-1,1).toLocaleDateString('ar-DZ',{month:'long',year:'numeric'});
+ $('#priorityFollowupCount').textContent=s.followups.length.toLocaleString('ar-DZ')+' تلميذ';
+ const list=$('#priorityFollowupList');
+ list.innerHTML=s.followups.length?s.followups.slice(0,6).map(x=>{const d=[];if(x.absenceDays>=3)d.push('غياب غير مبرر: '+x.absenceDays+' أيام مختلفة');if(x.latenessDays>=3)d.push('تأخر غير مبرر: '+x.latenessDays+' أيام مختلفة');return '<div class="smart-followup-item"><div><strong>'+esc(name(x.student.id))+'</strong><small>'+esc(attendanceGroupLabel(x.student))+'</small><small>'+esc(d.join(' · '))+'</small></div><button type="button" class="btn small" data-smart-student-id="'+esc(x.student.id)+'">فتح ملف التلميذ</button></div>';}).join(''):'<p class="empty">لا توجد حالات تكرار بلغت حد المراجعة خلال الشهر الجاري.</p>';
  list.querySelectorAll('[data-smart-student-id]').forEach(b=>b.addEventListener('click',()=>window.studentHistory(b.dataset.smartStudentId)));
 }
-
 function auditActionText(action){return action==='add'?'إضافة':action==='update'?'تعديل':action==='revert'?'استرجاع تعديل':action==='delete'?'حذف':action==='bulk'?'عملية جماعية':'عملية';}
 function auditEntityText(entity){return ({students:'بطاقة تلميذ',attendance:'سجل غياب أو تأخر',documents:'وثيقة أو استدعاء',violations:'مخالفة',settings:'إعدادات التطبيق'})[entity]||'سجل';}
 function auditDateText(value){const date=new Date(value);return Number.isFinite(date.getTime())?date.toLocaleString('ar-DZ'):'وقت غير محدد';}
@@ -2768,11 +2797,20 @@ function showVoiceStudentChoices(matches,title,choose){
 function showVoiceSuggestedActions(st){
  const fullName=(st.last+' '+st.first).trim()||st.name||st.fullName||'التلميذ';
  $('#voiceStatus').textContent='تم التعرف على '+fullName+' – '+(st.class||'القسم غير محدد')+'. اختر الإجراء المناسب:';
+ $('#voiceStatus').classList.remove('hidden');
  $('#voiceConfirm').classList.remove('hidden');
  const actions=[['absence','تسجيل غياب'],['late','تسجيل تأخر'],['report','عرض ملف التلميذ'],['violation','تسجيل مخالفة'],['summons','إنشاء استدعاء']];
  $('#voiceConfirm').innerHTML='<h3>الإجراءات المقترحة للتلميذ</h3><p><b>'+esc(fullName)+'</b> · '+esc(st.class||'')+'</p><div class="actions"><button type="button" class="btn primary" id="voiceOpenStudentRecord">فتح الملف الكامل</button>'+actions.map(([value,label])=>'<button type="button" class="btn voiceSuggestedAction" data-action="'+value+'">'+label+'</button>').join('')+'</div>';
- $('#voiceOpenStudentRecord').onclick=()=>{window.studentHistory(st.id);$('#voiceConfirm').classList.add('hidden');};
- $('.voiceSuggestedAction').forEach(button=>button.addEventListener('click',()=>{const opened=window.studentAction(button.dataset.action,String(st.id));if(!opened){$('#voiceStatus').textContent='تعذر فتح الإجراء المطلوب. تحقق من بطاقة التلميذ ثم أعد المحاولة.';return;}$('#voiceConfirm').classList.add('hidden');}));
+ $('#voiceOpenStudentRecord').onclick=()=>{window.studentHistory(st.id);$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم فتح الملف الكامل للتلميذ.';};
+ $$('.voiceSuggestedAction').forEach(button=>button.addEventListener('click',()=>{
+  if(button.disabled)return;
+  button.disabled=true;
+  let opened=false;
+  try{opened=!!window.studentAction(button.dataset.action,String(st.id));}catch(error){opened=false;}
+  if(!opened){button.disabled=false;$('#voiceStatus').textContent='تعذر فتح الإجراء المطلوب. لم تتغير بيانات التلميذ؛ أعد المحاولة أو افتح الإجراء من القسم المختص.';return;}
+  $('#voiceConfirm').classList.add('hidden');
+  $('#voiceStatus').textContent='تم فتح الإجراء المطلوب. راجع البيانات ثم احفظ العملية.';
+ }));
 }
 function handleVoiceOpenStudent(raw){
  let requested=normalizeArabic(raw);
@@ -2796,6 +2834,9 @@ function onArabicSpeechResult(raw){
   const scored=alternatives.map(text=>{const abs=text.match(/(?:غياب|غيابا)\s+(.+?)\s+(?:ليوم|يوم)\b/i);let q=abs?abs[1]:normalizeArabic(text).replace(/^(?:من فضلك |لو سمحت )?/,'').replace(/^(?:افتح|اعرض|ارني|وريني|اذهب الى|انتقل الى|هات|جيب لي)\s+/,'').replace(/^(?:(?:صفحة|ملف|سجل)\s+)?(?:(?:التلميذ|التلميذة|الطالب|الطالبة)\s+)?/,'');const best=voiceStudentRanked(q)[0];return {text,score:best?best.score:0};}).sort((x,y)=>y.score-x.score);
   raw=(scored[0]&&scored[0].score>0?scored[0].text:alternatives[0])||'';
  }
+ $('#startVoiceBtn').disabled=false;
+ $('#voiceStatus').classList.remove('hidden');
+ if(!String(raw||'').trim()){window.onArabicSpeechError('لم يتم التقاط الكلام. حاول مجدداً وتحدث بوضوح.');return;}
  $('#voiceStatus').textContent='تم التعرف على الكلام. جارٍ تحليل الأمر...';
  $('#voiceTranscript').classList.remove('hidden');$('#voiceTranscript').textContent='سمعت: '+raw;
  const t=normalizeArabic(raw);
@@ -2831,10 +2872,24 @@ function onArabicSpeechResult(raw){
  $('#confirmVoiceAttendance').onclick=()=>{const a=window.pendingVoiceAttendance;if(!a)return;const record={id:crypto.randomUUID(),...a};db.attendance.push(record);if(!save()){db.attendance.pop();$('#voiceStatus').textContent='تعذر حفظ الغياب. لم تُحذف البيانات السابقة؛ أعد المحاولة بعد التحقق من مساحة التخزين.';return;}window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم حفظ الغياب بنجاح.';};
  $('#cancelVoiceAttendance').onclick=()=>{window.pendingVoiceAttendance=null;$('#voiceConfirm').classList.add('hidden');$('#voiceStatus').textContent='تم إلغاء العملية. لم تُحفظ أي بيانات.';};
 }
+window.onArabicSpeechError=message=>{
+ const button=$('#startVoiceBtn');if(button)button.disabled=false;
+ const status=$('#voiceStatus');if(status){status.textContent=String(message||'تعذر التعرف على الكلام. حاول مرة أخرى.');status.classList.remove('hidden');}
+};
+window.onArabicSpeechCancelled=()=>{
+ const button=$('#startVoiceBtn');if(button)button.disabled=false;
+ const status=$('#voiceStatus');if(status){status.textContent='تم إلغاء التحدث. يمكنك المحاولة مجدداً عند الحاجة.';status.classList.remove('hidden');}
+};
 $('#startVoiceBtn').onclick=()=>{
- $('#voiceStatus').textContent='استمع الآن... تحدث بالعربية بعد ظهور نافذة الميكروفون.';
- if(window.AndroidBridge&&typeof AndroidBridge.startArabicSpeech==='function'){AndroidBridge.startArabicSpeech();return;}
- $('#voiceStatus').textContent='ميزة التحدث المباشر متاحة في نسخة Android المُحدّثة من التطبيق.';
+ const button=$('#startVoiceBtn');if(!button||button.disabled)return;
+ button.disabled=true;
+ $('#voiceConfirm').classList.add('hidden');$('#voiceTranscript').classList.add('hidden');
+ $('#voiceStatus').textContent='جارٍ فتح خدمة التعرف على الكلام...';$('#voiceStatus').classList.remove('hidden');
+ if(window.AndroidBridge&&typeof AndroidBridge.startArabicSpeech==='function'){
+  try{AndroidBridge.startArabicSpeech();}catch(error){window.onArabicSpeechError('تعذر تشغيل خدمة التعرف على الكلام. تحقق من خدمة Google للتحدث ثم أعد المحاولة.');}
+  return;
+ }
+ window.onArabicSpeechError('خدمة التحدث المباشر غير متاحة في هذه النسخة من التطبيق.');
 };
 
 const STUDENT_PRIVACY_FLAG_DEFINITIONS=Object.freeze([
@@ -3510,7 +3565,7 @@ function profileStudentFollowupView(records){
   const id=String(record.id??'');
   return '<article class="student-followup-item" data-followup-id="'+esc(id)+'">'+
    '<div class="student-followup-meta"><b>'+esc(record.category||'متابعة تربوية')+'</b><span>'+esc(record.date||'تاريخ غير محدد')+'</span><span class="pill">'+esc(record.status||'غير محددة')+'</span></div>'+
-   '<p><b>الملاحظة:</b> '+esc(record.observation||'—')+'</p>'+
+   '<div class="student-followup-observation"><p><b>الملاحظة:</b> '+esc(record.observation||'—')+'</p><small class="student-followup-author">المشرف التربوي: ABDOUCHE HACENE</small></div>'+
    '<p><b>الإجراء المتخذ:</b> '+esc(record.actionTaken||'—')+'</p>'+
    (record.result?'<p><b>النتيجة:</b> '+esc(record.result)+'</p>':'')+
    (record.nextDate?'<p><b>موعد المراجعة المقبلة:</b> '+esc(record.nextDate)+'</p>':'')+
@@ -3544,8 +3599,8 @@ function buildStudentPrintableReportMarkup(data){
  const latenessRows=profilePrintableTable(data.lateness,['التاريخ','الفترة','عدد الدقائق','حالة التبرير','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(profileKnownLatenessMinutes(x)===null?'غير مسجلة':number(profileKnownLatenessMinutes(x))+' دقيقة')+'</td><td>'+esc(profileJustificationLabel(x))+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
  const violationRows=profilePrintableTable(data.violations,['التاريخ','نوع المخالفة','الوصف','الإجراء والمتابعة','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.description||'—')+'</td><td>'+esc(x.action||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
  const documentRows=items=>profilePrintableTable(items,['التاريخ','نوع الوثيقة','السبب / الموضوع','موعد الحضور','التذكير','إثبات التبليغ','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+esc(x.reminderAt||'—')+'</td><td>'+esc([x.deliveryDate,x.deliveryProof].filter(Boolean).join(' — ')||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
- const followupRows=profilePrintableTable(data.followups,['التاريخ','المجال','الملاحظة','الإجراء المتخذ','النتيجة','الحالة','المراجعة المقبلة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category||'—')+'</td><td>'+esc(x.observation||'—')+'</td><td>'+esc(x.actionTaken||'—')+'</td><td>'+esc(x.result||'—')+'</td><td>'+esc(x.status||'غير محددة')+'</td><td>'+esc(x.nextDate||'—')+'</td></tr>');
- const noteRows=profilePrintableTable(data.notes,['التاريخ','القسم','الملاحظة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.note)+'</td></tr>');
+ const followupRows=profilePrintableTable(data.followups,['التاريخ','المجال','الملاحظة','الإجراء المتخذ','النتيجة','الحالة','المراجعة المقبلة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category||'—')+'</td><td>'+esc(x.observation||'—')+'<small class="student-report-observation-author">المشرف التربوي: ABDOUCHE HACENE</small></td><td>'+esc(x.actionTaken||'—')+'</td><td>'+esc(x.result||'—')+'</td><td>'+esc(x.status||'غير محددة')+'</td><td>'+esc(x.nextDate||'—')+'</td></tr>');
+ const noteRows=profilePrintableTable(data.notes,['التاريخ','القسم','الملاحظة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.note)+'<small class="student-report-observation-author">المشرف التربوي: ABDOUCHE HACENE</small></td></tr>');
  const timelineRows=profilePrintableTable(data.timeline,['التاريخ','نوع الحدث','التفاصيل'],x=>'<tr><td>'+esc(x.date||'غير محدد')+'</td><td>'+esc(x.sourceLabel+' · '+x.title)+'</td><td>'+esc([x.detail,x.appointment?'موعد الحضور: '+x.appointment:'',x.notes?'ملاحظة: '+x.notes:''].filter(Boolean).join(' · ')||'—')+'</td></tr>');
  return '<div class="student-report-document" dir="rtl">'+
   '<div class="student-report-main-title"><h1>التقرير الشامل للتلميذ</h1><p>ملخص السجل المدرسي والمتابعة التربوية</p></div>'+
@@ -3722,7 +3777,7 @@ window.studentHistory=(id,focusFollowupId)=>{
    <form id="studentFollowupForm" class="student-followup-form no-print" data-student-id="${esc(sid)}">
     <h4 id="studentFollowupFormTitle">إضافة متابعة تربوية جديدة</h4><input type="hidden" name="recordId">
     <div class="row"><div><label for="studentFollowupDate">تاريخ المتابعة</label><input id="studentFollowupDate" name="date" type="date" value="${followupToday}" required></div><div><label for="studentFollowupCategory">مجال المتابعة</label><select id="studentFollowupCategory" name="category" required><option value="">اختر المجال</option><option>المواظبة والحضور</option><option>السلوك والانضباط</option><option>التواصل مع الولي</option><option>متابعة تربوية عامة</option></select></div><div><label for="studentFollowupStatus">حالة المتابعة</label><select id="studentFollowupStatus" name="status" required><option>قيد المتابعة</option><option>تمت المتابعة</option><option>أغلقت الحالة</option></select></div></div>
-    <div class="row"><div><label for="studentFollowupObservation">الملاحظة أو سبب المتابعة</label><textarea id="studentFollowupObservation" name="observation" rows="3" maxlength="1200" required placeholder="اكتب الملاحظة بعبارات واضحة وموضوعية"></textarea></div><div><label for="studentFollowupAction">الإجراء المتخذ</label><textarea id="studentFollowupAction" name="actionTaken" rows="3" maxlength="1200" required placeholder="ما الإجراء الذي تم اتخاذه؟"></textarea></div></div>
+    <div class="row"><div><label for="studentFollowupObservation">الملاحظة أو سبب المتابعة</label><textarea id="studentFollowupObservation" name="observation" rows="3" maxlength="1200" required placeholder="اكتب الملاحظة بعبارات واضحة وموضوعية"></textarea><small class="student-followup-author-note">المشرف التربوي: ABDOUCHE HACENE</small></div><div><label for="studentFollowupAction">الإجراء المتخذ</label><textarea id="studentFollowupAction" name="actionTaken" rows="3" maxlength="1200" required placeholder="ما الإجراء الذي تم اتخاذه؟"></textarea></div></div>
     <div class="row"><div><label for="studentFollowupNextDate">موعد المراجعة المقبلة (التذكير 08:00)</label><input id="studentFollowupNextDate" name="nextDate" type="date"></div><div><label for="studentFollowupResult">النتيجة أو تطور الحالة (اختياري)</label><textarea id="studentFollowupResult" name="result" rows="2" maxlength="1600" placeholder="أضف ما تحقق أو ما زال يحتاج إلى متابعة"></textarea></div></div>
     <div class="actions"><button id="studentFollowupSubmit" class="btn primary" type="submit">حفظ المتابعة</button><button id="studentFollowupCancel" class="btn" type="button" onclick="resetStudentFollowupForm()" hidden>إلغاء التعديل</button></div>
    </form>
