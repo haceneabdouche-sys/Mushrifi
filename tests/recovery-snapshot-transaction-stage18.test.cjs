@@ -35,7 +35,7 @@ assert.match(validate, /opt\("database"\) instanceof org\.json\.JSONObject/,
   'snapshot must contain its database object');
 assert.match(validate, /opt\("settings"\) instanceof org\.json\.JSONObject/,
   'snapshot must contain valid settings');
-assert.match(validate, /new String\[\]\{"agenda", "followups", "supervisionLogs", "auditLog"\}/,
+assert.match(validate, /new String\[\]\{"agenda", "followups", "supervisionLogs", "guardianReceptions", "auditLog"}/,
   'optional current collections are type-checked without breaking legacy snapshots');
 assert.match(validate, /records\.opt\(i\) instanceof org\.json\.JSONObject/,
   'snapshot arrays cannot contain malformed record values');
