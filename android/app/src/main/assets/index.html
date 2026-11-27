@@ -1136,6 +1136,18 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 .footer-author-name{display:inline-block;font-size:14px;line-height:1.4;letter-spacing:1.2px;color:#9b7837;text-shadow:0 1px 0 rgba(255,255,255,.85),0 2px 2px rgba(23,59,88,.12);background:linear-gradient(90deg,#8a672a,#d7b96e,#8d6b32);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .footer-author-signature{display:block;width:68px;height:68px;object-fit:contain;background:transparent;border:0;margin:0 auto;filter:drop-shadow(0 2px 1px rgba(16,42,67,.12))}
 @media(max-width:700px){.app-footer{padding:18px 10px max(26px,calc(env(safe-area-inset-bottom,0px) + 16px))}.footer-author-name{font-size:13px}.footer-author-signature{width:60px;height:60px}}
+
+/* Burnt-engraving author mark: occupies the pale signature-watermark area above the storage note. */
+.app-footer{display:flex;flex-direction:column;align-items:center;gap:0;padding:0 12px max(27px,calc(env(safe-area-inset-bottom,0px) + 16px));text-align:center}
+.footer-author-credit{order:0;position:relative;isolation:isolate;box-sizing:border-box;width:min(100%,640px);min-height:208px;margin:0 auto;padding:18px 14px 14px;border:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:radial-gradient(ellipse at center,rgba(255,249,235,.30) 0%,rgba(255,255,255,0) 72%)}
+.footer-author-credit::before,.footer-author-credit::after{content:"";position:absolute;left:50%;transform:translateX(-50%);width:min(72%,320px);height:1px;background:linear-gradient(90deg,transparent,rgba(111,72,38,.38),transparent);pointer-events:none}
+.footer-author-credit::before{top:14px}
+.footer-author-credit::after{bottom:10px}
+.footer-author-label{font-size:11px;line-height:1.5;font-weight:800;letter-spacing:1px;color:#76502f;text-shadow:0 1px 0 rgba(255,255,255,.82),0 -1px 0 rgba(75,47,24,.15)}
+.footer-author-name{display:inline-block;margin:1px 0 0;font-family:Georgia,Tahoma,serif;font-size:clamp(18px,5vw,22px);font-weight:900;line-height:1.45;letter-spacing:1.9px;color:#5b3a20;background:linear-gradient(180deg,#8b6944 0%,#4a2e19 54%,#76502c 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 1px 0 rgba(255,255,255,.82),0 -1px 0 rgba(61,38,20,.32),0 1px 2px rgba(65,40,20,.18);filter:contrast(1.16);mix-blend-mode:multiply}
+.footer-author-signature{display:block;width:94px;height:88px;object-fit:contain;margin:1px auto 0;border:0;border-radius:0;padding:0;background:transparent;box-shadow:none;filter:grayscale(1) sepia(1) saturate(1.8) brightness(.56) contrast(1.38);mix-blend-mode:multiply;opacity:.94}
+.app-footer .footer-app-note{order:1;width:min(100%,540px);box-sizing:border-box;margin:0 auto;padding:12px 5px 0;border-top:1px solid rgba(111,72,38,.22);color:var(--muted);font-size:11px;line-height:1.7;text-align:center}
+@media(max-width:700px){.app-footer{padding-inline:9px}.footer-author-credit{min-height:208px;padding-top:18px}.footer-author-name{font-size:clamp(17px,5vw,20px);letter-spacing:1.55px}.footer-author-signature{width:88px;height:82px}.app-footer .footer-app-note{font-size:11px}}
 </style>
 </head>
 <body>
@@ -1572,12 +1584,12 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 </section>
 </div>
 </div><footer class="app-footer">
- <p class="footer-app-note">مُشرفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</p>
- <div class="footer-author-credit" aria-label="توقيع مطوّر تطبيق مُشرفي">
+ <div class="footer-author-credit" aria-label="إمضاء مطوّر تطبيق مُشرِفي">
   <span class="footer-author-label">تصميم وتطوير</span>
   <strong class="footer-author-name" dir="ltr">ABDOUCHE HACENE</strong>
   <img class="footer-author-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene" loading="eager">
  </div>
+ <p class="footer-app-note">مُشرِفي · نسخة Android مستقلة · تُحفظ البيانات محلياً على هذا الهاتف</p>
 </footer>
 <script>
 /* MUSHRIFI QUIET DIAGNOSTICS — no test overlay in the user interface */

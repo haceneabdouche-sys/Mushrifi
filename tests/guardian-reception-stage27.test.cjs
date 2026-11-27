@@ -87,6 +87,6 @@ assert.ok(receptionStart>=0&&receptionEnd>receptionStart);
 const receptionMarkup=html.slice(receptionStart,receptionEnd);
 for(const field of ['guardianName','guardianPhone','guardianAddress','parentName','parentPhone'])assert.ok(!receptionMarkup.includes('name="'+field+'"'));
 assert.equal((java.match(/guardianReceptions/g)||[]).length,6);
-assert.match(gradle,/versionCode 39[\s\S]*versionName '2\.6'/);
+assert.match(gradle,/versionCode 40[\s\S]*versionName '2\.6'/);
 assert.ok(workflow.includes('node tests/guardian-reception-stage27.test.cjs'));
 console.log('PASS: Stage27 guardian reception register, audit redaction, backward-compatible backup/undo and native validation.');
