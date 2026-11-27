@@ -18,16 +18,16 @@ const groupSandbox={
 };
 vm.createContext(groupSandbox);
 vm.runInContext(html.slice(groupStart,groupEnd),groupSandbox);
-const firstGroups=groupSandbox.attendanceGroups();
-const secondGroups=groupSandbox.attendanceGroups();
+const firstGroups=vm.runInContext('attendanceGroups()',groupSandbox);
+const secondGroups=vm.runInContext('attendanceGroups()',groupSandbox);
 assert.equal(secondGroups,firstGroups,'reopening attendance does not rebuild/sort the section list');
-assert.equal(groupSandbox.attendanceGroupForStudent(groupSandbox.db.students[0]).key,firstGroups[0].key,'student section lookup uses the cached key index');
-const selectedGroup=firstGroups.find(group=>group.class==='1');
-assert.equal(groupSandbox.timetableForGroup(selectedGroup),null,'missing section timetable stays missing');
+assert.equal(vm.runInContext('attendanceGroupForStudent(db.students[0]).key',groupSandbox),firstGroups[0].key,'student section lookup uses the cached key index');
+groupSandbox.selectedGroup=firstGroups.find(group=>group.class==='1');
+assert.equal(vm.runInContext('timetableForGroup(selectedGroup)',groupSandbox),null,'missing section timetable stays missing');
 const fallbackTimetable={sun:3,mon:3};
 groupSandbox.db.settings.timetables['1']=fallbackTimetable;
-groupSandbox.invalidateAttendanceGroupCaches();
-assert.equal(groupSandbox.timetableForGroup(selectedGroup),fallbackTimetable,'saved timetable edits invalidate fallback caches immediately');
+vm.runInContext('invalidateAttendanceGroupCaches()',groupSandbox);
+assert.equal(vm.runInContext('timetableForGroup(selectedGroup)',groupSandbox),fallbackTimetable,'saved timetable edits invalidate fallback caches immediately');
 
 // Extract the real absence-analysis helpers so cache behavior is exercised against production logic.
 const analysisStart=html.indexOf('let absenceAnalysisRevision=0;');
