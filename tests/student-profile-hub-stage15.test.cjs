@@ -68,7 +68,7 @@ assert.ok(handlers.includes('if(!button||button.disabled)return'),
 
 assert.ok(html.includes('function profileRecordBelongsToStudent(record,target,students)'),
  'profile records continue to use stable student identity and safe legacy matching');
-assert.ok(html.includes('function buildStudentTimeline(target,database)'),
+assert.ok(html.includes('function buildStudentTimeline(target,database,profileRecords)'),
  'the established verified timeline remains the source of the event history');
 assert.ok(html.includes('bodyMarkup=buildStudentPrintableReportMarkup(data)'),
  'the printable report remains a separately assembled report, not a print of the interactive controls');
