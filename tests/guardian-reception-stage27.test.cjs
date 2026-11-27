@@ -57,6 +57,15 @@ assert.equal(Object.prototype.hasOwnProperty.call(oldCounts,'guardianReceptions'
 const newCounts=backup.backupPayloadCounts({students:[],attendance:[],documents:[],violations:[],agenda:[],followups:[],guardianReceptions:[{id:'r1'}],auditLog:[]});
 assert.equal(newCounts.guardianReceptions,1);
 
+const studentReference=runSlice(html,'function guardianReceptionStudentReferenceValid','\nfunction ensureGuardianReceptionStudentOption','guardianReceptionStudentReferenceValid');
+assert.equal(studentReference.guardianReceptionStudentReferenceValid('student-1',null,[{id:'student-1'}]),true,'existing student can be linked');
+assert.equal(studentReference.guardianReceptionStudentReferenceValid('student-missing',{student:'student-missing'},[]),true,'editing a legacy reception retains its original missing student reference');
+assert.equal(studentReference.guardianReceptionStudentReferenceValid('student-missing',null,[]),false,'a new reception cannot create a missing student reference');
+assert.equal(studentReference.guardianReceptionStudentReferenceValid('',null,[]),true,'general receptions remain available without student reference');
+assert.ok(html.includes('ensureGuardianReceptionStudentOption(item.student)'),'editing a reception retains a visible option for an unavailable historical student');
+assert.ok(html.includes("(id?'ملف التلميذ غير متاح':'')"),'unavailable historical student references are identified without exposing raw IDs');
+assert.ok(html.includes('guardianReceptionStudentReferenceValid(student,editingReception,db.students)'),'new and existing missing references are validated differently');
+
 for(const id of ['guardianReceptionForm','guardianReceptionDate','guardianReceptionTime','guardianReceptionVisitorType','guardianReceptionPurpose','guardianReceptionStudent','guardianReceptionAction','guardianReceptionStatus','guardianReceptionNextDate','guardianReceptionEntries','guardianReceptionPagination'])assert.ok(html.includes('id="'+id+'"'),'missing control '+id);
 assert.match(html,/data-go="guardianReceptions"/);
 assert.match(html,/id="guardianReceptions" class="page hidden"/);
