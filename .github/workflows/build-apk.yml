@@ -91,6 +91,8 @@ jobs:
           node --check /tmp/mushrifi-inline.js
       - name: Run absence streak regression tests
         run: node tests/absence-streak.test.cjs
+      - name: Run Stage 28 automatic absence notice and warning workflow tests
+        run: node tests/absence-stage-automation-stage28.test.cjs
       - name: Run academic branch alias regression tests
         run: node tests/academic-branches.test.cjs
       - name: Run license read-only and backup safety regression tests
