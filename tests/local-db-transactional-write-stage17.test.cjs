@@ -27,7 +27,7 @@ assert.ok(markSuccessful < finallyBlock && finallyBlock < endTransaction && endT
   'the transaction returns only after a successful commit or rollback');
 assert.match(write, /if\s*\(transactionStarted\s*&&\s*database\s*!=\s*null\)/, 'only a started transaction is ended');
 assert.match(write, /catch\s*\(Exception\s+error\)[\s\S]*?lastError\s*=/, 'write and verification failures are exposed in native database error state');
-assert.match(write, /if\s*\(saved\)\s*lastError\s*=\s*""/, 'last error clears only after a verified commit');
+assert.match(write, /if\s*\(saved\)\s*\{\s*lastError\s*=\s*"";\s*markDatabaseInitialized\(\);\s*\}/, 'last error clears and first-run marker persists only after a verified commit');
 assert.match(activity, /synchronized boolean write\(String json\)\s*\{\s*\/\/ Preserve the original bridge contract for legacy callers\.\s*return write\(json, true\);/, 'legacy callers retain the old clear-undo default');
 
 const bridgeStart = activity.indexOf('public class AndroidBridge');
