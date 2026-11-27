@@ -34,13 +34,15 @@ after.followups=[{id:'legacy-followup',student:'missing-student-id',studentName:
 
 const beforeSnapshot=sandbox.auditComparableDatabase(before);
 const afterSnapshot=sandbox.auditComparableDatabase(after);
-let beforeFindCalls=0,afterFindCalls=0,beforeIterations=0,afterIterations=0;
-const originalBeforeForEach=beforeSnapshot.students.forEach;
-const originalAfterForEach=afterSnapshot.students.forEach;
+let beforeFindCalls=0,afterFindCalls=0,beforeLookupBuilds=0,afterLookupBuilds=0;
 beforeSnapshot.students.find=function(){beforeFindCalls++;throw new Error('before student list was rescanned');};
 afterSnapshot.students.find=function(){afterFindCalls++;throw new Error('after student list was rescanned');};
-beforeSnapshot.students.forEach=function(callback,thisArg){beforeIterations++;return originalBeforeForEach.call(this,callback,thisArg);};
-afterSnapshot.students.forEach=function(callback,thisArg){afterIterations++;return originalAfterForEach.call(this,callback,thisArg);};
+const originalLookupBuilder=sandbox.auditBuildStudentLookup;
+sandbox.auditBuildStudentLookup=function(snapshot){
+ if(snapshot===beforeSnapshot)beforeLookupBuilds++;
+ if(snapshot===afterSnapshot)afterLookupBuilds++;
+ return originalLookupBuilder(snapshot);
+};
 
 const events=sandbox.buildAuditEvents(beforeSnapshot,after,'2026-11-27T20:00:00.000Z',()=> 'event-'+Math.random(),{
  precomputedSnapshots:true,
@@ -53,8 +55,8 @@ assert.ok(bySummary('إضافة وثيقة أو استدعاء: عيسو وائ�
 assert.ok(bySummary('إضافة متابعة تربوية: اسم احتياطي صحيح'),'legacy records still fall back to their stored student name');
 assert.equal(beforeFindCalls,0,'before snapshot is not searched repeatedly with Array.find');
 assert.equal(afterFindCalls,0,'after snapshot is not searched repeatedly with Array.find');
-assert.equal(beforeIterations,1,'the before student lookup is built once even when several audit events need it');
-assert.equal(afterIterations,1,'the after student lookup is shared by all related event collections');
+assert.equal(beforeLookupBuilds,1,'the before student lookup is built once even when several audit events need it');
+assert.equal(afterLookupBuilds,1,'the after student lookup is shared by all related event collections');
 
 const noEvents=sandbox.buildAuditEvents(afterSnapshot,after,'2026-11-27T20:01:00.000Z',()=> 'unused',{
  precomputedSnapshots:true,
