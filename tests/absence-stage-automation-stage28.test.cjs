@@ -14,7 +14,7 @@ function test(name, fn) {
   catch (error) { console.error('FAIL', name, error.message); process.exitCode = 1; }
 }
 
-const policyStart = html.indexOf('function absenceStageDocument(');
+const policyStart = html.indexOf('function hasAbsenceDeliveryRecord(record){');
 const policyEnd = html.indexOf('let absenceAutomationRunning=false;', policyStart);
 assert.ok(policyStart >= 0 && policyEnd > policyStart, 'The stage policy block must exist in the packaged application.');
 
