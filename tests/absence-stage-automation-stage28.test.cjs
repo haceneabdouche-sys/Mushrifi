@@ -175,10 +175,10 @@ test('Android notification bridge supports monthly Article 17 and keeps stage al
 });
 
 test('pending absence-stage reminders are retried after notification permission is granted or restored', () => {
-  assert.match(html, /function syncPendingAbsenceStageNotifications\\(\\)/);
-  assert.match(html, /if\\(granted\\)\\{syncPendingAbsenceStageNotifications\\(\\)/);
-  assert.match(html, /if\\(granted\\)syncPendingAbsenceStageNotifications\\(\\)/);
-  assert.match(html, /AndroidBridge\\.notifyAbsenceStage\\(String\\(st\\.id\\)/);
+  assert.ok(html.includes('function syncPendingAbsenceStageNotifications()'));
+  assert.ok(html.includes('if(granted){syncPendingAbsenceStageNotifications();'));
+  assert.ok(html.includes('if(granted)syncPendingAbsenceStageNotifications();'));
+  assert.ok(html.includes('AndroidBridge.notifyAbsenceStage(String(st.id)'));
 });
 
 test('internal build code increments while public application version remains 2.6', () => {
