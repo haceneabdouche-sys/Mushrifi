@@ -164,7 +164,7 @@ test('formal print templates exist for the monthly warning, both notices, regist
     'إشعار ثانٍ بغياب التلميذ(ة)',
     'إعذار مضمون بسبب الغياب',
     'مذكرة داخلية لمراجعة ملف الغياب',
-    'لا يمثل قرار شطب'
+    'لا تمثل قرار شطب'
   ]) assert.ok(html.includes(phrase), phrase);
 });
 
