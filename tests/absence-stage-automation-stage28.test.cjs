@@ -15,7 +15,7 @@ function test(name, fn) {
 }
 
 const policyStart = html.indexOf('function hasAbsenceDeliveryRecord(record){');
-const policyEnd = html.indexOf('let absenceAutomationRunning=false;', policyStart);
+const policyEnd = html.indexOf("let absenceAutomationRunning=false,absenceAutomationLastKey='';", policyStart);
 assert.ok(policyStart >= 0 && policyEnd > policyStart, 'The stage policy block must exist in the packaged application.');
 
 let sequence = 0;
