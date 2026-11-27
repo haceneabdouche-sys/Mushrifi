@@ -95,7 +95,7 @@ jobs:
         run: node tests/absence-stage-automation-stage28.test.cjs
       - name: Run Stage 29 absence workflow lifecycle and settlement tests
         run: node tests/absence-workflow-stage29.test.cjs
-      - name: Run Stage 30 unified follow-up center privacy and aggregation tests
+      - name: Run Stage 30 follow-up center and Stage 31 database recovery guard tests
         run: node tests/followup-center-stage30.test.cjs
       - name: Run academic branch alias regression tests
         run: node tests/academic-branches.test.cjs

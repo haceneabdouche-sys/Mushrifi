@@ -75,3 +75,25 @@ assert.ok(html.includes("$('#followupCenterPrint')?.addEventListener('click',()=
 assert.match(workflow,/node tests\/followup-center-stage30\.test\.cjs/);
 assert.match(gradle,/versionCode 34[\s\S]*versionName '2\.6'/);
 console.log('PASS Stage 30 unified follow-up center, filtering, identity safety, privacy redaction, no-mutation and print wiring.');
+
+const activity=fs.readFileSync(path.join(root,'android/app/src/main/java/dz/mushrifi/app/MainActivity.java'),'utf8');
+const readStart=activity.indexOf('synchronized String read()');
+const readEnd=activity.indexOf('private String lastError',readStart);
+assert.ok(readStart>=0&&readEnd>readStart,'native database read guard exists');
+const nativeRead=activity.slice(readStart,readEnd);
+assert.match(nativeRead,/getDatabasePath\\("mushrifi_local\\.db"\\)/,'the database file is checked before SQLite can create a new one');
+assert.match(nativeRead,/databasePreviouslyInitialized\\(\\)/,'persisted first-run marker detects later missing rows');
+assert.match(nativeRead,/LicenseManager\\.hasStoredLicense\\(databaseContext\\)/,'a previously activated app is not treated as a fresh install');
+assert.match(nativeRead,/shouldBlockMissingMainRecord\\(/,'a missing main record in a prior installation enters the protective path');
+assert.match(nativeRead,/return "!MUSHRIFI_DB_ERROR!"/,'missing or unreadable stored data blocks normal application startup');
+assert.match(nativeRead,/markDatabaseInitialized\\(\\)/,'a genuine first run is remembered separately from later missing data');
+assert.match(activity,/if \\(saved\\) \\{ lastError = ""; markDatabaseInitialized\\(\\); \\}/,'successful writes persist the initialized marker');
+assert.match(activity,/if \\(restored\\) markDatabaseInitialized\\(\\);/,'successful restores persist the initialized marker');
+assert.match(nativeRead,/return databaseFileExistedBeforeRead \\|\\| previouslyInitialized \\|\\| previouslyLicensed/,'all prior-installation signals fail closed');
+
+assert.match(html,/function showMushrifiDatabaseRecoveryScreen\\(\\)/,'the startup error screen blocks normal writes');
+assert.match(html,/AndroidBridge\\.loadRecoverySnapshot/,'the encrypted recovery snapshot is checked');
+assert.match(html,/AndroidBridge\\.restoreDatabaseSafely\\(JSON\\.stringify\\(recoveryDatabase\\)\\)/,'recovery is written only after explicit confirmation');
+assert.match(html,/writes disabled for data protection/,'normal startup stops while stored data is unavailable');
+assert.match(gradle,/versionCode 35[\\s\\S]*versionName '2\\.6'/,'the corrective APK has a higher version code while retaining visible version 2.6');
+console.log('PASS Stage 31 missing database row protection, genuine first-run distinction and explicit encrypted recovery path.');

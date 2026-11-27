@@ -238,7 +238,67 @@ public class MainActivity extends Activity {
             ensureRecoveryTable(db);
         }
         private void ensureRecoveryTable(SQLiteDatabase db) { db.execSQL("CREATE TABLE IF NOT EXISTS recovery_snapshot (id INTEGER PRIMARY KEY CHECK(id=1), json TEXT NOT NULL, updated_at INTEGER NOT NULL)"); }
-        synchronized String read() { try (Cursor c = getReadableDatabase().rawQuery("SELECT json FROM appdata WHERE id=1", null)) { return c.moveToFirst() ? decryptData(c.getString(0)) : null; } catch (Exception e) { return "!MUSHRIFI_DB_ERROR!"; } }
+        private boolean databasePreviouslyInitialized() {
+            return databaseContext.getSharedPreferences("mushrifi_database_state", Context.MODE_PRIVATE)
+                .getBoolean("initialized", false);
+        }
+        private void markDatabaseInitialized() {
+            databaseContext.getSharedPreferences("mushrifi_database_state", Context.MODE_PRIVATE)
+                .edit().putBoolean("initialized", true).apply();
+        }
+        private static boolean shouldBlockMissingMainRecord(
+            boolean databaseFileExistedBeforeRead, boolean previouslyInitialized, boolean previouslyLicensed
+        ) {
+            return databaseFileExistedBeforeRead || previouslyInitialized || previouslyLicensed;
+        }
+        private String missingDatabaseRecordError(SQLiteDatabase database) {
+            boolean hasRecoverySnapshot = false;
+            try (Cursor cursor = database.rawQuery("SELECT 1 FROM recovery_snapshot WHERE id=1", null)) {
+                hasRecoverySnapshot = cursor.moveToFirst();
+            } catch (Exception ignored) {}
+            return "ملف قاعدة بيانات مُشرِفي موجود، لكن سجل البيانات الرئيسي غير موجود. "
+                + (hasRecoverySnapshot
+                    ? "عُثر على نقطة تراجع مشفّرة يمكن فحصها واستعادتها يدوياً."
+                    : "لم يُعثر على نقطة تراجع مشفّرة داخل الملف.")
+                + " لم يُنشئ التطبيق قاعدة فارغة ولم يستبدل البيانات.";
+        }
+        synchronized String read() {
+            java.io.File databaseFile = databaseContext.getDatabasePath("mushrifi_local.db");
+            boolean databaseFileExistedBeforeRead = databaseFile != null && databaseFile.exists();
+            boolean previouslyInitialized = databasePreviouslyInitialized();
+            boolean previouslyLicensed = LicenseManager.hasStoredLicense(databaseContext);
+            try {
+                SQLiteDatabase database = getReadableDatabase();
+                try (Cursor cursor = database.rawQuery("SELECT json FROM appdata WHERE id=1", null)) {
+                    if (cursor.moveToFirst()) {
+                        String json = decryptData(cursor.getString(0));
+                        if (json == null || json.trim().isEmpty()) {
+                            throw new IOException("سجل البيانات الرئيسي فارغ؛ أُوقف التحميل لحماية البيانات.");
+                        }
+                        markDatabaseInitialized();
+                        lastError = "";
+                        return json;
+                    }
+                }
+                if (shouldBlockMissingMainRecord(
+                    databaseFileExistedBeforeRead, previouslyInitialized, previouslyLicensed
+                )) {
+                    lastError = missingDatabaseRecordError(database);
+                    android.util.Log.e("MushrifiDB", lastError);
+                    return "!MUSHRIFI_DB_ERROR!";
+                }
+                // A genuinely new installation may start with no appdata row.
+                // Persist that first-run state so a later missing row cannot masquerade as
+                // a fresh install after an update or an unexpected storage failure.
+                markDatabaseInitialized();
+                lastError = "";
+                return null;
+            } catch (Exception error) {
+                lastError = error.getClass().getSimpleName() + ": " + String.valueOf(error.getMessage());
+                android.util.Log.e("MushrifiDB", "Encrypted application database read failed", error);
+                return "!MUSHRIFI_DB_ERROR!";
+            }
+        }
         private String lastError = "";
         synchronized String getLastError() { return lastError; }
         synchronized boolean write(String json) {
@@ -309,7 +369,7 @@ public class MainActivity extends Activity {
                 }
             }
 
-            if (saved) lastError = "";
+            if (saved) { lastError = ""; markDatabaseInitialized(); }
             return saved;
         }
         synchronized boolean restoreSafely(String json) {
@@ -400,6 +460,7 @@ public class MainActivity extends Activity {
                     }
                 }
             }
+            if (restored) markDatabaseInitialized();
             return restored;
         }
         private void validateRecoverySnapshotJson(String json) throws Exception {

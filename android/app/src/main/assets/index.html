@@ -1602,7 +1602,56 @@ const DBKEY='mushrifi_v1';
 const EMPTY_DB='{"students":[],"attendance":[],"documents":[],"violations":[],"agenda":[],"followups":[],"supervisionLogs":[],"guardianReceptions":[],"settings":{}}';
 const isAndroidApp=!!(window.AndroidBridge&&typeof AndroidBridge.loadDatabase==='function');
 const nativeJson=isAndroidApp?AndroidBridge.loadDatabase():null;
-if(nativeJson==='!MUSHRIFI_DB_ERROR!'){document.body.innerHTML='<main dir="rtl" style="font-family:Tahoma;padding:24px;line-height:2"><h2>تعذر فتح قاعدة بيانات مُشرفي</h2><p>لم يتم عرض قائمة فارغة حتى لا تُستبدل بياناتك. لا تحذف التطبيق. احتفظ بنسخة احتياطية إن كانت لديك، ثم تواصل مع الدعم.</p></main>';throw new Error('Mushrifi encrypted database could not be read');}
+function showMushrifiDatabaseRecoveryScreen(){
+ const root=document.createElement('main');
+ root.dir='rtl';root.style.cssText='font-family:Tahoma,Arial,sans-serif;padding:24px;line-height:2;max-width:760px;margin:auto;color:#172b3a';
+ const title=document.createElement('h2');title.textContent='توقّف مُشرِفي لحماية بياناتك';root.appendChild(title);
+ const lead=document.createElement('p');lead.textContent='لم يعثر التطبيق على سجل قاعدة البيانات الرئيسي. أوقف التشغيل بدلاً من إنشاء قائمة فارغة أو حفظ بيانات فوق الملف الموجود.';root.appendChild(lead);
+ let detail='تعذر تحديد سبب الخلل.';
+ try{detail=String(AndroidBridge.getDatabaseError?.()||detail);}catch(_){}
+ const detailNode=document.createElement('p');detailNode.style.cssText='color:#8a3b32;font-size:13px';detailNode.textContent=detail;root.appendChild(detailNode);
+ let recoveryDatabase=null;
+ try{
+  const raw=AndroidBridge.loadRecoverySnapshot?.();
+  if(raw){
+   const envelope=JSON.parse(String(raw));
+   const candidate=envelope&&envelope.version===1?envelope.database:null;
+   if(candidate&&Array.isArray(candidate.students)&&Array.isArray(candidate.attendance)
+      &&Array.isArray(candidate.documents)&&Array.isArray(candidate.violations)
+      &&candidate.settings&&typeof candidate.settings==='object'&&!Array.isArray(candidate.settings)){
+    recoveryDatabase=candidate;
+   }
+  }
+ }catch(_){}
+ if(recoveryDatabase){
+  const count=key=>Array.isArray(recoveryDatabase[key])?recoveryDatabase[key].length:0;
+  const summary=document.createElement('p');
+  summary.textContent='عُثر على نقطة تراجع مشفّرة: '+count('students')+' تلميذاً، '
+   +count('attendance')+' سجل غياب أو تأخر، '+count('documents')+' وثيقة، '
+   +count('violations')+' مخالفة، '+count('followups')+' متابعة تربوية.';
+  root.appendChild(summary);
+  const restore=document.createElement('button');
+  restore.type='button';restore.textContent='فحص واستعادة نقطة التراجع المشفّرة';
+  restore.style.cssText='padding:12px 16px;border:0;border-radius:9px;background:#173b58;color:white;font-weight:bold;font-size:15px';
+  const status=document.createElement('p');status.setAttribute('aria-live','polite');
+  restore.onclick=()=>{
+   if(!confirm('سيحاول التطبيق استعادة نقطة التراجع المشفّرة بعد التحقق منها. هل توافق؟'))return;
+   restore.disabled=true;restore.textContent='جارٍ التحقق والاستعادة...';
+   try{
+    const ok=AndroidBridge.restoreDatabaseSafely(JSON.stringify(recoveryDatabase))===true;
+    if(ok){status.textContent='نجحت الاستعادة. سيُعاد فتح التطبيق الآن.';window.location.reload();return;}
+    status.textContent='لم تنجح الاستعادة ولم تُعتمد بيانات بديلة. '+String(AndroidBridge.getDatabaseError?.()||'تحقق من حالة الترخيص أو سلامة نقطة التراجع.');
+   }catch(error){status.textContent='توقفت الاستعادة دون اعتماد البيانات: '+String(error&&error.message||error);}
+   restore.disabled=false;restore.textContent='إعادة محاولة استعادة نقطة التراجع';
+  };
+  root.appendChild(restore);root.appendChild(status);
+ }else{
+  const none=document.createElement('p');none.textContent='لم يُعثر على نقطة تراجع مشفّرة قابلة للاستعادة تلقائياً. لا تحذف التطبيق أو تمسح بياناته، ولا تستورد نسخة قبل فحص محتواها.';root.appendChild(none);
+ }
+ const advice=document.createElement('p');advice.textContent='احتفظ بهذا التطبيق كما هو. لا تستخدم مسح البيانات أو إلغاء التثبيت. إذا كانت لديك نسخة احتياطية خارجية، احتفظ بالملف الأصلي كما هو.';root.appendChild(advice);
+ document.body.replaceChildren(root);
+}
+if(nativeJson==='!MUSHRIFI_DB_ERROR!'){showMushrifiDatabaseRecoveryScreen();throw new Error('Mushrifi encrypted database could not be read; writes disabled for data protection');}
 const legacyJson=localStorage.getItem(DBKEY);
 function parseMushrifiDatabase(raw){
  const parsed=JSON.parse(raw);
