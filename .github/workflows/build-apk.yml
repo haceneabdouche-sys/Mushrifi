@@ -207,6 +207,8 @@ jobs:
         run: node tests/webview-security-stage16.test.cjs
       - name: Run mobile performance regression tests
         run: node tests/mobile-performance.test.cjs
+      - name: Run cached absence analysis and navigation performance tests
+        run: node tests/performance-cache-stage26.test.cjs
       - name: Package complete Android project
         run: |
           zip -r Mushrifi-Complete-Source.zip . \

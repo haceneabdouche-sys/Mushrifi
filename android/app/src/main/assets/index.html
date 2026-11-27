@@ -2050,6 +2050,9 @@ const save=(options={})=>{
   alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;
  }
  auditBaselineSnapshot=nextAuditSnapshot;
+ if(changedEntities.has('students')||changedEntities.has('settings'))invalidateAttendanceGroupCaches();
+ if(changedEntities.has('students')||changedEntities.has('attendance')||changedEntities.has('settings'))invalidateAbsenceAnalysisCache();
+ else if(changedEntities.has('documents'))absenceAutomationRevision++;
  if(['students','attendance','documents','violations'].some(entity=>changedEntities.has(entity)))homeOverviewCache=null;
  auditNextRevertsId='';preserveUndoOnNextSave=false;
  if(changedEntities.has('students'))rebuildStudentIndexes();
@@ -3475,9 +3478,41 @@ const dateISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMon
 const classKey=v=>String(v??'').trim().replace(/\s+/g,' ').toLocaleLowerCase('ar');
 const attendanceGroupKey=st=>[st?.schoolYear||'',st?.branch||'',st?.class||''].map(classKey).join('¦');
 const attendanceGroupLabel=st=>[st?.schoolYear||'',st?.branch||'',st?.class?sectionDisplay(st.class):'قسم غير محدد'].filter(Boolean).join(' — ');
-const attendanceGroups=()=>{const m=new Map();db.students.forEach(st=>{const key=attendanceGroupKey(st);if(!m.has(key))m.set(key,{key,label:attendanceGroupLabel(st),schoolYear:st.schoolYear||'',branch:st.branch||'',class:st.class||''});});return [...m.values()].sort((a,b)=>a.label.localeCompare(b.label,'ar',{numeric:true}));};
+let attendanceGroupsCache={source:null,length:-1,groups:[],byKey:new Map()};
+let timetableFallbackCache=new Map();
+function invalidateAttendanceGroupCaches(){
+ attendanceGroupsCache={source:null,length:-1,groups:[],byKey:new Map()};
+ timetableFallbackCache.clear();
+}
+const attendanceGroups=()=>{
+ const source=Array.isArray(db.students)?db.students:[];
+ if(attendanceGroupsCache.source!==source||attendanceGroupsCache.length!==source.length){
+  const m=new Map();
+  source.forEach(st=>{
+   const key=attendanceGroupKey(st);
+   if(!m.has(key))m.set(key,{key,label:attendanceGroupLabel(st),schoolYear:st.schoolYear||'',branch:st.branch||'',class:st.class||''});
+  });
+  const groups=[...m.values()].sort((a,b)=>a.label.localeCompare(b.label,'ar',{numeric:true}));
+  attendanceGroupsCache={source,length:source.length,groups,byKey:new Map(groups.map(group=>[group.key,group]))};
+  timetableFallbackCache.clear();
+ }
+ return attendanceGroupsCache.groups;
+};
+const attendanceGroupForStudent=st=>{
+ attendanceGroups();
+ return attendanceGroupsCache.byKey.get(attendanceGroupKey(st))||null;
+};
 const attendanceRecordGroupKey=a=>{const st=student(a.student);if(st)return attendanceGroupKey(st);return [a.schoolYear||'',a.branch||'',a.class||a.studentClass||''].map(classKey).join('¦');};
-const timetableForGroup=group=>{const all=db.settings.timetables||{};if(all[group.key])return all[group.key];const sameClass=attendanceGroups().filter(g=>classKey(g.class)===classKey(group.class));return sameClass.length===1?all[group.class]||null:null;};
+const timetableForGroup=group=>{
+ if(!group)return null;
+ const all=db.settings.timetables||{};
+ if(all[group.key])return all[group.key];
+ if(timetableFallbackCache.has(group.key))return timetableFallbackCache.get(group.key);
+ const sameClass=attendanceGroups().filter(g=>classKey(g.class)===classKey(group.class));
+ const result=sameClass.length===1?all[group.class]||null:null;
+ timetableFallbackCache.set(group.key,result);
+ return result;
+};
 function refreshAttendanceClassOptions(){const groups=attendanceGroups(),daily=$('#dailyClass'),schedule=$('#scheduleClass'),old=daily.value,oldSchedule=schedule.value,options=groups.map(g=>'<option value="'+esc(g.key)+'">'+esc(g.label)+'</option>').join('');daily.innerHTML='<option value="">اختر القسم</option>'+options;schedule.innerHTML='<option value="">اختر القسم لحفظ توقيته</option>'+options;if(groups.some(g=>g.key===old))daily.value=old;if(groups.some(g=>g.key===oldSchedule))schedule.value=oldSchedule;}
 function renderAttendanceWorkspace(){
  if(!$('#dailyDate'))return;if(!$('#dailyDate').value)$('#dailyDate').value=dateISO();if(!$('#absenceMonth').value)$('#absenceMonth').value=dateISO().slice(0,7);
@@ -3530,7 +3565,7 @@ function scheduledHoursForGroupDate(group,date){
 }
 function scheduledHoursForStudentDate(st,date){
  if(!st)return null;
- const group=attendanceGroups().find(g=>g.key===attendanceGroupKey(st));
+ const group=attendanceGroupForStudent(st);
  return scheduledHoursForGroupDate(group,date);
 }
 function updateIndividualPeriodFields(){
@@ -3554,7 +3589,16 @@ $('#attPeriod').addEventListener('change',updateIndividualPeriodFields);
 $('#attForm').elements.student.addEventListener('change',updateIndividualPeriodFields);
 $('#attForm').elements.date.addEventListener('change',updateIndividualPeriodFields);
 updateAttendanceTypeFields();
-$('#attStudentSearch').addEventListener('input',()=>{const sel=$('#attForm').elements.student,old=sel.value,q=$('#attStudentSearch').value.trim().toLocaleLowerCase('ar');sel.innerHTML=db.students.filter(s=>!q||[s.last,s.first,s.class,s.schoolYear,s.branch].join(' ').toLocaleLowerCase('ar').includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(studentAcademicLabel(s))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old;updateIndividualPeriodFields();});
+let attendanceStudentSearchTimer=0;
+$('#attStudentSearch').addEventListener('input',()=>{
+ clearTimeout(attendanceStudentSearchTimer);
+ attendanceStudentSearchTimer=setTimeout(()=>{
+  const sel=$('#attForm').elements.student,old=sel.value;
+  refreshActiveStudentSelectors('attendance');
+  if([...sel.options].some(option=>option.value===old))sel.value=old;
+  updateIndividualPeriodFields();
+ },100);
+});
 $('#attForm').onsubmit=e=>{
  e.preventDefault();const f=new FormData(e.target),type=String(f.get('type')||'غياب'),isLate=type==='تأخر',isPresent=type==='حضور';
  let period=String(f.get('period')||'').trim();if(period==='توقيت آخر')period=String(f.get('periodCustom')||'').trim();
@@ -3577,17 +3621,62 @@ $('#attForm').onsubmit=e=>{
 };
 function dateFromISO(v){const [y,m,d]=String(v||'').split('-').map(Number);return new Date(y,m-1,d,12,0,0);}
 function calendarDaysBetween(a,b){return Math.round((dateFromISO(b)-dateFromISO(a))/86400000);}
+let absenceAnalysisRevision=0;
+let absenceAutomationRevision=0;
+let absenceAnalysisCache=null;
+let validatedSchoolHolidayCache=null;
+function getAbsenceAnalysisCache(){
+ const today=dateISO();
+ const attendance=Array.isArray(db.attendance)?db.attendance:[];
+ const students=Array.isArray(db.students)?db.students:[];
+ const settings=db.settings&&typeof db.settings==='object'?db.settings:{};
+ const c=absenceAnalysisCache;
+ if(!c||c.today!==today||c.revision!==absenceAnalysisRevision||
+    c.attendance!==attendance||c.attendanceLength!==attendance.length||
+    c.students!==students||c.studentLength!==students.length||c.settings!==settings){
+  absenceAnalysisCache={today,revision:absenceAnalysisRevision,attendance,attendanceLength:attendance.length,
+   students,studentLength:students.length,settings,streaks:null,monthly:new Map()};
+ }
+ return absenceAnalysisCache;
+}
+function invalidateAbsenceAnalysisCache(){
+ absenceAnalysisRevision++;
+ absenceAutomationRevision++;
+ absenceAnalysisCache=null;
+ validatedSchoolHolidayCache=null;
+}
 const schoolHolidayRanges=()=>Array.isArray(db.settings.schoolHolidays)?db.settings.schoolHolidays:[];
 const isValidISODate=value=>{const v=String(value||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split('-').map(Number),date=dateFromISO(v);return Number.isFinite(date.getTime())&&date.getFullYear()===y&&date.getMonth()===m-1&&date.getDate()===d;};
-function isSchoolHolidayDate(date){return schoolHolidayRanges().some(h=>h&&isValidISODate(h.start)&&isValidISODate(h.end)&&h.start<=date&&date<=h.end);}
+function validatedSchoolHolidayRanges(){
+ const source=schoolHolidayRanges();
+ const cached=validatedSchoolHolidayCache;
+ if(!cached||cached.source!==source||cached.length!==source.length){
+  const ranges=[];
+  source.forEach(h=>{
+   if(!h)return;
+   const start=String(h.start||''),end=String(h.end||'');
+   if(isValidISODate(start)&&isValidISODate(end)&&start<=end)ranges.push({start,end});
+  });
+  validatedSchoolHolidayCache={source,length:source.length,ranges};
+ }
+ return validatedSchoolHolidayCache.ranges;
+}
+function isSchoolHolidayDate(date){
+ const value=String(date||'');
+ if(!value)return false;
+ return validatedSchoolHolidayRanges().some(range=>range.start<=value&&value<=range.end);
+}
 function getUnjustifiedStreaks(){
+ const cache=getAbsenceAnalysisCache();
+ if(cache.streaks)return cache.streaks;
+ const today=cache.today;
  // لا تبدأ السلسلة إلا بغياب يوم كامل غير مبرر.
  // يجب وجود غياب يوم كامل في كل يوم دراسة تالٍ؛ الجمعة والسبت والأيام
  // التي لا توجد فيها ساعات مبرمجة لا تتطلب سجلاً، لكنها تدخل في المدة التقويمية.
  // الحضور أو التأخر أو التبرير يقطع السلسلة، وله الأولوية داخل اليوم نفسه.
  const grouped=new Map();
  for(const r of db.attendance){
-  if(!r.date||String(r.date)>dateISO())continue;
+  if(!r.date||String(r.date)>today)continue;
   const st=student(r.student);if(!st)continue;
   const key=String(st.id);
   if(!grouped.has(key))grouped.set(key,{student:st,events:new Map()});
@@ -3624,7 +3713,7 @@ function getUnjustifiedStreaks(){
    let last=start,valid=true;
    for(let cursor=dateFromISO(start);;cursor.setDate(cursor.getDate()+1)){
     const date=cursor.getFullYear()+'-'+String(cursor.getMonth()+1).padStart(2,'0')+'-'+String(cursor.getDate()).padStart(2,'0');
-    if(date>dateISO())break;
+    if(date>today)break;
     // العطلة المدرسية المصرح بها لا تتطلب تسجيل غياب، لكنها تبقى ضمن المدة التقويمية.
     if(isSchoolHolidayDate(date)){last=date;continue;}
     const weekday=cursor.getDay();
@@ -3641,7 +3730,8 @@ function getUnjustifiedStreaks(){
   }
   if(active)out.push(active);
  }
- return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
+ cache.streaks=out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
+ return cache.streaks;
 }
 function absenceWorkflowGroupKey(record){
  if(record&&record.absenceStart)return 'continuous:'+String(record.student)+':'+String(record.absenceStart);
@@ -3819,7 +3909,10 @@ function getAbsenceStageBlockReason(streak,stage){
  return 'لا توجد شروط إضافية لهذه المرحلة.';
 }
 function getMonthlyUnjustifiedOccurrences(month){
- const targetMonth=String(month||dateISO().slice(0,7)),today=dateISO(),grouped=new Map();
+ const cache=getAbsenceAnalysisCache();
+ const targetMonth=String(month||cache.today.slice(0,7));
+ if(cache.monthly.has(targetMonth))return cache.monthly.get(targetMonth);
+ const today=cache.today,grouped=new Map();
  for(const record of db.attendance){
   const date=String(record.date||'');
   if(date.slice(0,7)!==targetMonth||date>today||isSchoolHolidayDate(date))continue;
@@ -3831,9 +3924,11 @@ function getMonthlyUnjustifiedOccurrences(month){
   const item=grouped.get(key);item.dates.add(date);
   if(record.type==='غياب')item.absenceCount++;else item.latenessCount++;
  }
- return [...grouped.values()].map(item=>({...item,dates:[...item.dates].sort()}))
+ const result=[...grouped.values()].map(item=>({...item,dates:[...item.dates].sort()}))
   .filter(item=>item.dates.length>=3)
   .sort((a,b)=>b.dates.length-a.dates.length||String(a.student.last||'').localeCompare(String(b.student.last||''),'ar'));
+ cache.monthly.set(targetMonth,result);
+ return result;
 }
 function monthlyAbsenceWarningExists(studentId,month){
  return db.documents.some(d=>String(d.student)===String(studentId)&&Number(d.absenceStage)===17&&String(d.absenceStageKind||'')==='monthly-repetition'&&String(d.absenceMonth||'')===String(month));
@@ -3863,10 +3958,14 @@ function createMonthlyRepetitionWarning(item){
  });
  return true;
 }
-let absenceAutomationRunning=false;
+let absenceAutomationRunning=false,absenceAutomationLastKey='';
+const absenceAutomationKey=()=>dateISO()+'|'+absenceAutomationRevision;
 function runAbsenceStageAutomation(){
  if(absenceAutomationRunning||licenseReadOnly||!licenseStateKnown||!Array.isArray(db.documents)||!Array.isArray(db.attendance))return [];
+ const runKey=absenceAutomationKey();
+ if(runKey===absenceAutomationLastKey)return [];
  absenceAutomationRunning=true;
+ let completed=false;
  const beforeLength=db.documents.length,created=[];
  try{
   for(const streak of getUnjustifiedStreaks()){
@@ -3877,7 +3976,7 @@ function runAbsenceStageAutomation(){
   for(const item of getMonthlyUnjustifiedOccurrences(dateISO().slice(0,7))){
    if(createMonthlyRepetitionWarning(item))created.push(db.documents[db.documents.length-1]);
   }
-  if(!created.length)return [];
+  if(!created.length){completed=true;return [];}
   if(!save()){
    db.documents.splice(beforeLength);
    return [];
@@ -3887,8 +3986,12 @@ function runAbsenceStageAutomation(){
    const displayName=((st.last||'')+' '+(st.first||'')).trim()||'تلميذ';
    try{AndroidBridge.notifyAbsenceStage(String(st.id),displayName,Number(record.absenceStage),String(record.absenceStart||record.absenceMonth||''));}catch(error){console.warn('Absence stage notification failed',error);}
   }
+  completed=true;
   return created;
- }finally{absenceAutomationRunning=false;}
+ }finally{
+  absenceAutomationRunning=false;
+  if(completed)absenceAutomationLastKey=absenceAutomationKey();
+ }
 }
 window.createAbsenceStageNotice=(id,start,stage)=>{
  const streak=getUnjustifiedStreaks().find(x=>String(x.student.id)===String(id)&&x.start===start);
