@@ -3460,7 +3460,7 @@ function appendAbsenceWorkflowHistory(record,action,summary,today){
 function applyAbsenceWorkflowDelivery(record,input,today){
  const value=input||{},now=String(today||dateISO()),stage=Number(record&&record.absenceStage);
  if(!record||![4,11,17,18].includes(stage))return {ok:false,changed:false,message:'هذه الوثيقة ليست إشعاراً قابلاً لتسجيل التبليغ.'};
- if(record.absenceStart&&absenceWorkflowCycleIsClosed(record.student,record.absenceStart))return {ok:false,changed:false,message:'دورة الغياب مسواة؛ لا يمكن تسجيل تبليغ جديد عليها.'};
+ if(String(record.absenceWorkflowStatus||'')==='مسوى'||(record.absenceStart&&absenceWorkflowCycleIsClosed(record.student,record.absenceStart)))return {ok:false,changed:false,message:'دورة الغياب مسواة؛ لا يمكن تسجيل تبليغ جديد عليها.'};
  if(value.confirmed!==true)return {ok:false,changed:false,message:'أكد أولاً أن التبليغ تم فعلياً قبل تسجيله.'};
  const delivered=String(value.deliveryDate||''),method=String(value.deliveryMethod||''),recipient=String(value.deliveryRecipient||'').trim(),proof=String(value.deliveryProof||'').trim();
  const methods=['تسليم يدوي للولي','البريد المضمون','محضر أو مراسلة إدارية'];
@@ -3480,7 +3480,7 @@ function applyAbsenceWorkflowResponse(record,input,today){
  const value=input||{},now=String(today||dateISO()),status=String(value.guardianResponseStatus||'غير مسجل');
  const allowed=['غير مسجل','لم يرد الولي','رد غير كافٍ','تبرير مقبول','قيد الدراسة','التحق بالمؤسسة'];
  if(!record||![4,11,17,18].includes(Number(record.absenceStage)))return {ok:false,changed:false,message:'لا يمكن تسجيل رد الولي على هذه الوثيقة.'};
- if(record.absenceStart&&absenceWorkflowCycleIsClosed(record.student,record.absenceStart))return {ok:false,changed:false,message:'دورة الغياب مسواة؛ لا يمكن تعديل رد الولي.'};
+ if(String(record.absenceWorkflowStatus||'')==='مسوى'||(record.absenceStart&&absenceWorkflowCycleIsClosed(record.student,record.absenceStart)))return {ok:false,changed:false,message:'دورة الغياب مسواة؛ لا يمكن تعديل رد الولي.'};
  if(!allowed.includes(status))return {ok:false,changed:false,message:'اختر نتيجة صحيحة من قائمة رد الولي.'};
  const checkedAt=String(value.guardianResponseDate||''),notes=String(value.guardianResponseNotes||'').trim();
  if(notes.length>500)return {ok:false,changed:false,message:'الملاحظة طويلة؛ الحد الأقصى 500 حرف.'};
@@ -3684,10 +3684,11 @@ function renderAbsenceWorkflowBoard(){
  const groups=new Map();docs.forEach(record=>{const key=absenceWorkflowGroupKey(record);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(record);});
  const ordered=[...groups.values()].sort((a,b)=>String(b[0].date||'').localeCompare(String(a[0].date||'')));
  const openDocs=docs.filter(record=>String(record.absenceWorkflowStatus||'')!=='مسوى');
+ const openGroups=[...groups.values()].filter(records=>!records.some(record=>String(record.absenceWorkflowStatus||'')==='مسوى')).length;
  const pendingDelivery=openDocs.filter(record=>Number(record.absenceStage)!==32&&(!isValidISODate(String(record.deliveryDate||''))||!String(record.deliveryProof||'').trim())).length;
  const pendingResponse=openDocs.filter(record=>Number(record.absenceStage)!==32&&isValidISODate(String(record.deliveryDate||''))&&String(record.deliveryProof||'').trim()&&String(record.guardianResponseStatus||'غير مسجل')==='غير مسجل').length;
  const overdue=openDocs.filter(record=>{const due=absenceWorkflowDeadlineDate(record);return due&&due<=dateISO()&&String(record.guardianResponseStatus||'غير مسجل')==='غير مسجل';}).length;
- if(stats)stats.innerHTML='<div class="absence-workflow-stats-grid"><div class="stat"><small>ملفات مفتوحة</small><strong>'+groups.size+'</strong></div><div class="stat"><small>تنتظر تسجيل التبليغ</small><strong>'+pendingDelivery+'</strong></div><div class="stat"><small>تنتظر نتيجة رد الولي</small><strong>'+pendingResponse+'</strong></div><div class="stat"><small>مهلة متابعة حلّت</small><strong>'+overdue+'</strong></div></div>';
+ if(stats)stats.innerHTML='<div class="absence-workflow-stats-grid"><div class="stat"><small>ملفات مفتوحة</small><strong>'+openGroups+'</strong></div><div class="stat"><small>تنتظر تسجيل التبليغ</small><strong>'+pendingDelivery+'</strong></div><div class="stat"><small>تنتظر نتيجة رد الولي</small><strong>'+pendingResponse+'</strong></div><div class="stat"><small>مهلة متابعة حلّت</small><strong>'+overdue+'</strong></div></div>';
  const responseOptions=['غير مسجل','لم يرد الولي','رد غير كافٍ','تبرير مقبول','قيد الدراسة','التحق بالمؤسسة'],methodOptions=['تسليم يدوي للولي','البريد المضمون','محضر أو مراسلة إدارية'],settlementOptions=['التحق بالمؤسسة','تبرير مقبول','تسوية إدارية بعد المراجعة','تصحيح سجل'];
  box.innerHTML=ordered.map(records=>{
   records.sort((a,b)=>Number(a.absenceStage)-Number(b.absenceStage));
