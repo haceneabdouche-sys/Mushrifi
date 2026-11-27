@@ -5215,7 +5215,18 @@ function refreshGuardianReceptionStudentOptions(){
 }
 function guardianReceptionStudentLabel(id){
  const student=(Array.isArray(db.students)?db.students:[]).find(item=>String(item.id)===String(id||''));
- return student?(String(student.last||'')+' '+String(student.first||'')+' – '+studentAcademicLabel(student)):'';
+ return student?(String(student.last||'')+' '+String(student.first||'')+' – '+studentAcademicLabel(student)):(id?'ملف التلميذ غير متاح':'');
+}
+function guardianReceptionStudentReferenceValid(id,editingRecord,students){
+ const value=String(id||'');if(!value)return true;
+ if((Array.isArray(students)?students:[]).some(item=>String(item.id)===value))return true;
+ return !!(editingRecord&&String(editingRecord.student||'')===value);
+}
+function ensureGuardianReceptionStudentOption(id){
+ const value=String(id||''),select=$('#guardianReceptionStudent');if(!value||!select)return;
+ if((Array.isArray(db.students)?db.students:[]).some(item=>String(item.id)===value))return;
+ if([...select.options].some(option=>option.value===value))return;
+ const option=document.createElement('option');option.value=value;option.textContent='ملف تلميذ غير متاح — الاحتفاظ بالارتباط التاريخي';select.append(option);
 }
 function guardianReceptionFilteredRecords(){
  const source=orderedRecords('guardianReceptions','date-desc'),query=normalizeDirectorySearch($('#guardianReceptionSearch')?.value||'');
@@ -5261,6 +5272,7 @@ function beginGuardianReceptionEdit(id){
  const item=(Array.isArray(db.guardianReceptions)?db.guardianReceptions:[]).find(row=>String(row.id)===String(id));if(!item)return;
  editingGuardianReceptionId=String(item.id);$('#guardianReceptionId').value=editingGuardianReceptionId;
  refreshGuardianReceptionStudentOptions();
+ ensureGuardianReceptionStudentOption(item.student);
  $('#guardianReceptionDate').value=String(item.date||dateISO());$('#guardianReceptionTime').value=String(item.time||'');
  $('#guardianReceptionVisitorType').value=GUARDIAN_RECEPTION_VISITOR_TYPES.includes(item.visitorType)?item.visitorType:'أخرى';
  $('#guardianReceptionPurpose').value=GUARDIAN_RECEPTION_PURPOSES.includes(item.purpose)?item.purpose:'أخرى';
@@ -5295,7 +5307,8 @@ $('#guardianReceptionForm')?.addEventListener('submit',event=>{
  if(!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time)){$('#guardianReceptionStatusText').textContent='أدخل وقتًا صحيحًا للاستقبال.';$('#guardianReceptionTime').focus();return;}
  if(!GUARDIAN_RECEPTION_VISITOR_TYPES.includes(visitorType)){$('#guardianReceptionStatusText').textContent='اختر صفة زائر صحيحة.';return;}
  if(!GUARDIAN_RECEPTION_PURPOSES.includes(purpose)){$('#guardianReceptionStatusText').textContent='اختر غرض الزيارة من القائمة.';$('#guardianReceptionPurpose').focus();return;}
- if(student&&!db.students.some(item=>String(item.id)===String(student))){$('#guardianReceptionStatusText').textContent='ملف التلميذ المحدد غير موجود؛ حدّث القائمة أو اختر استقبالًا عامًا.';return;}
+ const editingReception=editingGuardianReceptionId?(Array.isArray(db.guardianReceptions)?db.guardianReceptions:[]).find(item=>String(item.id)===editingGuardianReceptionId):null;
+ if(!guardianReceptionStudentReferenceValid(student,editingReception,db.students)){$('#guardianReceptionStatusText').textContent='ملف التلميذ المحدد غير موجود؛ لا يمكن ربط استقبال جديد بملف غير موجود.';return;}
  if(!actionTaken||actionTaken.length>800){$('#guardianReceptionStatusText').textContent='اكتب ملخصًا مهنيًا موجزًا لا يتجاوز 800 حرف.';$('#guardianReceptionAction').focus();return;}
  if(!GUARDIAN_RECEPTION_STATUSES.includes(status)){$('#guardianReceptionStatusText').textContent='اختر نتيجة استقبال صحيحة.';return;}
  if(nextDate&&(!isValidISODate(nextDate)||nextDate<date)){$('#guardianReceptionStatusText').textContent='موعد المتابعة يجب أن يكون تاريخًا صحيحًا لا يسبق تاريخ الاستقبال.';$('#guardianReceptionNextDate').focus();return;}
