@@ -96,12 +96,27 @@ function streak(days = 11) {
   context.input.guardianResponseDate = '2026-11-04';
   const beforeDelivery = resultOf("applyAbsenceWorkflowResponse(record,input,'2026-11-27')");
   assert.equal(beforeDelivery.ok, false, 'A reply review date cannot precede verified delivery.');
+  context.input.guardianResponseDate = '2026-11-10';
+  const earlyNoReply = resultOf("applyAbsenceWorkflowResponse(record,input,'2026-11-27')");
+  assert.equal(earlyNoReply.ok, false, 'A no-response decision cannot be recorded before seven full days have elapsed.');
   context.input.guardianResponseDate = '2026-11-12';
   const saved = resultOf("applyAbsenceWorkflowResponse(record,input,'2026-11-27')");
   assert.equal(saved.ok, true);
   assert.equal(record.guardianResponseStatus, 'لم يرد الولي');
   assert.equal(record.guardianResponseDate, '2026-11-12');
   assert.equal(record.absenceWorkflowHistory.length, 1);
+}
+
+{
+  const record = stageDoc('warning-response', 18, { deliveryDate: '2026-11-01', deliveryProof: 'وصل الإعذار' });
+  context.db.documents = [record];
+  context.record = record;
+  context.input = { guardianResponseStatus: 'لم يرد الولي', guardianResponseDate: '2026-11-14', guardianResponseNotes: '' };
+  const earlyWarningNoReply = resultOf("applyAbsenceWorkflowResponse(record,input,'2026-11-27')");
+  assert.equal(earlyWarningNoReply.ok, false, 'The registered warning response period requires fourteen complete days.');
+  context.input.guardianResponseDate = '2026-11-15';
+  const validWarningNoReply = resultOf("applyAbsenceWorkflowResponse(record,input,'2026-11-27')");
+  assert.equal(validWarningNoReply.ok, true);
 }
 
 {
