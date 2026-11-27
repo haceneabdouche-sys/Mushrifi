@@ -4588,6 +4588,11 @@ function buildStudentTimeline(target,database,profileRecords){
  events.forEach(event=>delete event._order);
  return events;
 }
+function profileTimelineDateLabel(value){
+ if(!profileTimelineValidDate(value))return 'تاريخ غير محدد';
+ const parts=String(value).split('-').map(Number);
+ return new Date(parts[0],parts[1]-1,parts[2],12).toLocaleDateString('ar-DZ',{year:'numeric',month:'short',day:'numeric'});
+}
 function profileTimelineView(events,filter,limit){
  const allowed=['all','attendance','violations','documents','followups'],selected=allowed.includes(filter)?filter:'all';
  const source=Array.isArray(events)?events:[],filtered=selected==='all'?source:source.filter(event=>event.source===selected);
