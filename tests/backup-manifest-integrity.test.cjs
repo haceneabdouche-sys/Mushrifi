@@ -25,6 +25,7 @@ const nodeCrypto = require('node:crypto');
     violations: [],
     agenda: [{ id: 'g-1' }],
     followups: [{ id: 'f-1', student: 's-1' }],
+    supervisionLogs: [{ id: 'sl-1', type: 'حراسة الامتحانات' }],
     auditLog: [{ id: 'log-1' }],
     settings: { school: 'مؤسسة تربوية' }
   };
@@ -37,7 +38,7 @@ const nodeCrypto = require('node:crypto');
   assert.ok(manifest.payloadBytes > serialized.length, 'UTF-8 byte count accounts for Arabic text');
   assert.deepEqual(JSON.parse(JSON.stringify(manifest.counts)), {
     students: 1, attendance: 1, documents: 0, violations: 0,
-    agenda: 1, followups: 1, auditLog: 1
+    agenda: 1, followups: 1, supervisionLogs: 1, auditLog: 1
   });
   assert.equal(manifest.checksum.algorithm, 'CRC32');
   assert.equal(manifest.strongChecksum.algorithm, 'SHA-256');

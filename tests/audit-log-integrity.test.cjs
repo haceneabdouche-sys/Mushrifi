@@ -175,7 +175,7 @@ assert.ok(html.includes("filtered.length>120?'عرض أحدث 120 من '"),'audi
 assert.ok(html.includes('التصدير فيشمل جميع العمليات المحتفظ بها'),'audit export is documented as including the full retained history');
 assert.ok(html.includes("list.querySelectorAll('[data-audit-revert]')"),'revert actions are wired to guarded rollback');
 assert.ok(html.includes("const retainedAudit=Array.isArray(oldDb.auditLog)&&oldDb.auditLog.length?oldDb.auditLog:importedAudit"),'backup restore preserves local audit history or imports history when local history is empty');
-assert.ok(html.includes("db={...data,agenda:Array.isArray(data.agenda)?data.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]}"),'undo recovery preserves current agenda entries when restoring an older snapshot and retains the current audit history');
+assert.ok(html.includes("db={...data,agenda:Array.isArray(data.agenda)?data.agenda:(Array.isArray(oldDb.agenda)?oldDb.agenda.slice():[]),supervisionLogs:Array.isArray(data.supervisionLogs)?data.supervisionLogs:(Array.isArray(oldDb.supervisionLogs)?oldDb.supervisionLogs.slice():[]),auditLog:Array.isArray(oldDb.auditLog)?oldDb.auditLog.slice():[]}"),'undo recovery preserves current agenda entries when restoring an older snapshot and retains the current audit history');
 assert.ok(html.includes("if(obj.auditLog!==undefined&&(!Array.isArray(obj.auditLog)"),'backup import validates the optional audit log before replacing data');
 assert.ok(html.includes("const allowed=new Set(['exportData','exportAuditLog'"),'audit export remains available in read-only mode');
 

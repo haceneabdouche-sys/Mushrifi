@@ -327,7 +327,7 @@ public class MainActivity extends Activity {
                         throw new IOException("قائمة البيانات غير صالحة: " + key);
                     }
                 }
-                for (String key : new String[]{"agenda", "followups", "auditLog"}) {
+                for (String key : new String[]{"agenda", "followups", "supervisionLogs", "auditLog"}) {
                     if (replacement.has(key) && !(replacement.opt(key) instanceof org.json.JSONArray)) {
                         throw new IOException("قائمة البيانات غير صالحة: " + key);
                     }
@@ -335,7 +335,7 @@ public class MainActivity extends Activity {
                 if (!(replacement.opt("settings") instanceof org.json.JSONObject)) {
                     throw new IOException("إعدادات قاعدة البيانات غير صالحة.");
                 }
-                for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "auditLog"}) {
+                for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "supervisionLogs", "auditLog"}) {
                     org.json.JSONArray records = replacement.optJSONArray(key);
                     if (records == null) continue;
                     for (int i = 0; i < records.length(); i++) {
@@ -420,12 +420,12 @@ public class MainActivity extends Activity {
             if (!(snapshotDatabase.opt("settings") instanceof org.json.JSONObject)) {
                 throw new IOException("إعدادات نقطة التراجع غير صالحة.");
             }
-            for (String key : new String[]{"agenda", "followups", "auditLog"}) {
+            for (String key : new String[]{"agenda", "followups", "supervisionLogs", "auditLog"}) {
                 if (snapshotDatabase.has(key) && !(snapshotDatabase.opt(key) instanceof org.json.JSONArray)) {
                     throw new IOException("قائمة نقطة التراجع غير صالحة: " + key);
                 }
             }
-            for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "auditLog"}) {
+            for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "supervisionLogs", "auditLog"}) {
                 org.json.JSONArray records = snapshotDatabase.optJSONArray(key);
                 if (records == null) continue;
                 for (int i = 0; i < records.length(); i++) {
@@ -566,7 +566,7 @@ public class MainActivity extends Activity {
                     throw new IOException("قائمة البيانات الأساسية غير صالحة: " + key);
                 }
             }
-            for (String key : new String[]{"agenda", "followups", "auditLog"}) {
+            for (String key : new String[]{"agenda", "followups", "supervisionLogs", "auditLog"}) {
                 if (data.has(key) && !(data.opt(key) instanceof org.json.JSONArray)) {
                     throw new IOException("قائمة البيانات الاختيارية غير صالحة: " + key);
                 }
@@ -574,7 +574,7 @@ public class MainActivity extends Activity {
             if (!(data.opt("settings") instanceof org.json.JSONObject)) {
                 throw new IOException("إعدادات قاعدة البيانات غير صالحة.");
             }
-            for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "auditLog"}) {
+            for (String key : new String[]{"students", "attendance", "documents", "violations", "agenda", "followups", "supervisionLogs", "auditLog"}) {
                 org.json.JSONArray records = data.optJSONArray(key);
                 if (records == null) continue;
                 for (int i = 0; i < records.length(); i++) {

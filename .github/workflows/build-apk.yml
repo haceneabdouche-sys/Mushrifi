@@ -119,6 +119,8 @@ jobs:
         run: node tests/voice-action-routing-stage24.test.cjs
       - name: Run Stage 25 mobile responsiveness performance regression tests
         run: node tests/performance-stage25.test.cjs
+      - name: Run Stage 26 supervision duty register tests
+        run: node tests/supervision-log-stage26.test.cjs
       - name: Run backup identity integrity and restore rollback tests
         run: node tests/backup-restore-integrity.test.cjs
       - name: Run backup manifest integrity and legacy compatibility tests

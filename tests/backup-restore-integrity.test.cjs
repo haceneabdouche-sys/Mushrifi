@@ -56,6 +56,13 @@ const duplicateFollowupIds = context.inspectBackupIdentityIntegrity({
 });
 assert.equal(duplicateFollowupIds.ok, false, 'duplicate educational follow-up IDs block restore');
 
+const duplicateSupervisionLogIds = context.inspectBackupIdentityIntegrity({
+  students: [{ id: 's-1' }], attendance: [], documents: [], violations: [], agenda: [], followups: [],
+  supervisionLogs: [{ id: 'sl-1' }, { id: 'sl-1' }]
+});
+assert.equal(duplicateSupervisionLogIds.ok, false, 'duplicate supervision log IDs block restore');
+assert.equal(duplicateSupervisionLogIds.duplicateRecordIds[0].collection, 'supervisionLogs');
+
 const importCall = html.indexOf('const integrity=inspectBackupIdentityIntegrity(normalized);');
 const setPending = html.indexOf('pendingBackupData=normalized;', importCall);
 assert.ok(importCall > 0 && setPending > importCall, 'integrity scan runs after legacy recovery and before data is staged for preview');
