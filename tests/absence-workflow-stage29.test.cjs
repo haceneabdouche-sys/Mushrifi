@@ -176,11 +176,32 @@ function streak(days = 11) {
   assert.equal(blockedResponse.ok, false, 'A settled monthly warning must reject response edits.');
 }
 
+
+{
+  const record = stageDoc('cycle-evidence', 4);
+  context.db.attendance = [
+    { id: 'before-cycle', student: 'student-29', date: '2026-10-31', type: 'حضور' },
+    { id: 'after-cycle', student: 'student-29', date: '2026-11-12', type: 'حضور' },
+    { id: 'unrelated-student', student: 'other', date: '2026-11-13', type: 'حضور' }
+  ];
+  context.record = record;
+  const evidence = resultOf("findAbsenceWorkflowReturnEvidence(record,db.attendance)");
+  assert.equal(evidence.date, '2026-11-12');
+  assert.equal(evidence.type, 'حضور');
+  context.db.attendance = [{ student: 'student-29', date: '2026-11-12', type: 'غياب', justified: 'مبرر' }];
+  const justifiedEvidence = resultOf("findAbsenceWorkflowReturnEvidence(record,db.attendance)");
+  assert.equal(justifiedEvidence.type, 'غياب', 'A justified absence after the cycle start interrupts the streak and must be reviewed.');
+  context.db.attendance = [{ student: 'student-29', date: '2026-11-12', type: 'غياب', justified: 'غير مبرر' }];
+  assert.equal(resultOf("findAbsenceWorkflowReturnEvidence(record,db.attendance)"), null, 'Another unjustified absence is not return evidence.');
+}
+
 assert.ok(html.includes('id="absenceWorkflowBoard"'), 'The document page must expose the workflow management panel.');
 assert.ok(html.includes('data-absence-action="delivery"'), 'The panel must provide a real delivery-recording action.');
 assert.ok(html.includes('data-absence-action="response"'), 'The panel must provide a guardian-response action.');
 assert.ok(html.includes('data-absence-action="settle"'), 'The panel must provide a settlement action.');
 assert.ok(html.includes('أؤكد أن التبليغ تم فعلياً'), 'The delivery operation must require explicit confirmation.');
+assert.ok(html.includes('تنبيه مراجعة: يوجد سجل '), 'The board must flag potential attendance evidence after the absence cycle start.');
+assert.ok(html.includes('guardianResponseNotes'), 'The workflow history must preserve dated response details for review.');
 assert.ok(html.includes('أؤكد مراجعة الملف وتوثيق العودة/التسوية'), 'The settlement operation must require explicit confirmation.');
 assert.match(html, /absenceWorkflowHistory/);
 assert.match(html, /absenceWorkflowCycleIsClosed\(streak\.student\.id,streak\.start\)/);
