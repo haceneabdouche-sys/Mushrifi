@@ -1128,62 +1128,53 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 .monthly-occurrence-dates{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin-top:8px}
 .monthly-occurrence-dates span{display:inline-block;padding:4px 7px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:11px;color:var(--muted);white-space:nowrap}
 
-/* Burned-graffiti engraving positioned inside the reserved strip on the home dashboard. */
+/* Dark-red nameplate with a recessed, burnt-graffiti author mark. */
 .home-author-engraving{
- min-height:144px;
- margin:8px auto 4px;
- padding:8px 10px 3px;
- display:flex;
- flex-direction:column;
- align-items:center;
- justify-content:center;
- gap:1px;
- text-align:center;
- background:transparent;
- border:0;
- box-shadow:none;
+ position:relative; isolation:isolate; overflow:hidden; box-sizing:border-box;
+ width:min(100%,760px); min-height:88px; margin:14px auto 8px; padding:9px 14px;
+ display:flex; flex-direction:row; align-items:center; justify-content:center;
+ gap:clamp(10px,3vw,20px); direction:rtl; text-align:right;
+ border:1px solid #68111b; border-radius:9px;
+ background:radial-gradient(ellipse at 18% 18%,rgba(255,137,119,.16),transparent 38%),linear-gradient(132deg,#a52b37 0%,#821722 52%,#9c2631 100%);
+ box-shadow:inset 0 1px 0 rgba(255,204,194,.25),inset 0 -5px 11px rgba(28,0,4,.42),0 4px 12px rgba(58,5,13,.17);
+}
+.home-author-engraving::before{
+ content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.16;
+ background:repeating-linear-gradient(116deg,transparent 0 19px,rgba(22,0,4,.82) 20px,transparent 21px 41px);
+}
+.home-author-engraving::after{
+ content:"";position:absolute;inset:4px;z-index:0;pointer-events:none;
+ border:1px solid rgba(245,173,160,.20);border-radius:5px;
+}
+.home-author-copy{
+ position:relative;z-index:1;min-width:0;display:flex;flex-direction:column;align-items:flex-end;gap:1px;
 }
 .home-author-caption{
- color:#60402c;
- font-size:11px;
- font-weight:900;
- letter-spacing:1.25px;
- text-shadow:0 1px 0 rgba(255,244,225,.9),0 -1px 1px rgba(59,36,21,.28);
+ color:#310b10;font-size:10px;line-height:1.5;font-weight:900;letter-spacing:.9px;
+ text-shadow:0 1px 0 rgba(255,153,140,.30),0 -1px 1px rgba(19,0,4,.78);
 }
 .home-author-name{
- display:block;
- color:#4e2e1c;
+ display:block;max-width:100%;color:#26070c;-webkit-text-fill-color:#26070c;
  font-family:"Arial Black","Franklin Gothic Heavy",Impact,Tahoma,sans-serif;
- font-size:clamp(18px,4.8vw,23px);
- font-weight:900;
- letter-spacing:2px;
- line-height:1.42;
- -webkit-text-stroke:.45px rgba(61,36,21,.62);
- text-shadow:
-  0 1px 0 rgba(255,239,214,.92),
-  0 -1px 0 rgba(44,26,16,.44),
-  1px 2px 1px rgba(42,25,15,.38),
-  0 3px 5px rgba(67,39,19,.25);
+ font-size:clamp(17px,4.7vw,22px);font-weight:900;letter-spacing:1.8px;line-height:1.35;white-space:nowrap;
+ -webkit-text-stroke:.55px rgba(37,0,7,.78);
+ text-shadow:0 1px 0 rgba(255,142,128,.34),0 -1px 1px rgba(12,0,3,.88),1px 2px 1px rgba(17,0,4,.58),0 2px 4px rgba(18,0,4,.28);
  transform:rotate(-1deg);
 }
 .home-author-signature{
- display:block;
- width:88px;
- height:82px;
- object-fit:contain;
- margin:0 auto;
- border:0;
- border-radius:0;
- padding:0;
- background:transparent;
- box-shadow:none;
- opacity:.94;
- filter:grayscale(1) sepia(1) saturate(2.2) brightness(.48) contrast(1.32);
+ position:relative;z-index:1;display:block;flex:0 0 65px;width:65px;height:60px;object-fit:contain;margin:0;
+ border:0;border-radius:0;padding:0;background:transparent;box-shadow:none;opacity:.96;
+ filter:grayscale(1) sepia(1) saturate(2.2) brightness(.32) contrast(1.55);
 }
 @media(max-width:700px){
- .home-author-engraving{min-height:150px;margin:7px auto 3px;padding:7px 8px 2px}
- .home-author-name{font-size:clamp(17px,4.7vw,21px);letter-spacing:1.7px}
- .home-author-signature{width:82px;height:76px}
+ .home-author-engraving{min-height:78px;margin:12px auto 7px;padding:8px 10px;gap:10px}
+ .home-author-name{font-size:clamp(15px,4.5vw,19px);letter-spacing:1.25px}
+ .home-author-signature{flex-basis:56px;width:56px;height:50px}
+}
+@media(max-width:360px){
+ .home-author-engraving{min-height:72px;padding:7px 8px;gap:8px}
+ .home-author-name{font-size:14px;letter-spacing:1px}
+ .home-author-signature{flex-basis:50px;width:50px;height:45px}
 }
 @media(prefers-reduced-motion:reduce){.home-author-name{transform:none}}
 @media print{.home-author-engraving{display:none!important}}
@@ -1314,9 +1305,11 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
   <summary><strong>آخر العمليات</strong><span class="pill" id="recentCount">0 عملية</span><span class="muted">اضغط لعرض العمليات أو إخفائها</span></summary>
   <div id="recent" class="empty">لا توجد عمليات مسجلة بعد.</div>
 </details>
-<div id="home-author-engraving" class="home-author-engraving" aria-label="توقيع مطوّر تطبيق مُشرِفي">
- <span class="home-author-caption">تصميم وتطوير</span>
- <strong class="home-author-name" dir="ltr">ABDOUCHE HACENE</strong>
+<div id="home-author-engraving" class="home-author-engraving" aria-label="اسم وإمضاء مطوّر تطبيق مُشرِفي">
+ <div class="home-author-copy">
+  <span class="home-author-caption">تصميم وتطوير</span>
+  <strong class="home-author-name" dir="ltr">ABDOUCHE HACENE</strong>
+ </div>
  <img class="home-author-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene" loading="eager">
 </div>
 </section>
