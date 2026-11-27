@@ -26,7 +26,7 @@ const database={
  documents:[{id:'d1',student:'s-1',date:'2026-11-06'},{id:'d2',student:'old-d',studentName:'وائل عيسو1',studentClass:'١'},{id:'d3',student:'s-2'}],
  followups:[{id:'f1',student:'s-1'},{id:'f2',student:'old-f',studentName:'وائل عيسو',sectionLabel:'1'},{id:'f3',student:'s-2'}]
 };
-const ids=items=>items.map(record=>record.id);
+const ids=items=>JSON.parse(JSON.stringify(items.map(record=>record.id)));
 const brute=(target,collection)=>database[collection].filter(record=>sandbox.profileRecordBelongsToStudent(record,target,database.students));
 for(const target of database.students){
  const indexed=sandbox.getStudentProfileRecords(target,database);
