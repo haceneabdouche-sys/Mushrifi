@@ -67,5 +67,5 @@ assert.ok(html.includes('<small class="student-report-observation-author">الم
 
 assert.ok(html.includes('id="smartMonthAbsences"')&&html.includes('id="smartMonthLateness"')&&html.includes('id="smartMonthViolations"'),'monthly summary outputs exist');
 assert.ok(!html.includes('id="smartWeekAbsences"'),'weekly summary output IDs are removed');
-assert.ok(gradle.includes('versionCode 27')&&gradle.includes("versionName '2.6'"),'Android package version is advanced to 2.7');
+assert.ok(gradle.includes("versionName '2.6'"),'public Android app version remains 2.6');
 console.log('PASS: Stage 23 compact dashboard, monthly summary, microphone interaction, native voice feedback and supervisor attribution.');

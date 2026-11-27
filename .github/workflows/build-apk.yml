@@ -115,6 +115,8 @@ jobs:
         run: node tests/guardian-address-import-stage22.test.cjs
       - name: Run Stage 23 compact dashboard, voice interaction and supervisor attribution tests
         run: node tests/focused-dashboard-voice-stage23.test.cjs
+      - name: Run Stage 24 real voice action routing and disclosure visibility tests
+        run: node tests/voice-action-routing-stage24.test.cjs
       - name: Run backup identity integrity and restore rollback tests
         run: node tests/backup-restore-integrity.test.cjs
       - name: Run backup manifest integrity and legacy compatibility tests

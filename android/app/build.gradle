@@ -7,7 +7,7 @@ android {
         applicationId 'dz.mushrifi.app.offline'
         minSdk 23
         targetSdk 35
-        versionCode 27
+        versionCode 28
         versionName '2.6'
     }
 

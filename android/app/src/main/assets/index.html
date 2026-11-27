@@ -3244,9 +3244,16 @@ window.studentAction=(source,id)=>{
     form.elements.type.value=action==='absence'?'غياب':'تأخر';
     form.elements.type.dispatchEvent(new Event('change',{bubbles:true}));
     form.elements.date.value=today();
+    // The individual attendance form is inside a collapsed disclosure.
+    // Open it before navigating so the voice-selected action is immediately visible.
+    const attendanceDisclosure=typeof form.closest==='function'?form.closest('details'):null;
+    if(attendanceDisclosure)attendanceDisclosure.open=true;
     go('attendance');
     const focusTarget=action==='late'?form.elements.minutes:form.elements.hours;
-    (focusTarget||form.elements.period)?.focus();
+    if(focusTarget){
+      if(typeof focusTarget.scrollIntoView==='function')focusTarget.scrollIntoView({behavior:'smooth',block:'center'});
+      if(typeof focusTarget.focus==='function')focusTarget.focus();
+    }
     return true;
   }
   if(action==='report'){
@@ -4012,7 +4019,6 @@ $('#makeReport').onclick=()=>{
  const table=(rows,headers,render)=>rows.length?'<div class="tablewrap"><table><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+rows.map(render).join('')+'</tbody></table></div>':'<p class="empty">لا توجد سجلات ضمن الفترة المحددة.</p>';
  $('#reportOutput').innerHTML='<div class="report-heading"><h2>تقرير الحياة المدرسية</h2><p>'+esc(db.settings.school||'ثانوية الشيخ بوعمامة')+' – '+esc(db.settings.location||'بوسكن')+'</p></div><div class="report-print-meta"><span>الفترة: '+esc(from||'من بداية السجلات')+' إلى '+esc(to||'حتى اليوم')+'</span><span>تاريخ الاستخراج: '+esc(new Date().toLocaleDateString('ar-DZ'))+'</span></div><div class="report-summary-grid">'+cards.map(([label,value])=>'<div class="report-summary-item"><small>'+label+'</small><strong>'+esc(value)+'</strong></div>').join('')+'</div><h3 class="report-section-title">الغيابات والتأخرات ('+a.length+')</h3>'+table(a,['التاريخ','التلميذ','الحالة','الفترة','المدة','التبرير','ملاحظات'],x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(name(x.student))+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(x.type==='تأخر'?(x.minutes??Math.round(Number(x.hours||0)*60))+' دقيقة':(x.hours??'—')+(x.type==='غياب'?' ساعة':''))+'</td><td>'+esc(x.justified||'—')+'</td><td>'+esc(x.notes||'—')+'</td></tr>')+'<h3 class="report-section-title">المخالفات ('+v.length+')</h3>'+table(v,['التاريخ','التلميذ','النوع','الوصف','الإجراء'],x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(name(x.student))+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.action||'—')+'</td></tr>')+'<h3 class="report-section-title">الإشعارات والاستدعاءات ('+d.length+')</h3>'+table(d,['التاريخ','التلميذ','الوثيقة','السبب','موعد الحضور'],x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(name(x.student))+'</td><td>'+esc(x.type)+'</td><td>'+esc(x.reason)+'</td><td>'+esc(x.appointment||'—')+'</td></tr>');
 };
-$('#quickVoiceAccess')?.addEventListener('click',()=>{go('home');$('#voiceAssistant')?.scrollIntoView({behavior:'smooth',block:'center'});$('#startVoiceBtn')?.click();});
 $('#saveSettings').onclick=()=>{const school=$('#schoolName').value.trim(),location=$('#schoolLocation').value.trim();if(!school){alert('أدخل اسم المؤسسة أولاً.');$('#schoolName').focus();return;}const previous={...db.settings};db.settings.school=school;db.settings.location=location;if(!save()){db.settings=previous;render();return;}alert('تم حفظ إعدادات المؤسسة، وظهرت المعلومات أعلى اسمك وإمضائك.')};
 function updateBackupHealth(timestamp,verified){
  const box=$('#backupHealthStatus');if(!box)return;
