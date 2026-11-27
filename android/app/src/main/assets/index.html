@@ -3637,9 +3637,22 @@ appointmentInput.addEventListener('change',()=>{if(!appointmentInput.value||remi
 $('#docForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);const type=f.get('type'),appointment=f.get('appointment');let reminderAt='';if(type==='استدعاء ولي'){const rd=f.get('reminderDate'),rt=f.get('reminderTime');if(!appointment||!rd||!rt){alert('حدد موعد حضور الولي وتاريخ وساعة التنبيه.');return;}reminderAt=rd+'T'+rt;const appointmentMs=new Date(appointment).getTime(),reminderMs=new Date(reminderAt).getTime();if(!Number.isFinite(appointmentMs)||!Number.isFinite(reminderMs)||reminderMs<=Date.now()){alert('يجب أن يكون تاريخ وساعة التنبيه في المستقبل.');return;}}let d={id:crypto.randomUUID(),type,student:f.get('student'),date:f.get('date'),appointment,reminderAt,reason:f.get('reason'),photo:e.target.dataset.photo||''};db.documents.push(d);if(!save()){db.documents.pop();return;}scheduleSummonsReminder(d);e.target.reset();e.target.dataset.photo='';$('#docPhotoPreview').innerHTML='';updateReminderFields();printDoc(d.id)};
 $('#violForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.violations.push({id:crypto.randomUUID(),student:f.get('student'),date:f.get('date'),type:f.get('type'),description:f.get('description'),action:f.get('action'),photo:e.target.dataset.photo||''});if(!save()){db.violations.pop();return;}e.target.reset();e.target.dataset.photo='';$('#violPhotoPreview').innerHTML='';alert('تم حفظ الواقعة وصورة التقرير إن وُجدت.')};
 let studentSearchTimer=0;$('#studentSearch').oninput=()=>{clearTimeout(studentSearchTimer);studentDirectoryPage=0;studentSearchTimer=setTimeout(renderStudentDirectory,100);};
+function syncPendingAbsenceStageNotifications(){
+ if(!window.AndroidBridge||typeof AndroidBridge.notifyAbsenceStage!=='function'||!Array.isArray(db.documents))return;
+ if(typeof AndroidBridge.hasNotificationPermission==='function'&&!AndroidBridge.hasNotificationPermission())return;
+ const handled=new Set();
+ for(const record of db.documents){
+  const stage=Number(record.absenceStage);
+  if(![4,11,17,18,32].includes(stage))continue;
+  const st=student(record.student);if(!st)continue;
+  const reference=String(record.absenceStart||record.absenceMonth||'');if(!reference)continue;
+  const key=String(st.id)+'|'+reference+'|'+stage;if(handled.has(key))continue;handled.add(key);
+  try{AndroidBridge.notifyAbsenceStage(String(st.id),((st.last||'')+' '+(st.first||'')).trim()||'تلميذ',stage,reference);}catch(error){console.warn('Pending absence-stage notification sync failed',error);}
+ }
+}
 function renderNotificationPermissionStatus(granted){const status=$('#notificationPermissionStatus');if(!status)return;status.textContent=granted?'صلاحية الإشعارات مفعّلة على هذا الهاتف.':'الإشعارات غير مفعّلة؛ لن تظهر التذكيرات حتى تسمح بها.';status.classList.toggle('status-ok',!!granted);status.classList.toggle('status-warn',!granted);}
-window.onMushrifiNotificationPermissionChanged=granted=>{renderNotificationPermissionStatus(!!granted);refreshAgendaNotificationStatus();if(granted&&window.AndroidBridge&&typeof AndroidBridge.syncAgendaReminders==='function')syncAgendaRemindersWithAndroid(true);};
-function refreshNotificationPermissionStatus(){if(window.AndroidBridge&&typeof AndroidBridge.hasNotificationPermission==='function')renderNotificationPermissionStatus(AndroidBridge.hasNotificationPermission());else renderNotificationPermissionStatus(false);}
+window.onMushrifiNotificationPermissionChanged=granted=>{renderNotificationPermissionStatus(!!granted);refreshAgendaNotificationStatus();if(granted){syncPendingAbsenceStageNotifications();if(window.AndroidBridge&&typeof AndroidBridge.syncAgendaReminders==='function')syncAgendaRemindersWithAndroid(true);}};
+function refreshNotificationPermissionStatus(){const granted=!!(window.AndroidBridge&&typeof AndroidBridge.hasNotificationPermission==='function'&&AndroidBridge.hasNotificationPermission());renderNotificationPermissionStatus(granted);if(granted)syncPendingAbsenceStageNotifications();}
 function renderExactAlarmPermissionStatus(granted){const status=$('#exactAlarmPermissionStatus');if(!status)return;status.textContent=granted?'التنبيهات الدقيقة متاحة؛ يُضبط التذكير على الوقت المحدد.':'التنبيهات الدقيقة غير مفعّلة؛ قد يصل التذكير في وقت تقريبي حسب نظام الهاتف.';status.classList.toggle('status-ok',!!granted);status.classList.toggle('status-warn',!granted);}
 window.onMushrifiExactAlarmPermissionChanged=granted=>{renderExactAlarmPermissionStatus(!!granted);refreshAgendaNotificationStatus();if(granted&&window.AndroidBridge&&typeof AndroidBridge.syncAgendaReminders==='function')syncAgendaRemindersWithAndroid(true);};
 function refreshExactAlarmPermissionStatus(){if(window.AndroidBridge&&typeof AndroidBridge.hasExactAlarmAccess==='function')renderExactAlarmPermissionStatus(AndroidBridge.hasExactAlarmAccess());else renderExactAlarmPermissionStatus(false);}
