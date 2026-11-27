@@ -160,6 +160,22 @@ function streak(days = 11) {
   assert.equal(record.absenceWorkflowStatus, 'مفتوح');
 }
 
+
+{
+  const record = stageDoc('monthly-closed', 17, { absenceStart: '', absenceWorkflowStatus: 'مسوى' });
+  context.db.documents = [record];
+  context.record = record;
+  context.input = {
+    deliveryDate: '2026-11-05', deliveryMethod: 'البريد المضمون',
+    deliveryRecipient: 'ولي التلميذ', deliveryProof: 'وصل شهري', confirmed: true
+  };
+  const blockedDelivery = resultOf("applyAbsenceWorkflowDelivery(record,input,'2026-11-27')");
+  assert.equal(blockedDelivery.ok, false, 'A settled monthly warning must reject delivery-record edits.');
+  context.input = { guardianResponseStatus: 'رد غير كافٍ', guardianResponseDate: '2026-11-12', guardianResponseNotes: '' };
+  const blockedResponse = resultOf("applyAbsenceWorkflowResponse(record,input,'2026-11-27')");
+  assert.equal(blockedResponse.ok, false, 'A settled monthly warning must reject response edits.');
+}
+
 assert.ok(html.includes('id="absenceWorkflowBoard"'), 'The document page must expose the workflow management panel.');
 assert.ok(html.includes('data-absence-action="delivery"'), 'The panel must provide a real delivery-recording action.');
 assert.ok(html.includes('data-absence-action="response"'), 'The panel must provide a guardian-response action.');
