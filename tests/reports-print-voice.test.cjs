@@ -25,7 +25,7 @@ const checks = [
   ['the More page exposes only secondary tools and groups them by purpose', /<section id="more" class="page hidden">[\s\S]*?data-go="agenda"[\s\S]*?data-go="reports"[\s\S]*?data-go="settings"[\s\S]*?data-go="audit"/],
   ['violations are inside the Follow-up workspace rather than a separate More-page destination', /<section id="attendance" class="page hidden">[\s\S]*?data-followup-view="attendance"[\s\S]*?data-followup-view="violations"[\s\S]*?<div id="violations" class="followup-view hidden"/],
   ['bottom navigation is fixed and reserves space for mobile safe areas', /#nav\{position:fixed[\s\S]*?env\(safe-area-inset-bottom\)/],
-  ['secondary destinations include the agenda, reports, settings, audit and the new supervision register', /const secondary=\['reports','settings','audit','agenda','supervisionLog','guardianReceptions'\]\.includes\(route\)/],
+  ['secondary destinations include the agenda, reports, settings, audit and the new supervision register', /const secondary=\['reports','settings','audit','agenda','supervisionLog','guardianReceptions','followupCenter'\]\.includes\(route\)/],
   ['More selection follows the secondary-route flag', /button\.dataset\.page==='more'&&secondary/],
   ['top dashboard voice launcher is icon-only and located in the heading', /<div class="home-heading panel">[\s\S]*?<section id="voiceAssistant"[\s\S]*?<button[^>]*id="startVoiceBtn"[^>]*aria-label="التحدث إلى مُشرِفي"[^>]*>🎙️<\/button>/],
   ['duplicate lower voice tile is removed', /^(?![\s\S]*id="quickVoiceAccess")[\s\S]*$/],
