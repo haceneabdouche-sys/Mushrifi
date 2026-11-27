@@ -927,6 +927,29 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 @media(max-width:420px){.agenda-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.agenda-week-grid{grid-template-columns:1fr}.agenda-month-grid{gap:2px}.agenda-month-day{min-height:59px}.agenda-month-day>b{font-size:10px}.agenda-day-chip{font-size:7px}.agenda-event-top{flex-wrap:wrap}}
 @media print{.agenda-controls,.agenda-form-panel,.agenda-item-actions,.agenda-event button{display:none!important}.agenda-week-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.agenda-month-day{min-height:70px}}
 
+
+.followup-center-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.followup-center-kpi{border:1px solid var(--line);border-radius:11px;background:#f8fafb;padding:11px;min-width:0}
+.followup-center-kpi small{display:block;color:var(--muted);font-size:11px}
+.followup-center-kpi strong{display:block;margin-top:5px;color:var(--navy);font-size:23px}
+.followup-center-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.followup-center-filters>div{min-width:0}
+.followup-center-list{display:grid;gap:9px}
+.followup-center-event{border:1px solid var(--line);border-right:4px solid #9ab7c8;border-radius:11px;background:#fbfcfd;padding:11px;min-width:0}
+.followup-center-event[data-center-status="open"]{border-right-color:#c69a50}
+.followup-center-event[data-center-status="unlinked"]{border-right-color:#b74646}
+.followup-center-event[data-center-status="done"]{border-right-color:#5a9a7d}
+.followup-center-event-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.followup-center-event h4{margin:7px 0 4px;font-size:14px}
+.followup-center-event p{margin:4px 0;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.followup-center-event-meta{display:flex;gap:7px;flex-wrap:wrap;color:var(--muted);font-size:11px}
+.followup-center-event .pill{display:inline-block}
+.followup-center-event-actions{margin-top:8px}
+.followup-center-event-actions .btn{min-height:34px}
+@media(max-width:700px){.followup-center-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.followup-center-filters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.followup-center-filters{grid-template-columns:1fr}}
+@media print{.followup-center-filters,.followup-center-event-actions{display:none!important}}
+
 </style>
 <style>
 
@@ -1244,6 +1267,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
   </div>
   <div class="more-groups">
     <section class="panel more-group"><h2>دفاتر العمل</h2><div class="tiles more-tiles">
+      <div class="tile" data-go="followupCenter">🧭<b>مركز المتابعة الشامل</b><small>تجميع وفرز وطباعة سجلات المتابعة</small></div>
       <div class="tile" data-go="supervisionLog">🧭<b>دفتر مهام الإشراف</b><small>توثيق المهام اليومية وفق المادة 144</small></div>
       <div class="tile" data-go="guardianReceptions">🤝<b>دفتر استقبال الأولياء</b><small>توثيق الاستقبال والتوجيه والمتابعة</small></div>
     </div></section>
@@ -1376,6 +1400,32 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
  </div>
 </section>
 
+
+
+<section id="followupCenter" class="page hidden" aria-labelledby="followupCenterHeading">
+ <div class="panel">
+  <div class="panel-title-row"><h2 id="followupCenterHeading">مركز المتابعة الشامل</h2><span class="pill" id="followupCenterCount">0 سجل</span></div>
+  <p class="muted">عرض موحد للسجلات المحفوظة في مُشرِفي. المركز لا ينشئ سجلات جديدة ولا يغيرها، ولا يصدر قرارات آلية؛ هو أداة جمع وفرز ومراجعة فقط.</p>
+  <div class="followup-center-kpis" id="followupCenterSummary" aria-live="polite"></div>
+ </div>
+ <div class="panel">
+  <h3>تصفية السجلات</h3>
+  <div class="followup-center-filters">
+   <div><label for="followupCenterFrom">من تاريخ</label><input id="followupCenterFrom" type="date"></div>
+   <div><label for="followupCenterTo">إلى تاريخ</label><input id="followupCenterTo" type="date"></div>
+   <div><label for="followupCenterSource">نوع السجل</label><select id="followupCenterSource"><option value="all">كل السجلات</option><option value="attendance">الحضور والغياب</option><option value="violations">المخالفات</option><option value="documents">الوثائق والاستدعاءات</option><option value="followups">المتابعات التربوية</option><option value="guardianReceptions">استقبال الأولياء</option><option value="supervisionLogs">مهام الإشراف</option></select></div>
+   <div><label for="followupCenterStatus">الحالة</label><select id="followupCenterStatus"><option value="all">كل الحالات</option><option value="open">تحتاج متابعة / مراجعة</option><option value="done">مسجلة / مكتملة</option><option value="unlinked">هوية تحتاج تحقق</option><option value="info">سجلات معلوماتية</option></select></div>
+   <div><label for="followupCenterSection">القسم</label><select id="followupCenterSection"><option value="">كل الأقسام</option></select></div>
+   <div><label for="followupCenterSearch">بحث</label><input id="followupCenterSearch" type="search" placeholder="اسم التلميذ أو نوع السجل أو القسم"></div>
+  </div>
+  <div class="actions no-print"><button type="button" class="btn primary" id="followupCenterApply">تحديث النتائج</button><button type="button" class="btn" id="followupCenterReset">إعادة ضبط المرشحات</button><button type="button" class="btn" id="followupCenterPrint">طباعة السجل / حفظ PDF</button></div>
+  <p id="followupCenterNotice" class="muted" role="status" aria-live="polite"></p>
+ </div>
+ <div class="panel">
+  <div class="panel-title-row"><h3>السجل الموحد</h3><span class="muted" id="followupCenterResultCount">0 نتيجة</span></div>
+  <div id="followupCenterEntries" class="followup-center-list" aria-live="polite"><p class="empty">اختر الفترة ثم حدّث النتائج.</p></div>
+ </div>
+</section>
 
 <section id="guardianReceptions" class="page hidden" aria-labelledby="guardianReceptionsHeading">
  <div class="panel">
@@ -2043,6 +2093,7 @@ const PAGE_CONTEXT={
  agenda:['الأجندة والمواعيد','المهام والاجتماعات ومواعيد الأولياء'],
  supervisionLog:['دفتر مهام الإشراف','توثيق المهام اليومية وفق المادة 144'],
  guardianReceptions:['استقبال الأولياء','تسجيل الاستقبال والتوجيه دون تكرار الاستدعاءات'],
+ followupCenter:['مركز المتابعة الشامل','عرض وفرز سجلات المتابعة والتنبيهات دون تعديل البيانات'],
  reports:['التقارير والطباعة','الإحصاءات والتقارير الفردية والجماعية'],
  settings:['الإعدادات والترخيص','المؤسسة والتنبيهات والبيانات والحماية'],
  audit:['سجل العمليات','مراجعة الإضافات والتعديلات والحذف']
@@ -2084,7 +2135,7 @@ function go(page,addHistory=true){
  }
  document.querySelectorAll('.page').forEach(element=>element.classList.toggle('hidden',element.id!==target));
  if(target==='attendance')setFollowupView(route==='violations'?'violations':'attendance');
- const secondary=['reports','settings','audit','agenda','supervisionLog','guardianReceptions'].includes(route);
+ const secondary=['reports','settings','audit','agenda','supervisionLog','guardianReceptions','followupCenter'].includes(route);
  document.querySelectorAll('nav button').forEach(button=>{
   button.classList.toggle('active',button.dataset.page===target||(button.dataset.page==='more'&&secondary));
  });
@@ -2119,7 +2170,12 @@ function setSettingsTab(tab){const allowed=['schedule','followup','rates','alert
 window.setSettingsTab=setSettingsTab;
 $$('[data-settings-tab]').forEach(button=>button.addEventListener('click',()=>setSettingsTab(button.dataset.settingsTab)));
 $$('nav button').forEach(button=>button.addEventListener('click',()=>go(button.dataset.page)));
- $$('[data-go]').forEach(button=>button.addEventListener('click',()=>go(button.dataset.go)));
+ $('[data-go]').forEach(button=>button.addEventListener('click',()=>go(button.dataset.go)));
+ $('#followupCenterApply')?.addEventListener('click',renderFollowupCenter);
+ $('#followupCenterReset')?.addEventListener('click',()=>{['followupCenterFrom','followupCenterTo','followupCenterSearch'].forEach(id=>{const el=$('#'+id);if(el)el.value='';});['followupCenterSource','followupCenterStatus','followupCenterSection'].forEach(id=>{const el=$('#'+id);if(el)el.value='all';});if($('#followupCenterSection'))$('#followupCenterSection').value='';renderFollowupCenter();});
+ ['followupCenterFrom','followupCenterTo','followupCenterSource','followupCenterStatus','followupCenterSection'].forEach(id=>$('#'+id)?.addEventListener('change',renderFollowupCenter));
+ $('#followupCenterSearch')?.addEventListener('input',renderFollowupCenter);
+ $('#followupCenterPrint')?.addEventListener('click',()=>window.printFollowupCenter());
  $$('[data-followup-view]').forEach(button=>button.addEventListener('click',()=>{setFollowupView(button.dataset.followupView);updatePageContextBar(currentAppRoute());render();}));
  $('#pageBackButton')?.addEventListener('click',()=>goPreviousPage());
  $('#licenseAdvisoryOpen')?.addEventListener('click',()=>{go('settings');setSettingsTab('license');});
@@ -3035,6 +3091,203 @@ function getHomeOverviewSnapshot(today){
  homeOverviewCache={date:today,students:db.students,attendance:db.attendance,documents:db.documents,violations:db.violations,studentCount:db.students.length,attendanceCount:db.attendance.length,documentsCount:db.documents.length,violationsCount:db.violations.length,snapshot};
  return snapshot;
 }
+
+function followupCenterValidDate(value){
+ const match=String(value??'').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ if(!match)return false;
+ const year=Number(match[1]),month=Number(match[2]),day=Number(match[3]),date=new Date(Date.UTC(year,month-1,day));
+ return date.getUTCFullYear()===year&&date.getUTCMonth()===month-1&&date.getUTCDate()===day;
+}
+function followupCenterText(value,maxLength){
+ return String(value??'').replace(/\s+/g,' ').trim().slice(0,maxLength||180);
+}
+function followupCenterNormalize(value){
+ return String(value??'').normalize('NFKC').replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u200e\u200f]/g,'').replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+}
+function followupCenterShiftDate(value,days){
+ if(!followupCenterValidDate(value))return '';
+ const parts=String(value).split('-').map(Number),date=new Date(Date.UTC(parts[0],parts[1]-1,parts[2]));
+ date.setUTCDate(date.getUTCDate()+Number(days||0));
+ return date.getUTCFullYear()+'-'+String(date.getUTCMonth()+1).padStart(2,'0')+'-'+String(date.getUTCDate()).padStart(2,'0');
+}
+function buildFollowupCenterSnapshot(database,filters,today){
+ const source=database&&typeof database==='object'?database:{},options=filters&&typeof filters==='object'?filters:{};
+ const students=Array.isArray(source.students)?source.students:[],now=followupCenterValidDate(today)?String(today):'';
+ const allowedSources=['attendance','violations','documents','followups','guardianReceptions','supervisionLogs'];
+ const sourceFilter=allowedSources.includes(String(options.source||''))?String(options.source):'all';
+ const statusFilter=['all','open','done','unlinked','info'].includes(String(options.status||''))?String(options.status):'all';
+ const from=followupCenterValidDate(options.from)?String(options.from):'',to=followupCenterValidDate(options.to)?String(options.to):'';
+ if(from&&to&&from>to)return {valid:false,total:0,shown:0,events:[],summary:{open:0,done:0,unlinked:0,overdue:0}};
+ const query=followupCenterNormalize(options.query||''),sectionFilter=followupCenterNormalize(options.section||'');
+ const seen=new Set(),allEvents=[];
+ const resolveStudent=record=>{
+  const hasReference=!!String(record?.student??'').trim()||!!String(record?.studentName??'').trim();
+  if(!hasReference)return {student:null,unlinked:false};
+  if(typeof profileRecordBelongsToStudent!=='function')return {student:null,unlinked:true};
+  const matches=students.filter(target=>{
+   try{return profileRecordBelongsToStudent(record,target,students);}catch(_){return false;}
+  });
+  return matches.length===1?{student:matches[0],unlinked:false}:{student:null,unlinked:true};
+ };
+ const add=(collection,record,index,sourceLabel,title,statusKey,statusLabel,targetPage,detail,dueDate)=>{
+  if(!record||typeof record!=='object')return;
+  const date=String(record.date||'').trim();
+  if(!followupCenterValidDate(date))return;
+  const rawId=followupCenterText(record.id,120),dedupe=collection+':'+(rawId||('row-'+index));
+  if(seen.has(dedupe))return;
+  seen.add(dedupe);
+  const linked=resolveStudent(record),student=linked.student;
+  const studentName=student?[student.last||'',student.first||''].join(' ').trim()||student.name||student.fullName||'':'';
+  const section=student?(typeof attendanceGroupLabel==='function'?attendanceGroupLabel(student):[student.schoolYear,student.branch,student.class].filter(Boolean).join(' — ')):followupCenterText(record.class||record.studentClass||record.section||'',100);
+  const finalStatus=linked.unlinked?'unlinked':statusKey;
+  const finalStatusLabel=linked.unlinked?'هوية التلميذ تحتاج تحقق':statusLabel;
+  allEvents.push({
+   key:dedupe,source:collection,sourceLabel,title:followupCenterText(title,140)||'سجل محفوظ',
+   date,studentId:student?String(student.id):'',studentName:followupCenterText(studentName,140),
+   section:followupCenterText(section,120),recordId:rawId,targetPage,
+   statusKey:finalStatus,statusLabel:finalStatusLabel,
+   detail:followupCenterText(detail,220),
+   dueDate:followupCenterValidDate(dueDate)?String(dueDate):'',
+   unlinked:linked.unlinked
+  });
+ };
+ const attendance=Array.isArray(source.attendance)?source.attendance:[];
+ attendance.forEach((record,index)=>{
+  const type=followupCenterText(record?.type,50).replace(/\s+/g,'');
+  if(!['غياب','تأخر','حضور'].includes(type))return;
+  const justification=followupCenterText(record.justified||'غير محدد',40);
+  let statusKey='open',statusLabel='حالة التبرير غير محددة';
+  if(justification==='مبرر'||justification==='مبررة'){statusKey='done';statusLabel='مبرر مسجل';}
+  else if(justification==='قيد التبرير'){statusKey='open';statusLabel='قيد التبرير';}
+  else if(justification==='غير مبرر'){statusKey='open';statusLabel='غير مبرر · يحتاج مراجعة';}
+  else if(type==='حضور'){statusKey='done';statusLabel='حضور مسجل';}
+  const period=followupCenterText(record.period,40);
+  add('attendance',record,index,'الحضور والغياب',type==='غياب'?'غياب مسجل':type==='تأخر'?'تأخر مسجل':'حضور مسجل',statusKey,statusLabel,'attendance',period?'الفترة: '+period:'', '');
+ });
+ (Array.isArray(source.violations)?source.violations:[]).forEach((record,index)=>{
+  const type=followupCenterText(record?.type||'مخالفة',80);
+  add('violations',record,index,'المخالفات','مخالفة مسجلة · '+type,'open','سجل يحتاج مراجعة مهنية','violations','واقعة مسجلة؛ تُراجع تفاصيلها في سجل المخالفات','');
+ });
+ (Array.isArray(source.documents)?source.documents:[]).forEach((record,index)=>{
+  const type=followupCenterText(record?.type||'وثيقة',90),stage=Number(record.absenceStage);
+  let statusKey='info',statusLabel='وثيقة محفوظة';
+  if(String(record.absenceWorkflowStatus||'')==='مسوى'){statusKey='done';statusLabel='دورة الغياب مسواة';}
+  else if([4,11,17,18,32].includes(stage)){
+   statusKey='open';
+   if(record.deliveryDate&&String(record.deliveryProof||'').trim()){
+    const response=String(record.guardianResponseStatus||'غير مسجل');
+    statusLabel=response==='غير مسجل'?'التبليغ مثبت · رد الولي غير مسجل':'التبليغ مثبت · '+followupCenterText(response,50);
+   }else statusLabel='حالة التبليغ تحتاج مراجعة';
+  }
+  const dueDate=followupCenterValidDate(record.appointment)?record.appointment:'';
+  add('documents',record,index,'الوثائق والاستدعاءات',type,statusKey,statusLabel,'documents',dueDate?'موعد الحضور: '+dueDate:'',dueDate);
+ });
+ (Array.isArray(source.followups)?source.followups:[]).forEach((record,index)=>{
+  const status=followupCenterText(record?.status||'غير محدد',50),category=followupCenterText(record?.category||'متابعة تربوية',80);
+  const statusKey=status==='تمت المتابعة'||status==='أغلقت الحالة'?'done':status==='قيد المتابعة'?'open':'info';
+  const nextDate=followupCenterValidDate(record.nextDate)?record.nextDate:'';
+  add('followups',record,index,'المتابعات التربوية','متابعة تربوية · '+category,statusKey,status,'students',nextDate?'موعد المراجعة: '+nextDate:'',nextDate);
+ });
+ (Array.isArray(source.guardianReceptions)?source.guardianReceptions:[]).forEach((record,index)=>{
+  const status=followupCenterText(record?.status||'غير محدد',50),purpose=followupCenterText(record?.purpose||'استقبال ولي',80);
+  const statusKey=status==='يحتاج متابعة'?'open':status==='تم التوجيه'?'done':'info';
+  const nextDate=followupCenterValidDate(record.nextDate)?record.nextDate:'';
+  add('guardianReceptions',record,index,'استقبال الأولياء',purpose,statusKey,status,'guardianReceptions',nextDate?'موعد المتابعة: '+nextDate:'',nextDate);
+ });
+ (Array.isArray(source.supervisionLogs)?source.supervisionLogs:[]).forEach((record,index)=>{
+  const type=followupCenterText(record?.type||'مهمة إشرافية',90);
+  const period=followupCenterText(record.period,50);
+  add('supervisionLogs',record,index,'مهام الإشراف','مهمة إشرافية · '+type,'info','سجل إشرافي موثق','supervisionLog',period?'الفترة: '+period:'','');
+ });
+ const priority={attendance:0,violations:1,documents:2,followups:3,guardianReceptions:4,supervisionLogs:5};
+ allEvents.sort((a,b)=>b.date.localeCompare(a.date)||(priority[a.source]-priority[b.source])||String(a.title).localeCompare(String(b.title),'ar'));
+ const withinRange=allEvents.filter(item=>(!from||item.date>=from)&&(!to||item.date<=to));
+ const filtered=withinRange.filter(item=>{
+  if(sourceFilter!=='all'&&item.source!==sourceFilter)return false;
+  if(statusFilter!=='all'&&item.statusKey!==statusFilter)return false;
+  if(sectionFilter&&followupCenterNormalize(item.section)!==sectionFilter)return false;
+  if(query&&!followupCenterNormalize([item.title,item.studentName,item.section,item.sourceLabel,item.statusLabel,item.date,item.detail].join(' ')).includes(query))return false;
+  return true;
+ });
+ const summary={
+  open:filtered.filter(item=>item.statusKey==='open').length,
+  done:filtered.filter(item=>item.statusKey==='done').length,
+  unlinked:filtered.filter(item=>item.statusKey==='unlinked').length,
+  info:filtered.filter(item=>item.statusKey==='info').length,
+  overdue:filtered.filter(item=>item.statusKey==='open'&&item.dueDate&&now&&item.dueDate<now).length,
+  dueToday:filtered.filter(item=>item.statusKey==='open'&&item.dueDate&&now&&item.dueDate===now).length
+ };
+ return {valid:true,total:withinRange.length,shown:filtered.length,events:filtered,summary,from,to};
+}
+
+
+function ensureFollowupCenterDates(){
+ const today=dateISO(),from=$('#followupCenterFrom'),to=$('#followupCenterTo');
+ if(!from||!to||!followupCenterValidDate(today))return;
+ if(!followupCenterValidDate(from.value))from.value=followupCenterShiftDate(today,-29);
+ if(!followupCenterValidDate(to.value))to.value=today;
+}
+function followupCenterStatusLabel(key){
+ return ({open:'تحتاج متابعة / مراجعة',done:'مسجلة / مكتملة',unlinked:'هوية تحتاج تحقق',info:'سجل معلوماتي'})[key]||'غير محدد';
+}
+function renderFollowupCenter(){
+ const output=$('#followupCenterEntries');if(!output)return;
+ ensureFollowupCenterDates();
+ const filters={
+  from:$('#followupCenterFrom')?.value||'',to:$('#followupCenterTo')?.value||'',
+  source:$('#followupCenterSource')?.value||'all',status:$('#followupCenterStatus')?.value||'all',
+  section:$('#followupCenterSection')?.value||'',query:$('#followupCenterSearch')?.value||''
+ };
+ const snapshot=buildFollowupCenterSnapshot(db,filters,dateISO());
+ const sectionSelect=$('#followupCenterSection'),oldSection=filters.section;
+ if(sectionSelect){
+  const sections=[...new Set(snapshot.events.map(item=>item.section).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ar'));
+  sectionSelect.innerHTML='<option value="">كل الأقسام</option>'+sections.map(value=>'<option value="'+esc(value)+'">'+esc(value)+'</option>').join('');
+  if(sections.includes(oldSection))sectionSelect.value=oldSection;
+ }
+ const sectionValue=sectionSelect?.value||'';
+ const finalSnapshot=sectionValue===filters.section?snapshot:buildFollowupCenterSnapshot(db,{...filters,section:sectionValue},dateISO());
+ const summary=finalSnapshot.summary;
+ $('#followupCenterCount').textContent=finalSnapshot.total.toLocaleString('ar-DZ')+' سجل';
+ $('#followupCenterResultCount').textContent=finalSnapshot.shown.toLocaleString('ar-DZ')+' نتيجة';
+ $('#followupCenterSummary').innerHTML=[
+  ['بحاجة إلى متابعة',summary.open],['مسجلة / مكتملة',summary.done],
+  ['هوية تحتاج تحقق',summary.unlinked],['مواعيد مراجعة متأخرة',summary.overdue]
+ ].map(item=>'<div class="followup-center-kpi"><small>'+esc(item[0])+'</small><strong>'+Number(item[1]).toLocaleString('ar-DZ')+'</strong></div>').join('');
+ $('#followupCenterNotice').textContent=finalSnapshot.shown<finalSnapshot.total?'توجد مرشحات مفعّلة؛ المعروض '+finalSnapshot.shown+' من أصل '+finalSnapshot.total+' سجل ضمن الفترة. لا يتم حذف أو تعديل أي سجل.':'تُعرض السجلات من مصادرها الأصلية دون نسخها إلى قاعدة بيانات جديدة.';
+ output.className=finalSnapshot.shown?'followup-center-list':'empty';
+ output.innerHTML=finalSnapshot.shown?finalSnapshot.events.slice(0,100).map(item=>{
+  const nameMarkup=item.studentName?'<p><b>التلميذ:</b> '+esc(item.studentName)+'</p>':'<p class="muted">'+(item.unlinked?'ارتباط التلميذ غير مؤكد؛ راجع السجل الأصلي':'سجل عام غير مرتبط بتلميذ')+'</p>';
+  const sectionMarkup=item.section?'<span>القسم: '+esc(item.section)+'</span>':'';
+  const detailMarkup=item.detail?'<p>'+esc(item.detail)+'</p>':'';
+  const profileAction=item.studentId?'<button type="button" class="btn small primary" data-center-student="'+esc(item.studentId)+'">فتح ملف التلميذ</button>':'';
+  const pageAction='<button type="button" class="btn small" data-center-page="'+esc(item.targetPage)+'" data-center-record="'+esc(item.recordId)+'">مراجعة السجل الأصلي</button>';
+  return '<article class="followup-center-event" data-center-status="'+esc(item.statusKey)+'"><div class="followup-center-event-head"><span class="pill">'+esc(item.sourceLabel)+'</span><span class="muted">'+esc(item.date)+'</span></div><h4>'+esc(item.title)+'</h4>'+nameMarkup+'<div class="followup-center-event-meta">'+sectionMarkup+'<span>'+esc(followupCenterStatusLabel(item.statusKey))+'</span><span>'+esc(item.statusLabel)+'</span></div>'+detailMarkup+'<div class="actions followup-center-event-actions">'+profileAction+pageAction+'</div></article>';
+ }).join(''):'<p class="empty">لا توجد سجلات تطابق الفترة والمرشحات المختارة.</p>';
+ if(finalSnapshot.shown>100)output.insertAdjacentHTML('beforeend','<p class="muted">يُعرض أول 100 سجل من النتائج المطابقة لتحسين الأداء. استخدم البحث أو المرشحات لتضييق النطاق.</p>');
+ output.querySelectorAll('[data-center-student]').forEach(button=>button.addEventListener('click',()=>window.studentHistory(button.dataset.centerStudent)));
+ output.querySelectorAll('[data-center-page]').forEach(button=>button.addEventListener('click',()=>{
+  const page=String(button.dataset.centerPage||'');
+  if(page==='violations')go('violations');
+  else if(['attendance','documents','students','guardianReceptions','supervisionLog'].includes(page))go(page);
+ }));
+ window.followupCenterLastSnapshot=finalSnapshot;
+}
+window.printFollowupCenter=()=>{
+ const snapshot=window.followupCenterLastSnapshot;
+ if(!snapshot||!Array.isArray(snapshot.events)||!snapshot.events.length){alert('اعرض سجلات مطابقة أولاً قبل الطباعة.');return;}
+ window.closeMushrifiPrintPreview(true);
+ const preview=document.createElement('section');preview.id='mushrifiPrintPreview';preview.className='print-preview-overlay';
+ const school=esc(db.settings.school||'مُشرِفي'),location=esc(db.settings.location||'');
+ const rows=snapshot.events.map((item,index)=>'<tr><td>'+(index+1)+'</td><td>'+esc(item.date)+'</td><td>'+esc(item.sourceLabel)+'</td><td>'+esc(item.title)+'</td><td>'+esc(item.studentName||'—')+'</td><td>'+esc(item.section||'—')+'</td><td>'+esc(item.statusLabel)+'</td></tr>').join('');
+ const table='<table><thead><tr><th>ر</th><th>التاريخ</th><th>المصدر</th><th>نوع السجل</th><th>التلميذ</th><th>القسم</th><th>الحالة</th></tr></thead><tbody>'+rows+'</tbody></table>';
+ const period='<p>الفترة: '+esc(snapshot.from||'كل التواريخ')+' إلى '+esc(snapshot.to||'اليوم')+' · عدد السجلات: '+snapshot.events.length+'</p>';
+ preview.innerHTML='<div class="print-preview-tools no-print"><button type="button" class="btn primary" id="mushrifiPrintNow">طباعة / حفظ PDF</button><button type="button" class="btn" id="mushrifiPrintBack">عودة إلى مركز المتابعة</button></div><article class="print-preview-paper report-print-paper" dir="rtl"><div class="report-heading"><h2>'+school+'</h2><p>'+location+'</p><p>مركز المتابعة الشامل – مُشرِفي</p></div>'+period+table+'<p class="muted">تجميع للعرض والمراجعة من السجلات الأصلية. لا يمثل هذا الكشف قراراً إدارياً أو حكماً تأديبياً.</p><div class="report-print-signatures"><span>إعداد التقرير<br>المشرف التربوي</span><span>مدير المؤسسة / الختم</span></div></article>';
+ document.body.appendChild(preview);window.mushrifiPrintOpen=true;
+ try{history.pushState({mushrifiPrintPreview:true,mushrifiPage:'followupCenter'},'');}catch(e){}
+ $('#mushrifiPrintNow').onclick=()=>window.print();$('#mushrifiPrintBack').onclick=()=>window.closeMushrifiPrintPreview(false);
+};
+
 function render(){
 if(!absenceAutomationRunning)runAbsenceStageAutomation();
 const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';
@@ -3059,6 +3312,7 @@ if(activePage==='home'){
  }
 
 if(activePage==='home')renderAbsenceStageDashboard();
+if(activePage==='followupCenter')renderFollowupCenter();
 if(activePage==='students')renderStudentDirectory();
 refreshActiveStudentSelectors(activePage);
 if(activePage==='attendance'&&activeFollowupView==='attendance'){

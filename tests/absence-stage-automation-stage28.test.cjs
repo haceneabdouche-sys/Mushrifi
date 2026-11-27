@@ -182,6 +182,6 @@ test('pending absence-stage reminders are retried after notification permission 
 });
 
 test('internal build code increments while public application version remains 2.6', () => {
-  assert.match(gradle, /versionCode 33/);
+  assert.match(gradle, /versionCode 34/);
   assert.match(gradle, /versionName '2\.6'/);
 });
