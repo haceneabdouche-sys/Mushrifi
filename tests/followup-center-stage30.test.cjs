@@ -91,7 +91,7 @@ assert.ok(nativeRead.includes('return "!MUSHRIFI_DB_ERROR!"'),'missing or unread
 assert.ok(nativeRead.includes('markDatabaseInitialized()'),'a genuine first run is remembered separately from later missing data');
 assert.ok(activity.includes('if (saved) { lastError = ""; markDatabaseInitialized(); }'),'successful writes persist the initialized marker');
 assert.ok(activity.includes('if (restored) markDatabaseInitialized();'),'successful restores persist the initialized marker');
-assert.ok(nativeRead.includes('return databaseFileExistedBeforeRead || previouslyInitialized || previouslyLicensed'),'all prior-installation signals fail closed');
+assert.ok(activity.includes('return databaseFileExistedBeforeRead || previouslyInitialized || previouslyLicensed'),'all prior-installation signals fail closed');
 
 assert.ok(html.includes('function showMushrifiDatabaseRecoveryScreen()'),'the startup error screen blocks normal writes');
 assert.ok(html.includes('AndroidBridge.loadRecoverySnapshot'),'the encrypted recovery snapshot is checked');
