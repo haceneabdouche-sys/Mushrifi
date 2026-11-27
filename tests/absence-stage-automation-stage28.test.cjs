@@ -23,6 +23,14 @@ const studentRecord = { id: 'student-1', last: 'اختبار', first: 'تلمي�
 let holidays = [];
 const context = {
   db: { documents: [], attendance: [], settings: { schoolHolidays: [] } },
+  analysisCache: null,
+  getAbsenceAnalysisCache: () => {
+    const today = '2026-11-27';
+    if (!context.analysisCache || context.analysisCache.today !== today) {
+      context.analysisCache = { today, monthly: new Map(), streaks: null };
+    }
+    return context.analysisCache;
+  },
   dateISO: () => '2026-11-27',
   student: id => String(id) === studentRecord.id ? studentRecord : null,
   isSchoolHolidayDate: date => holidays.some(range => range.start <= date && date <= range.end),
