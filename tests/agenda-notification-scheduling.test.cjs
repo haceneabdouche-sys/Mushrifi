@@ -76,7 +76,7 @@ assert.equal(plan.invalid,4,'invalid date, time, lead and nonexistent DST local 
 assert.ok(html.includes('id="agendaReminderEnabled"')&&html.includes('id="agendaReminderLead"'),'each agenda item has an independent reminder toggle and lead selector');
 assert.ok(html.includes('item?item.reminderEnabled===true:true'),'old agenda items do not silently start sending reminders after update');
 assert.ok(html.includes("reminderEnabled:$('#agendaReminderEnabled').checked===true"),'the reminder choice is saved with the agenda item');
-assert.ok(html.includes("if(isAndroidApp)syncAgendaRemindersWithAndroid(false);"),'successful local database saves synchronize agenda alarms with Android');
+assert.ok(html.includes("if(isAndroidApp&&changedEntities.has('agenda'))syncAgendaRemindersWithAndroid(false);"),'only saves that change agenda records synchronize agenda alarms with Android');
 assert.ok(html.includes("syncAgendaRemindersWithAndroid(true);"),'startup rebuilds the complete desired agenda alarm list');
 assert.ok(html.includes('function renderAgendaNotificationStatus')&&html.includes('agendaRequestExactAlarmPermission'),'agenda page reports notification and exact-alarm permission states');
 assert.ok(html.includes('agendaTestNotification')&&html.includes('testAgendaNotification'),'agenda offers a direct notification test');
@@ -107,3 +107,4 @@ const manifest=fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8'
 assert.ok(manifest.includes('.AgendaReminderReceiver')&&manifest.includes('android.intent.action.TIMEZONE_CHANGED')&&manifest.includes('android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED'),'manifest registers agenda delivery and rescheduling broadcasts');
 
 console.log('PASS: agenda reminder timing, local calendar/DST, disabled/completed/past events, delayed permission delivery, Android sync, native channels, lock-screen privacy and boot recovery.');
+

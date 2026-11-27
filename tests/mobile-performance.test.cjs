@@ -9,8 +9,20 @@ assert.ok(scriptStart >= 0 && scriptOpenEnd > scriptStart && scriptEnd > scriptO
 const js = html.slice(scriptOpenEnd + 1, scriptEnd);
 
 assert.ok(html.includes('header .credit-wrap{animation:none!important'), 'phone header 3D animation is disabled');
-assert.ok(html.includes('header .credit-name-glint,header .credit-signature-glint{display:block!important;filter:none!important}'), 'lightweight signature and name sparkle remain visible without SVG filters');
+assert.ok(html.includes('header .credit-name-glint,header .credit-signature-glint{display:none!important}'), 'decorative SVG glints are omitted on phones while the signature artwork remains');
 assert.ok(html.includes('header .credit-signature-glint .signature-glint-point{filter:none!important}'), 'sparkle points avoid expensive filter passes');
+assert.ok(!html.includes('<animateMotion'), 'the header and signature no longer run continuous SVG path animations');
+assert.ok(!html.includes('mushrifi-credit-spin 10s linear infinite'), 'the header has no permanent 3D spin animation');
+assert.ok(html.includes('backdrop-filter:none;'), 'fixed mobile navigation avoids live backdrop blur composition');
+assert.ok(html.includes('const STUDENT_DIRECTORY_PAGE_SIZE=30;'), 'large student directories are paginated instead of adding every row to the DOM');
+assert.ok(html.includes('const ATTENDANCE_LOG_PAGE_SIZE=40,VIOLATION_LOG_PAGE_SIZE=18,DOCUMENT_LOG_PAGE_SIZE=15;'), 'large record histories are paginated to avoid thousands of DOM nodes');
+assert.ok(!html.includes('mix-blend-mode:multiply}'), 'the full-screen signature background does not trigger blend-mode composition');
+assert.ok(html.includes('const student=id=>{ensureStudentIndexes();'), 'student ID and unique-name lookups use prebuilt indexes');
+assert.ok(html.includes('function refreshActiveStudentSelectors(activePage)'), 'student select options are cached and only replaced when their source changes');
+assert.ok(js.includes('renderSmartDashboard(overview.date,overview.monthly);')&&!js.includes('renderDailyFollowupDashboard(today,Date.now());'), 'cached monthly metrics render without recalculating hidden daily task analytics');
+assert.ok(js.includes('const overview=getHomeOverviewSnapshot(dateISO());'), 'the home view reuses its cached summary when navigating back to the dashboard');
+assert.ok(!js.includes('renderAgendaHome(today);'), 'upcoming agenda data is not built for the hidden home panel');
+assert.ok(js.includes('const keepRecent=')&&js.includes('if(position<6){recent.splice'), 'recent activity keeps a bounded six-item list instead of sorting every record');
 assert.ok(html.includes('header .credit-signature,header p.credit{filter:none!important;transform:none!important}'), 'phone header avoids expensive filters and transforms');
 assert.ok(html.includes('class="credit-signature"'), 'static signature image remains in the interface');
 
@@ -27,3 +39,4 @@ assert.ok(js.includes('AndroidBridge.saveDatabase(json)'), 'native database save
 assert.ok(js.includes('preserveUndoOnNextSave'), 'delete recovery snapshot handling remains intact');
 
 console.log('PASS: mobile rendering preserves lightweight sparkle while avoiding continuous 3D animation, filter passes, and inactive-page rebuilds.');
+

@@ -8,10 +8,10 @@
 <style>
 :root{--navy:#173b58;--blue:#2878a8;--bg:#f3f6f9;--ink:#172b3a;--muted:#667987;--line:#dce5eb;--white:#fff;--red:#b74646;--green:#21845f}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
-body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("./signature-real.jpg");background-repeat:no-repeat;background-position:center 56%;background-size:min(78vw,460px) auto;opacity:.075;mix-blend-mode:multiply}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url("./signature-real.jpg");background-repeat:no-repeat;background-position:center 56%;background-size:min(78vw,460px) auto;opacity:.055;mix-blend-mode:normal}
 body>*{position:relative;z-index:1}
 header{background:var(--navy);color:white;padding:18px 16px;display:flex;justify-content:center;align-items:center;gap:12px;text-align:center;position:relative}
-header h1{margin:0;font-size:25px}header p{margin:5px 0 0;color:#d8e5ed;font-size:12px}header .credit-wrap{margin:16px auto 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;max-width:100%;perspective:1100px;transform-style:preserve-3d;transform-origin:center;animation:mushrifi-credit-spin 10s linear infinite}header p.credit{margin:0;background:linear-gradient(115deg,#fff4c5 0%,#e7bd62 24%,#fff0b0 48%,#c89132 72%,#fff1bd 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-family:"URW Chancery L","Brush Script MT","Segoe Script","Lucida Handwriting",cursive;font-style:italic;font-weight:900;font-size:clamp(24px,6vw,33px);letter-spacing:1.5px;line-height:1.4;text-transform:uppercase;text-shadow:0 2px 3px rgba(0,0,0,.22);filter:drop-shadow(0 2px 2px rgba(0,0,0,.18));transform:translateZ(12px);white-space:nowrap}header .credit-rule{display:block;width:72px;height:2px;background:linear-gradient(90deg,transparent,#f2d38a,transparent);margin:2px 0;transform:translateZ(6px)}header .credit-signature{display:block;width:142px;height:142px;object-fit:contain;background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;filter:drop-shadow(0 8px 6px rgba(0,0,0,.28));mix-blend-mode:normal;opacity:1;flex:0 0 auto;margin-top:5px;transform:translateZ(18px);backface-visibility:visible}@keyframes mushrifi-credit-spin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}@media(prefers-reduced-motion:reduce){header .credit-wrap{animation:none}}.mark{font-size:34px;position:absolute;left:16px;top:50%;transform:translateY(-50%)}
+header h1{margin:0;font-size:25px}header p{margin:5px 0 0;color:#d8e5ed;font-size:12px}header .credit-wrap{margin:16px auto 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;max-width:100%;perspective:none;transform-style:flat;transform-origin:center;animation:none}header p.credit{margin:0;background:linear-gradient(115deg,#fff4c5 0%,#e7bd62 24%,#fff0b0 48%,#c89132 72%,#fff1bd 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-family:"URW Chancery L","Brush Script MT","Segoe Script","Lucida Handwriting",cursive;font-style:italic;font-weight:900;font-size:clamp(24px,6vw,33px);letter-spacing:1.5px;line-height:1.4;text-transform:uppercase;text-shadow:0 2px 3px rgba(0,0,0,.22);filter:none;transform:none;white-space:nowrap}header .credit-rule{display:block;width:72px;height:2px;background:linear-gradient(90deg,transparent,#f2d38a,transparent);margin:2px 0;transform:none}header .credit-signature{display:block;width:142px;height:142px;object-fit:contain;background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;filter:none;mix-blend-mode:normal;opacity:1;flex:0 0 auto;margin-top:5px;transform:none;backface-visibility:hidden}@media(prefers-reduced-motion:reduce){header .credit-wrap{animation:none}}.mark{font-size:34px;position:absolute;left:16px;top:50%;transform:translateY(-50%)}
 .wrap{max-width:1100px;margin:auto;padding:14px}.notice{background:#fff7df;border:1px solid #f0d995;border-radius:12px;padding:11px;font-size:12px;line-height:1.7;margin-bottom:12px}
 nav{display:flex;gap:7px;overflow:auto;padding:5px 0 12px}
 nav button,.btn{border:0;border-radius:10px;padding:10px 13px;background:#e2ebf1;color:var(--navy);font-weight:bold;white-space:nowrap;cursor:pointer}
@@ -467,7 +467,7 @@ header .credit-signature{width:72px;height:72px;margin-top:2px}
 .more-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
 .more-tiles .tile{min-height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .more-tiles .tile b{margin:0}
-#nav{position:fixed!important;left:50%;right:auto;bottom:0;transform:translateX(-50%);width:min(calc(100% - 20px),820px);max-width:820px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;align-items:stretch;margin:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));overflow:visible;z-index:9999;background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border:1px solid #d8e2e9;border-bottom:0;border-radius:17px 17px 0 0;box-shadow:0 -8px 24px rgba(20,47,73,.12)}
+#nav{position:fixed!important;left:50%;right:auto;bottom:0;transform:translateX(-50%);width:min(calc(100% - 20px),820px);max-width:820px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;align-items:stretch;margin:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom));overflow:visible;z-index:9999;background:rgba(255,255,255,.97);backdrop-filter:none;border:1px solid #d8e2e9;border-bottom:0;border-radius:17px 17px 0 0;box-shadow:0 -8px 24px rgba(20,47,73,.12)}
 #nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:52px;padding:6px 2px;border:0;border-radius:11px;background:transparent;color:var(--muted);font-size:11px;font-weight:800;line-height:1.25;white-space:normal}
 #nav button span:first-child{font-size:18px;line-height:1}
 #nav button.active{background:#edf3f7;color:var(--navy);box-shadow:inset 0 -2px 0 var(--gold)}
@@ -495,12 +495,19 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
 /* Mobile performance: keep the author's name and signature static on phones. */
 @media(max-width:700px){
  header .credit-wrap{animation:none!important;perspective:none!important;transform:none!important;transform-style:flat!important}
- /* Preserve the animated sparkle paths; remove costly SVG filter passes instead. */
+ /* Static sparkles retain the signature identity without a continuous SVG animation loop. */
  header .credit-name-glint,header .credit-signature-glint{display:block!important;filter:none!important}
  header .credit-signature-glint .signature-glint-point{filter:none!important}
  header .credit-signature,header p.credit{filter:none!important;transform:none!important}
 }
 
+
+/* MUSHRIFI STAGE 25 — keep large directories responsive on modest Android devices. */
+.student-directory-pagination{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:10px 2px 2px;color:var(--muted);font-size:12px}
+.student-directory-pagination .page-meta{flex:1 1 150px;text-align:center}
+.student-directory-pagination button{min-height:38px;padding:7px 12px;border:1px solid #d7e2e9;border-radius:10px;background:#f5f8fa;color:var(--navy);font:inherit;font-weight:800}
+.student-directory-pagination button:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:420px){.student-directory-pagination button{min-height:36px;padding:6px 9px;font-size:11px}}
 
 /* MUSHRIFI STAGE 13 — calm information architecture and mobile-first navigation */
 .app-data-note{padding:8px 11px;margin-bottom:8px;font-size:11px;line-height:1.55}
@@ -534,7 +541,7 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
 #nav{scrollbar-width:none}
 #nav::-webkit-scrollbar{display:none}
 @media(min-width:701px){
- #nav{position:sticky;top:0;z-index:35;background:rgba(242,245,248,.96);backdrop-filter:blur(10px);border-bottom:1px solid rgba(210,222,231,.75);padding:8px 2px 10px}
+ #nav{position:sticky;top:0;z-index:35;background:rgba(242,245,248,.96);backdrop-filter:none;border-bottom:1px solid rgba(210,222,231,.75);padding:8px 2px 10px}
 }
 @media(max-width:700px){
  .wrap{padding:10px 10px calc(94px + env(safe-area-inset-bottom))}
@@ -549,7 +556,7 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
  header .credit-signature{width:58px;height:58px;margin-top:1px}
  .app-data-note{font-size:10px;margin-bottom:6px}
  .license-advisory{font-size:11px;padding:8px 9px}
- #nav{position:fixed;left:0!important;right:0!important;bottom:0;top:auto;width:100%!important;max-width:none!important;transform:none!important;z-index:1000;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;overflow:visible;margin:0;padding:6px 7px calc(6px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border-top:1px solid #d9e3e9;box-shadow:0 -5px 20px rgba(20,47,73,.11)}
+ #nav{position:fixed;left:0!important;right:0!important;bottom:0;top:auto;width:100%!important;max-width:none!important;transform:none!important;z-index:1000;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px;overflow:visible;margin:0;padding:6px 7px calc(6px + env(safe-area-inset-bottom));background:rgba(255,255,255,.97);backdrop-filter:none;border-top:1px solid #d9e3e9;box-shadow:0 -5px 20px rgba(20,47,73,.11)}
  #nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:0;min-height:51px;padding:4px 1px;border:1px solid transparent;border-radius:10px;font-size:10px;line-height:1.25;white-space:normal;background:transparent;color:#526879}
  #nav button span:first-child{font-size:18px;line-height:1.15}
  #nav button span:last-child{font-size:10px}
@@ -585,6 +592,7 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
 .monthly-priority-details{margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}.monthly-priority-details>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;list-style:none;cursor:pointer;font-size:12px;color:var(--navy)}.monthly-priority-details>summary::-webkit-details-marker{display:none}.monthly-priority-details>summary:after{content:"＋";font-weight:bold;color:var(--blue)}.monthly-priority-details[open]>summary:after{content:"−"}.monthly-priority-details>p{margin:7px 0;font-size:11px}
 .student-followup-author,.student-followup-author-note,.student-report-observation-author{display:block;margin-top:5px;color:#526575;font-size:10px;font-weight:700;text-align:left;direction:ltr}.student-followup-author-note{text-align:right;direction:rtl}.student-followup-observation{margin:6px 0 8px;padding:8px 10px;border-radius:9px;background:#f7f9fb;border-right:2px solid var(--gold)}.student-followup-observation p{margin:0}
 @media(max-width:520px){.home-heading{gap:8px;padding:11px}.home-heading h2{font-size:18px}#voiceAssistant .voice-mic-button{width:44px;height:44px;min-height:44px;font-size:23px}.home-monthly-summary{padding:10px}.home-monthly-grid{gap:5px}.home-monthly-grid .stat{padding:8px 5px}.home-monthly-grid .stat small{font-size:9px}.home-monthly-grid .smart-trend{font-size:8px}}
+.profile-history-more-wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;flex-wrap:wrap}
 </style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}
 /* Brand signature refinement — fixed name and signature with path-following star glints */
 :root{--navy:#102A43}
@@ -667,7 +675,8 @@ header .glint-point{
   stroke:#fff;
   stroke-width:.65;
   filter:url(#mushrifi-glint-glow);
-}\nheader .signature-glint-point{filter:url(#mushrifi-signature-glow)!important;}
+}
+header .signature-glint-point{filter:url(#mushrifi-signature-glow)!important;}
 header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 @media(prefers-reduced-motion:reduce){
   header .glint-point{opacity:.9}
@@ -1045,10 +1054,19 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 }
 @media(max-width:360px){.student-profile-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.student-profile-hub-head{flex-direction:column}}
 @media print{.student-profile-nav,.student-profile-actions,.student-profile-toolbar{display:none!important}.student-profile-hub,.student-profile-detail{box-shadow:none!important}}
+/* Final Android performance overrides: retain the signature artwork, skip decorative SVG compositing. */
+@media(max-width:700px){
+ header .credit-name-glint,header .credit-signature-glint{display:none!important}
+ header .credit-signature-wrap{width:104px!important;height:104px!important;margin-top:2px!important}
+ header .credit-signature{width:104px!important;height:104px!important;filter:none!important;mix-blend-mode:normal!important}
+ header .credit-wrap{gap:2px!important;margin-top:9px!important}
+ #nav{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+}
+.profile-history-more-wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;flex-wrap:wrap}
 </style>
 </head>
 <body>
-<header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><span class="credit-name-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><svg class="credit-name-glint" viewBox="0 0 360 48" preserveAspectRatio="none" aria-hidden="true"><defs><filter id="mushrifi-glint-glow" x="-180%" y="-180%" width="460%" height="460%"><feGaussianBlur stdDeviation="2.4" result="halo"/><feMerge><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path id="mushrifi-name-trace" d="M 5 27 C 22 19 40 20 57 26 S 91 33 111 26 S 145 19 165 25 S 199 33 220 26 S 255 19 276 25 S 316 32 337 25 S 350 23 356 25" fill="none"/><g class="glint-point"><animateMotion dur="4.8s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-name-trace"/></animateMotion><path d="M0-7 L2-2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2-2 Z"/><circle class="glint-core" r="2.1"/></g></svg></span><span class="credit-rule" aria-hidden="true"></span><span class="credit-signature-wrap"><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"><svg class="credit-signature-glint" viewBox="0 0 512 512" aria-hidden="true"><defs><radialGradient id="mushrifi-signature-halo"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".18" stop-color="#fff9d9" stop-opacity=".98"/><stop offset=".46" stop-color="#ffd36a" stop-opacity=".72"/><stop offset="1" stop-color="#ffc247" stop-opacity="0"/></radialGradient><filter id="mushrifi-signature-glow" x="-300%" y="-300%" width="700%" height="700%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="soft"/><feGaussianBlur in="SourceGraphic" stdDeviation="5.2" result="wide"/><feMerge><feMergeNode in="wide"/><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path id="mushrifi-signature-upper" d="M 12 144 C 55 144 109 146 162 150 S 278 159 332 145 C 386 133 438 111 449 79 C 461 45 440 20 405 17 C 362 14 339 43 331 81 C 325 107 325 130 325 151" fill="none"/><path id="mushrifi-signature-left" d="M 55 314 C 40 306 43 268 55 235 C 78 183 111 115 140 58 C 155 28 170 18 183 34 C 203 60 214 120 215 170 C 216 196 217 213 218 224" fill="none"/><path id="mushrifi-signature-middle" d="M 118 305 C 136 268 159 242 177 248 C 196 253 211 294 229 310 C 245 287 258 250 277 249 C 295 247 315 286 333 310 C 344 327 357 339 370 342 C 358 300 352 249 348 198 C 345 175 344 158 344 148" fill="none"/><path id="mushrifi-signature-sweep" d="M 42 309 C 100 308 164 309 224 310 C 302 311 383 306 454 302 C 471 301 477 306 463 319 C 430 344 382 364 332 385 C 264 415 195 445 131 468 C 108 478 91 469 92 449 C 94 417 108 369 128 311" fill="none"/><g class="glint-point signature-glint-point" data-glint="1" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.6s" begin="0s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-upper"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="2" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.6s" begin="-2.2s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-upper"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="3" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.6s" begin="-4.4s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-upper"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="4" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.1s" begin="-0.8s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-left"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="5" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.1s" begin="-4.35s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-left"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="6" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.4s" begin="-0.6s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-middle"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="7" filter="url(#mushrifi-signature-glow)"><animateMotion dur="6.4s" begin="-3.8s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-middle"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="8" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.4s" begin="-0.7s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-sweep"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="9" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.4s" begin="-3.15s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-sweep"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="10" filter="url(#mushrifi-signature-glow)"><animateMotion dur="7.4s" begin="-5.6s" repeatCount="indefinite" rotate="auto"><mpath href="#mushrifi-signature-sweep"/></animateMotion><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g></svg></span></div>
+<header><div><h1 class="app-title">مُشرفي</h1><p class="school-info" id="schoolHeaderName">ثانوية الشيخ بوعمامة</p><p class="school-info school-location" id="schoolHeaderLocation">بوسكن – ولاية المدية</p><div class="credit-wrap"><span class="credit-name-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE</p><svg class="credit-name-glint" viewBox="0 0 360 48" preserveAspectRatio="none" aria-hidden="true"><defs><filter id="mushrifi-glint-glow" x="-180%" y="-180%" width="460%" height="460%"><feGaussianBlur stdDeviation="2.4" result="halo"/><feMerge><feMergeNode in="halo"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path id="mushrifi-name-trace" d="M 5 27 C 22 19 40 20 57 26 S 91 33 111 26 S 145 19 165 25 S 199 33 220 26 S 255 19 276 25 S 316 32 337 25 S 350 23 356 25" fill="none"/><g class="glint-point" transform="translate(180 25)"><path d="M0-7 L2-2 L7 0 L2 2 L0 7 L-2 2 L-7 0 L-2-2 Z"/><circle class="glint-core" r="2.1"/></g></svg></span><span class="credit-rule" aria-hidden="true"></span><span class="credit-signature-wrap"><img class="credit-signature" src="./signature-color.png" alt="إمضاء Abdouche Hacene"><svg class="credit-signature-glint" viewBox="0 0 512 512" aria-hidden="true"><defs><radialGradient id="mushrifi-signature-halo"><stop offset="0" stop-color="#fff" stop-opacity="1"/><stop offset=".18" stop-color="#fff9d9" stop-opacity=".98"/><stop offset=".46" stop-color="#ffd36a" stop-opacity=".72"/><stop offset="1" stop-color="#ffc247" stop-opacity="0"/></radialGradient><filter id="mushrifi-signature-glow" x="-300%" y="-300%" width="700%" height="700%" color-interpolation-filters="sRGB"><feGaussianBlur in="SourceGraphic" stdDeviation="2.8" result="soft"/><feGaussianBlur in="SourceGraphic" stdDeviation="5.2" result="wide"/><feMerge><feMergeNode in="wide"/><feMergeNode in="soft"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path id="mushrifi-signature-upper" d="M 12 144 C 55 144 109 146 162 150 S 278 159 332 145 C 386 133 438 111 449 79 C 461 45 440 20 405 17 C 362 14 339 43 331 81 C 325 107 325 130 325 151" fill="none"/><path id="mushrifi-signature-left" d="M 55 314 C 40 306 43 268 55 235 C 78 183 111 115 140 58 C 155 28 170 18 183 34 C 203 60 214 120 215 170 C 216 196 217 213 218 224" fill="none"/><path id="mushrifi-signature-middle" d="M 118 305 C 136 268 159 242 177 248 C 196 253 211 294 229 310 C 245 287 258 250 277 249 C 295 247 315 286 333 310 C 344 327 357 339 370 342 C 358 300 352 249 348 198 C 345 175 344 158 344 148" fill="none"/><path id="mushrifi-signature-sweep" d="M 42 309 C 100 308 164 309 224 310 C 302 311 383 306 454 302 C 471 301 477 306 463 319 C 430 344 382 364 332 385 C 264 415 195 445 131 468 C 108 478 91 469 92 449 C 94 417 108 369 128 311" fill="none"/><g class="glint-point signature-glint-point" data-glint="1" transform="translate(100 145)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="2" transform="translate(405 48)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="3" transform="translate(330 150)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="4" transform="translate(60 270)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="5" transform="translate(184 100)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="6" transform="translate(160 250)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="7" transform="translate(280 250)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="8" transform="translate(90 310)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="9" transform="translate(260 400)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g><g class="glint-point signature-glint-point" data-glint="10" transform="translate(445 310)"><circle r="8.5" fill="url(#mushrifi-signature-halo)"/><path d="M0-8 L2-2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2-2 Z" fill="#fff9df" stroke="#fff" stroke-width=".7"/><circle r="2.25" fill="#fff"/></g></svg></span></div>
 </div></header>
 <div class="wrap">
 <div class="notice app-data-note"><b>حماية البيانات:</b> سجلاتك محفوظة محلياً ومشفّرة على هذا الهاتف. احتفظ بنسخة احتياطية خارجية بانتظام.</div>
@@ -1299,7 +1317,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <div class="actions"><button class="btn primary" id="studentSubmit" type="submit">حفظ بطاقة التلميذ</button><button class="btn hidden" id="cancelStudentEdit" type="button">إلغاء التعديل</button></div></form></div></details>
 <details class="panel attendance-log" id="guardianAddressImportDisclosure"><summary><strong>استيراد عناوين الأولياء</strong><span class="muted">مطابقة آمنة برقم التعريف فقط</span></summary><div class="guardian-address-import-body"><p class="muted">اختر ملفًا يحتوي على عمودين على الأقل: «رقم التعريف» و«عنوان الولي». يقبل CSV أو جدول Excel المحفوظ بصيغة HTML. لا يقبل ملف Excel ثنائي XLS/XLSX؛ احفظه بصيغة CSV أو Excel HTML. يجب حفظ أرقام التعريف كنص من 16 رقمًا، لا بصيغة علمية أو رقمية مقربة.</p><div class="row guardian-address-import-controls"><div><button class="btn" id="downloadGuardianAddressTemplate" type="button">تنزيل نموذج العناوين CSV</button></div><div><label for="guardianAddressImportFile">ملف عناوين الأولياء</label><input id="guardianAddressImportFile" type="file" accept=".csv,.xls,.html,text/csv,text/html,*/*"></div></div><p id="guardianAddressImportStatus" class="muted" role="status" aria-live="polite">لم يتم اختيار ملف. لن تُحفظ أي بيانات قبل معاينة النتائج والضغط على زر الحفظ.</p><div id="guardianAddressImportPreview" class="guardian-address-import-preview hidden" aria-live="polite"></div><div class="actions guardian-address-import-actions"><button class="btn primary" id="applyGuardianAddressImport" type="button" disabled>حفظ العناوين المطابقة فقط</button><button class="btn" id="cancelGuardianAddressImport" type="button">إلغاء المعاينة</button></div></div></details>
 <details class="panel attendance-log section-setup"><summary><strong>إعداد المستويات والشعب والأقسام</strong><span class="muted">إضافة أو مراجعة القوائم الدراسية</span></summary><div class="section-setup-content"><p class="muted">أضف تركيبة جديدة عند الحاجة، وسيُدرج المستوى والشعبة والقسم تلقائيًا في القوائم المتدرجة.</p><form id="sectionForm"><div class="row"><div><label>المستوى</label><input name="schoolYear" placeholder="مثال: أولى" required></div><div><label>الشعبة</label><input name="branch" placeholder="مثال: علوم تجريبية" required></div><div><label>رقم القسم</label><input name="sectionNumber" placeholder="مثال: 2" required></div></div><button class="btn primary" type="submit">إضافة إلى القوائم</button></form><div id="sectionList" class="muted"></div></div></details>
-<div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count" role="status" aria-live="polite">0 تلميذ</span></div><input id="studentSearch" class="student-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="بحث في ملفات التلاميذ" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>اللقب والاسم</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div></div>
+<div class="panel students-list-panel"><div class="students-list-head"><div><h2>قائمة التلاميذ</h2><p class="muted">ملفات التلاميذ مرتبة حسب القسم واللقب، مع وصول سريع إلى العمليات.</p></div><span id="studentCount" class="students-count" role="status" aria-live="polite">0 تلميذ</span></div><input id="studentSearch" class="student-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="بحث في ملفات التلاميذ" placeholder="ابحث بالاسم أو اللقب أو القسم أو الصفة أو الولي أو الهاتف"><div class="tablewrap"><table class="students-table"><thead><tr><th>اللقب والاسم</th><th>المستوى</th><th>الشعبة</th><th>القسم</th><th>الصفة</th><th>تاريخ الميلاد</th><th>اسم الولي</th><th>رقم الهاتف</th><th>العمليات</th></tr></thead><tbody id="studentsRows"></tbody></table></div><div id="studentsPagination" class="student-directory-pagination" aria-label="صفحات قائمة التلاميذ"></div></div>
 </section>
 <section id="attendance" class="page hidden">
  <div class="followup-page-heading">
@@ -1318,18 +1336,18 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
  <details class="panel attendance-log individual-attendance"><summary><strong>تسجيل حالة فردية</strong><span class="muted">غياب أو تأخر أو حضور لتلميذ واحد</span></summary><div class="individual-attendance-content"><form id="attForm"><label>بحث عن تلميذ</label><input id="attStudentSearch" type="search" placeholder="اكتب اسم التلميذ أو القسم للبحث"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>نوع الحالة</label><select name="type" id="attType"><option value="غياب">غياب</option><option value="تأخر">تأخر</option><option value="حضور">حضور</option></select></div><div><label>التاريخ</label><input name="date" type="date" required></div></div>
  <div class="row"><div><label>الفترة</label><select name="period" id="attPeriod"><option value="الفترة الصباحية">الفترة الصباحية</option><option value="الفترة المسائية">الفترة المسائية</option><option value="اليوم كاملاً">اليوم كاملاً</option><option value="توقيت آخر">توقيت آخر</option></select><input name="periodCustom" id="attPeriodCustom" class="hidden" placeholder="أدخل التوقيت أو الفترة"></div><div id="absenceHoursField"><label>عدد ساعات الغياب</label><input name="hours" id="attHours" type="number" min="0.25" max="24" step="0.25" placeholder="مثال: 2 أو 7.5"></div><div id="lateMinutesField" class="hidden"><label>مدة التأخر بالدقائق</label><input name="minutes" type="number" min="1" max="600" step="1" placeholder="مثال: 15"></div></div>
  <div class="row"><div><label>حالة التبرير</label><select name="justified"><option>غير مبرر</option><option>قيد التبرير</option><option>مبرر</option></select></div><div><label>ملاحظات</label><input name="notes" placeholder="سبب الغياب أو التأخر أو ملاحظة"></div></div><button class="btn primary" type="submit">حفظ الحالة</button></form></div></details>
- <details class="panel attendance-log"><summary><strong>سجل الغيابات والتأخرات</strong> <span class="pill" id="attLogCount">0 سجل</span> <span class="muted">يمكن تعديل الساعات والتبرير والملاحظات</span></summary><div class="tablewrap"><table class="attendance-table"><thead><tr><th>التلميذ</th><th>القسم</th><th>التاريخ</th><th>الحالة والمدة</th><th>التبرير</th><th>ملاحظات</th><th>الإجراءات</th></tr></thead><tbody id="attRows"></tbody></table></div></details>
+ <details class="panel attendance-log"><summary><strong>سجل الغيابات والتأخرات</strong> <span class="pill" id="attLogCount">0 سجل</span> <span class="muted">يمكن تعديل الساعات والتبرير والملاحظات</span></summary><div class="tablewrap"><table class="attendance-table"><thead><tr><th>التلميذ</th><th>القسم</th><th>التاريخ</th><th>الحالة والمدة</th><th>التبرير</th><th>ملاحظات</th><th>الإجراءات</th></tr></thead><tbody id="attRows"></tbody></table></div><div id="attRowsPagination" class="student-directory-pagination" aria-label="صفحات سجل الغياب والتأخر"></div></details>
 
  </div>
  <div id="violations" class="followup-view hidden" role="tabpanel" aria-labelledby="followupViolationsTab">
 
 <div class="panel"><h2>تسجيل مخالفة أو واقعة</h2><form id="violForm"><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>التاريخ</label><input name="date" type="date" required></div><div><label>نوع الواقعة</label><select name="type"><option>عدم الانضباط</option><option>إتلاف ممتلكات</option><option>مخالفة النظام الداخلي</option><option>سلوك آخر</option></select></div></div><label>وصف الواقعة</label><textarea name="description" required></textarea><label>الإجراء أو المتابعة</label><textarea name="action"></textarea><label>صورة تقرير السلوك (اختياري)</label><input id="violPhoto" type="file" accept="image/*" capture="environment"><p class="muted">التقط صورة التقرير بالكاميرا أو اختر صورة من الهاتف.</p><div id="violPhotoPreview"></div><button class="btn primary">حفظ الواقعة</button></form></div>
-<div class="panel"><h2>سجل المخالفات</h2><div class="tablewrap"><table class="violations-table"><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody id="violRows"></tbody></table></div></div>
+<div class="panel"><h2>سجل المخالفات</h2><div class="tablewrap"><table class="violations-table"><thead><tr><th>التاريخ</th><th>التلميذ</th><th>النوع</th><th>الوصف</th><th>الإجراء</th></tr></thead><tbody id="violRows"></tbody></table></div><div id="violRowsPagination" class="student-directory-pagination" aria-label="صفحات سجل المخالفات"></div></div>
  </div>
 </section>
 <section id="documents" class="page hidden">
 <div class="panel"><h2>إنشاء إشعار أو استدعاء</h2><form id="docForm"><label>نوع الوثيقة</label><select name="type"><option>إشعار غياب</option><option>استدعاء ولي</option><option>تنبيه</option></select><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>التاريخ</label><input name="date" type="date" required></div><div><label>موعد الحضور (للاستدعاء)</label><input name="appointment" type="datetime-local"></div></div><div id="summonsReminderFields" class="hidden"><div class="row"><div><label>تاريخ التنبيه (تختاره أنت)</label><input name="reminderDate" type="date"></div><div><label>ساعة التنبيه (تختارها أنت)</label><input name="reminderTime" type="time"></div></div><p class="muted">يُقترح تلقائياً وقت في اليوم السابق، ويمكنك اختيار أي تاريخ وساعة للتنبيه، حتى لو كانا بعد موعد حضور الولي. يجب فقط أن يكون التنبيه في المستقبل.</p></div><label>الموضوع / السبب</label><textarea name="reason" required></textarea><label>صورة الاستدعاء (اختياري)</label><input id="docPhoto" type="file" accept="image/*" capture="environment"><p class="muted">التقط صورة الاستدعاء بالكاميرا أو اختر صورة من الهاتف.</p><div id="docPhotoPreview"></div><button class="btn primary">إنشاء الوثيقة</button></form></div>
-<div class="panel"><h2>الوثائق المحفوظة</h2><div id="docsRows" class="empty">لا توجد وثائق بعد.</div></div></section>
+<div class="panel"><h2>الوثائق المحفوظة</h2><div id="docsRows" class="empty">لا توجد وثائق بعد.</div><div id="docsRowsPagination" class="student-directory-pagination" aria-label="صفحات الوثائق المحفوظة"></div></div></section>
 
 <section id="reports" class="page hidden">
 <section id="studentAnalyticsPanel" class="panel student-analytics-panel" aria-labelledby="studentAnalyticsHeading">
@@ -1486,7 +1504,8 @@ function auditFingerprintValue(value){
  for(let i=0;i<text.length;i++){const code=text.charCodeAt(i);hashA=Math.imul(hashA^code,16777619);hashB=(Math.imul(hashB,33)^code)>>>0;}
  return {__auditFingerprint:typeof value+':'+text.length+':'+(hashA>>>0).toString(16)+':'+hashB.toString(16)};
 }
-function auditComparableDatabase(source){
+function auditComparableDatabase(source,options){
+ const opts=options||{};
  const input=source&&typeof source==='object'?source:{};
  const result={students:[],attendance:[],documents:[],violations:[],followups:[],agenda:[],settings:{}};
  const auxiliary={students:['name','fullName'],attendance:['student','studentName'],documents:['student','studentName'],violations:['student','studentName'],followups:['student','studentName'],agenda:[]};
@@ -1498,7 +1517,7 @@ function auditComparableDatabase(source){
    Object.keys(record||{}).forEach(key=>{
     const value=record[key];
     if(safe.has(key)){projected[key]=value;return;}
-    if(value!==undefined&&value!==null&&value!==''&&value!==false)projected[key]=auditFingerprintValue(value);
+    if(value!==undefined&&value!==null&&value!==''&&value!==false){if(opts.retainLargeAttachments&&typeof value==='string'&&value.length>4096&&/^data:image\//i.test(value))projected[key]=value;else projected[key]=auditFingerprintValue(value);}
     else if(Object.prototype.hasOwnProperty.call(record,key))projected[key]=value;
    });
    return projected;
@@ -1566,8 +1585,10 @@ function auditActionLabel(action){
  return action==='add'?'إضافة':action==='delete'?'حذف':action==='revert'?'استرجاع تعديل':action==='bulk'?'تغيير جماعي':'تعديل';
 }
 function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
- const before=auditComparableDatabase(beforeSnapshot||{}),after=auditComparableDatabase(afterDatabase),makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2);
- const opts=options||{},events=[];
+ const opts=options||{};
+ const before=opts.precomputedSnapshots?(beforeSnapshot||{}):auditComparableDatabase(beforeSnapshot||{});
+ const after=opts.precomputedSnapshots?(opts.afterSnapshot||{}):auditComparableDatabase(afterDatabase);
+ const makeId=typeof idFactory==='function'?idFactory:()=>String(Date.now())+'-'+Math.random().toString(36).slice(2),events=[];
  for(const collection of ['students','attendance','documents','violations','followups','agenda']){
   const oldList=Array.isArray(before[collection])?before[collection]:[],newList=Array.isArray(after[collection])?after[collection]:[];
   const oldMap=new Map(),newMap=new Map();
@@ -1648,17 +1669,22 @@ function auditEntryValue(value,missing){
  if(typeof value==='boolean')return value?'نعم':'لا';
  return String(value);
 }
-let auditBaselineJson=JSON.stringify(auditComparableDatabase(db));
+let auditBaselineSnapshot=auditComparableDatabase(db,{retainLargeAttachments:true});
+let homeOverviewCache=null;
 let auditNextRevertsId='';
 let preserveUndoOnNextSave=false;
 const save=(options={})=>{
  if(licenseReadOnly){alert('وضع القراءة فقط: انتهى الترخيص أو تعذر التحقق منه. بياناتك محفوظة؛ صدّر نسخة احتياطية أو اتصل بالإنترنت لتجديد الترخيص.');return false;}
- const clearUndoAfterSave=!preserveUndoOnNextSave;preserveUndoOnNextSave=false;
+ const clearUndoAfterSave=!preserveUndoOnNextSave;
  const previousAuditLog=Array.isArray(db.auditLog)?db.auditLog.slice():[];
- let json;
+ let json,nextAuditSnapshot,changedEntities=new Set(),atomicRecoveryClear=false,undoKnownEmpty=false;
  try{
-  const baseline=JSON.parse(auditBaselineJson||JSON.stringify(auditComparableDatabase(db)));
-  const newEntries=buildAuditEvents(baseline,db,new Date().toISOString(),()=>crypto.randomUUID(),auditNextRevertsId?{revertsId:auditNextRevertsId}:{});
+  const baseline=auditBaselineSnapshot||auditComparableDatabase(db,{retainLargeAttachments:true});
+  nextAuditSnapshot=auditComparableDatabase(db,{retainLargeAttachments:true});
+  const auditOptions={precomputedSnapshots:true,afterSnapshot:nextAuditSnapshot};
+  if(auditNextRevertsId)auditOptions.revertsId=auditNextRevertsId;
+  const newEntries=buildAuditEvents(baseline,db,new Date().toISOString(),()=>crypto.randomUUID(),auditOptions);
+  changedEntities=new Set(newEntries.map(entry=>entry.entity));
   if(newEntries.length)db.auditLog=previousAuditLog.concat(newEntries).slice(-AUDIT_LOG_LIMIT);
   else db.auditLog=previousAuditLog;
   json=JSON.stringify(db);
@@ -1667,6 +1693,9 @@ const save=(options={})=>{
    if(options&&options.restore===true){
     if(typeof AndroidBridge.restoreDatabaseSafely!=='function')throw Error('إصدار التخزين الآمن لا يدعم الاستعادة المعاملية؛ لم تُعتمد النسخة.');
     stored=AndroidBridge.restoreDatabaseSafely(json)===true;
+   }else if(typeof AndroidBridge.saveDatabaseWithPolicy==='function'){
+    stored=AndroidBridge.saveDatabaseWithPolicy(json,clearUndoAfterSave)===true;
+    atomicRecoveryClear=true;
    }else stored=AndroidBridge.saveDatabase(json)===true;
    if(!stored){let detail='';try{detail=AndroidBridge.getDatabaseError?.()||'';}catch(_){}throw Error(detail||'تعذر الحفظ المشفر محلياً دون تفاصيل من النظام');}
    try{localStorage.removeItem(DBKEY);}catch(_){}
@@ -1678,12 +1707,17 @@ const save=(options={})=>{
   db.auditLog=previousAuditLog;
   alert('تعذر حفظ البيانات محلياً. سبب الخطأ: '+(e?.message||'غير معروف')+'؛ لم يتم تأكيد الحفظ. لا تحذف التطبيق أو بياناته.');return false;
  }
- auditBaselineJson=JSON.stringify(auditComparableDatabase(db));
- auditNextRevertsId='';
- if(clearUndoAfterSave){try{clearStoredRecoverySnapshot();}catch(e){console.warn('Mushrifi recovery cleanup failed',e);}}
- try{if(isAndroidApp)syncAgendaRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi agenda reminder sync failed',e);}
- try{if(isAndroidApp)syncStudentFollowupRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi educational follow-up reminder sync failed',e);}
- try{render();refreshUndoPanel();}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}
+ auditBaselineSnapshot=nextAuditSnapshot;
+ if(['students','attendance','documents','violations'].some(entity=>changedEntities.has(entity)))homeOverviewCache=null;
+ auditNextRevertsId='';preserveUndoOnNextSave=false;
+ if(changedEntities.has('students'))rebuildStudentIndexes();
+ else if(changedEntities.has('attendance')||changedEntities.has('documents')||changedEntities.has('violations'))rebuildRecordNameIndex();
+ invalidateRecordOrderCache(['attendance','documents','violations'].filter(collection=>changedEntities.has(collection)));
+ if(clearUndoAfterSave&&!atomicRecoveryClear){try{undoKnownEmpty=clearStoredRecoverySnapshot()===true;}catch(e){console.warn('Mushrifi recovery cleanup failed',e);}}
+ try{if(isAndroidApp&&changedEntities.has('agenda'))syncAgendaRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi agenda reminder sync failed',e);}
+ try{if(isAndroidApp&&(changedEntities.has('students')||changedEntities.has('followups')))syncStudentFollowupRemindersWithAndroid(false);}catch(e){console.warn('Mushrifi educational follow-up reminder sync failed',e);}
+ if(atomicRecoveryClear&&clearUndoAfterSave)undoKnownEmpty=true;
+ try{render();refreshUndoPanel(undoKnownEmpty);}catch(e){console.error('Mushrifi: data saved but the interface could not refresh',e);alert('تم حفظ البيانات في التخزين المحلي، لكن تعذر تحديث عرض الصفحة. أعد فتح القسم أو التطبيق؛ لا تُعد إدخال العملية حتى لا تتكرر.');}
  return true;
 };
 function readStoredRecoverySnapshot(){
@@ -1706,8 +1740,9 @@ function parseRecoverySnapshot(raw){
  if(data.followups!==undefined&&(!Array.isArray(data.followups)||!data.followups.every(entry=>entry&&typeof entry==='object'&&!Array.isArray(entry))))return null;
  return item;
 }
-function refreshUndoPanel(){
+function refreshUndoPanel(knownEmpty=false){
  const button=$('#undoLastDelete'),status=$('#undoLastDeleteStatus');if(!button||!status)return;
+ if(knownEmpty){status.textContent='لا توجد عملية حذف محفوظة للتراجع عنها حالياً.';button.disabled=true;return;}
  let snapshot=null;try{snapshot=parseRecoverySnapshot(readStoredRecoverySnapshot());}catch(_){}
  if(!snapshot){status.textContent='لا توجد عملية حذف محفوظة للتراجع عنها حالياً.';button.disabled=true;return;}
  const when=snapshot.createdAt?new Date(snapshot.createdAt).toLocaleString('ar-DZ'):'وقت غير محدد';
@@ -1799,8 +1834,54 @@ return String(value??'').normalize('NFKC').toLocaleLowerCase('ar')
 }
 
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
-const student=id=>{const key=normalizeStudentKey(id);if(!key)return null;let s=db.students.find(x=>normalizeStudentKey(x.id)===key);if(s)return s;const matches=db.students.filter(x=>[x.last+' '+x.first,x.first+' '+x.last,x.name,x.fullName].some(v=>normalizeStudentKey(v)===key));return matches.length===1?matches[0]:null;};
-const name=id=>{let s=student(id);if(s)return (s.last+' '+s.first).trim()||s.name||s.fullName||'—';for(const kind of ['attendance','documents','violations']){const r=db[kind].find(x=>normalizeStudentKey(x.student)===normalizeStudentKey(id)&&x.studentName);if(r)return r.studentName;}return 'تلميذ محذوف'};
+let studentIndexSource=null,studentIndexLength=-1,studentById=new Map(),studentByName=new Map(),recordNameByStudent=new Map();
+let directorySearchCache=new WeakMap(),studentDirectorySorted=[],studentSelectOptionsCache=new Map(),studentSelectOptionsRevision=0;
+let studentDirectoryPage=0;
+const STUDENT_DIRECTORY_COLLATOR=new Intl.Collator('ar',{numeric:true});
+const STUDENT_DIRECTORY_PAGE_SIZE=30;
+function rebuildStudentIndexes(){
+ const source=Array.isArray(db.students)?db.students:[];
+ studentById=new Map();studentByName=new Map();recordNameByStudent=new Map();directorySearchCache=new WeakMap();
+ const addAlias=(value,item)=>{const key=normalizeStudentKey(value);if(!key)return;const list=studentByName.get(key)||[];if(!list.includes(item))list.push(item);studentByName.set(key,list);};
+ source.forEach(item=>{
+  if(!item||typeof item!=='object')return;
+  const id=normalizeStudentKey(item.id);if(id)studentById.set(id,item);
+  addAlias((item.last+' '+item.first).trim(),item);addAlias((item.first+' '+item.last).trim(),item);addAlias(item.name,item);addAlias(item.fullName,item);
+  const searchable=normalizeDirectorySearch([item.first,item.last,item.class,sectionLabel(item.class),item.attribute,item.status,item.birthDate,item.guardian,item.phone,item.identityNumber,item.schoolYear,item.branch].join(' '));
+  directorySearchCache.set(item,searchable);
+ });
+ rebuildRecordNameIndex();
+ studentDirectorySorted=source.slice().sort((a,b)=>STUDENT_DIRECTORY_COLLATOR.compare(String(a.class||''),String(b.class||''))||STUDENT_DIRECTORY_COLLATOR.compare(String(a.last||''),String(b.last||''))||STUDENT_DIRECTORY_COLLATOR.compare(String(a.first||''),String(b.first||'')));
+ studentIndexSource=db.students;studentIndexLength=source.length;studentSelectOptionsCache.clear();studentSelectOptionsRevision++;
+ studentDirectoryPage=0;
+}
+function rebuildRecordNameIndex(){
+ recordNameByStudent=new Map();
+ for(const collection of ['attendance','documents','violations']){
+  (Array.isArray(db[collection])?db[collection]:[]).forEach(record=>{const key=normalizeStudentKey(record?.student);if(key&&record?.studentName&&!recordNameByStudent.has(key))recordNameByStudent.set(key,String(record.studentName));});
+ }
+}
+function ensureStudentIndexes(){if(studentIndexSource!==db.students||studentIndexLength!==(Array.isArray(db.students)?db.students.length:0))rebuildStudentIndexes();}
+const student=id=>{ensureStudentIndexes();const key=normalizeStudentKey(id);if(!key)return null;const exact=studentById.get(key);if(exact)return exact;const matches=studentByName.get(key);return matches&&matches.length===1?matches[0]:null;};
+const name=id=>{const matched=student(id);if(matched)return (matched.last+' '+matched.first).trim()||matched.name||matched.fullName||'—';ensureStudentIndexes();return recordNameByStudent.get(normalizeStudentKey(id))||'تلميذ محذوف';};
+function studentSearchText(item){let value=directorySearchCache.get(item);if(value===undefined){value=normalizeDirectorySearch([item.first,item.last,item.class,sectionLabel(item.class),item.attribute,item.status,item.birthDate,item.guardian,item.phone,item.identityNumber,item.schoolYear,item.branch].join(' '));directorySearchCache.set(item,value);}return value;}
+function refreshActiveStudentSelectors(activePage){
+ if(!['attendance','documents','violations','reports'].includes(activePage))return;
+ ensureStudentIndexes();
+ $$('.studentSelect').filter(sel=>sel.closest('.page')?.id===activePage).forEach(sel=>{
+  const old=sel.value;
+  const q=sel.name==='student'&&sel.form?.id==='attForm'?normalizeDirectorySearch($('#attStudentSearch')?.value||''):(sel.id==='reportStudent'?normalizeDirectorySearch($('#reportStudentSearch')?.value||''):'');
+  const cacheKey=studentSelectOptionsRevision+':'+activePage+':'+sel.id+':'+q;
+  let markup=studentSelectOptionsCache.get(cacheKey);
+  if(markup===undefined){
+   const first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';
+   const options=studentDirectorySorted.filter(item=>!q||studentSearchText(item).includes(q));
+   markup=first+options.map(item=>`<option value="${item.id}">${esc(item.last)} ${esc(item.first)} – ${esc(studentAcademicLabel(item))}</option>`).join('');
+   if(studentSelectOptionsCache.size>=12)studentSelectOptionsCache.clear();studentSelectOptionsCache.set(cacheKey,markup);
+  }
+  if(sel.dataset.optionsKey!==cacheKey){sel.innerHTML=markup;sel.dataset.optionsKey=cacheKey;if([...sel.options].some(option=>option.value===old))sel.value=old;}
+ });
+}
 let previousAppPage='home';
 const appPageStack=['home'];
 let activeFollowupView='attendance';
@@ -1892,12 +1973,44 @@ $$('nav button').forEach(button=>button.addEventListener('click',()=>go(button.d
  $$('[data-followup-view]').forEach(button=>button.addEventListener('click',()=>{setFollowupView(button.dataset.followupView);updatePageContextBar(currentAppRoute());render();}));
  $('#pageBackButton')?.addEventListener('click',()=>goPreviousPage());
  $('#licenseAdvisoryOpen')?.addEventListener('click',()=>{go('settings');setSettingsTab('license');});
+let attendanceLogPage=0,violationLogPage=0,documentLogPage=0;
+const ATTENDANCE_LOG_PAGE_SIZE=40,VIOLATION_LOG_PAGE_SIZE=18,DOCUMENT_LOG_PAGE_SIZE=15;
+let recordOrderCache=new Map();
+function invalidateRecordOrderCache(collections){(collections||[]).forEach(collection=>recordOrderCache.delete(collection));}
+function orderedRecords(collection,mode){
+ const source=Array.isArray(db[collection])?db[collection]:[];
+ let cached=recordOrderCache.get(collection);
+ if(!cached||cached.source!==source||cached.length!==source.length){
+  const rows=source.slice();
+  if(mode==='date-desc')rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  else rows.reverse();
+  cached={source,length:source.length,rows};recordOrderCache.set(collection,cached);
+ }
+ return cached.rows;
+}
+function renderRecordPagination(id,page,total,pageSize,onPage){
+ const output=$('#'+id);if(!output)return;
+ const pages=Math.max(1,Math.ceil(total/pageSize));
+ if(total<=pageSize){output.innerHTML='';return;}
+ const current=Math.max(0,Math.min(page,pages-1)),first=current*pageSize+1,last=Math.min((current+1)*pageSize,total);
+ output.innerHTML=`<button type="button" data-record-page="prev" ${current===0?'disabled':''}>السابق</button><span class="page-meta">عرض ${first}–${last} من ${total} · صفحة ${current+1} من ${pages}</span><button type="button" data-record-page="next" ${current>=pages-1?'disabled':''}>التالي</button>`;
+ output.querySelectorAll('[data-record-page]').forEach(button=>button.addEventListener('click',()=>{onPage(current+(button.dataset.recordPage==='next'?1:-1));render();output.scrollIntoView({behavior:'auto',block:'center'});}));
+}
 function renderStudentDirectory(){
-let q=normalizeDirectorySearch($('#studentSearch')?.value||'');
-const searchable=s=>normalizeDirectorySearch([s.first,s.last,s.class,sectionLabel(s.class),s.attribute,s.status,s.birthDate,s.guardian,s.phone,s.identityNumber,s.schoolYear,s.branch].join(' '));
-const matches=db.students.filter(s=>searchable(s).includes(q));
-$('#studentCount').textContent=q?'نتائج البحث: '+matches.length+' من '+db.students.length:'عدد التلاميذ: '+matches.length;
-$('#studentsRows').innerHTML=matches.slice().sort((a,b)=>String(a.class||'').localeCompare(String(b.class||''),'ar',{numeric:true})||String(a.last||'').localeCompare(String(b.last||''),'ar')||String(a.first||'').localeCompare(String(b.first||''),'ar')).map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')"><span class="student-value student-name-value">${esc(((s.last||'')+' '+(s.first||'')).trim()||'—')}</span></button></td><td data-label="المستوى"><span class="student-value">${esc(p.schoolYear||'—')}</span></td><td data-label="الشعبة"><span class="student-value branch-value">${esc(shortBranch(p.branch))}</span></td><td data-label="القسم"><span class="student-value">${esc(p.sectionNumber||s.class||'—')}</span></td><td data-label="الصفة"><span class="student-value">${esc(s.attribute||s.status||'—')}</span></td><td data-label="تاريخ الميلاد"><span class="student-value date-value" dir="ltr">${esc(s.birthDate||'—')}</span></td><td data-label="اسم الولي"><span class="student-value">${esc(s.guardian||'—')}</span></td><td data-label="رقم الهاتف"><span class="student-value date-value" dir="ltr">${esc(s.phone||'—')}</span></td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="empty">'+(q?'لا توجد نتائج مطابقة للبحث.':'لا يوجد تلاميذ في القائمة.')+'</td></tr>';
+ ensureStudentIndexes();
+ const q=normalizeDirectorySearch($('#studentSearch')?.value||'');
+ const matches=q?studentDirectorySorted.filter(item=>studentSearchText(item).includes(q)):studentDirectorySorted;
+ const pageCount=Math.max(1,Math.ceil(matches.length/STUDENT_DIRECTORY_PAGE_SIZE));
+ studentDirectoryPage=Math.max(0,Math.min(studentDirectoryPage,pageCount-1));
+ const start=studentDirectoryPage*STUDENT_DIRECTORY_PAGE_SIZE,visible=matches.slice(start,start+STUDENT_DIRECTORY_PAGE_SIZE);
+ $('#studentCount').textContent=q?'نتائج البحث: '+matches.length+' من '+db.students.length:'عدد التلاميذ: '+matches.length;
+ $('#studentsRows').innerHTML=visible.map(s=>{const p=studentAcademicParts(s);return `<tr><td class="student-primary-cell"><button type="button" class="student-name" onclick="studentHistory('${s.id}')"><span class="student-value student-name-value">${esc(((s.last||'')+' '+(s.first||'')).trim()||'—')}</span></button></td><td data-label="المستوى"><span class="student-value">${esc(p.schoolYear||'—')}</span></td><td data-label="الشعبة"><span class="student-value branch-value">${esc(shortBranch(p.branch))}</span></td><td data-label="القسم"><span class="student-value">${esc(p.sectionNumber||s.class||'—')}</span></td><td data-label="الصفة"><span class="student-value">${esc(s.attribute||s.status||'—')}</span></td><td data-label="تاريخ الميلاد"><span class="student-value date-value" dir="ltr">${esc(s.birthDate||'—')}</span></td><td data-label="اسم الولي"><span class="student-value">${esc(s.guardian||'—')}</span></td><td data-label="رقم الهاتف"><span class="student-value date-value" dir="ltr">${esc(s.phone||'—')}</span></td><td data-label="العمليات" class="student-actions-cell"><div class="student-actions"><button type="button" class="btn small primary" onclick="studentHistory('${s.id}')">الملف الفردي</button><button type="button" class="btn small" onclick="editStudent('${s.id}')">تعديل البطاقة</button><select class="studentAction" aria-label="اختر إجراء للتلميذ" onchange="studentAction(this,'${s.id}')"><option value="">اختر إجراءً</option><option value="absence">تسجيل غياب</option><option value="late">تسجيل تأخر</option><option value="report">عرض التقرير</option><option value="violation">تسجيل مخالفة</option><option value="summons">إنشاء استدعاء</option></select><button class="btn small danger" onclick="delStudent('${s.id}')">حذف</button></div></td></tr>`}).join('')||'<tr><td colspan="9" class="empty">'+(q?'لا توجد نتائج مطابقة للبحث.':'لا يوجد تلاميذ في القائمة.')+'</td></tr>';
+ const pagination=$('#studentsPagination');
+ if(pagination){
+  const first=matches.length?start+1:0,last=Math.min(start+STUDENT_DIRECTORY_PAGE_SIZE,matches.length);
+  pagination.innerHTML=matches.length>STUDENT_DIRECTORY_PAGE_SIZE?`<button type="button" data-student-page="prev" ${studentDirectoryPage===0?'disabled':''}>السابق</button><span class="page-meta">عرض ${first}–${last} من ${matches.length} · صفحة ${studentDirectoryPage+1} من ${pageCount}</span><button type="button" data-student-page="next" ${studentDirectoryPage>=pageCount-1?'disabled':''}>التالي</button>`:'';
+  pagination.querySelectorAll('[data-student-page]').forEach(button=>button.addEventListener('click',()=>{studentDirectoryPage+=button.dataset.studentPage==='next'?1:-1;renderStudentDirectory();document.querySelector('.students-list-panel')?.scrollIntoView({behavior:'auto',block:'start'});}));
+ }
 }
 
 window.openTaskPage=page=>go(String(page||'home'));
@@ -2434,20 +2547,38 @@ function smartDashboardMonthWindows(today){
 function buildSmartDashboardSnapshot(attendance,violations,today,resolveStudent){
  const windows=smartDashboardMonthWindows(today),empty={current:{absences:0,lateness:0,violations:0},previous:{absences:0,lateness:0,violations:0},followups:[],windows:null};
  if(!windows)return empty;
- const {currentStart,currentEnd,previousStart,previousEnd}=windows,inRange=(d,a,b)=>smartDashboardValidDate(d)&&d>=a&&d<=b,typeOf=r=>String(r?.type??'').trim().replace(/\s+/g,'');
- const count=(items,a,b,t)=>items.filter(r=>inRange(r?.date,a,b)&&(!t||typeOf(r)===t)).length,A=Array.isArray(attendance)?attendance:[],V=Array.isArray(violations)?violations:[];
- const current={absences:count(A,currentStart,currentEnd,'غياب'),lateness:count(A,currentStart,currentEnd,'تأخر'),violations:count(V,currentStart,currentEnd,'')};
- const previous={absences:count(A,previousStart,previousEnd,'غياب'),lateness:count(A,previousStart,previousEnd,'تأخر'),violations:count(V,previousStart,previousEnd,'')},groups=new Map();
- A.forEach(r=>{
-  if(!inRange(r?.date,currentStart,currentEnd)||String(r?.justified??'غير مبرر').trim()!=='غير مبرر')return;
-  const t=typeOf(r);if(t!=='غياب'&&t!=='تأخر')return;
-  const st=typeof resolveStudent==='function'?resolveStudent(r.student,r):null;
-  if(!st||st.id===undefined||st.id===null)return;
-  const id=String(st.id);if(!id)return;
-  if(!groups.has(id))groups.set(id,{student:st,absence:new Set(),late:new Set()});
-  const g=groups.get(id);(t==='غياب'?g.absence:g.late).add(String(r.date));
- });
- const followups=[...groups.values()].map(g=>({student:g.student,absenceDays:g.absence.size,latenessDays:g.late.size})).filter(x=>x.absenceDays>=3||x.latenessDays>=3).sort((a,b)=>b.absenceDays+b.latenessDays-(a.absenceDays+a.latenessDays)||String(a.student.last||'').localeCompare(String(b.student.last||''),'ar'));
+ const {currentStart,currentEnd,previousStart,previousEnd}=windows;
+ const A=Array.isArray(attendance)?attendance:[],V=Array.isArray(violations)?violations:[];
+ const current={absences:0,lateness:0,violations:0},previous={absences:0,lateness:0,violations:0},groups=new Map();
+ const typeOf=r=>String(r?.type??'').trim().replace(/\s+/g,'');
+ const inWindow=(date,start,end)=>smartDashboardValidDate(date)&&date>=start&&date<=end;
+ // One pass over attendance: count both month windows and resolve only current-month
+ // unjustified absence/lateness rows needed for the follow-up threshold.
+ for(const record of A){
+  const date=String(record?.date||''),type=typeOf(record);
+  const isAbsence=type==='غياب',isLate=type==='تأخر';
+  if(inWindow(date,currentStart,currentEnd)){
+   if(isAbsence)current.absences++;else if(isLate)current.lateness++;
+   if((isAbsence||isLate)&&String(record?.justified??'غير مبرر').trim()==='غير مبرر'){
+    const st=typeof resolveStudent==='function'?resolveStudent(record.student,record):null;
+    if(st&&st.id!==undefined&&st.id!==null){
+     const id=String(st.id);if(id){
+      if(!groups.has(id))groups.set(id,{student:st,absence:new Set(),late:new Set()});
+      const group=groups.get(id);(isAbsence?group.absence:group.late).add(date);
+     }
+    }
+   }
+  }else if(inWindow(date,previousStart,previousEnd)){
+   if(isAbsence)previous.absences++;else if(isLate)previous.lateness++;
+  }
+ }
+ // Violations have no required student lookup in the monthly card: count with one pass.
+ for(const record of V){
+  const date=String(record?.date||'');
+  if(inWindow(date,currentStart,currentEnd))current.violations++;
+  else if(inWindow(date,previousStart,previousEnd))previous.violations++;
+ }
+ const followups=[...groups.values()].map(group=>({student:group.student,absenceDays:group.absence.size,latenessDays:group.late.size})).filter(item=>item.absenceDays>=3||item.latenessDays>=3).sort((a,b)=>b.absenceDays+b.latenessDays-(a.absenceDays+a.latenessDays)||String(a.student.last||'').localeCompare(String(b.student.last||''),'ar'));
  return {current,previous,followups,windows};
 }
 function smartDashboardTrend(a,b){const n=Number(a||0)-Number(b||0);return n===0?'مثل الفترة المناظرة من الشهر السابق':(n>0?'زيادة ':'انخفاض ')+Math.abs(n)+' عن الفترة المناظرة من الشهر السابق';}
@@ -2541,8 +2672,8 @@ function renderDailyFollowupDashboard(today,nowValue){
  }).join(''):'<p class="empty">لا توجد مهام تحتاج إجراءً اليوم. أحسنت، المتابعة مكتملة.</p>';
  list.querySelectorAll('[data-daily-page],[data-daily-student-id]').forEach(b=>b.addEventListener('click',()=>openDailyDashboardTask(b)));
  if(s.totalTasks>10)list.insertAdjacentHTML('beforeend','<p class="muted daily-task-overflow">يُعرض أعلى 10 إجراءات حسب الأولوية من أصل '+s.totalTasks.toLocaleString('ar-DZ')+'؛ بقية السجلات ما زالت محفوظة في صفحاتها الأصلية.</p>');
-}function renderSmartDashboard(today){
- const s=buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
+}function renderSmartDashboard(today,snapshot){
+ const s=snapshot||buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
  $('#smartMonthAbsences').textContent=s.current.absences.toLocaleString('ar-DZ');$('#smartMonthLateness').textContent=s.current.lateness.toLocaleString('ar-DZ');$('#smartMonthViolations').textContent=s.current.violations.toLocaleString('ar-DZ');
  $('#smartMonthAbsenceTrend').textContent=smartDashboardTrend(s.current.absences,s.previous.absences);$('#smartMonthLatenessTrend').textContent=smartDashboardTrend(s.current.lateness,s.previous.lateness);$('#smartMonthViolationTrend').textContent=smartDashboardTrend(s.current.violations,s.previous.violations);
  $('#smartMonthPeriod').textContent=new Date(Number(today.slice(0,4)),Number(today.slice(5,7))-1,1).toLocaleDateString('ar-DZ',{month:'long',year:'numeric'});
@@ -2691,6 +2822,39 @@ document.querySelectorAll('[data-analytics-range]').forEach(button=>button.addEv
 $('#applyStudentAnalytics')?.addEventListener('click',()=>{document.querySelectorAll('[data-analytics-range]').forEach(button=>button.classList.remove('active'));renderStudentAnalytics();});
 function ensureStudentAnalyticsDates(){if(!$('#analyticsFromDate')?.value||!$('#analyticsToDate')?.value)setStudentAnalyticsRange('6months');}
 
+function buildHomeOverviewSnapshot(today){
+ const normType=value=>String(value??'').trim().replace(/\s+/g,'');
+ let absCount=0,lateCount=0,todayAbs=0,todayLate=0,todayViol=0,summonsCount=0,absenceNoticesCount=0,todaySummons=0,sequence=0;
+ const recent=[];
+ const keepRecent=(record,description)=>{
+  const linkedName=name(record?.student),displayName=linkedName==='تلميذ محذوف'?(record?.studentName||linkedName):linkedName;
+  const item={date:String(record?.date||''),t:String(displayName),desc:description,sequence:sequence++};
+  let position=0;while(position<recent.length&&recent[position].date>=item.date)position++;
+  if(position<6){recent.splice(position,0,item);if(recent.length>6)recent.pop();}
+ };
+ for(const record of db.attendance){
+  const type=normType(record.type);
+  if(type==='غياب'){absCount++;if(record.date===today)todayAbs++;}
+  else if(type==='تأخر'){lateCount++;if(record.date===today)todayLate++;}
+  keepRecent(record,record.type||'غياب/تأخر');
+ }
+ for(const record of db.documents){
+  const type=normType(record.type);
+  if(type.includes('استدعاء')){summonsCount++;if(record.date===today)todaySummons++;}
+  if(type.includes('إشعارغياب'))absenceNoticesCount++;
+  keepRecent(record,record.type||'وثيقة');
+ }
+ for(const record of db.violations){if(record.date===today)todayViol++;keepRecent(record,'مخالفة');}
+ const monthly=buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
+ return {date:today,absCount,lateCount,todayAbs,todayLate,todayViol,summonsCount,absenceNoticesCount,todaySummons,recent,monthly};
+}
+function getHomeOverviewSnapshot(today){
+ const c=homeOverviewCache;
+ if(c&&c.date===today&&c.students===db.students&&c.attendance===db.attendance&&c.documents===db.documents&&c.violations===db.violations&&c.studentCount===db.students.length&&c.attendanceCount===db.attendance.length&&c.documentsCount===db.documents.length&&c.violationsCount===db.violations.length)return c.snapshot;
+ const snapshot=buildHomeOverviewSnapshot(today);
+ homeOverviewCache={date:today,students:db.students,attendance:db.attendance,documents:db.documents,violations:db.violations,studentCount:db.students.length,attendanceCount:db.attendance.length,documentsCount:db.documents.length,violationsCount:db.violations.length,snapshot};
+ return snapshot;
+}
 function render(){
 const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';
 if(activePage==='audit')renderAuditLog();
@@ -2702,36 +2866,35 @@ $('#schoolHeaderName').textContent=schoolName;$('#schoolHeaderLocation').textCon
 if(document.activeElement!==$('#schoolName'))$('#schoolName').value=db.settings.school||'';
 if(document.activeElement!==$('#schoolLocation'))$('#schoolLocation').value=db.settings.location||'';
 if(activePage==='home'){
-const normType=v=>String(v??'').trim().replace(/\s+/g,'');const absCount=db.attendance.filter(x=>normType(x.type)==='غياب').length;const lateCount=db.attendance.filter(x=>normType(x.type)==='تأخر').length;const summonsCount=db.documents.filter(x=>normType(x.type).includes('استدعاء')).length;const absenceNoticesCount=db.documents.filter(x=>normType(x.type).includes('إشعارغياب')).length;$('#sStudents').textContent=db.students.length;$('#sAbs').textContent=absCount;$('#sLate').textContent=lateCount;$('#sViol').textContent=db.violations.length;$('#sDocs').textContent=db.documents.length;$('#sSummons').textContent=summonsCount;$('#sAbsNotices').textContent=absenceNoticesCount;$('#sRecords').textContent=db.attendance.length+db.documents.length+db.violations.length;
-const today=dateISO();
-const todayAbs=db.attendance.filter(x=>x.date===today&&normType(x.type)==='غياب').length;
-const todayLate=db.attendance.filter(x=>x.date===today&&normType(x.type)==='تأخر').length;
-const todayViol=db.violations.filter(x=>x.date===today).length;
-const todaySummons=db.documents.filter(x=>x.date===today&&normType(x.type).includes('استدعاء')).length;
-$('#todayAbs').textContent=todayAbs;$('#todayLate').textContent=todayLate;$('#todayViol').textContent=todayViol;$('#todaySummons').textContent=todaySummons;
-const upcoming=db.documents.filter(x=>normType(x.type).includes('استدعاء')&&x.appointment&&String(x.appointment).slice(0,16)>=today+'T00:00').slice().sort((a,b)=>String(a.appointment).localeCompare(String(b.appointment))).slice(0,5);
-$('#upcomingSummons').className=upcoming.length?'upcoming-list':'empty';
-$('#upcomingSummons').innerHTML=upcoming.length?upcoming.map(x=>{const ap=String(x.appointment),day=ap.slice(0,10),clock=ap.slice(11,16);return '<div class="upcoming-item"><div><strong>'+esc(name(x.student))+'</strong><small>'+esc(x.reason||'استدعاء ولي')+'</small></div><div class="when">'+esc(day)+' · '+esc(clock)+'</div></div>';}).join(''):'لا توجد استدعاءات قادمة.';
-renderDailyFollowupDashboard(today,Date.now());
-renderSmartDashboard(today);
-renderAgendaHome(today);
-}
-
+ const overview=getHomeOverviewSnapshot(dateISO());
+ $('#sStudents').textContent=db.students.length;$('#sAbs').textContent=overview.absCount;$('#sLate').textContent=overview.lateCount;$('#sViol').textContent=db.violations.length;$('#sDocs').textContent=db.documents.length;$('#sSummons').textContent=overview.summonsCount;$('#sAbsNotices').textContent=overview.absenceNoticesCount;$('#sRecords').textContent=db.attendance.length+db.documents.length+db.violations.length;
+ $('#todayAbs').textContent=overview.todayAbs;$('#todayLate').textContent=overview.todayLate;$('#todayViol').textContent=overview.todayViol;$('#todaySummons').textContent=overview.todaySummons;
+ // The immutable-by-commit home snapshot avoids repeated full-history scans while navigating.
+ renderSmartDashboard(overview.date,overview.monthly);
+ const recent=overview.recent;
+ $('#recentCount').textContent=recent.length+' عملية';$('#recent').className=recent.length?'':'empty';$('#recent').innerHTML=recent.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>نوع العملية</th></tr></thead><tbody>${recent.map(item=>`<tr><td>${esc(item.date)}</td><td>${esc(item.t)}</td><td><span class="pill">${esc(item.desc)}</span></td></tr>`).join('')}</tbody></table></div>`:'لا توجد عمليات مسجلة بعد.';
+ }
 
 if(activePage==='students')renderStudentDirectory();
-if(['attendance','documents','violations','reports'].includes(activePage)){$$('.studentSelect').filter(sel=>sel.closest('.page')?.id===activePage).forEach(sel=>{let old=sel.value;let first=sel.id==='reportStudent'?'<option value="">كل التلاميذ</option>':'';const q=sel.name==='student'&&sel.form?.id==='attForm'?normalizeDirectorySearch($('#attStudentSearch')?.value||''):(sel.id==='reportStudent'?normalizeDirectorySearch($('#reportStudentSearch')?.value||''):'');sel.innerHTML=first+db.students.filter(s=>!q||normalizeDirectorySearch([s.last,s.first,s.class,s.schoolYear,s.branch,s.identityNumber].join(' ')).includes(q)).map(s=>`<option value="${s.id}">${esc(s.last)} ${esc(s.first)} – ${esc(studentAcademicLabel(s))}</option>`).join('');if([...sel.options].some(o=>o.value===old))sel.value=old});}
+refreshActiveStudentSelectors(activePage);
 if(activePage==='attendance'&&activeFollowupView==='attendance'){
-$('#attLogCount').textContent=db.attendance.length+' سجل';$('#attRows').innerHTML=db.attendance.slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).map(x=>{const duration=x.type==='حضور'?'حضور مسجل':x.type==='تأخر'?((x.minutes!==null&&x.minutes!==undefined&&x.minutes!==''?Number(x.minutes):Math.round(Number(x.hours||0)*60))+' دقيقة'):(x.hours!==undefined&&x.hours!==''?x.hours+' ساعة':'—');return `<tr data-att-id="${esc(x.id)}"><td data-label="التلميذ"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(x.studentName||name(x.student))}</button></td><td data-label="القسم">${esc(x.class||x.studentClass||student(x.student)?.class||'غير محدد')}</td><td data-label="التاريخ">${esc(x.date)}</td><td data-label="الحالة">${esc(x.type)} ${esc(x.period||'')} · ${esc(duration)}</td><td data-label="التبرير">${esc(x.justified||'غير مبرر')}</td><td data-label="ملاحظات">${esc(x.notes||'—')}</td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="editAttendance('${x.id}')">تعديل السجل</button><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">لا توجد سجلات.</td></tr>';
+ const rows=orderedRecords('attendance','date-desc');attendanceLogPage=Math.max(0,Math.min(attendanceLogPage,Math.max(0,Math.ceil(rows.length/ATTENDANCE_LOG_PAGE_SIZE)-1)));
+ const visible=rows.slice(attendanceLogPage*ATTENDANCE_LOG_PAGE_SIZE,(attendanceLogPage+1)*ATTENDANCE_LOG_PAGE_SIZE);
+ $('#attLogCount').textContent=db.attendance.length+' سجل';$('#attRows').innerHTML=visible.map(x=>{const duration=x.type==='حضور'?'حضور مسجل':x.type==='تأخر'?((x.minutes!==null&&x.minutes!==undefined&&x.minutes!==''?Number(x.minutes):Math.round(Number(x.hours||0)*60))+' دقيقة'):(x.hours!==undefined&&x.hours!==''?x.hours+' ساعة':'—');return `<tr data-att-id="${esc(x.id)}"><td data-label="التلميذ"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(x.studentName||name(x.student))}</button></td><td data-label="القسم">${esc(x.class||x.studentClass||student(x.student)?.class||'غير محدد')}</td><td data-label="التاريخ">${esc(x.date)}</td><td data-label="الحالة">${esc(x.type)} ${esc(x.period||'')} · ${esc(duration)}</td><td data-label="التبرير">${esc(x.justified||'غير مبرر')}</td><td data-label="ملاحظات">${esc(x.notes||'—')}</td><td data-label="الإجراءات"><div class="actions"><button class="btn small primary" onclick="editAttendance('${x.id}')">تعديل السجل</button><button class="btn small danger" onclick="delRecord('attendance','${x.id}')">حذف</button></div></td></tr>`;}).join('')||'<tr><td colspan="7" class="empty">لا توجد سجلات.</td></tr>';
+ renderRecordPagination('attRowsPagination',attendanceLogPage,rows.length,ATTENDANCE_LOG_PAGE_SIZE,next=>{attendanceLogPage=next;});
 }
 if(activePage==='attendance'&&activeFollowupView==='violations'){
-$('#violRows').innerHTML=db.violations.slice().reverse().map(x=>`<tr data-violation-id="${esc(x.id)}"><td data-label="التاريخ"><span class="viol-field">${esc(x.date)}</span></td><td data-label="التلميذ" class="viol-student"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="النوع"><span class="viol-field">${esc(x.type)}</span></td><td data-label="الوصف"><span class="viol-field">${esc(x.description)}</span>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td data-label="الإجراء"><span class="viol-field">${esc(x.action||'—')}</span></td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
+ const rows=orderedRecords('violations','reverse');violationLogPage=Math.max(0,Math.min(violationLogPage,Math.max(0,Math.ceil(rows.length/VIOLATION_LOG_PAGE_SIZE)-1)));
+ const visible=rows.slice(violationLogPage*VIOLATION_LOG_PAGE_SIZE,(violationLogPage+1)*VIOLATION_LOG_PAGE_SIZE);
+ $('#violRows').innerHTML=visible.map(x=>`<tr data-violation-id="${esc(x.id)}"><td data-label="التاريخ"><span class="viol-field">${esc(x.date)}</span></td><td data-label="التلميذ" class="viol-student"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="النوع"><span class="viol-field">${esc(x.type)}</span></td><td data-label="الوصف"><span class="viol-field">${esc(x.description)}</span>${x.photo?`<img class="record-photo" loading="lazy" decoding="async" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:''}</td><td data-label="الإجراء"><span class="viol-field">${esc(x.action||'—')}</span></td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد مخالفات.</td></tr>';
+ renderRecordPagination('violRowsPagination',violationLogPage,rows.length,VIOLATION_LOG_PAGE_SIZE,next=>{violationLogPage=next;});
 }
 if(activePage==='documents'){
-$('#docsRows').innerHTML=db.documents.length?`<div class="tablewrap"><table class="documents-table"><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>الموضوع</th><th>موعد الحضور</th><th>الصورة</th><th>الإجراءات</th></tr></thead><tbody>${db.documents.slice().reverse().map(x=>`<tr data-doc-id="${esc(x.id)}"><td data-label="تاريخ الوثيقة"><span class="doc-field">${esc(x.date)}</span></td><td data-label="التلميذ" class="doc-student"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="نوع الوثيقة"><span class="doc-field">${esc(x.type)}</span></td><td data-label="السبب"><span class="doc-field">${esc(x.reason)}</span></td><td data-label="موعد الحضور"><span class="doc-field doc-date" dir="ltr">${esc(x.appointment||'—')}</span></td><td data-label="وقت التنبيه"><span class="doc-field doc-date" dir="ltr">${esc(x.reminderAt||'—')}</span></td><td data-label="الصورة">${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td><td data-label="الإجراءات" class="doc-actions"><div class="actions"><button class="btn small primary" onclick="editDocument('${x.id}')">تعديل</button><button class="btn small" onclick="printDoc('${x.id}')">طباعة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد وثائق.</div>';
-}
-if(activePage==='home'){
-let all=[...db.attendance.map(x=>({date:x.date,t:name(x.student),desc:x.type})),...db.violations.map(x=>({date:x.date,t:name(x.student),desc:'مخالفة'})),...db.documents.map(x=>({date:x.date,t:name(x.student),desc:x.type||'وثيقة'}))].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,6);
-$('#recentCount').textContent=all.length+' عملية';$('#recent').className=all.length?'':'empty';$('#recent').innerHTML=all.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>نوع العملية</th></tr></thead><tbody>${all.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.t)}</td><td><span class="pill">${esc(x.desc)}</span></td></tr>`).join('')}</tbody></table></div>`:'لا توجد عمليات مسجلة بعد.';
+ const rows=orderedRecords('documents','reverse');documentLogPage=Math.max(0,Math.min(documentLogPage,Math.max(0,Math.ceil(rows.length/DOCUMENT_LOG_PAGE_SIZE)-1)));
+ const visible=rows.slice(documentLogPage*DOCUMENT_LOG_PAGE_SIZE,(documentLogPage+1)*DOCUMENT_LOG_PAGE_SIZE);
+ $('#docsRows').className=rows.length?'':'empty';
+ $('#docsRows').innerHTML=rows.length?`<div class="tablewrap"><table class="documents-table"><thead><tr><th>التاريخ</th><th>التلميذ</th><th>الوثيقة</th><th>الموضوع</th><th>موعد الحضور</th><th>الصورة</th><th>الإجراءات</th></tr></thead><tbody>${visible.map(x=>`<tr data-doc-id="${esc(x.id)}"><td data-label="تاريخ الوثيقة"><span class="doc-field">${esc(x.date)}</span></td><td data-label="التلميذ" class="doc-student"><button type="button" class="student-name" onclick="studentHistory('${x.student}')">${esc(name(x.student))}</button></td><td data-label="نوع الوثيقة"><span class="doc-field">${esc(x.type)}</span></td><td data-label="السبب"><span class="doc-field">${esc(x.reason)}</span></td><td data-label="موعد الحضور"><span class="doc-field doc-date" dir="ltr">${esc(x.appointment||'—')}</span></td><td data-label="وقت التنبيه"><span class="doc-field doc-date" dir="ltr">${esc(x.reminderAt||'—')}</span></td><td data-label="الصورة">${x.photo?`<img class="record-photo" loading="lazy" decoding="async" src="${esc(x.photo)}" alt="صورة الوثيقة">`:'—'}</td><td data-label="الإجراءات" class="doc-actions"><div class="actions"><button class="btn small primary" onclick="editDocument('${x.id}')">تعديل</button><button class="btn small" onclick="printDoc('${x.id}')">طباعة</button><button class="btn small danger" onclick="delRecord('documents','${x.id}')">حذف</button></div></td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">لا توجد وثائق.</div>';
+ renderRecordPagination('docsRowsPagination',documentLogPage,rows.length,DOCUMENT_LOG_PAGE_SIZE,next=>{documentLogPage=next;});
 }
 if((activePage==='attendance'&&activeFollowupView==='attendance')||activePage==='settings'){refreshAttendanceClassOptions();renderAttendanceWorkspace();}
 }
@@ -3198,7 +3361,7 @@ docTypeInput.addEventListener('change',updateReminderFields);updateReminderField
 appointmentInput.addEventListener('change',()=>{if(!appointmentInput.value||reminderDateInput.value||reminderTimeInput.value)return;const t=new Date(appointmentInput.value);t.setDate(t.getDate()-1);const pad=n=>String(n).padStart(2,'0');reminderDateInput.value=t.getFullYear()+'-'+pad(t.getMonth()+1)+'-'+pad(t.getDate());reminderTimeInput.value=db.settings.summonsReminderTime||defaultReminderTimeInput.value||'18:00';});
 $('#docForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);const type=f.get('type'),appointment=f.get('appointment');let reminderAt='';if(type==='استدعاء ولي'){const rd=f.get('reminderDate'),rt=f.get('reminderTime');if(!appointment||!rd||!rt){alert('حدد موعد حضور الولي وتاريخ وساعة التنبيه.');return;}reminderAt=rd+'T'+rt;const appointmentMs=new Date(appointment).getTime(),reminderMs=new Date(reminderAt).getTime();if(!Number.isFinite(appointmentMs)||!Number.isFinite(reminderMs)||reminderMs<=Date.now()){alert('يجب أن يكون تاريخ وساعة التنبيه في المستقبل.');return;}}let d={id:crypto.randomUUID(),type,student:f.get('student'),date:f.get('date'),appointment,reminderAt,reason:f.get('reason'),photo:e.target.dataset.photo||''};db.documents.push(d);if(!save()){db.documents.pop();return;}scheduleSummonsReminder(d);e.target.reset();e.target.dataset.photo='';$('#docPhotoPreview').innerHTML='';updateReminderFields();printDoc(d.id)};
 $('#violForm').onsubmit=e=>{e.preventDefault();let f=new FormData(e.target);db.violations.push({id:crypto.randomUUID(),student:f.get('student'),date:f.get('date'),type:f.get('type'),description:f.get('description'),action:f.get('action'),photo:e.target.dataset.photo||''});if(!save()){db.violations.pop();return;}e.target.reset();e.target.dataset.photo='';$('#violPhotoPreview').innerHTML='';alert('تم حفظ الواقعة وصورة التقرير إن وُجدت.')};
-let studentSearchTimer=0;$('#studentSearch').oninput=()=>{clearTimeout(studentSearchTimer);studentSearchTimer=setTimeout(renderStudentDirectory,100);};
+let studentSearchTimer=0;$('#studentSearch').oninput=()=>{clearTimeout(studentSearchTimer);studentDirectoryPage=0;studentSearchTimer=setTimeout(renderStudentDirectory,100);};
 function renderNotificationPermissionStatus(granted){const status=$('#notificationPermissionStatus');if(!status)return;status.textContent=granted?'صلاحية الإشعارات مفعّلة على هذا الهاتف.':'الإشعارات غير مفعّلة؛ لن تظهر التذكيرات حتى تسمح بها.';status.classList.toggle('status-ok',!!granted);status.classList.toggle('status-warn',!granted);}
 window.onMushrifiNotificationPermissionChanged=granted=>{renderNotificationPermissionStatus(!!granted);refreshAgendaNotificationStatus();if(granted&&window.AndroidBridge&&typeof AndroidBridge.syncAgendaReminders==='function')syncAgendaRemindersWithAndroid(true);};
 function refreshNotificationPermissionStatus(){if(window.AndroidBridge&&typeof AndroidBridge.hasNotificationPermission==='function')renderNotificationPermissionStatus(AndroidBridge.hasNotificationPermission());else renderNotificationPermissionStatus(false);}
@@ -3706,18 +3869,23 @@ window.openStudentProfileViolation=id=>{
 window.studentHistory=(id,focusFollowupId)=>{
   const sid=String(id),s=db.students.find(x=>String(x.id)===sid);if(!s){alert('لم يتم العثور على ملف هذا التلميذ.');return;}
   const belongsToStudent=record=>profileRecordBelongsToStudent(record,s,db.students);
-  const a=db.attendance.filter(belongsToStudent);
+  const a=db.attendance.filter(belongsToStudent).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
   const abs=a.filter(x=>String(x.type||'').trim()==='غياب'),late=a.filter(x=>String(x.type||'').trim()==='تأخر');
   const absHours=abs.reduce((sum,item)=>sum+(profileKnownAbsenceHours(item)??0),0);
   const lateMinutes=late.reduce((sum,item)=>sum+(profileKnownLatenessMinutes(item)??0),0);
   const unknownAbsenceHours=abs.filter(item=>profileKnownAbsenceHours(item)===null).length;
   const unknownLatenessMinutes=late.filter(item=>profileKnownLatenessMinutes(item)===null).length;
+  const profileHistoryLimits={absences:25,lateness:25,violations:25,documents:25};
+  const profileHistoryTable=(items,key,headers,rowMarkup)=>{
+   const limit=profileHistoryLimits[key]||25,visible=items.slice(0,limit);
+   return '<div id="profileHistory-'+key+'"><div class="tablewrap"><table><thead><tr>'+headers.map(header=>'<th>'+header+'</th>').join('')+'</tr></thead><tbody>'+visible.map(rowMarkup).join('')+'</tbody></table></div>'+(items.length>limit?'<div class="profile-history-more-wrap no-print"><span class="muted">عرض '+visible.length+' من '+items.length+' سجلاً</span> <button type="button" class="btn small" data-profile-history-more="'+key+'">عرض 25 سجلاً إضافياً</button></div>':'')+'</div>';
+  };
   const statusOf=x=>profileJustificationLabel(x);
   const justified=items=>items.filter(x=>profileJustificationCategory(x)==='justified').length;
   const unjustified=items=>items.filter(x=>profileJustificationCategory(x)==='unjustified').length;
   const pending=items=>items.filter(x=>profileJustificationCategory(x)==='pending').length;
   const unknown=items=>items.filter(x=>profileJustificationCategory(x)==='unknown').length;
-  const v=db.violations.filter(belongsToStudent),d=db.documents.filter(belongsToStudent);
+  const v=db.violations.filter(belongsToStudent).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||''))),d=db.documents.filter(belongsToStudent).sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
   const followups=buildStudentFollowupRecords(s,db),followupView=profileStudentFollowupView(followups);
   const followupToday=(()=>{const date=new Date();return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')})();
   const timeline=buildStudentTimeline(s,db);
@@ -3727,8 +3895,12 @@ window.studentHistory=(id,focusFollowupId)=>{
   const privacyFlags=normalizeStudentPrivacyFlags(s.privacyFlags);
   const privacyFlagMarkup=privacyFlags.length?privacyFlags.map(flag=>'<span class="student-profile-private-flag">'+esc(studentPrivacyFlagLabel(flag))+'</span>').join(''):'<span class="muted">لا توجد علامات خصوصية مسجلة.</span>';
   const statusSummary=items=>`<p>مبررة: <b>${justified(items)}</b> · غير مبررة: <b>${unjustified(items)}</b> · قيد التبرير: <b>${pending(items)}</b> · غير محددة: <b>${unknown(items)}</b></p>`;
-  const attendanceList=(items,isLate=false)=>items.length?'<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th>الفترة</th><th>المدة</th><th>حالة التبرير</th><th>ملاحظات</th><th class="no-print">الإجراء</th></tr></thead><tbody>'+items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>'<tr data-profile-att-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(isLate?(profileKnownLatenessMinutes(x)===null?'غير مسجلة':profileLatenessMinutes(x)+' دقيقة'):(profileKnownAbsenceHours(x)===null?'غير مسجلة':profileAbsenceHours(x)+' ساعة'))+'</td><td>'+esc(statusOf(x))+'</td><td>'+esc(x.notes||'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileAttendanceEdit(this.dataset.id)">تعديل السجل</button></td></tr>').join('')+'</tbody></table></div>':'<p class="empty">لا توجد سجلات.</p>';
-  const documentList=items=>items.length?'<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع الوثيقة</th><th>السبب</th><th>موعد الحضور</th><th>الصورة</th><th class="no-print">الإجراءات</th></tr></thead><tbody>'+items.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>'<tr data-profile-doc-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+(x.photo?'<img class="record-photo" src="'+esc(x.photo)+'" alt="صورة الوثيقة">':'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileDocumentEdit(this.dataset.id)">تعديل الوثيقة</button> <button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="printDoc(this.dataset.id)">طباعة</button></td></tr>').join('')+'</tbody></table></div>':'<p class="empty">لا توجد وثائق.</p>';
+  const attendanceList=(items,isLate=false)=>{
+   const key=isLate?'lateness':'absences';
+   return items.length?profileHistoryTable(items,key,['التاريخ','النوع','الفترة','المدة','حالة التبرير','ملاحظات','الإجراء'],x=>'<tr data-profile-att-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(isLate?(profileKnownLatenessMinutes(x)===null?'غير مسجلة':profileLatenessMinutes(x)+' دقيقة'):(profileKnownAbsenceHours(x)===null?'غير مسجلة':profileAbsenceHours(x)+' ساعة'))+'</td><td>'+esc(statusOf(x))+'</td><td>'+esc(x.notes||'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileAttendanceEdit(this.dataset.id)">تعديل السجل</button></td></tr>'):'<p class="empty">لا توجد سجلات.</p>';
+  };
+  const documentList=items=>items.length?profileHistoryTable(items,'documents',['التاريخ','نوع الوثيقة','السبب','موعد الحضور','الصورة','الإجراءات'],x=>'<tr data-profile-doc-id="'+esc(x.id)+'"><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+(x.photo?'<img class="record-photo" loading="lazy" decoding="async" src="'+esc(x.photo)+'" alt="صورة الوثيقة">':'—')+'</td><td class="no-print"><button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="openStudentProfileDocumentEdit(this.dataset.id)">تعديل الوثيقة</button> <button type="button" class="btn small" data-id="'+esc(x.id)+'" onclick="printDoc(this.dataset.id)">طباعة</button></td></tr>'):'<p class="empty">لا توجد وثائق.</p>';
+
 
   go('reports');
   $('#reportOutput').dataset.reportKind='student';$('#reportOutput').dataset.studentReportId=sid;
@@ -3794,7 +3966,20 @@ window.studentHistory=(id,focusFollowupId)=>{
   <details id="studentProfileSummary" class="panel attendance-log student-profile-detail"><summary><strong>الحصيلة الإجمالية</strong><span class="pill">ملخص تفصيلي</span><span class="muted">الأعداد والمدد وحالات التبرير</span></summary><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>غيابات قيد التبرير</small><strong>${pending(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>تأخرات قيد التبرير</small><strong>${pending(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب المعروفة</small><strong>${absHours}</strong><small>مدد غير مسجلة: ${unknownAbsenceHours}</small></div><div class="stat"><small>مجموع دقائق التأخر المعروفة</small><strong>${lateMinutes}</strong><small>مدد غير مسجلة: ${unknownLatenessMinutes}</small><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div></details>
   <details id="studentProfileAbsences" class="panel attendance-log student-profile-detail"><summary><strong>تفصيل الغيابات (${abs.length})</strong><span class="pill">${abs.length.toLocaleString('ar-DZ')} سجل</span><span class="muted">المدة والتبرير والملاحظات</span></summary>${statusSummary(abs)}${attendanceList(abs,false)}</details>
   <details id="studentProfileLateness" class="panel attendance-log student-profile-detail"><summary><strong>تفصيل التأخرات (${late.length})</strong><span class="pill">${late.length.toLocaleString('ar-DZ')} سجل</span><span class="muted">المدة بالدقائق وحالة التبرير</span></summary>${statusSummary(late)}${attendanceList(late,true)}</details>
-  <details id="studentProfileViolations" class="panel attendance-log student-profile-detail"><summary><strong>المخالفات (${v.length})</strong><span class="pill">${v.length.toLocaleString('ar-DZ')} سجل</span><span class="muted">الوصف والإجراء والصورة</span></summary>${v.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>نوع المخالفة</th><th>الوصف</th><th>الإجراء والمتابعة</th><th>الصورة</th></tr></thead><tbody>${v.slice().sort((x,y)=>String(y.date).localeCompare(String(x.date))).map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.description||'—')}</td><td>${esc(x.action||'—')}</td><td>${x.photo?`<img class="record-photo" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:'—'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">لا توجد مخالفات.</p>'}</details><details id="studentProfileDocuments" class="panel attendance-log student-profile-detail"><summary><strong>الإشعارات والاستدعاءات (${d.length})</strong><span class="pill">${d.length.toLocaleString('ar-DZ')} وثيقة</span><span class="muted">الموضوع ومواعيد الحضور والطباعة</span></summary>${documentList(d)}</details>`;
+  <details id="studentProfileViolations" class="panel attendance-log student-profile-detail"><summary><strong>المخالفات (${v.length})</strong><span class="pill">${v.length.toLocaleString('ar-DZ')} سجل</span><span class="muted">الوصف والإجراء والصورة</span></summary>${v.length?profileHistoryTable(v,'violations',['التاريخ','نوع المخالفة','الوصف','الإجراء والمتابعة','الصورة'],x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.description||'—')}</td><td>${esc(x.action||'—')}</td><td>${x.photo?`<img class="record-photo" loading="lazy" decoding="async" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:'—'}</td></tr>`):'<p class="empty">لا توجد مخالفات.</p>'}</details><details id="studentProfileDocuments" class="panel attendance-log student-profile-detail"><summary><strong>الإشعارات والاستدعاءات (${d.length})</strong><span class="pill">${d.length.toLocaleString('ar-DZ')} وثيقة</span><span class="muted">الموضوع ومواعيد الحضور والطباعة</span></summary>${documentList(d)}</details>`;
+
+
+  const profileHistoryOutput=$('#reportOutput');
+  profileHistoryOutput.onclick=event=>{
+   const button=event.target.closest('[data-profile-history-more]');if(!button)return;
+   const key=String(button.dataset.profileHistoryMore||'');if(!Object.prototype.hasOwnProperty.call(profileHistoryLimits,key))return;
+   const totals={absences:abs.length,lateness:late.length,violations:v.length,documents:d.length};
+   profileHistoryLimits[key]=Math.min((profileHistoryLimits[key]||25)+25,totals[key]||0);
+   const mount=$('#profileHistory-'+key);if(!mount)return;
+   const violationRows=()=>v.length?profileHistoryTable(v,'violations',['التاريخ','نوع المخالفة','الوصف','الإجراء والمتابعة','الصورة'],x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.type)}</td><td>${esc(x.description||'—')}</td><td>${esc(x.action||'—')}</td><td>${x.photo?`<img class="record-photo" loading="lazy" decoding="async" src="${esc(x.photo)}" alt="صورة تقرير السلوك">`:'—'}</td></tr>`):'<p class="empty">لا توجد مخالفات.</p>';
+   const renderers={absences:()=>attendanceList(abs,false),lateness:()=>attendanceList(late,true),violations:violationRows,documents:()=>documentList(d)};
+   if(renderers[key])mount.innerHTML=renderers[key]();
+  };
 
   const timelineFilter=$('#studentTimelineFilter'),timelineList=$('#studentTimelineList'),timelineMore=$('#studentTimelineMore');
   let timelineMode='all',timelineLimit=30;

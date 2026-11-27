@@ -120,7 +120,8 @@ for(const id of ['dailyTodayAbsences','dailyTodayLateness','dailyTodayUnjustifie
 }
 assert.ok(html.includes('لوحة المتابعة اليومية الذكية'),'dedicated smart daily dashboard heading is visible');
 assert.ok(html.includes('function renderDailyFollowupDashboard(today,nowValue)'),'daily dashboard has a dedicated renderer');
-assert.ok(html.includes('renderDailyFollowupDashboard(today,Date.now());'),'dashboard refreshes from saved current database on home view');
+assert.ok(!html.includes('renderDailyFollowupDashboard(today,Date.now());'),'daily analysis is no longer recomputed in the compact home view');
+assert.ok(html.includes('function renderDailyFollowupDashboard(today,nowValue)'),'the full daily dashboard logic remains available for its dedicated workflow');
 assert.ok(html.includes("list.querySelectorAll('[data-daily-page],[data-daily-student-id]')"),'all task and profile buttons are wired after rendering');
 assert.ok(html.includes("if(s.totalTasks>10)"),'task list explains when more than ten tasks are available');
 assert.ok(html.includes("replace(/\\s+/g,'').includes('استدعاء')"),'summons type matching tolerates spaces in Arabic labels');
@@ -128,3 +129,4 @@ assert.ok(html.includes('x.students.size'),'section aggregation counts distinct 
 assert.ok(html.includes('dailyTodayViolations'),'today violations are displayed in their own KPI');
 
 console.log('PASS: smart daily dashboard record counts, section aggregation, unlinked identity protection, rolling summons window, agenda status, task prioritization, action routing and mobile dashboard controls.');
+

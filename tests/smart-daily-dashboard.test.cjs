@@ -61,6 +61,7 @@ assert.equal(sandbox.smartDashboardTrend(2,2),'مثل الفترة المناظ�
 assert.ok(html.includes('id="smartDashboardHeading">الملخص الشهري'),'homepage labels its summary monthly');
 assert.ok(html.includes('id="smartMonthAbsences"')&&html.includes('id="smartMonthLateness"')&&html.includes('id="smartMonthViolations"'),'monthly totals are present');
 assert.ok(!html.includes('id="smartWeekAbsences"')&&!html.includes('ملخص الأسبوع ومؤشرات المتابعة'),'weekly summary is removed');
-assert.ok(html.includes('renderSmartDashboard(today);'),'monthly renderer remains connected to dashboard refresh');
+assert.ok(html.includes('renderSmartDashboard(overview.date,overview.monthly);'),'monthly renderer remains connected to the cached dashboard refresh');
 assert.ok(html.includes('ثلاثة أيام مختلفة على الأقل خلال الشهر الجاري'),'repeat threshold is explained for the current month');
 console.log('PASS: month-to-date dashboard, matching previous-month comparison, calendar boundaries and safe repeat review logic.');
+

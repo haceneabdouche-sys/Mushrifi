@@ -76,7 +76,7 @@ assert.match(history, /normalizeStudentPrivacyFlags\(s\.privacyFlags\)/,
 assert.match(history, /no-print/,
   'private flag block is excluded from direct print output');
 
-const listStart = html.indexOf("const searchable=s=>");
+const listStart = html.indexOf("function renderStudentDirectory(){");
 const listEnd = html.indexOf("$('#studentsRows').innerHTML", listStart);
 assert.ok(listStart >= 0 && listEnd > listStart, 'general student directory renderer exists');
 const directory = html.slice(listStart, listEnd + 2500);
@@ -108,3 +108,4 @@ assert.ok(stage21VersionCode >= 25 && /versionName '2\.6'/.test(gradle),
   'internal build code is at least the Stage 21 level while visible application version remains 2.6');
 
 console.log('PASS: Stage 21 student privacy markers, guardian address, legacy compatibility, edit/save, audit redaction, directory/print privacy, CSV preservation and backup warning.');
+

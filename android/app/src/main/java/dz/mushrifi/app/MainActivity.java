@@ -242,6 +242,10 @@ public class MainActivity extends Activity {
         private String lastError = "";
         synchronized String getLastError() { return lastError; }
         synchronized boolean write(String json) {
+            // Preserve the original bridge contract for legacy callers.
+            return write(json, true);
+        }
+        synchronized boolean write(String json, boolean clearRecoverySnapshot) {
             SQLiteDatabase database = null;
             boolean transactionStarted = false;
             boolean saved = false;
@@ -267,17 +271,24 @@ public class MainActivity extends Activity {
                     throw new IOException("SQLite لم يقبل حفظ السجل (insertWithOnConflict أعاد -1).");
                 }
 
-                // Do not report success until the stored ciphertext can be read,
-                // authenticated by AES-GCM decryption, and compared byte-for-byte
-                // with the exact JSON submitted by the application.
-                String verifiedJson = null;
+                // Verify the exact encrypted envelope persisted by SQLite. The
+                // ciphertext was produced locally by AES-GCM immediately above;
+                // comparing it directly avoids a second full-size decrypt/copy on
+                // every ordinary save while still detecting a missing or altered row.
+                String verifiedCiphertext = null;
                 try (Cursor cursor = database.rawQuery("SELECT json FROM appdata WHERE id=1", null)) {
                     if (cursor.moveToFirst()) {
-                        verifiedJson = decryptData(cursor.getString(0));
+                        verifiedCiphertext = cursor.getString(0);
                     }
                 }
-                if (!json.equals(verifiedJson)) {
+                if (!encryptedJson.equals(verifiedCiphertext)) {
                     throw new IOException("فشل التحقق من قاعدة البيانات بعد الحفظ؛ أُلغيت المعاملة.");
+                }
+
+                // Clear the one-level undo point in the same transaction as the
+                // successful save. A failed write therefore cannot erase recovery.
+                if (clearRecoverySnapshot) {
+                    database.delete("recovery_snapshot", "id=1", null);
                 }
 
                 database.setTransactionSuccessful();
@@ -755,6 +766,10 @@ public class MainActivity extends Activity {
             if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
             return localDb.write(json);
         }
+        @JavascriptInterface public boolean saveDatabaseWithPolicy(String json, boolean clearRecoverySnapshot) {
+            if (json == null || !LicenseManager.canWrite(MainActivity.this)) return false;
+            return localDb.write(json, clearRecoverySnapshot);
+        }
         @JavascriptInterface public long getLastVerifiedBackupTime() {
             return getSharedPreferences("mushrifi_backup_status", MODE_PRIVATE).getLong("last_verified_backup", 0L);
         }
@@ -1227,3 +1242,4 @@ public class MainActivity extends Activity {
 
     @Override public void onBackPressed() { handleAppBack(); }
 }
+

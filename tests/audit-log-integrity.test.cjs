@@ -4,7 +4,7 @@ const vm=require('node:vm');
 
 const html=fs.readFileSync('android/app/src/main/assets/index.html','utf8');
 const helperStart=html.indexOf('const AUDIT_LOG_LIMIT=500;');
-const helperEnd=html.indexOf('let auditBaselineJson=',helperStart);
+const helperEnd=html.indexOf('let auditBaselineSnapshot=',helperStart);
 assert.ok(helperStart>=0&&helperEnd>helperStart,'audit helpers are defined before the transactional save function');
 const sandbox={};
 vm.createContext(sandbox);
@@ -161,7 +161,9 @@ assert.deepEqual(JSON.parse(JSON.stringify(visible.map(x=>x.id))),['old-compatib
 assert.ok(html.includes("const AUDIT_LOG_LIMIT=500;"),'audit history is capped to a bounded size');
 assert.ok(html.includes("previousAuditLog.concat(newEntries).slice(-AUDIT_LOG_LIMIT)"),'only the most recent audit entries are retained');
 assert.ok(html.includes("db.auditLog=previousAuditLog;"),'a failed database save discards the uncommitted audit event');
-assert.ok(html.includes("auditBaselineJson=JSON.stringify(auditComparableDatabase(db));"),'the audit baseline moves only after the database save succeeds');
+assert.ok(html.includes("auditBaselineSnapshot=auditComparableDatabase(db,{retainLargeAttachments:true});"),'the private in-memory audit baseline retains image references rather than re-hashing unchanged photo data');
+assert.ok(html.includes('auditBaselineSnapshot=nextAuditSnapshot;'),'the audit baseline moves only after the database save succeeds');
+assert.ok(html.includes('precomputedSnapshots:true,afterSnapshot:nextAuditSnapshot'),'each save projects the audit view once and reuses it during comparison');
 assert.ok(html.includes('id="audit" class="page hidden"'),'a dedicated audit history page exists');
 assert.ok(html.includes('id="auditSearch"')&&html.includes('id="auditEntityFilter"')&&html.includes('id="auditActionFilter"'),'audit history supports search and category filters');
 assert.ok(html.includes('AUDIT_SAFE_SETTING_FIELDS')&&html.includes('summonsReminderTime'),'audit history stores readable values only for approved non-sensitive scalar settings');
@@ -178,3 +180,4 @@ assert.ok(html.includes("if(obj.auditLog!==undefined&&(!Array.isArray(obj.auditL
 assert.ok(html.includes("const allowed=new Set(['exportData','exportAuditLog'"),'audit export remains available in read-only mode');
 
 console.log('PASS: audit creation, update, deletion, bulk import, sensitive-field redaction, safe guarded rollback, bounded history, failed-save safety, and restore continuity.');
+

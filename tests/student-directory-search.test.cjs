@@ -28,11 +28,15 @@ const input=html.match(/<input id="studentSearch"[^>]*>/)?.[0]||'';
 assert.match(input,/type="search"/,'the directory search uses a search-optimized mobile input');
 assert.match(input,/aria-label="بحث في ملفات التلاميذ"/,'the search field has an accessible label');
 assert.match(html,/<span id="studentCount"[^>]*role="status"[^>]*aria-live="polite"/,'result count is announced accessibly');
-assert.match(html,/let q=normalizeDirectorySearch\(\$\('#studentSearch'\)\?\.value\|\|''\);/,'directory query uses the shared normalizer');
-assert.match(html,/const searchable=s=>normalizeDirectorySearch\(/,'all student fields use the same normalizer');
+assert.match(html,/const q=normalizeDirectorySearch\(\$\('#studentSearch'\)\?\.value\|\|''\);/,'directory query uses the shared normalizer');
+assert.match(html,/function studentSearchText\(item\)/,'normalized student search values are cached per student');
+assert.match(html,/const STUDENT_DIRECTORY_PAGE_SIZE=30;/,'directory renders at most thirty student rows per page');
+assert.match(html,/id="studentsPagination"/,'the student directory provides explicit pagination controls');
+assert.match(html,/studentDirectorySorted\.filter\(item=>studentSearchText\(item\)\.includes\(q\)\)/,'search filters cached normalized values rather than rebuilding each student string');
 assert.match(html,/نتائج البحث: '\+matches\.length\+' من '\+db\.students\.length/,'filtered result count shows matches against total students');
 assert.match(html,/لا توجد نتائج مطابقة للبحث/,'empty search has a clear message instead of implying the directory is empty');
 assert.match(html,/normalizeDirectorySearch\(\$\('#attStudentSearch'\)\?\.value\|\|''\)/,'individual attendance student selector uses the same normalizer');
 assert.match(html,/normalizeDirectorySearch\(\$\('#reportStudentSearch'\)\?\.value\|\|''\)/,'report student selector uses the same normalizer');
 
 console.log('PASS: Arabic-aware student search handles diacritics, alef and ya variants, tatweel, Arabic digits, accessibility and truthful result counts.');
+

@@ -1,3 +1,4 @@
+const assert = require('node:assert/strict');
 const fs = require('fs');
 const vm = require('vm');
 const html = fs.readFileSync('android/app/src/main/assets/index.html', 'utf8');
@@ -9,10 +10,10 @@ const checks = [
 
 
   ['author name has a dedicated overlay aligned to its lettering', /<span class="credit-name-wrap"><p class="credit" dir="ltr">ABDOUCHE HACENE<\/p><svg class="credit-name-glint"/],
-  ['name glint travels along its own SVG lettering track', /id="mushrifi-name-trace"[\s\S]*?<animateMotion dur="4\.8s" repeatCount="indefinite"[\s\S]*?<mpath href="#mushrifi-name-trace"\/>/],
+  ['name glint is now a fixed decorative detail with no animation', /id="mushrifi-name-trace"[\s\S]*?<g class="glint-point" transform="translate\(180 25\)"/],
   ['signature image remains fixed in place', /header \.credit-signature\{[\s\S]*?transform:none/],
   ['signature glint overlays the exact square image bounds', /<span class="credit-signature-wrap"><img class="credit-signature"[\s\S]*?<svg class="credit-signature-glint" viewBox="0 0 512 512"/],
-  ['ten luminous points glow across four signature stroke paths', /id="mushrifi-signature-halo"[\s\S]*?id="mushrifi-signature-glow"[\s\S]*?id="mushrifi-signature-upper"[\s\S]*?id="mushrifi-signature-left"[\s\S]*?id="mushrifi-signature-middle"[\s\S]*?id="mushrifi-signature-sweep"[\s\S]*?data-glint="10"/],
+  ['ten static signature sparkles remain positioned over the original signature', /data-glint="1" transform="translate\(100 145\)"[\s\S]*?data-glint="10" transform="translate\(445 310\)"/],
   ['old free-floating rectangle sparkle animation is removed', /^(?![\s\S]*mushrifi-signature-only-star)(?![\s\S]*signature-light)/],
   ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
   ['home keeps all detailed metrics available in the expandable statistics panel', /class="[^"]*home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
@@ -37,6 +38,7 @@ const checks = [
   ['voice action buttons pass their action key directly to the shared action handler', /window\.studentAction\(button\.dataset\.action,String\(st\.id\)\)/],
   ['student actions dispatch change events so conditional form fields refresh', /form\.elements\.type\.dispatchEvent\(new Event\('change'/]
 ];
+assert.ok(!html.includes('<animateMotion'), 'decorative SVG glints do not consume continuous animation frames');
 let failed = 0;
 
 const actionStart = html.indexOf('window.studentAction=(source,id)=>{');
@@ -157,3 +159,4 @@ for (const id of preservedHomeIds) {
 }
 
 if (failed) process.exit(1);
+

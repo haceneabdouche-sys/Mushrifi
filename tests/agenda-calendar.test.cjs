@@ -96,7 +96,7 @@ assert.throws(()=>dbSandbox.parseMushrifiDatabase(JSON.stringify({...oldDatabase
 
 // Agenda items are part of transactional audit history, with their private notes redacted.
 const auditStart=html.indexOf('const AUDIT_LOG_LIMIT=500;');
-const auditEnd=html.indexOf('let auditBaselineJson=',auditStart);
+const auditEnd=html.indexOf('let auditBaselineSnapshot=',auditStart);
 assert.ok(auditStart>=0&&auditEnd>auditStart,'audit helpers can be independently loaded');
 const auditSandbox={};
 vm.createContext(auditSandbox);
@@ -134,7 +134,7 @@ assert.ok(html.includes('<section id="agenda" class="page hidden">'),'agenda is 
 assert.ok(html.includes('data-go="agenda"')&&html.includes("['reports','settings','audit','agenda'].includes(route)"),'agenda is accessible from More and the secondary navigation state stays aligned');
 assert.ok(html.includes('data-agenda-view="day"')&&html.includes('data-agenda-view="week"')&&html.includes('data-agenda-view="month"'),'day, week and month view selectors are present');
 assert.ok(html.includes('function renderAgenda()')&&html.includes("if(activePage==='agenda')renderAgenda();"),'agenda refreshes when opened or data is saved');
-assert.ok(html.includes("renderAgendaHome(today);")&&html.includes('id="upcomingAgenda"'),'upcoming agenda items are surfaced on the home dashboard');
+assert.ok(!html.includes("renderAgendaHome(today);")&&html.includes('id="upcomingAgenda"'),'upcoming agenda remains available on its dedicated page but is not built for the compact home view');
 assert.ok(html.includes("function openAgendaSummons(id)")&&html.includes("go('documents')"),'summons in agenda open their original document rather than a duplicate record');
 assert.ok(html.includes("||endTime&&!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(endTime)")&&html.includes('endTime<=startTime'),'invalid or reversed appointment times are rejected');
 assert.ok(html.includes("db.agenda.push({id:crypto.randomUUID()")&&html.includes("db.agenda.splice(i,0,item)"),'agenda CRUD uses saved records and restores in-memory data when a save fails');
@@ -147,3 +147,4 @@ assert.equal(ids.filter(x=>x==='agendaForm').length,1,'agenda form remains uniqu
 assert.equal((html.match(/function initAgendaControls\(\)/g)||[]).length,1,'agenda control listeners are installed only once');
 
 console.log('PASS: agenda calendar date safety, leap years, week/month ranges, manual task sorting, unique IDs, read-only summons projection, student linkage, legacy database migration, audit logging, guarded rollback, old backup continuity, and mobile navigation.');
+

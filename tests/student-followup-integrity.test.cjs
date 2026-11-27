@@ -98,7 +98,7 @@ assert.equal(current.followups.length,1,'valid follow-up collection is retained'
 assert.throws(()=>dbSandbox.parseMushrifiDatabase(JSON.stringify({students:[],attendance:[],documents:[],violations:[],followups:'broken',settings:{}})),'malformed follow-up collection is rejected instead of silently discarded');
 
 const recoveryStart=html.indexOf('function parseRecoverySnapshot(raw){');
-const recoveryEnd=html.indexOf('function refreshUndoPanel(){',recoveryStart);
+const recoveryEnd=html.indexOf('function refreshUndoPanel(knownEmpty=false){',recoveryStart);
 const recoverySandbox={};vm.createContext(recoverySandbox);
 vm.runInContext(html.slice(recoveryStart,recoveryEnd),recoverySandbox);
 const legacySnapshot={version:1,createdAt:'2026-11-20T10:00:00Z',database:{students:[],attendance:[],documents:[],violations:[],settings:{}}};
@@ -107,7 +107,7 @@ const badSnapshot=JSON.parse(JSON.stringify(legacySnapshot));badSnapshot.databas
 assert.equal(recoverySandbox.parseRecoverySnapshot(JSON.stringify(badSnapshot)),null,'malformed follow-up data in an undo snapshot is rejected');
 
 const auditStart=html.indexOf('const AUDIT_LOG_LIMIT=500;');
-const auditEnd=html.indexOf('let auditBaselineJson=',auditStart);
+const auditEnd=html.indexOf('let auditBaselineSnapshot=',auditStart);
 assert.ok(auditStart>=0&&auditEnd>auditStart,'audit helpers include follow-up privacy rules');
 const auditSandbox={};vm.createContext(auditSandbox);vm.runInContext(html.slice(auditStart,auditEnd),auditSandbox);
 const before={students:[target],attendance:[],documents:[],violations:[],followups:[],agenda:[],settings:{}};
@@ -157,3 +157,4 @@ assert.equal(recoveredFollowup.students[0].id,'old-student-id','follow-up-linked
 assert.ok(html.includes("for(const collection of ['students','attendance','documents','violations','followups','agenda']){"),'audit snapshot and audit event logic include follow-ups');
 
 console.log('PASS: follow-up validation, student identity and section safety, timeline/report inclusion, audit redaction, legacy database/backup/undo compatibility, and profile UI wiring.');
+
