@@ -604,7 +604,25 @@ body{padding-bottom:calc(91px + env(safe-area-inset-bottom))}
 .supervision-log-entry p{margin:8px 0;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
 .supervision-log-entry .actions{margin-top:8px}
 @media(max-width:620px){.supervision-log-form-grid{grid-template-columns:1fr}}
-</style><style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}
+
+.absence-workflow-panel{border-inline-start:4px solid var(--primary,#526a9a)}
+.absence-workflow-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin:12px 0}
+.absence-workflow-card{border:1px solid var(--border,#ddd);margin:10px 0}
+.absence-workflow-state{font-weight:700;color:var(--muted,#666)}
+.absence-workflow-state.is-closed,.absence-workflow-closed{color:#23764c;font-weight:700}
+.absence-workflow-step{border-top:1px solid var(--border,#ddd);padding:10px 0}
+.absence-workflow-step-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.absence-workflow-editor{margin-top:8px;padding:9px;border:1px solid var(--border,#ddd);border-radius:10px}
+.absence-workflow-editor>summary,.absence-workflow-history>summary{cursor:pointer;font-weight:700;padding:5px}
+.absence-workflow-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin-top:10px}
+.absence-workflow-fields label{display:flex;flex-direction:column;gap:5px;min-width:0}
+.absence-workflow-fields label input,.absence-workflow-fields label select,.absence-workflow-fields label textarea{width:100%;min-width:0}
+.absence-workflow-fields label.absence-workflow-confirm{grid-column:1/-1;display:flex;flex-direction:row;align-items:center;gap:8px}
+.absence-workflow-fields .btn{justify-self:start;align-self:end}
+.absence-workflow-history{margin-top:8px;color:var(--muted,#666);font-size:.9em}
+.absence-workflow-history ul{padding-inline-start:22px;margin:6px 0}
+
+<style>.print-preview-overlay{position:fixed;inset:0;z-index:99999;overflow:auto;background:rgba(12,27,40,.72);padding:12px;display:flex;flex-direction:column;align-items:center;gap:12px}.print-preview-tools{position:sticky;top:0;z-index:2;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;width:100%;padding:10px;background:#f3f6f8;border-radius:12px}.print-preview-paper{background:#fff;color:#111;direction:rtl;font-family:Tahoma,Arial,sans-serif;line-height:2;width:min(100%,800px);min-height:75vh;padding:32px;box-shadow:0 8px 30px rgba(0,0,0,.2)}.print-preview-paper h2{text-align:center}.print-preview-paper .sig{display:flex;justify-content:space-between;margin-top:80px}
 /* Brand signature refinement — fixed name and signature with path-following star glints */
 :root{--navy:#102A43}
 header{
@@ -1131,6 +1149,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
  <div class="panel-title-row"><h2 id="absenceStageDashboardHeading">تنبيهات الإشعارات والإعذارات</h2><span class="pill" id="absenceStageAlertCount">0 حالة</span></div>
  <p class="muted">مسودات تلقائية ومراحل تستوجب المراجعة وفق المادتين 17 و21 من القرار 833. التبليغ الفعلي وإثباته وردّ الولي تسجل يدوياً؛ ولا يُتخذ قرار شطب آلي.</p>
  <div id="absenceStageDashboardList" class="followup-list" aria-live="polite"><p class="empty">جارٍ فحص سجلات الغياب...</p></div>
+ <button type="button" class="btn small primary" onclick="go('documents')">إدارة التبليغ وتسوية الملفات</button>
  <button type="button" class="btn small" onclick="go('settings');setSettingsTab('followup')">فتح متابعة الغيابات وإعداداتها</button>
 </section>
 <section class="panel daily-tasks-panel" aria-labelledby="dailyTasksHeading">
@@ -1457,6 +1476,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
  </div>
 </section>
 <section id="documents" class="page hidden">
+<div class="panel absence-workflow-panel"><div class="panel-title-row"><h2>متابعة التبليغ وتسوية ملفات الغياب</h2><span class="pill">المرحلة 29</span></div><p class="muted">سجل تاريخ التبليغ الفعلي وطريقته والمستلم ومرجع الإثبات، ثم وثّق نتيجة رد الولي. لا يبدأ التطبيق مهلة لاحقة دون تاريخ وإثبات تبليغ، ولا تُغلق الدورة إلا بتأكيد التسوية. جميع الوثائق السابقة تبقى محفوظة.</p><div id="absenceWorkflowStats"></div><div id="absenceWorkflowBoard" class="followup-list"><p class="empty">جارٍ تحميل ملفات المتابعة...</p></div></div>
 <div class="panel"><h2>إنشاء إشعار أو استدعاء</h2><form id="docForm"><label>نوع الوثيقة</label><select name="type"><option>إشعار غياب</option><option>استدعاء ولي</option><option>تنبيه</option></select><label>التلميذ</label><select name="student" class="studentSelect" required></select><div class="row"><div><label>التاريخ</label><input name="date" type="date" required></div><div><label>موعد الحضور (للاستدعاء)</label><input name="appointment" type="datetime-local"></div></div><div id="summonsReminderFields" class="hidden"><div class="row"><div><label>تاريخ التنبيه (تختاره أنت)</label><input name="reminderDate" type="date"></div><div><label>ساعة التنبيه (تختارها أنت)</label><input name="reminderTime" type="time"></div></div><p class="muted">يُقترح تلقائياً وقت في اليوم السابق، ويمكنك اختيار أي تاريخ وساعة للتنبيه، حتى لو كانا بعد موعد حضور الولي. يجب فقط أن يكون التنبيه في المستقبل.</p></div><label>الموضوع / السبب</label><textarea name="reason" required></textarea><label>صورة الاستدعاء (اختياري)</label><input id="docPhoto" type="file" accept="image/*" capture="environment"><p class="muted">التقط صورة الاستدعاء بالكاميرا أو اختر صورة من الهاتف.</p><div id="docPhotoPreview"></div><button class="btn primary">إنشاء الوثيقة</button></form></div>
 <div class="panel"><h2>الوثائق المحفوظة</h2><div id="docsRows" class="empty">لا توجد وثائق بعد.</div><div id="docsRowsPagination" class="student-directory-pagination" aria-label="صفحات الوثائق المحفوظة"></div></div></section>
 
@@ -1584,7 +1604,7 @@ const AUDIT_LOG_LIMIT=500;
 const AUDIT_FIELD_DEFINITIONS={
  students:[['last','اللقب'],['first','الاسم'],['schoolYear','المستوى'],['branch','الشعبة'],['class','القسم'],['attribute','الصفة'],['status','الحالة']],
  attendance:[['class','القسم'],['date','التاريخ'],['type','نوع المتابعة'],['period','الفترة'],['hours','ساعات الغياب'],['minutes','دقائق التأخر'],['justified','حالة التبرير'],['fullDay','غياب يوم كامل'],['schoolYear','المستوى'],['branch','الشعبة'],['sectionLabel','وصف القسم'],['studentClass','القسم']],
- documents:[['date','تاريخ الوثيقة'],['type','نوع الوثيقة'],['appointment','موعد حضور الولي'],['reminderAt','موعد التنبيه'],['absenceStage','مرحلة التبليغ'],['absenceStageKind','نوع متابعة الغياب'],['absenceMonth','شهر التكرار'],['absenceOccurrenceDates','تواريخ الوقائع'],['draftStatus','حالة المسودة'],['guardianResponseStatus','حالة رد الولي'],['deliveryDate','تاريخ التبليغ']],
+ documents:[['date','تاريخ الوثيقة'],['type','نوع الوثيقة'],['appointment','موعد حضور الولي'],['reminderAt','موعد التنبيه'],['absenceStage','مرحلة التبليغ'],['absenceStageKind','نوع متابعة الغياب'],['absenceMonth','شهر التكرار'],['absenceOccurrenceDates','تواريخ الوقائع'],['draftStatus','حالة المسودة'],['guardianResponseStatus','حالة رد الولي'],['deliveryDate','تاريخ التبليغ'],['absenceWorkflowStatus','حالة دورة الغياب']],
  violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']],
  followups:[['date','تاريخ المتابعة'],['category','مجال المتابعة'],['status','حالة المتابعة'],['nextDate','موعد المتابعة التالية']],
  agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة'],['reminderEnabled','تنبيه الهاتف'],['reminderLeadMinutes','موعد التذكير'],['repeatFrequency','نمط التكرار'],['repeatInterval','الفاصل بين مرات التكرار'],['repeatUntil','نهاية التكرار'],['repeatCompletedDates','تواريخ إنجاز المرات المتكررة'],['repeatSkippedDates','تواريخ تخطي المرات المتكررة']],
@@ -1594,7 +1614,7 @@ const AUDIT_FIELD_DEFINITIONS={
 const AUDIT_PRIVATE_FIELDS={
  students:{identityNumber:'رقم التعريف',code:'رقم التعريف',birthDate:'تاريخ الميلاد',dateOfBirth:'تاريخ الميلاد',guardian:'بيانات الولي',parentName:'بيانات الولي',guardianName:'بيانات الولي',phone:'رقم هاتف الولي',parentPhone:'رقم هاتف الولي',address:'العنوان',guardianAddress:'عنوان الولي',privacyFlags:'علامات الخصوصية',notes:'ملاحظات خاصة'},
  attendance:{student:'ارتباط السجل بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',notes:'الملاحظات'},
- documents:{student:'ارتباط الوثيقة بملف التلميذ',reason:'موضوع الوثيقة وتفاصيلها',photo:'صورة الوثيقة',deliveryProof:'إثبات التبليغ',guardianResponseStatus:'حالة رد الولي',absenceOccurrenceDates:'تواريخ الوقائع'},
+ documents:{student:'ارتباط الوثيقة بملف التلميذ',reason:'موضوع الوثيقة وتفاصيلها',photo:'صورة الوثيقة',deliveryProof:'إثبات التبليغ',deliveryMethod:'طريقة التبليغ',deliveryRecipient:'مستلم الوثيقة',deliveryRecordedAt:'تاريخ تسجيل التبليغ',guardianResponseStatus:'حالة رد الولي',guardianResponseDate:'تاريخ توثيق الرد',guardianResponseNotes:'ملاحظات رد الولي',absenceOccurrenceDates:'تواريخ الوقائع',absenceWorkflowHistory:'تاريخ إجراءات دورة الغياب',absenceClosureDate:'تاريخ تسوية الملف',absenceClosureReason:'سبب تسوية الملف',absenceClosureNotes:'ملاحظات التسوية',absenceReturnDate:'تاريخ العودة'},
  violations:{student:'ارتباط الواقعة بملف التلميذ',description:'تفاصيل الواقعة',photo:'صورة التقرير'},
  followups:{student:'ارتباط المتابعة بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',class:'القسم المرتبط بالمتابعة',schoolYear:'المستوى المرتبط بالمتابعة',branch:'الشعبة المرتبطة بالمتابعة',observation:'مضمون الملاحظة التربوية',actionTaken:'الإجراء التربوي المتخذ',result:'نتيجة المتابعة',createdAt:'بيانات إنشاء المتابعة',updatedAt:'بيانات تحديث المتابعة'},
  agenda:{studentId:'ارتباط الموعد بملف التلميذ',notes:'ملاحظات الأجندة',details:'تفاصيل الموعد'},
@@ -1604,7 +1624,7 @@ const AUDIT_PRIVATE_FIELDS={
 const AUDIT_REVERSIBLE_FIELDS={
  students:['last','first','schoolYear','branch','class','attribute','status'],
  attendance:['class','date','type','period','hours','minutes','justified','fullDay','schoolYear','branch','sectionLabel','studentClass'],
- documents:['date','type','appointment','reminderAt','absenceStage','absenceStageKind','absenceMonth','absenceOccurrenceDates','draftStatus','guardianResponseStatus','deliveryDate'],
+ documents:['date','type','appointment','reminderAt','absenceStage','absenceStageKind','absenceMonth','absenceOccurrenceDates','draftStatus','guardianResponseStatus','deliveryDate','deliveryMethod','absenceWorkflowStatus','absenceClosureDate','absenceClosureReason'],
  violations:['date','type','action'],
  followups:['date','category','status','nextDate'],
  agenda:['title','type','date','startTime','endTime','location','priority','status','reminderEnabled','reminderLeadMinutes','repeatFrequency','repeatInterval','repeatUntil','repeatCompletedDates','repeatSkippedDates'],
@@ -3052,6 +3072,7 @@ if(activePage==='attendance'&&activeFollowupView==='violations'){
  renderRecordPagination('violRowsPagination',violationLogPage,rows.length,VIOLATION_LOG_PAGE_SIZE,next=>{violationLogPage=next;});
 }
 if(activePage==='documents'){
+ renderAbsenceWorkflowBoard();
  const rows=orderedRecords('documents','reverse');documentLogPage=Math.max(0,Math.min(documentLogPage,Math.max(0,Math.ceil(rows.length/DOCUMENT_LOG_PAGE_SIZE)-1)));
  const visible=rows.slice(documentLogPage*DOCUMENT_LOG_PAGE_SIZE,(documentLogPage+1)*DOCUMENT_LOG_PAGE_SIZE);
  $('#docsRows').className=rows.length?'':'empty';
@@ -3423,6 +3444,77 @@ function getUnjustifiedStreaks(){
  return out.sort((a,b)=>b.days-a.days||a.start.localeCompare(b.start));
 }
 function absenceStageDocument(streak,stage){
+function absenceWorkflowGroupKey(record){
+ if(record&&record.absenceStart)return 'continuous:'+String(record.student)+':'+String(record.absenceStart);
+ if(record&&record.absenceMonth)return 'monthly:'+String(record.student)+':'+String(record.absenceMonth);
+ return 'document:'+String(record&&record.id||'');
+}
+function absenceWorkflowCycleIsClosed(studentId,start){
+ if(!start||!Array.isArray(db.documents))return false;
+ return db.documents.some(record=>String(record.student)===String(studentId)&&String(record.absenceStart||'')===String(start)&&String(record.absenceWorkflowStatus||'')==='مسوى');
+}
+function appendAbsenceWorkflowHistory(record,action,summary,today){
+ const history=Array.isArray(record.absenceWorkflowHistory)?record.absenceWorkflowHistory.slice():[];
+ history.push({at:new Date().toISOString(),date:String(today||dateISO()),action:String(action||''),summary:String(summary||'')});
+ record.absenceWorkflowHistory=history.slice(-40);
+}
+function applyAbsenceWorkflowDelivery(record,input,today){
+ const value=input||{},now=String(today||dateISO()),stage=Number(record&&record.absenceStage);
+ if(!record||![4,11,17,18].includes(stage))return {ok:false,changed:false,message:'هذه الوثيقة ليست إشعاراً قابلاً لتسجيل التبليغ.'};
+ if(record.absenceStart&&absenceWorkflowCycleIsClosed(record.student,record.absenceStart))return {ok:false,changed:false,message:'دورة الغياب مسواة؛ لا يمكن تسجيل تبليغ جديد عليها.'};
+ if(value.confirmed!==true)return {ok:false,changed:false,message:'أكد أولاً أن التبليغ تم فعلياً قبل تسجيله.'};
+ const delivered=String(value.deliveryDate||''),method=String(value.deliveryMethod||''),recipient=String(value.deliveryRecipient||'').trim(),proof=String(value.deliveryProof||'').trim();
+ const methods=['تسليم يدوي للولي','البريد المضمون','محضر أو مراسلة إدارية'];
+ if(!isValidISODate(delivered)||delivered>now)return {ok:false,changed:false,message:'أدخل تاريخ تبليغ صحيحاً لا يتجاوز تاريخ اليوم.'};
+ if(isValidISODate(String(record.date||''))&&delivered<String(record.date))return {ok:false,changed:false,message:'لا يمكن أن يسبق تاريخ التبليغ تاريخ تحرير الوثيقة.'};
+ if(!methods.includes(method))return {ok:false,changed:false,message:'اختر طريقة التبليغ من القائمة.'};
+ if(!recipient||recipient.length>120)return {ok:false,changed:false,message:'أدخل اسم المستلم أو الجهة التي تسلمت الوثيقة (120 حرفاً كحد أقصى).'};
+ if(!proof||proof.length>240)return {ok:false,changed:false,message:'أدخل رقم الوصل أو مرجع الإثبات أو وصفاً واضحاً له (240 حرفاً كحد أقصى).'};
+ const unchanged=String(record.deliveryDate||'')===delivered&&String(record.deliveryMethod||'')===method&&String(record.deliveryRecipient||'')===recipient&&String(record.deliveryProof||'')===proof;
+ if(unchanged)return {ok:true,changed:false,message:'بيانات التبليغ المسجلة مطابقة؛ لم يحدث تعديل.'};
+ record.deliveryDate=delivered;record.deliveryMethod=method;record.deliveryRecipient=recipient;record.deliveryProof=proof;record.deliveryRecordedAt=now;
+ record.draftStatus='سُجل التبليغ الفعلي وإثباته';
+ appendAbsenceWorkflowHistory(record,'تبليغ','تسجيل بيانات التبليغ وإثباته',now);
+ return {ok:true,changed:true,message:'تم تسجيل بيانات التبليغ. احتُفظ بتاريخ التبليغ وإثباته.'};
+}
+function applyAbsenceWorkflowResponse(record,input,today){
+ const value=input||{},now=String(today||dateISO()),status=String(value.guardianResponseStatus||'غير مسجل');
+ const allowed=['غير مسجل','لم يرد الولي','رد غير كافٍ','تبرير مقبول','قيد الدراسة','التحق بالمؤسسة'];
+ if(!record||![4,11,17,18].includes(Number(record.absenceStage)))return {ok:false,changed:false,message:'لا يمكن تسجيل رد الولي على هذه الوثيقة.'};
+ if(record.absenceStart&&absenceWorkflowCycleIsClosed(record.student,record.absenceStart))return {ok:false,changed:false,message:'دورة الغياب مسواة؛ لا يمكن تعديل رد الولي.'};
+ if(!allowed.includes(status))return {ok:false,changed:false,message:'اختر نتيجة صحيحة من قائمة رد الولي.'};
+ const checkedAt=String(value.guardianResponseDate||''),notes=String(value.guardianResponseNotes||'').trim();
+ if(notes.length>500)return {ok:false,changed:false,message:'الملاحظة طويلة؛ الحد الأقصى 500 حرف.'};
+ if(status!=='غير مسجل'){
+  if(!isValidISODate(String(record.deliveryDate||''))||!String(record.deliveryProof||'').trim())return {ok:false,changed:false,message:'سجل التبليغ وإثباته أولاً قبل توثيق نتيجة رد الولي.'};
+  if(!isValidISODate(checkedAt)||checkedAt>now||checkedAt<String(record.deliveryDate))return {ok:false,changed:false,message:'أدخل تاريخ مراجعة/تسجيل الرد، ويجب ألا يسبق التبليغ أو يتجاوز اليوم.'};
+ }else if(checkedAt||notes)return {ok:false,changed:false,message:'اترك تاريخ وملاحظة الرد فارغين ما دامت النتيجة غير مسجلة.'};
+ const unchanged=String(record.guardianResponseStatus||'غير مسجل')===status&&String(record.guardianResponseDate||'')===checkedAt&&String(record.guardianResponseNotes||'')===notes;
+ if(unchanged)return {ok:true,changed:false,message:'نتيجة رد الولي مطابقة لما هو محفوظ.'};
+ record.guardianResponseStatus=status;record.guardianResponseDate=checkedAt;record.guardianResponseNotes=notes;
+ appendAbsenceWorkflowHistory(record,'رد الولي','تحديث نتيجة متابعة رد الولي',now);
+ return {ok:true,changed:true,message:'تم حفظ نتيجة متابعة رد الولي.'};
+}
+function applyAbsenceWorkflowSettlement(records,record,input,today){
+ const value=input||{},now=String(today||dateISO()),reason=String(value.reason||''),settlementDate=String(value.settlementDate||''),notes=String(value.notes||'').trim();
+ const allowed=['التحق بالمؤسسة','تبرير مقبول','تسوية إدارية بعد المراجعة','تصحيح سجل'];
+ if(!record||!Array.isArray(records)||!records.includes(record))return {ok:false,changed:false,message:'تعذر تحديد ملف الغياب المراد تسويته.'};
+ if(value.confirmed!==true)return {ok:false,changed:false,message:'أكد مراجعة الملف وحفظ سجل التسوية قبل الإغلاق.'};
+ if(!allowed.includes(reason))return {ok:false,changed:false,message:'اختر سبب تسوية واضحاً.'};
+ if(!isValidISODate(settlementDate)||settlementDate>now)return {ok:false,changed:false,message:'أدخل تاريخ عودة/تسوية صحيحاً لا يتجاوز اليوم.'};
+ const start=String(record.absenceStart||record.date||'');
+ if(isValidISODate(start)&&settlementDate<start)return {ok:false,changed:false,message:'لا يمكن أن يسبق تاريخ التسوية بداية دورة الغياب أو تاريخ الوثيقة.'};
+ if(notes.length>500)return {ok:false,changed:false,message:'ملاحظة التسوية تتجاوز 500 حرف.'};
+ const targets=record.absenceStart?records.filter(item=>String(item.student)===String(record.student)&&String(item.absenceStart||'')===String(record.absenceStart)):[record];
+ if(!targets.length||targets.some(item=>String(item.absenceWorkflowStatus||'')==='مسوى'))return {ok:false,changed:false,message:'الملف مسوى سابقاً أو لم تعد له سجلات قابلة للتسوية.'};
+ targets.forEach(item=>{
+  item.absenceWorkflowStatus='مسوى';item.absenceClosureDate=settlementDate;item.absenceClosureReason=reason;item.absenceClosureNotes=notes;
+  if(reason==='التحق بالمؤسسة')item.absenceReturnDate=settlementDate;
+  appendAbsenceWorkflowHistory(item,'تسوية','إغلاق دورة الغياب مع الاحتفاظ بجميع الوثائق والسجلات',now);
+ });
+ return {ok:true,changed:true,count:targets.length,message:'تمت تسوية الملف مع الاحتفاظ بالتاريخ والوثائق السابقة.'};
+}
+
  return db.documents.find(d=>String(d.student)===String(streak.student.id)&&d.absenceStart===streak.start&&Number(d.absenceStage)===Number(stage));
 }
 function noticeExists(streak,stage){return !!absenceStageDocument(streak,stage);}
@@ -3440,7 +3532,7 @@ function canCreateAbsenceStage32(streak){
  return !!streak&&Number(streak.days)>=32&&hasVerifiedAbsenceNoticeDelivery(streak,18,14)&&guardianResponseAllowsEscalation(warning);
 }
 function getEligibleAbsenceStages(streak){
- if(!streak)return [];
+ if(!streak||absenceWorkflowCycleIsClosed(streak.student.id,streak.start))return [];
  const days=Number(streak.days)||0,eligible=[];
  const first=absenceStageDocument(streak,4),second=absenceStageDocument(streak,11);
  if(days>=4&&!first)eligible.push(4);
@@ -3491,7 +3583,7 @@ function monthlyAbsenceWarningExists(studentId,month){
  return db.documents.some(d=>String(d.student)===String(studentId)&&Number(d.absenceStage)===17&&String(d.absenceStageKind||'')==='monthly-repetition'&&String(d.absenceMonth||'')===String(month));
 }
 function createAbsenceStageNoticeRecord(streak,stage){
- if(noticeExists(streak,stage))return false;
+ if(absenceWorkflowCycleIsClosed(streak.student.id,streak.start)||noticeExists(streak,stage))return false;
  const labels={4:'إشعار غياب - المرحلة الأولى',11:'إشعار غياب - المرحلة الثانية',18:'إعذار مضمون بسبب الغياب',32:'مذكرة داخلية - مراجعة انتهاء مهلة الإعذار'};
  const reasons={
   4:'مسودة إشعار أول آلية بعد بلوغ ثلاثة أيام متتالية من الغياب، وفق المادة 21 من القرار رقم 833 المؤرخ في 13 نوفمبر 1991. تُراجع وتُعتمد قبل الإمضاء والتبليغ.',
@@ -3499,7 +3591,7 @@ function createAbsenceStageNoticeRecord(streak,stage){
   18:'مسودة إعذار مضمون آلية بعد استمرار الغياب وانقضاء سبعة أيام كاملة من تاريخ التبليغ المثبت للإشعار الثاني، وبعد تسجيل عدم ورود رد أو عدم كفاية الرد. تبدأ مهلة الأسبوعين من تاريخ التبليغ الفعلي المثبت لهذا الإعذار.',
   32:'مذكرة متابعة داخلية: استمر الغياب بعد الإعذار المضمون وانقضت أربعة عشر يوماً كاملة من تاريخ تبليغه المثبت. هذه المذكرة لا تشطب التلميذ ولا تحل محل قرار الإدارة.'
  };
- db.documents.push({id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceLastDate:streak.last,absenceStage:stage,absenceStageKind:'continuous-absence',draftStatus:stage===32?'مذكرة داخلية للمراجعة':'مسودة آلية - تنتظر المراجعة والإمضاء والتبليغ',deliveryDate:'',deliveryProof:'',guardianResponseStatus:'غير مسجل'});
+ db.documents.push({id:crypto.randomUUID(),type:labels[stage],student:streak.student.id,date:dateISO(),reason:reasons[stage],absenceStart:streak.start,absenceLastDate:streak.last,absenceStage:stage,absenceStageKind:'continuous-absence',absenceWorkflowStatus:'مفتوح',absenceWorkflowHistory:[],draftStatus:stage===32?'مذكرة داخلية للمراجعة':'مسودة آلية - تنتظر المراجعة والإمضاء والتبليغ',deliveryDate:'',deliveryProof:'',guardianResponseStatus:'غير مسجل'});
  return true;
 }
 function createMonthlyRepetitionWarning(item){
@@ -3510,6 +3602,7 @@ function createMonthlyRepetitionWarning(item){
   reason:'مسودة إنذار كتابي بعد تسجيل ثلاث مرات على الأقل من الغيابات أو التأخرات غير المبررة في أيام مختلفة خلال شهر '+item.month+'، وفق المادة 17 من القرار رقم 833 المؤرخ في 13 نوفمبر 1991. راجع الوقائع والتبريرات قبل الإمضاء والتبليغ.',
   absenceStage:17,absenceStageKind:'monthly-repetition',absenceMonth:item.month,
   absenceOccurrenceDates:item.dates.slice(),absenceCount:item.absenceCount,latenessCount:item.latenessCount,
+  absenceWorkflowStatus:'مفتوح',absenceWorkflowHistory:[],
   draftStatus:'مسودة آلية - تنتظر المراجعة والإمضاء والتبليغ',deliveryDate:'',deliveryProof:''
  });
  return true;
@@ -3554,6 +3647,77 @@ window.openAbsenceStageDocument=id=>{
  const record=db.documents.find(item=>String(item.id)===String(id));if(!record)return;
  go('documents');window.printDoc(String(id));
 };
+function absenceWorkflowDeadlineDate(record){
+ const stage=Number(record&&record.absenceStage),required=[4,11].includes(stage)?7:stage===18?14:0;
+ if(!required||!isValidISODate(String(record.deliveryDate||''))||!String(record.deliveryProof||'').trim())return '';
+ const d=dateFromISO(String(record.deliveryDate));d.setDate(d.getDate()+required);
+ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function absenceWorkflowStepStatus(record,closed){
+ if(closed||String(record.absenceWorkflowStatus||'')==='مسوى')return 'أُغلق الملف بالتسوية؛ السجلات السابقة محفوظة.';
+ const stage=Number(record.absenceStage);
+ if(stage===32)return 'مذكرة داخلية للمراجعة الإدارية؛ لا تمثل تبليغاً ولا قرار شطب.';
+ if(!isValidISODate(String(record.deliveryDate||''))||!String(record.deliveryProof||'').trim())return 'مسودة محفوظة؛ لم يكتمل تسجيل التبليغ الفعلي وإثباته.';
+ const status=String(record.guardianResponseStatus||'غير مسجل'),deadline=absenceWorkflowDeadlineDate(record);
+ if(status==='غير مسجل'){
+  if(deadline&&deadline<=dateISO())return 'تم تسجيل التبليغ؛ حلّ/انتهى أجل المتابعة في '+deadline+' ويلزم توثيق نتيجة الرد قبل أي تصعيد.';
+  if(deadline)return 'تم تسجيل التبليغ؛ آخر أجل للمتابعة: '+deadline+'. نتيجة رد الولي لم تسجل بعد.';
+  return 'تم تسجيل التبليغ؛ نتيجة رد الولي لم تسجل بعد.';
+ }
+ return 'نتيجة متابعة الولي: '+status+'. راجعها قبل اعتماد المرحلة التالية.';
+}
+function persistAbsenceWorkflowMutation(targets,mutator){
+ if(licenseReadOnly){alert('وضع القراءة فقط: لا يمكن تعديل سجل التبليغ أو التسوية.');return;}
+ const snapshots=(targets||[]).map(record=>({record,copy:{...record}})),result=mutator();
+ if(!result||!result.ok){alert(result&&result.message||'تعذر تنفيذ التعديل.');return;}
+ if(!result.changed){alert(result.message||'لا يوجد تغيير جديد للحفظ.');return;}
+ if(!save()){
+  snapshots.forEach(item=>{Object.keys(item.record).forEach(key=>{if(!Object.prototype.hasOwnProperty.call(item.copy,key))delete item.record[key];});Object.assign(item.record,item.copy);});
+  return;
+ }
+ alert(result.message||'تم الحفظ بنجاح.');render();
+}
+function renderAbsenceWorkflowBoard(){
+ const box=$('#absenceWorkflowBoard'),stats=$('#absenceWorkflowStats');if(!box)return;
+ const docs=db.documents.filter(item=>[4,11,17,18,32].includes(Number(item.absenceStage)));
+ if(!docs.length){box.innerHTML='<p class="empty">لا توجد حالياً وثائق آلية للغياب تحتاج إلى متابعة.</p>';if(stats)stats.innerHTML='';return;}
+ const groups=new Map();docs.forEach(record=>{const key=absenceWorkflowGroupKey(record);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(record);});
+ const ordered=[...groups.values()].sort((a,b)=>String(b[0].date||'').localeCompare(String(a[0].date||'')));
+ const openDocs=docs.filter(record=>String(record.absenceWorkflowStatus||'')!=='مسوى');
+ const pendingDelivery=openDocs.filter(record=>Number(record.absenceStage)!==32&&(!isValidISODate(String(record.deliveryDate||''))||!String(record.deliveryProof||'').trim())).length;
+ const pendingResponse=openDocs.filter(record=>Number(record.absenceStage)!==32&&isValidISODate(String(record.deliveryDate||''))&&String(record.deliveryProof||'').trim()&&String(record.guardianResponseStatus||'غير مسجل')==='غير مسجل').length;
+ const overdue=openDocs.filter(record=>{const due=absenceWorkflowDeadlineDate(record);return due&&due<=dateISO()&&String(record.guardianResponseStatus||'غير مسجل')==='غير مسجل';}).length;
+ if(stats)stats.innerHTML='<div class="absence-workflow-stats-grid"><div class="stat"><small>ملفات مفتوحة</small><strong>'+groups.size+'</strong></div><div class="stat"><small>تنتظر تسجيل التبليغ</small><strong>'+pendingDelivery+'</strong></div><div class="stat"><small>تنتظر نتيجة رد الولي</small><strong>'+pendingResponse+'</strong></div><div class="stat"><small>مهلة متابعة حلّت</small><strong>'+overdue+'</strong></div></div>';
+ const responseOptions=['غير مسجل','لم يرد الولي','رد غير كافٍ','تبرير مقبول','قيد الدراسة','التحق بالمؤسسة'],methodOptions=['تسليم يدوي للولي','البريد المضمون','محضر أو مراسلة إدارية'],settlementOptions=['التحق بالمؤسسة','تبرير مقبول','تسوية إدارية بعد المراجعة','تصحيح سجل'];
+ box.innerHTML=ordered.map(records=>{
+  records.sort((a,b)=>Number(a.absenceStage)-Number(b.absenceStage));
+  const first=records[0],st=student(first.student),studentName=((st&&st.last||'')+' '+(st&&st.first||'')).trim()||'تلميذ غير محدد';
+  const closed=records.some(item=>String(item.absenceWorkflowStatus||'')==='مسوى'),heading=first.absenceStart?'دورة غياب متواصل · البداية '+esc(first.absenceStart):'متابعة تكرار شهري · '+esc(first.absenceMonth||'');
+  const steps=records.map(record=>{
+   const stage=Number(record.absenceStage),label=absenceStageLabel(stage),stepStatus=absenceWorkflowStepStatus(record,closed),history=Array.isArray(record.absenceWorkflowHistory)?record.absenceWorkflowHistory:[];
+   const historyHtml=history.length?'<details class="absence-workflow-history"><summary>سجل هذه الوثيقة ('+history.length+')</summary><ul>'+history.slice().reverse().map(event=>'<li><b>'+esc(event.date||'')+'</b> — '+esc(event.summary||event.action||'تحديث مسجل')+'</li>').join('')+'</ul></details>':'';
+   if(stage===32||closed)return '<div class="absence-workflow-step"><div class="absence-workflow-step-head"><b>'+esc(label)+'</b><span>'+esc(record.date||'')+'</span></div><p>'+esc(stepStatus)+'</p>'+historyHtml+'</div>';
+   const methodHtml='<option value="">اختر الطريقة</option>'+methodOptions.map(method=>'<option value="'+esc(method)+'" '+(String(record.deliveryMethod||'')===method?'selected':'')+'>'+esc(method)+'</option>').join('');
+   const responseHtml=responseOptions.map(status=>'<option value="'+esc(status)+'" '+(String(record.guardianResponseStatus||'غير مسجل')===status?'selected':'')+'>'+esc(status)+'</option>').join('');
+   return '<div class="absence-workflow-step"><div class="absence-workflow-step-head"><b>'+esc(label)+'</b><span>'+esc(record.date||'')+'</span></div><p>'+esc(stepStatus)+'</p><details class="absence-workflow-editor"><summary>إدارة بيانات التبليغ ونتيجة رد الولي</summary><div class="absence-workflow-fields"><label>تاريخ التبليغ الفعلي<input type="date" data-field="deliveryDate" value="'+esc(record.deliveryDate||'')+'"></label><label>طريقة التبليغ<select data-field="deliveryMethod">'+methodHtml+'</select></label><label>اسم المستلم أو الجهة<input type="text" maxlength="120" data-field="deliveryRecipient" value="'+esc(record.deliveryRecipient||'')+'" placeholder="اسم المستلم"></label><label>رقم الوصل أو مرجع الإثبات<input type="text" maxlength="240" data-field="deliveryProof" value="'+esc(record.deliveryProof||'')+'" placeholder="رقم البريد المضمون أو مرجع الإثبات"></label><label class="absence-workflow-confirm"><input type="checkbox" data-field="deliveryConfirmed"> أؤكد أن التبليغ تم فعلياً وأن الإثبات محفوظ لدى المؤسسة.</label><button type="button" class="btn small primary" data-absence-action="delivery" data-doc-id="'+esc(record.id)+'">حفظ بيانات التبليغ</button></div><hr><div class="absence-workflow-fields"><label>نتيجة متابعة رد الولي<select data-field="guardianResponseStatus">'+responseHtml+'</select></label><label>تاريخ توثيق نتيجة الرد أو المراجعة<input type="date" data-field="guardianResponseDate" value="'+esc(record.guardianResponseDate||'')+'"></label><label>ملاحظات مختصرة<textarea rows="2" maxlength="500" data-field="guardianResponseNotes">'+esc(record.guardianResponseNotes||'')+'</textarea></label><button type="button" class="btn small" data-absence-action="response" data-doc-id="'+esc(record.id)+'">حفظ نتيجة الرد</button></div></details>'+historyHtml+'</div>';
+  }).join('');
+  const settlement=closed?'<p class="absence-workflow-closed">تمت تسوية هذه الدورة بتاريخ '+esc(first.absenceClosureDate||'—')+' · '+esc(first.absenceClosureReason||'')+'. الوثائق محفوظة ولا تُحذف.</p>':'<details class="absence-workflow-editor absence-workflow-settlement"><summary>تسجيل عودة التلميذ أو تسوية الملف</summary><div class="absence-workflow-fields"><label>سبب التسوية<select data-field="settlementReason"><option value="">اختر السبب</option>'+settlementOptions.map(reason=>'<option value="'+esc(reason)+'">'+esc(reason)+'</option>').join('')+'</select></label><label>تاريخ العودة أو التسوية<input type="date" data-field="settlementDate" value="'+esc(dateISO())+'"></label><label>ملاحظات التسوية (اختياري)<textarea rows="2" maxlength="500" data-field="settlementNotes"></textarea></label><label class="absence-workflow-confirm"><input type="checkbox" data-field="settlementConfirmed"> أؤكد مراجعة الملف وتوثيق العودة/التسوية، مع الاحتفاظ بالوثائق السابقة.</label><button type="button" class="btn small primary" data-absence-action="settle" data-doc-id="'+esc(first.id)+'">اعتماد التسوية وإغلاق الدورة</button></div></details>';
+  return '<article class="followup-card absence-workflow-card"><h3>'+esc(studentName)+'</h3><p>'+heading+'</p><p class="absence-workflow-state '+(closed?'is-closed':'')+'">'+(closed?'ملف مسوى':'ملف مفتوح')+' · '+records.length+' وثيقة محفوظة</p>'+steps+settlement+'</article>';
+ }).join('');
+ box.querySelectorAll('[data-absence-action]').forEach(button=>button.addEventListener('click',()=>{
+  const action=button.dataset.absenceAction,record=db.documents.find(item=>String(item.id)===String(button.dataset.docId));if(!record)return;
+  if(action==='settle'){
+   const card=button.closest('.absence-workflow-card'),field=name=>card&&card.querySelector('[data-field="'+name+'"]');
+   const targets=record.absenceStart?db.documents.filter(item=>String(item.student)===String(record.student)&&String(item.absenceStart||'')===String(record.absenceStart)):[record];
+   persistAbsenceWorkflowMutation(targets,()=>applyAbsenceWorkflowSettlement(db.documents,record,{reason:field('settlementReason')?.value,settlementDate:field('settlementDate')?.value,notes:field('settlementNotes')?.value,confirmed:!!field('settlementConfirmed')?.checked},dateISO()));
+   return;
+  }
+  const step=button.closest('.absence-workflow-step'),field=name=>step&&step.querySelector('[data-field="'+name+'"]');
+  if(action==='delivery')persistAbsenceWorkflowMutation([record],()=>applyAbsenceWorkflowDelivery(record,{deliveryDate:field('deliveryDate')?.value,deliveryMethod:field('deliveryMethod')?.value,deliveryRecipient:field('deliveryRecipient')?.value,deliveryProof:field('deliveryProof')?.value,confirmed:!!field('deliveryConfirmed')?.checked},dateISO()));
+  if(action==='response')persistAbsenceWorkflowMutation([record],()=>applyAbsenceWorkflowResponse(record,{guardianResponseStatus:field('guardianResponseStatus')?.value,guardianResponseDate:field('guardianResponseDate')?.value,guardianResponseNotes:field('guardianResponseNotes')?.value},dateISO()));
+ }));
+}
+
 function absenceStageLabel(stage){
  return ({4:'الإشعار الأول',11:'الإشعار الثاني',17:'إنذار التكرار الشهري',18:'الإعذار المضمون',32:'مراجعة انتهاء مهلة الإعذار'})[Number(stage)]||'متابعة الغياب';
 }
