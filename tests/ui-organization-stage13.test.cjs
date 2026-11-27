@@ -68,18 +68,23 @@ const studentEditorScript = html.slice(studentEditorScriptStart, studentEditorSc
 assert.ok(studentEditorScript.includes('if(editor)editor.open=false'), 'saving or cancelling closes the student editor');
 assert.ok(studentEditorScript.includes('if(editor)editor.open=true'), 'editing an existing student opens the form before scrolling');
 
-// Less-frequent summaries start collapsed; core daily work and speech access remain visible.
-const smartDetailsStart = html.indexOf('<details class="panel attendance-log home-advanced-panel">');
-assert.ok(smartDetailsStart >= 0, 'weekly analysis is in a disclosure');
-assert.ok(!/<details[^>]*\sopen(?:\s|>)/.test(html.slice(smartDetailsStart, smartDetailsStart + 500)),
-  'weekly analysis starts collapsed');
-const shortcutsStart = html.indexOf('<summary><strong>اختصارات ومواعيد إضافية</strong>');
-assert.ok(shortcutsStart > 0, 'secondary home shortcuts are grouped in one disclosure');
+// The home display is intentionally compact: one top microphone and month-to-date summary.
+// Daily task and appointment panels remain in the document but are hidden on Home only.
+const monthlyPanelStart = html.indexOf('<section class="panel home-monthly-summary"');
+assert.ok(monthlyPanelStart > 0, 'the month-to-date summary is visible on Home');
+assert.ok(html.includes('id="smartDashboardHeading">الملخص الشهري'), 'the dashboard is explicitly monthly');
+assert.ok(html.includes('#home .daily-tasks-panel,#home .agenda-home-panel,#home .home-advanced-panel{display:none!important}'),
+  'upcoming agenda and dense daily tasks are hidden from Home');
 const homeVoice = html.indexOf('<section id="voiceAssistant"');
-const homeAgenda = html.indexOf('<section class="panel agenda-home-panel"');
-assert.ok(homeVoice > 0 && homeAgenda > homeVoice,
-  'voice assistant remains on the home screen and appears before the secondary analysis');
-assert.ok(html.includes('id="quickVoiceAccess"'), 'the optional quick voice shortcut is preserved');
+const homeKpis = html.indexOf('<div class="home-kpis grid">');
+assert.ok(homeVoice > 0 && homeKpis > homeVoice, 'the microphone launcher appears above the essential home indicators');
+const micStart = html.indexOf('<button', homeVoice);
+const micEnd = html.indexOf('</button>', micStart);
+assert.equal(html.slice(html.indexOf('>', micStart) + 1, micEnd), '🎙️', 'the home microphone launcher contains only its icon');
+assert.ok(!html.includes('id="quickVoiceAccess"'), 'a duplicate second microphone shortcut is not retained');
+const shortcutsStart = html.indexOf('<summary><strong>اختصارات ومواعيد إضافية</strong>');
+assert.ok(shortcutsStart > 0, 'existing secondary shortcut markup is preserved without filling the home display');
+assert.ok(html.includes('<section id="agenda" class="page hidden">'), 'the dedicated agenda screen is still available');
 
 // Mobile navigation is pinned at the bottom and respects Android safe-area insets.
 assert.ok(html.includes('#nav{position:fixed;left:0!important;right:0!important;bottom:0;top:auto;width:100%!important;max-width:none!important;transform:none!important;'),
