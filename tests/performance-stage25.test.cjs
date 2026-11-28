@@ -121,7 +121,7 @@ assert.ok(html.includes("if(['students','attendance','documents','violations'].s
 const homeHelpers = html.slice(homeStart, homeEnd);
 assert.ok(homeHelpers.includes('const keepRecent=') && homeHelpers.includes('if(position<6){recent.splice'),
   'home recent activity keeps only six rows instead of merging and sorting every record');
-assert.ok(homeHelpers.includes("const linkedName=name(record?.student),displayName=linkedName==='تلميذ محذوف'"), 'recent activity prefers the currently linked student name and preserves historical names for deleted students');
+assert.ok(homeHelpers.includes("const linkedName=name(item.record?.student),displayName=linkedName==='تلميذ محذوف'") && homeHelpers.indexOf('const recentItems=recent.map(item=>{')>homeHelpers.indexOf('for(const record of db.violations)'), 'recent activity resolves linked or historical names only after the final six rows have been selected');
 
 // 5) Saving reuses a private, precomputed audit snapshot and avoids re-hashing unchanged photos.
 const auditStart = html.indexOf('const AUDIT_LOG_LIMIT=500;');

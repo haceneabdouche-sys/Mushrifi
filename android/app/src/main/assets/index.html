@@ -3278,8 +3278,7 @@ function buildHomeOverviewSnapshot(today){
  let absCount=0,lateCount=0,todayAbs=0,todayLate=0,todayViol=0,summonsCount=0,absenceNoticesCount=0,todaySummons=0,sequence=0;
  const recent=[];
  const keepRecent=(record,description)=>{
-  const linkedName=name(record?.student),displayName=linkedName==='تلميذ محذوف'?(record?.studentName||linkedName):linkedName;
-  const item={date:String(record?.date||''),t:String(displayName),desc:description,sequence:sequence++};
+  const item={date:String(record?.date||''),record,desc:description,sequence:sequence++};
   let position=0;while(position<recent.length&&recent[position].date>=item.date)position++;
   if(position<6){recent.splice(position,0,item);if(recent.length>6)recent.pop();}
  };
@@ -3296,8 +3295,14 @@ function buildHomeOverviewSnapshot(today){
   keepRecent(record,record.type||'وثيقة');
  }
  for(const record of db.violations){if(record.date===today)todayViol++;keepRecent(record,'مخالفة');}
+ // Only the six records that survive the final recent-activity ranking need
+ // a student-name lookup; displaced and older records never resolve names.
+ const recentItems=recent.map(item=>{
+  const linkedName=name(item.record?.student),displayName=linkedName==='تلميذ محذوف'?(item.record?.studentName||linkedName):linkedName;
+  return {date:item.date,t:String(displayName),desc:item.desc,sequence:item.sequence};
+ });
  const monthly=buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
- return {date:today,absCount,lateCount,todayAbs,todayLate,todayViol,summonsCount,absenceNoticesCount,todaySummons,recent,monthly};
+ return {date:today,absCount,lateCount,todayAbs,todayLate,todayViol,summonsCount,absenceNoticesCount,todaySummons,recent:recentItems,monthly};
 }
 function getHomeOverviewSnapshot(today){
  const c=homeOverviewCache;
