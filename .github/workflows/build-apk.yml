@@ -196,6 +196,8 @@ jobs:
         run: node tests/home-leadership-center-stage7.test.cjs
       - name: Run Stage 8 student timeline search and pagination tests
         run: node tests/student-timeline-stage8.test.cjs
+      - name: Run Stage 9 educational follow-up lifecycle and transition-history tests
+        run: node tests/student-followup-workflow-stage9.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests

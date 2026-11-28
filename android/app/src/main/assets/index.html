@@ -1310,6 +1310,14 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 @media(max-width:680px){.home-leadership-pulse{grid-template-columns:minmax(0,1fr);gap:11px;padding:14px}.home-pulse-side{grid-template-columns:minmax(0,1fr);padding:10px}.home-pulse-metrics strong{font-size:20px}}
 @media(max-width:360px){.home-pulse-actions .btn{flex:1 1 100%;width:100%}.home-pulse-metrics{gap:5px}.home-pulse-metrics>div{padding:7px 5px}.home-pulse-metrics small{font-size:8px}}
 
+
+.student-followup-stage{display:inline-flex;align-items:center;padding:4px 9px;border-radius:20px;background:#eaf2f7;color:#244e68;border:1px solid #cbdde8;font-size:11px;font-weight:800}
+.student-followup-history{margin-top:8px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#f8fafb}
+.student-followup-history>summary{cursor:pointer;color:var(--navy);font-size:12px;font-weight:800}
+.student-followup-history-item{display:grid;gap:3px;margin-top:8px;padding:8px 0;border-top:1px solid var(--line);font-size:11px;line-height:1.6}
+.student-followup-history-item small,.student-followup-history-item span{color:var(--muted)}.student-followup-history-item p{margin:0;color:var(--ink)}
+.student-followup-legacy-note{font-size:10px;margin:7px 0}
+.student-followup-form select:disabled{opacity:1;background:#eef2f5;color:#40586a;font-weight:700}
 </style>
 </head>
 <body>
@@ -1847,7 +1855,7 @@ const AUDIT_FIELD_DEFINITIONS={
  attendance:[['class','القسم'],['date','التاريخ'],['type','نوع المتابعة'],['period','الفترة'],['hours','ساعات الغياب'],['minutes','دقائق التأخر'],['justified','حالة التبرير'],['fullDay','غياب يوم كامل'],['schoolYear','المستوى'],['branch','الشعبة'],['sectionLabel','وصف القسم'],['studentClass','القسم']],
  documents:[['date','تاريخ الوثيقة'],['type','نوع الوثيقة'],['appointment','موعد حضور الولي'],['reminderAt','موعد التنبيه'],['absenceStage','مرحلة التبليغ'],['absenceStageKind','نوع متابعة الغياب'],['absenceMonth','شهر التكرار'],['absenceOccurrenceDates','تواريخ الوقائع'],['draftStatus','حالة المسودة'],['guardianResponseStatus','حالة رد الولي'],['deliveryDate','تاريخ التبليغ'],['absenceWorkflowStatus','حالة دورة الغياب']],
  violations:[['date','التاريخ'],['type','نوع الواقعة'],['action','الإجراء']],
- followups:[['date','تاريخ المتابعة'],['category','مجال المتابعة'],['status','حالة المتابعة'],['nextDate','موعد المتابعة التالية']],
+ followups:[['date','تاريخ المتابعة'],['category','مجال المتابعة'],['status','حالة المتابعة'],['workflowStage','مرحلة الحالة'],['nextDate','موعد المتابعة التالية']],
  agenda:[['title','عنوان الموعد'],['type','نوع الموعد'],['date','التاريخ'],['startTime','وقت البداية'],['endTime','وقت النهاية'],['location','المكان'],['priority','الأولوية'],['status','الحالة'],['reminderEnabled','تنبيه الهاتف'],['reminderLeadMinutes','موعد التذكير'],['repeatFrequency','نمط التكرار'],['repeatInterval','الفاصل بين مرات التكرار'],['repeatUntil','نهاية التكرار'],['repeatCompletedDates','تواريخ إنجاز المرات المتكررة'],['repeatSkippedDates','تواريخ تخطي المرات المتكررة']],
  supervisionLogs:[['type','نوع المهمة'],['date','التاريخ'],['period','الفترة'],['location','المكان'],['section','القسم']],
  guardianReceptions:[['date','تاريخ الاستقبال'],['time','وقت الاستقبال'],['visitorType','صفة الزائر'],['purpose','غرض الزيارة'],['status','حالة الاستقبال'],['nextDate','موعد المتابعة']]
@@ -1860,7 +1868,7 @@ const AUDIT_PRIVATE_FIELDS={
  attendance:{student:'ارتباط السجل بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',notes:'الملاحظات'},
  documents:{student:'ارتباط الوثيقة بملف التلميذ',reason:'موضوع الوثيقة وتفاصيلها',photo:'صورة الوثيقة',deliveryProof:'إثبات التبليغ',deliveryMethod:'طريقة التبليغ',deliveryRecipient:'مستلم الوثيقة',deliveryRecordedAt:'تاريخ تسجيل التبليغ',guardianResponseStatus:'حالة رد الولي',guardianResponseDate:'تاريخ توثيق الرد',guardianResponseNotes:'ملاحظات رد الولي',absenceOccurrenceDates:'تواريخ الوقائع',absenceWorkflowHistory:'تاريخ إجراءات دورة الغياب',absenceClosureDate:'تاريخ تسوية الملف',absenceClosureReason:'سبب تسوية الملف',absenceClosureNotes:'ملاحظات التسوية',absenceReturnDate:'تاريخ العودة'},
  violations:{student:'ارتباط الواقعة بملف التلميذ',description:'تفاصيل الواقعة',photo:'صورة التقرير'},
- followups:{student:'ارتباط المتابعة بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',class:'القسم المرتبط بالمتابعة',schoolYear:'المستوى المرتبط بالمتابعة',branch:'الشعبة المرتبطة بالمتابعة',observation:'مضمون الملاحظة التربوية',actionTaken:'الإجراء التربوي المتخذ',result:'نتيجة المتابعة',createdAt:'بيانات إنشاء المتابعة',updatedAt:'بيانات تحديث المتابعة'},
+ followups:{student:'ارتباط المتابعة بملف التلميذ',studentName:'اسم التلميذ المحفوظ في السجل',class:'القسم المرتبط بالمتابعة',schoolYear:'المستوى المرتبط بالمتابعة',branch:'الشعبة المرتبطة بالمتابعة',observation:'مضمون الملاحظة التربوية',actionTaken:'الإجراء التربوي المتخذ',result:'نتيجة المتابعة',nextAction:'تفاصيل الإجراء القادم',transitionNote:'ملاحظة انتقال الحالة',workflowHistory:'سجل تفاصيل انتقالات المتابعة',owner:'المكلف بمتابعة الحالة',createdAt:'بيانات إنشاء المتابعة',updatedAt:'بيانات تحديث المتابعة'},
  agenda:{studentId:'ارتباط الموعد بملف التلميذ',notes:'ملاحظات الأجندة',details:'تفاصيل الموعد'},
  supervisionLogs:{notes:'ملاحظة المهمة',actionTaken:'الإجراء المدوّن',createdAt:'تاريخ الإنشاء',updatedAt:'تاريخ التعديل'},
  guardianReceptions:{student:'ارتباط الاستقبال بملف التلميذ',actionTaken:'التوجيه أو الإجراء المدوّن',createdAt:'تاريخ الإنشاء',updatedAt:'تاريخ التعديل'}
@@ -1870,7 +1878,7 @@ const AUDIT_REVERSIBLE_FIELDS={
  attendance:['class','date','type','period','hours','minutes','justified','fullDay','schoolYear','branch','sectionLabel','studentClass'],
  documents:['date','type','appointment','reminderAt','absenceStage','absenceStageKind','absenceMonth','absenceOccurrenceDates','draftStatus','guardianResponseStatus','deliveryDate','deliveryMethod','absenceWorkflowStatus','absenceClosureDate','absenceClosureReason'],
  violations:['date','type','action'],
- followups:['date','category','status','nextDate'],
+ followups:['date','category','nextDate'],
  agenda:['title','type','date','startTime','endTime','location','priority','status','reminderEnabled','reminderLeadMinutes','repeatFrequency','repeatInterval','repeatUntil','repeatCompletedDates','repeatSkippedDates'],
  supervisionLogs:['type','date','period','location','section'],
  guardianReceptions:['date','time','visitorType','purpose','status','nextDate']
@@ -4748,7 +4756,9 @@ function buildStudentTimeline(target,database,profileRecords){
    record.observation?'الملاحظة: '+profileTimelineText(record.observation,240):'',record.actionTaken?'الإجراء المتخذ: '+profileTimelineText(record.actionTaken,200):'',
    record.result?'النتيجة: '+profileTimelineText(record.result,180):'',record.status?'الحالة: '+profileTimelineText(record.status,60):''
   ].filter(Boolean);
+  details.push('مرحلة الحالة: '+profileStudentFollowupStage(record));if(record.owner)details.push('المكلف: '+profileTimelineText(record.owner,100));if(record.nextAction)details.push('الإجراء القادم: '+profileTimelineText(record.nextAction,180));
   add('followups','متابعة تربوية',record,index,'متابعة تربوية · '+profileTimelineText(record.category,80),details.join(' · '),record.nextDate||'');
+  (Array.isArray(record.workflowHistory)?record.workflowHistory:[]).forEach((item,historyIndex)=>{const at=String(item?.at||''),eventDate=at.slice(0,10);if(!profileTimelineValidDate(eventDate))return;events.push({source:'followups',sourceLabel:'تطور ملف المتابعة',recordId:profileTimelineText(record?.id,120),date:eventDate,title:'انتقال مرحلة المتابعة · '+profileTimelineText(item.to,60),detail:[item.from?'من: '+profileTimelineText(item.from,60):'',item.to?'إلى: '+profileTimelineText(item.to,60):'',item.owner?'المكلف: '+profileTimelineText(item.owner,80):''].filter(Boolean).join(' · '),appointment:'',notes:profileTimelineText(item.note,400),_order:index+historyIndex/1000});});
  });
  events.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.appointment||'').localeCompare(String(a.appointment||''))||b._order-a._order);
  events.forEach(event=>delete event._order);
@@ -4794,21 +4804,64 @@ function profileTimelineView(events,filter,limit,offset,query,fromDate,toDate){
 
 const PROFILE_FOLLOWUP_CATEGORIES=['المواظبة والحضور','السلوك والانضباط','التواصل مع الولي','متابعة تربوية عامة'];
 const PROFILE_FOLLOWUP_STATUSES=['قيد المتابعة','تمت المتابعة','أغلقت الحالة'];
+const PROFILE_FOLLOWUP_STAGES=['رصد الحالة','التحقق من المعطيات','اتخاذ الإجراء','متابعة الولي','تقييم النتيجة','مغلقة'];
+const PROFILE_FOLLOWUP_TRANSITIONS={
+ 'رصد الحالة':['التحقق من المعطيات'],
+ 'التحقق من المعطيات':['رصد الحالة','اتخاذ الإجراء'],
+ 'اتخاذ الإجراء':['التحقق من المعطيات','متابعة الولي','تقييم النتيجة'],
+ 'متابعة الولي':['اتخاذ الإجراء','تقييم النتيجة'],
+ 'تقييم النتيجة':['اتخاذ الإجراء','متابعة الولي','مغلقة'],
+ 'مغلقة':['تقييم النتيجة']
+};
+function profileFollowupStatusForStage(stage){
+ return stage==='مغلقة'?'أغلقت الحالة':stage==='تقييم النتيجة'?'تمت المتابعة':'قيد المتابعة';
+}
+function profileStudentFollowupStage(record){
+ const saved=String(record?.workflowStage||'').trim();if(PROFILE_FOLLOWUP_STAGES.includes(saved))return saved;
+ const status=String(record?.status||'').trim();
+ return status==='أغلقت الحالة'?'مغلقة':status==='تمت المتابعة'?'تقييم النتيجة':'التحقق من المعطيات';
+}
+function profileFollowupCanTransition(from,to){
+ return PROFILE_FOLLOWUP_STAGES.includes(from)&&PROFILE_FOLLOWUP_STAGES.includes(to)&&from!==to&&Array.isArray(PROFILE_FOLLOWUP_TRANSITIONS[from])&&PROFILE_FOLLOWUP_TRANSITIONS[from].includes(to);
+}
+function buildStudentFollowupWorkflowHistory(record,fromStage,toStage,note,when,owner,isNew){
+ const old=Array.isArray(record?.workflowHistory)?record.workflowHistory:[];
+ const safe=old.slice(-59).map(item=>({
+  at:String(item?.at||'').slice(0,32),from:String(item?.from||'').slice(0,60),to:String(item?.to||'').slice(0,60),
+  note:String(item?.note||'').slice(0,400),owner:String(item?.owner||'').slice(0,100)
+ })).filter(item=>PROFILE_FOLLOWUP_STAGES.includes(item.to));
+ if(isNew){safe.push({at:String(when||''),from:'بداية الملف',to:toStage,note:'إنشاء ملف متابعة تربوية',owner:String(owner||'ABDOUCHE HACENE').slice(0,100)});return safe;}
+ if(fromStage!==toStage)safe.push({at:String(when||''),from:String(fromStage||'').slice(0,60),to:String(toStage||'').slice(0,60),note:String(note||'').trim().slice(0,400),owner:String(owner||'ABDOUCHE HACENE').slice(0,100)});
+ return safe.slice(-60);
+}
 function validateStudentFollowupInput(input){
  const value=input&&typeof input==='object'?input:{};
  const clean=(item,limit)=>String(item??'').replace(/\s+/g,' ').trim().slice(0,limit);
  const date=clean(value.date,10),nextDate=clean(value.nextDate,10);
- const category=clean(value.category,80),status=clean(value.status,40);
+ const category=clean(value.category,80),submittedStatus=clean(value.status,40);
+ const suppliedStage=clean(value.workflowStage,60),hasStage=PROFILE_FOLLOWUP_STAGES.includes(suppliedStage);
+ const legacyStage=submittedStatus==='أغلقت الحالة'?'مغلقة':submittedStatus==='تمت المتابعة'?'تقييم النتيجة':'التحقق من المعطيات';
+ const workflowStage=hasStage?suppliedStage:legacyStage;
+ const currentStage=PROFILE_FOLLOWUP_STAGES.includes(String(value.currentStage||''))?String(value.currentStage):'';
+ const transitionNote=String(value.transitionNote??'').trim().slice(0,400);
+ const owner=clean(value.owner,100)||'ABDOUCHE HACENE';
+ const nextAction=String(value.nextAction??'').trim().slice(0,600);
  const observation=String(value.observation??'').trim().slice(0,1200);
  const actionTaken=String(value.actionTaken??'').trim().slice(0,1200);
  const result=String(value.result??'').trim().slice(0,1600);
  if(!profileTimelineValidDate(date))return {valid:false,error:'أدخل تاريخ متابعة صحيحاً.'};
  if(!PROFILE_FOLLOWUP_CATEGORIES.includes(category))return {valid:false,error:'اختر مجال متابعة من القائمة.'};
- if(!PROFILE_FOLLOWUP_STATUSES.includes(status))return {valid:false,error:'اختر حالة متابعة صحيحة.'};
+ if(suppliedStage&&!hasStage)return {valid:false,error:'اختر مرحلة حالة صحيحة من القائمة.'};
+ if(!hasStage&&!PROFILE_FOLLOWUP_STATUSES.includes(submittedStatus))return {valid:false,error:'اختر حالة متابعة صحيحة.'};
  if(!observation)return {valid:false,error:'اكتب الملاحظة أو سبب المتابعة.'};
  if(!actionTaken)return {valid:false,error:'اكتب الإجراء الذي تم اتخاذه.'};
  if(nextDate&&(!profileTimelineValidDate(nextDate)||nextDate<date))return {valid:false,error:'موعد المراجعة المقبلة يجب أن يكون تاريخاً صحيحاً ولا يسبق تاريخ المتابعة.'};
- return {valid:true,value:{date,category,status,nextDate,observation,actionTaken,result}};
+ const stageChanged=!!(currentStage&&currentStage!==workflowStage);
+ if(stageChanged&&!profileFollowupCanTransition(currentStage,workflowStage))return {valid:false,error:'هذا الانتقال غير مسموح. انتقل إلى المرحلة التالية المحددة أو أعد الملف إلى مرحلة سابقة مصرح بها.'};
+ if(stageChanged&&transitionNote.length<5)return {valid:false,error:'اكتب ملاحظة توضح سبب انتقال الحالة (خمسة أحرف على الأقل).'};
+ if(stageChanged&&(workflowStage==='تقييم النتيجة'||workflowStage==='مغلقة')&&!result)return {valid:false,error:'لا يمكن اعتماد تقييم النتيجة أو إغلاق الحالة دون توثيق النتيجة.'};
+ if(stageChanged&&workflowStage==='مغلقة'&&nextDate)return {valid:false,error:'أزل موعد المراجعة المقبلة قبل إغلاق الحالة.'};
+ return {valid:true,stageChanged,transitionNote,value:{date,category,status:profileFollowupStatusForStage(workflowStage),observation,actionTaken,result,nextDate,workflowStage,owner,nextAction}};
 }
 function buildStudentFollowupRecords(target,database){
  return getStudentProfileRecords(target,database).followups.slice()
@@ -4819,12 +4872,16 @@ function profileStudentFollowupView(records){
  const readOnly=typeof licenseReadOnly!=='undefined'&&licenseReadOnly,disabled=readOnly?' disabled aria-disabled="true"':'';
  const html=list.map(record=>{
   const id=String(record.id??'');
+  const stage=profileStudentFollowupStage(record),history=Array.isArray(record.workflowHistory)?record.workflowHistory.slice(-6).reverse():[];
+  const historyMarkup=history.length?'<details class="student-followup-history"><summary>سجل انتقالات الحالة ('+history.length+')</summary>'+history.map(item=>'<div class="student-followup-history-item"><b>'+esc(item.to||'مرحلة غير محددة')+'</b><small>'+esc(item.at?new Date(item.at).toLocaleString('ar-DZ'):'تاريخ غير محدد')+' · '+esc(item.owner||'')+'</small>'+(item.from?'<span>'+esc(item.from)+' ← المرحلة السابقة</span>':'')+(item.note?'<p>'+esc(item.note)+'</p>':'')+'</div>').join('')+'</details>':'<p class="muted student-followup-legacy-note">سجل سابق: لا تتوفر بيانات انتقالات تاريخية لهذا الإدخال.</p>';
   return '<article class="student-followup-item" data-followup-id="'+esc(id)+'">'+
-   '<div class="student-followup-meta"><b>'+esc(record.category||'متابعة تربوية')+'</b><span>'+esc(record.date||'تاريخ غير محدد')+'</span><span class="pill">'+esc(record.status||'غير محددة')+'</span></div>'+
+   '<div class="student-followup-meta"><b>'+esc(record.category||'متابعة تربوية')+'</b><span>'+esc(record.date||'تاريخ غير محدد')+'</span><span class="pill">'+esc(record.status||'غير محددة')+'</span><span class="student-followup-stage">'+esc(stage)+'</span></div>'+
    '<div class="student-followup-observation"><p><b>الملاحظة:</b> '+esc(record.observation||'—')+'</p><small class="student-followup-author">المشرف التربوي: ABDOUCHE HACENE</small></div>'+
    '<p><b>الإجراء المتخذ:</b> '+esc(record.actionTaken||'—')+'</p>'+
    (record.result?'<p><b>النتيجة:</b> '+esc(record.result)+'</p>':'')+
-   (record.nextDate?'<p><b>موعد المراجعة المقبلة:</b> '+esc(record.nextDate)+'</p>':'')+
+   (record.owner?'<p><b>المكلف بالمتابعة:</b> '+esc(record.owner)+'</p>':'')+
+   (record.nextAction?'<p><b>الإجراء القادم:</b> '+esc(record.nextAction)+'</p>':'')+
+   (record.nextDate?'<p><b>موعد المراجعة المقبلة:</b> '+esc(record.nextDate)+'</p>':'')+historyMarkup+
    '<div class="student-followup-actions no-print"><button type="button" class="btn small"'+disabled+' data-followup-action="edit" data-followup-id="'+esc(id)+'">تعديل المتابعة</button><button type="button" class="btn small danger"'+disabled+' data-followup-action="delete" data-followup-id="'+esc(id)+'">حذف</button></div></article>';
  }).join('');
  return {total:list.length,pending:list.filter(x=>x.status==='قيد المتابعة').length,completed:list.filter(x=>x.status==='تمت المتابعة').length,closed:list.filter(x=>x.status==='أغلقت الحالة').length,html:html||'<p class="empty">لم تُسجّل متابعة تربوية لهذا التلميذ بعد.</p>'};
@@ -4855,7 +4912,7 @@ function buildStudentPrintableReportMarkup(data){
  const latenessRows=profilePrintableTable(data.lateness,['التاريخ','الفترة','عدد الدقائق','حالة التبرير','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.period||'—')+'</td><td>'+esc(profileKnownLatenessMinutes(x)===null?'غير مسجلة':number(profileKnownLatenessMinutes(x))+' دقيقة')+'</td><td>'+esc(profileJustificationLabel(x))+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
  const violationRows=profilePrintableTable(data.violations,['التاريخ','نوع المخالفة','الوصف','الإجراء والمتابعة','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.description||'—')+'</td><td>'+esc(x.action||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
  const documentRows=items=>profilePrintableTable(items,['التاريخ','نوع الوثيقة','السبب / الموضوع','موعد الحضور','التذكير','إثبات التبليغ','الملاحظات'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.type||'—')+'</td><td>'+esc(x.reason||'—')+'</td><td>'+esc(x.appointment||'—')+'</td><td>'+esc(x.reminderAt||'—')+'</td><td>'+esc([x.deliveryDate,x.deliveryProof].filter(Boolean).join(' — ')||'—')+'</td><td>'+esc(x.notes||x.note||'—')+'</td></tr>');
- const followupRows=profilePrintableTable(data.followups,['التاريخ','المجال','الملاحظة','الإجراء المتخذ','النتيجة','الحالة','المراجعة المقبلة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category||'—')+'</td><td>'+esc(x.observation||'—')+'<small class="student-report-observation-author">المشرف التربوي: ABDOUCHE HACENE</small></td><td>'+esc(x.actionTaken||'—')+'</td><td>'+esc(x.result||'—')+'</td><td>'+esc(x.status||'غير محددة')+'</td><td>'+esc(x.nextDate||'—')+'</td></tr>');
+ const followupRows=profilePrintableTable(data.followups,['التاريخ','المجال','مرحلة الحالة','المكلف','الإجراء القادم','الملاحظة','الإجراء المتخذ','النتيجة','الحالة','المراجعة المقبلة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category||'—')+'</td><td>'+esc(profileStudentFollowupStage(x))+'</td><td>'+esc(x.owner||'ABDOUCHE HACENE')+'</td><td>'+esc(x.nextAction||'—')+'</td><td>'+esc(x.observation||'—')+'<small class="student-report-observation-author">المشرف التربوي: ABDOUCHE HACENE</small></td><td>'+esc(x.actionTaken||'—')+'</td><td>'+esc(x.result||'—')+'</td><td>'+esc(x.status||'غير محددة')+'</td><td>'+esc(x.nextDate||'—')+'</td></tr>');
  const noteRows=profilePrintableTable(data.notes,['التاريخ','القسم','الملاحظة'],x=>'<tr><td>'+esc(x.date||'—')+'</td><td>'+esc(x.category)+'</td><td>'+esc(x.note)+'<small class="student-report-observation-author">المشرف التربوي: ABDOUCHE HACENE</small></td></tr>');
  const timelineRows=profilePrintableTable(data.timeline,['التاريخ','نوع الحدث','التفاصيل'],x=>'<tr><td>'+esc(x.date||'غير محدد')+'</td><td>'+esc(x.sourceLabel+' · '+x.title)+'</td><td>'+esc([x.detail,x.appointment?'موعد الحضور: '+x.appointment:'',x.notes?'ملاحظة: '+x.notes:''].filter(Boolean).join(' · ')||'—')+'</td></tr>');
  return '<div class="student-report-document" dir="rtl">'+
@@ -4878,7 +4935,7 @@ function buildStudentPrintableReportMarkup(data){
 
 window.resetStudentFollowupForm=()=>{
  const form=$('#studentFollowupForm');if(!form)return;
- form.reset();form.elements.recordId.value='';
+ form.reset();form.elements.recordId.value='';form.elements.workflowStage.value='رصد الحالة';form.elements.status.value='قيد المتابعة';form.elements.owner.value='ABDOUCHE HACENE';form.elements.nextAction.value='';form.elements.transitionNote.value='';
  const d=new Date();form.elements.date.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
  $('#studentFollowupFormTitle').textContent='إضافة متابعة تربوية جديدة';
  $('#studentFollowupSubmit').textContent='حفظ المتابعة';
@@ -4891,8 +4948,8 @@ window.editStudentFollowup=(studentId,recordId)=>{
  if(!target||!record||!profileRecordBelongsToStudent(record,target,db.students)){alert('لم يتم العثور على سجل المتابعة في ملف هذا التلميذ.');return;}
  const form=$('#studentFollowupForm');if(!form)return;
  form.elements.recordId.value=id;form.elements.date.value=record.date||'';form.elements.category.value=record.category||'';
- form.elements.status.value=record.status||'قيد المتابعة';form.elements.observation.value=record.observation||'';
- form.elements.actionTaken.value=record.actionTaken||'';form.elements.result.value=record.result||'';
+ form.elements.workflowStage.value=profileStudentFollowupStage(record);form.elements.status.value=profileFollowupStatusForStage(form.elements.workflowStage.value);form.elements.owner.value=record.owner||'ABDOUCHE HACENE';form.elements.nextAction.value=record.nextAction||'';form.elements.transitionNote.value='';
+ form.elements.observation.value=record.observation||'';form.elements.actionTaken.value=record.actionTaken||'';form.elements.result.value=record.result||'';
  form.elements.nextDate.value=record.nextDate||'';
  $('#studentFollowupFormTitle').textContent='تعديل متابعة تربوية';
  $('#studentFollowupSubmit').textContent='حفظ التعديلات';
@@ -4917,8 +4974,12 @@ window.saveStudentFollowup=event=>{
  const sid=String(form.dataset.studentId||''),target=db.students.find(x=>String(x.id)===sid);
  if(!target){alert('تعذر تحديد ملف التلميذ. لم يتم حفظ المتابعة.');return false;}
  const recordId=String(form.elements.recordId.value||'').trim();
+ const currentRecord=recordId?db.followups.find(x=>String(x.id)===recordId):null;
+ if(recordId&&(!currentRecord||!profileRecordBelongsToStudent(currentRecord,target,db.students))){alert('تغير سجل المتابعة أو لم يعد مرتبطاً بهذا الملف. أعد فتح الملف قبل المحاولة.');return false;}
+ const currentStage=currentRecord?profileStudentFollowupStage(currentRecord):'';
  const checked=validateStudentFollowupInput({
-  date:form.elements.date.value,category:form.elements.category.value,status:form.elements.status.value,
+  date:form.elements.date.value,category:form.elements.category.value,status:form.elements.status.value,workflowStage:form.elements.workflowStage.value,currentStage,
+  owner:form.elements.owner.value,nextAction:form.elements.nextAction.value,transitionNote:form.elements.transitionNote.value,
   observation:form.elements.observation.value,actionTaken:form.elements.actionTaken.value,
   result:form.elements.result.value,nextDate:form.elements.nextDate.value
  });
@@ -4928,10 +4989,12 @@ window.saveStudentFollowup=event=>{
   const index=db.followups.findIndex(x=>String(x.id)===recordId);
   if(index<0||!profileRecordBelongsToStudent(db.followups[index],target,db.students)){alert('تغير سجل المتابعة أو لم يعد مرتبطاً بهذا الملف. أعد فتح الملف قبل المحاولة.');return false;}
   const current=db.followups[index];
-  db.followups[index]={...current,...checked.value,student:sid,studentName,class:target.class||'',schoolYear:target.schoolYear||'',branch:target.branch||'',updatedAt:now};
+  const workflowHistory=buildStudentFollowupWorkflowHistory(current,currentStage,checked.value.workflowStage,checked.transitionNote,now,checked.value.owner,false);
+  db.followups[index]={...current,...checked.value,workflowHistory,student:sid,studentName,class:target.class||'',schoolYear:target.schoolYear||'',branch:target.branch||'',updatedAt:now};
  }else{
   const id=crypto.randomUUID();
-  db.followups.push({id,student:sid,studentName,class:target.class||'',schoolYear:target.schoolYear||'',branch:target.branch||'',...checked.value,createdAt:now,updatedAt:now});
+  const workflowHistory=buildStudentFollowupWorkflowHistory(null,'',checked.value.workflowStage,'',now,checked.value.owner,true);
+  db.followups.push({id,student:sid,studentName,class:target.class||'',schoolYear:target.schoolYear||'',branch:target.branch||'',...checked.value,workflowHistory,createdAt:now,updatedAt:now});
  }
  if(!save()){db.followups=previous;return false;}
  window.studentHistory(sid);
@@ -5041,9 +5104,9 @@ window.studentHistory=(id,focusFollowupId)=>{
   <section id="studentProfileFollowups" class="panel student-followup-panel" aria-labelledby="studentFollowupHeading"><div class="student-followup-heading"><div><h3 id="studentFollowupHeading">سجل المتابعة التربوية</h3><p class="muted">سجل مستقل يوثق الملاحظة والإجراء والنتيجة وموعد المراجعة، دون تغيير سجلات الغياب أو المخالفات. تُرسل تذكيرات أندرويد العامة للمراجعات النشطة يوم الموعد عند 08:00 بالتوقيت المحلي، دون إظهار اسم التلميذ أو مضمون الملاحظة.</p></div><span class="pill">الإجمالي: ${followupView.total} · قيد المتابعة: ${followupView.pending} · تمت: ${followupView.completed} · مغلقة: ${followupView.closed}</span></div>
    <form id="studentFollowupForm" class="student-followup-form no-print" data-student-id="${esc(sid)}">
     <h4 id="studentFollowupFormTitle">إضافة متابعة تربوية جديدة</h4><input type="hidden" name="recordId">
-    <div class="row"><div><label for="studentFollowupDate">تاريخ المتابعة</label><input id="studentFollowupDate" name="date" type="date" value="${followupToday}" required></div><div><label for="studentFollowupCategory">مجال المتابعة</label><select id="studentFollowupCategory" name="category" required><option value="">اختر المجال</option><option>المواظبة والحضور</option><option>السلوك والانضباط</option><option>التواصل مع الولي</option><option>متابعة تربوية عامة</option></select></div><div><label for="studentFollowupStatus">حالة المتابعة</label><select id="studentFollowupStatus" name="status" required><option>قيد المتابعة</option><option>تمت المتابعة</option><option>أغلقت الحالة</option></select></div></div>
+    <div class="row"><div><label for="studentFollowupDate">تاريخ المتابعة</label><input id="studentFollowupDate" name="date" type="date" value="${followupToday}" required></div><div><label for="studentFollowupCategory">مجال المتابعة</label><select id="studentFollowupCategory" name="category" required><option value="">اختر المجال</option><option>المواظبة والحضور</option><option>السلوك والانضباط</option><option>التواصل مع الولي</option><option>متابعة تربوية عامة</option></select></div><div><label for="studentFollowupStage">مرحلة الحالة</label><select id="studentFollowupStage" name="workflowStage" required><option>رصد الحالة</option><option>التحقق من المعطيات</option><option>اتخاذ الإجراء</option><option>متابعة الولي</option><option>تقييم النتيجة</option><option>مغلقة</option></select></div><div><label for="studentFollowupStatus">الحالة المحسوبة</label><select id="studentFollowupStatus" name="status" disabled aria-disabled="true"><option>قيد المتابعة</option><option>تمت المتابعة</option><option>أغلقت الحالة</option></select></div></div>
     <div class="row"><div><label for="studentFollowupObservation">الملاحظة أو سبب المتابعة</label><textarea id="studentFollowupObservation" name="observation" rows="3" maxlength="1200" required placeholder="اكتب الملاحظة بعبارات واضحة وموضوعية"></textarea><small class="student-followup-author-note">المشرف التربوي: ABDOUCHE HACENE</small></div><div><label for="studentFollowupAction">الإجراء المتخذ</label><textarea id="studentFollowupAction" name="actionTaken" rows="3" maxlength="1200" required placeholder="ما الإجراء الذي تم اتخاذه؟"></textarea></div></div>
-    <div class="row"><div><label for="studentFollowupNextDate">موعد المراجعة المقبلة (التذكير 08:00)</label><input id="studentFollowupNextDate" name="nextDate" type="date"></div><div><label for="studentFollowupResult">النتيجة أو تطور الحالة (اختياري)</label><textarea id="studentFollowupResult" name="result" rows="2" maxlength="1600" placeholder="أضف ما تحقق أو ما زال يحتاج إلى متابعة"></textarea></div></div>
+    <div class="row"><div><label for="studentFollowupOwner">المكلف بمتابعة الحالة</label><input id="studentFollowupOwner" name="owner" maxlength="100" value="ABDOUCHE HACENE" required></div><div><label for="studentFollowupNextAction">الإجراء القادم المطلوب</label><textarea id="studentFollowupNextAction" name="nextAction" rows="2" maxlength="600" placeholder="مثال: التحقق من حضور الولي أو مراجعة التبرير"></textarea></div></div><div class="row"><div><label for="studentFollowupNextDate">موعد المراجعة المقبلة (التذكير 08:00)</label><input id="studentFollowupNextDate" name="nextDate" type="date"></div><div><label for="studentFollowupResult">النتيجة أو تطور الحالة</label><textarea id="studentFollowupResult" name="result" rows="2" maxlength="1600" placeholder="وثّق النتيجة قبل اعتماد تقييمها أو إغلاق الحالة"></textarea></div></div><div class="row"><div><label for="studentFollowupTransitionNote">سبب انتقال الحالة (مطلوب عند تغيير المرحلة)</label><textarea id="studentFollowupTransitionNote" name="transitionNote" rows="2" maxlength="400" placeholder="ما سبب انتقال الملف إلى المرحلة التالية؟"></textarea></div></div>
     <div class="actions"><button id="studentFollowupSubmit" class="btn primary" type="submit">حفظ المتابعة</button><button id="studentFollowupCancel" class="btn" type="button" onclick="resetStudentFollowupForm()" hidden>إلغاء التعديل</button></div>
    </form>
    <div id="studentFollowupList" class="student-followup-list" aria-live="polite">${followupView.html}</div>
@@ -5124,6 +5187,7 @@ window.studentHistory=(id,focusFollowupId)=>{
    if(action==='print'){window.printReport();return;}
   });
   const followupForm=$('#studentFollowupForm'),followupList=$('#studentFollowupList');
+  followupForm.elements.workflowStage.addEventListener('change',()=>{followupForm.elements.status.value=profileFollowupStatusForStage(followupForm.elements.workflowStage.value);});
   followupForm.addEventListener('submit',window.saveStudentFollowup);
   if(licenseReadOnly)followupForm.querySelectorAll('input,select,textarea,button').forEach(control=>{control.disabled=true;});
   followupList.addEventListener('click',event=>{
