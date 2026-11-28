@@ -134,7 +134,7 @@ assert.ok(html.includes('<section id="agenda" class="page hidden">'),'agenda is 
 assert.ok(html.includes('data-go="agenda"')&&html.includes('data-go="supervisionLog"')&&html.includes("['reports','settings','audit','agenda','supervisionLog','guardianReceptions'].includes(route)"),'agenda and the new supervision register are accessible from More and share the secondary navigation state');
 assert.ok(html.includes('data-agenda-view="day"')&&html.includes('data-agenda-view="week"')&&html.includes('data-agenda-view="month"'),'day, week and month view selectors are present');
 assert.ok(html.includes('function renderAgenda()')&&html.includes("if(activePage==='agenda')renderAgenda();"),'agenda refreshes when opened or data is saved');
-assert.ok(!html.includes("renderAgendaHome(today);")&&html.includes('id="upcomingAgenda"'),'upcoming agenda remains available on its dedicated page but is not built for the compact home view');
+assert.ok(html.includes('function renderAgendaHome(today)')&&html.includes('renderAgendaHome(leadership.date);')&&html.includes('id="upcomingAgenda"'),'upcoming agenda is available on both the leadership home preview and its dedicated page');
 assert.ok(html.includes("function openAgendaSummons(id)")&&html.includes("go('documents')"),'summons in agenda open their original document rather than a duplicate record');
 assert.ok(html.includes("||endTime&&!/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(endTime)")&&html.includes('endTime<=startTime'),'invalid or reversed appointment times are rejected');
 assert.ok(html.includes("db.agenda.push({id:crypto.randomUUID()")&&html.includes("db.agenda.splice(i,0,item)"),'agenda CRUD uses saved records and restores in-memory data when a save fails');

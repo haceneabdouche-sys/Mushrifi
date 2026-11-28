@@ -579,7 +579,7 @@ body{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 }
 
 /* Stage 23: compact home screen and microphone-only voice launcher */
-#home .daily-tasks-panel,#home .agenda-home-panel,#home .home-advanced-panel{display:none!important}
+#home .home-advanced-panel{display:none!important}
 #voiceAssistant.voice-launch{display:flex;flex:0 0 auto;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px;width:auto;max-width:100%;margin:0;padding:0;border:0;background:transparent;box-shadow:none}
 #voiceAssistant .voice-mic-button{display:grid;place-items:center;width:48px;height:48px;min-height:48px;padding:0;border:2px solid rgba(214,180,107,.75);border-radius:50%;font-size:25px;line-height:1;background:linear-gradient(135deg,#173b58,#286b91);box-shadow:0 4px 12px rgba(23,59,88,.19)}
 #voiceAssistant .voice-mic-button:disabled{opacity:.62;cursor:wait;transform:none}
@@ -1293,6 +1293,13 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 }
 @media print{#nav{display:none!important}}
 
+/* Stage 7 — executive leadership pulse and readable daily command center */
+.home-leadership-pulse{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(245px,.75fr);gap:16px;margin:12px 0 13px;padding:17px;border:1px solid #274b65;border-radius:18px;background:linear-gradient(125deg,#0d263b 0%,#163b55 58%,#214e68 100%);color:#fff;box-shadow:0 9px 24px rgba(12,35,54,.14);overflow:hidden}
+.home-pulse-main,.home-pulse-side{min-width:0}.home-pulse-eyebrow{display:inline-block;color:#e7ca82;font-size:11px;font-weight:800;letter-spacing:.15px}.home-pulse-main h2{margin:5px 0 2px;color:#fff;font-size:clamp(19px,3vw,25px);line-height:1.45}.home-pulse-date{margin:0;color:#c7d8e3;font-size:11px}.home-pulse-message{margin:11px 0 12px;color:#f3f7fa;font-size:14px;line-height:1.8;max-width:600px}.home-pulse-actions{display:flex;gap:8px;flex-wrap:wrap}.home-pulse-actions .btn{min-height:39px;padding:8px 12px;font-size:12px}.home-pulse-primary{border:1px solid #e3c779;background:linear-gradient(135deg,#d4b56d,#ead99d);color:#17354c}.home-pulse-secondary{border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff}.home-pulse-side{display:grid;align-content:center;gap:10px;padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.07)}.home-pulse-status{justify-self:start;padding:5px 10px;border:1px solid rgba(255,255,255,.22);border-radius:30px;background:rgba(255,255,255,.09);color:#e8f2f7;font-size:11px;font-weight:800}.home-pulse-status[data-level="urgent"]{border-color:#e9aaa0;background:rgba(153,57,49,.27);color:#ffe0da}.home-pulse-status[data-level="attention"]{border-color:#e5cb88;background:rgba(178,131,44,.2);color:#ffedc0}.home-pulse-status[data-level="upcoming"]{border-color:#91b7cd;color:#d9effb}.home-pulse-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.home-pulse-metrics>div{min-width:0;padding:8px 7px;border-radius:10px;background:rgba(255,255,255,.08)}.home-pulse-metrics small{display:block;color:#c8d9e4;font-size:9px;line-height:1.5}.home-pulse-metrics strong{display:block;margin-top:3px;color:#fff;font-size:22px;line-height:1.3}.home-pulse-next{padding-top:8px;border-top:1px solid rgba(255,255,255,.15);display:grid;gap:3px}.home-pulse-next small{color:#d7c58f;font-size:10px}.home-pulse-next strong{color:#fff;font-size:12px;line-height:1.6;overflow-wrap:anywhere}.home-pulse-next span{color:#c8d9e4;font-size:10px;line-height:1.5;overflow-wrap:anywhere}.home-leadership-pulse[data-level="clear"] .home-pulse-status{color:#c6ecd9;border-color:rgba(136,205,168,.4)}
+.daily-tasks-panel{display:block}.daily-tasks-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none;cursor:pointer;min-height:44px}.daily-tasks-summary::-webkit-details-marker{display:none}.daily-tasks-summary>span:first-child{display:grid;gap:2px;min-width:0}.daily-tasks-summary strong{color:var(--navy);font-size:15px}.daily-tasks-summary small{color:var(--muted);font-size:11px;line-height:1.5}.daily-tasks-summary:after{content:"＋";flex:0 0 auto;display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--surface-soft);color:var(--blue);font-weight:900}.daily-tasks-panel[open]>.daily-tasks-summary:after{content:"−"}.daily-tasks-content{padding-top:10px;border-top:1px solid var(--line);margin-top:8px}.daily-tasks-panel[open]{border-color:#cbdbe5;box-shadow:0 5px 17px rgba(16,42,67,.055)}
+@media(max-width:680px){.home-leadership-pulse{grid-template-columns:minmax(0,1fr);gap:11px;padding:14px}.home-pulse-side{grid-template-columns:minmax(0,1fr);padding:10px}.home-pulse-metrics strong{font-size:20px}}
+@media(max-width:360px){.home-pulse-actions .btn{flex:1 1 100%;width:100%}.home-pulse-metrics{gap:5px}.home-pulse-metrics>div{padding:7px 5px}.home-pulse-metrics small{font-size:8px}}
+
 </style>
 </head>
 <body>
@@ -1338,6 +1345,27 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
   <div class="stat"><small>تأخرات اليوم</small><strong id="todayLate">0</strong></div>
   <div class="stat"><small>استدعاءات اليوم</small><strong id="todaySummons">0</strong></div>
 </div>
+<section class="home-leadership-pulse" id="homeLeadershipPulse" data-level="clear" aria-labelledby="homePulseHeading" aria-live="polite">
+ <div class="home-pulse-main">
+  <span class="home-pulse-eyebrow">مركز القيادة التربوية · مُشرِفي 360</span>
+  <h2 id="homePulseHeading"><span id="homePulseGreeting">مرحبًا بك</span></h2>
+  <p class="home-pulse-date" id="homePulseDate">—</p>
+  <p class="home-pulse-message" id="homePulseMessage">جارٍ تحليل الأولويات من السجلات المحفوظة...</p>
+  <div class="home-pulse-actions no-print">
+   <button type="button" class="btn home-pulse-primary" id="homePulseOpenTasks">مراجعة الأولويات</button>
+   <button type="button" class="btn home-pulse-secondary" data-go="agenda">عرض الأجندة</button>
+  </div>
+ </div>
+ <div class="home-pulse-side">
+  <div class="home-pulse-status" id="homePulseStatus" data-level="clear">لا توجد أولوية عاجلة</div>
+  <div class="home-pulse-metrics">
+   <div><small>إجمالي المتابعات</small><strong id="homePulseTaskCount">0</strong></div>
+   <div><small>أولويات عاجلة</small><strong id="homePulseUrgentCount">0</strong></div>
+   <div><small>مواعيد قريبة</small><strong id="homePulseAppointmentCount">0</strong></div>
+  </div>
+  <div class="home-pulse-next" id="homePulseNext"><small>الأولوية التالية</small><strong>لا توجد مهمة تحتاج إجراءً الآن.</strong></div>
+ </div>
+</section>
 <section class="panel" id="absenceStageDashboard" aria-labelledby="absenceStageDashboardHeading">
  <div class="panel-title-row"><h2 id="absenceStageDashboardHeading">تنبيهات الإشعارات والإعذارات</h2><span class="pill" id="absenceStageAlertCount">0 حالة</span></div>
  <p class="muted">مسودات تلقائية ومراحل تستوجب المراجعة وفق المادتين 17 و21 من القرار 833. التبليغ الفعلي وإثباته وردّ الولي تسجل يدوياً؛ ولا يُتخذ قرار شطب آلي.</p>
@@ -1345,8 +1373,9 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
  <button type="button" class="btn small primary" onclick="go('documents')">إدارة التبليغ وتسوية الملفات</button>
  <button type="button" class="btn small" onclick="go('settings');setSettingsTab('followup')">فتح متابعة الغيابات وإعداداتها</button>
 </section>
-<section class="panel daily-tasks-panel" aria-labelledby="dailyTasksHeading">
-<div class="panel-title-row"><h2 id="dailyTasksHeading">لوحة المتابعة اليومية الذكية</h2><span class="pill" id="dailyTasksCount">0 متابعة</span></div>
+<details class="panel daily-tasks-panel" id="dailyTasksDetails" aria-labelledby="dailyTasksHeading">
+<summary class="daily-tasks-summary"><span><strong id="dailyTasksHeading">لوحة المتابعة اليومية الذكية</strong><small>المؤشرات والمهام التي تحتاج إلى إجراء</small></span><span class="pill" id="dailyTasksCount">0 متابعة</span></summary>
+<div class="daily-tasks-content">
 <p class="muted">ملخص حيّ لعمل اليوم: الغياب والتأخر، التبريرات المنتظرة، الاستدعاءات القريبة، ومهام الأجندة. الأرقام تُحسب من السجلات ولا تغيّرها هذه اللوحة.</p>
 <div class="daily-today-grid" aria-label="مؤشرات اليوم">
 <div class="stat"><small>غيابات اليوم</small><strong id="dailyTodayAbsences">0</strong></div>
@@ -1363,7 +1392,9 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <div class="daily-section-summary"><strong>ملخص الأقسام اليوم</strong><div id="dailySectionBreakdown" class="daily-section-chips"><span class="muted">لا توجد حركة مسجلة اليوم.</span></div></div>
 <div class="smart-followup-head"><h3>المهام التي تحتاج إجراءً</h3><span class="muted" id="dailyTasksSubCount">—</span></div>
 <div id="dailyTasksList" class="daily-tasks-list" aria-live="polite"><p class="empty">جارٍ تحديث المهام...</p></div>
-</section>
+
+</div>
+</details>
 <section class="panel agenda-home-panel" aria-labelledby="upcomingAgendaHeading">
  <div class="panel-title-row"><h2 id="upcomingAgendaHeading">مواعيدي ومهامي القادمة</h2><button type="button" class="btn small" data-go="agenda">فتح الأجندة</button></div>
  <p class="muted">مواعيد الأيام السبعة القادمة، بما فيها استدعاءات الأولياء المحفوظة في الوثائق.</p>
@@ -2052,6 +2083,8 @@ function auditEntryValue(value,missing){
 }
 let auditBaselineSnapshot=auditComparableDatabase(db,{retainLargeAttachments:true});
 let homeOverviewCache=null;
+let homeLeadershipCache=null;
+let homeAgendaSnapshotCache=null;
 let auditNextRevertsId='';
 let preserveUndoOnNextSave=false;
 const save=(options={})=>{
@@ -2094,6 +2127,8 @@ const save=(options={})=>{
  if(changedEntities.has('students')||changedEntities.has('attendance')||changedEntities.has('settings'))invalidateAbsenceAnalysisCache();
  else if(changedEntities.has('documents'))absenceAutomationRevision++;
  if(['students','attendance','documents','violations'].some(entity=>changedEntities.has(entity)))homeOverviewCache=null;
+ if(['students','attendance','documents','violations','agenda','followups'].some(entity=>changedEntities.has(entity)))homeLeadershipCache=null;
+ if(['students','documents','agenda'].some(entity=>changedEntities.has(entity)))homeAgendaSnapshotCache=null;
  auditNextRevertsId='';preserveUndoOnNextSave=false;
  if(changedEntities.has('students'))rebuildStudentIndexes();
  else if(changedEntities.has('attendance')||changedEntities.has('documents')||changedEntities.has('violations'))rebuildRecordNameIndex();
@@ -2974,7 +3009,9 @@ function agendaSkipOccurrence(id,occurrenceDate){
 function agendaDelete(id){if(licenseReadOnly)return;const i=db.agenda.findIndex(x=>String(x.id)===String(id));if(i<0)return;const item=db.agenda[i],recurring=agendaRepeatRule(item).frequency!=='none';if(!confirm(recurring?'هل تريد حذف السلسلة المتكررة «'+String(item.title||'')+'» وجميع مواعيدها المستقبلية؟ لن يتأثر أي استدعاء محفوظ في قسم الوثائق.':'هل تريد حذف الموعد «'+String(item.title||'')+'»؟ لن يتأثر الاستدعاء الأصلي في قسم الوثائق.'))return;db.agenda.splice(i,1);if(!save()){db.agenda.splice(i,0,item);return;}renderAgenda();}
 function openAgendaSummons(id){if(!db.documents.some(x=>String(x.id)===String(id)))return;go('documents');if(typeof window.editDocument==='function')window.editDocument(String(id));}
 function renderAgendaHome(today){
- const output=$('#upcomingAgenda');if(!output)return;const to=agendaShiftDate(today,6),snapshot=buildAgendaSnapshot(db.agenda,db.documents,today,to,id=>student(id));
+ const output=$('#upcomingAgenda');if(!output)return;const to=agendaShiftDate(today,6),cache=homeAgendaSnapshotCache;let snapshot;
+ if(cache&&cache.date===today&&cache.agenda===db.agenda&&cache.documents===db.documents&&cache.students===db.students&&cache.agendaCount===db.agenda.length&&cache.documentCount===db.documents.length&&cache.studentCount===db.students.length)snapshot=cache.snapshot;
+ else{snapshot=buildAgendaSnapshot(db.agenda,db.documents,today,to,id=>student(id));homeAgendaSnapshotCache={date:today,agenda:db.agenda,documents:db.documents,students:db.students,agendaCount:db.agenda.length,documentCount:db.documents.length,studentCount:db.students.length,snapshot};}
  const items=snapshot.items.filter(x=>x.status!=='done'&&x.status!=='cancelled').slice(0,5);
  output.innerHTML=items.length?items.map(x=>'<button type="button" class="agenda-home-item" data-agenda-home-date="'+esc(x.date)+'"><span><b>'+esc(x.title)+'</b><small>'+esc(agendaFormatDate(x.date,{weekday:'short',month:'short',day:'numeric'}))+(x.startTime?' · '+esc(x.startTime):'')+'</small></span><small>'+esc(agendaTypeLabel(x.type))+'</small></button>').join(''):'<p class="empty">لا توجد مواعيد أو مهام مفتوحة في الأيام السبعة القادمة.</p>';
  output.querySelectorAll('[data-agenda-home-date]').forEach(b=>b.addEventListener('click',()=>{agendaSelectedDate=b.dataset.agendaHomeDate;agendaCurrentView='day';go('agenda');}));
@@ -3117,8 +3154,8 @@ function openDailyDashboardTask(button){
  if(page==='attendance'){go('attendance');if(recordId){const row=[...document.querySelectorAll('[data-att-id]')].find(x=>String(x.getAttribute('data-att-id'))===recordId);if(row){row.scrollIntoView({behavior:'smooth',block:'center'});row.classList.add('daily-task-focus');}}return;}
  if(page)go(page);
 }
-function renderDailyFollowupDashboard(today,nowValue){
- const s=buildDailyFollowupSnapshot(db.attendance,db.documents,db.agenda,db.violations,today,nowValue,id=>student(id),db.followups,db.students);
+function renderDailyFollowupDashboard(today,nowValue,snapshot){
+ const s=snapshot||buildDailyFollowupSnapshot(db.attendance,db.documents,db.agenda,db.violations,today,nowValue,id=>student(id),db.followups,db.students);
  const put=(id,value)=>{const el=$('#'+id);if(el)el.textContent=Number(value||0).toLocaleString('ar-DZ');};
  put('dailyTodayAbsences',s.today.absences);put('dailyTodayLateness',s.today.lateness);put('dailyTodayUnjustified',s.today.unjustified);put('dailyPendingReasons',s.today.pending);put('dailyTodayViolations',s.today.violations);
  put('dailyFollowupOverdue',s.followupReviews.overdue);put('dailyFollowupDueToday',s.followupReviews.dueToday);put('dailyFollowupUpcoming',s.followupReviews.upcoming7Days);
@@ -3135,7 +3172,36 @@ function renderDailyFollowupDashboard(today,nowValue){
  }).join(''):'<p class="empty">لا توجد مهام تحتاج إجراءً اليوم. أحسنت، المتابعة مكتملة.</p>';
  list.querySelectorAll('[data-daily-page],[data-daily-student-id]').forEach(b=>b.addEventListener('click',()=>openDailyDashboardTask(b)));
  if(s.totalTasks>10)list.insertAdjacentHTML('beforeend','<p class="muted daily-task-overflow">يُعرض أعلى 10 إجراءات حسب الأولوية من أصل '+s.totalTasks.toLocaleString('ar-DZ')+'؛ بقية السجلات ما زالت محفوظة في صفحاتها الأصلية.</p>');
-}function renderSmartDashboard(today,snapshot){
+ return s;
+}
+function getHomeLeadershipSnapshot(today,nowValue){
+ const now=Number(nowValue),safeNow=Number.isFinite(now)?now:Date.now(),minute=Math.floor(safeNow/60000),cache=homeLeadershipCache;
+ if(cache&&cache.date===today&&cache.minute===minute&&cache.students===db.students&&cache.attendance===db.attendance&&cache.documents===db.documents&&cache.violations===db.violations&&cache.agenda===db.agenda&&cache.followups===db.followups&&cache.studentCount===db.students.length&&cache.attendanceCount===db.attendance.length&&cache.documentCount===db.documents.length&&cache.violationCount===db.violations.length&&cache.agendaCount===db.agenda.length&&cache.followupCount===db.followups.length)return {date:today,now:safeNow,daily:cache.daily};
+ const daily=buildDailyFollowupSnapshot(db.attendance,db.documents,db.agenda,db.violations,today,safeNow,id=>student(id),db.followups,db.students);
+ homeLeadershipCache={date:today,minute,students:db.students,attendance:db.attendance,documents:db.documents,violations:db.violations,agenda:db.agenda,followups:db.followups,studentCount:db.students.length,attendanceCount:db.attendance.length,documentCount:db.documents.length,violationCount:db.violations.length,agendaCount:db.agenda.length,followupCount:db.followups.length,daily};
+ return {date:today,now:safeNow,daily};
+}
+function buildHomeLeadershipPulseModel(snapshot,today,nowValue){
+ const s=snapshot&&typeof snapshot==='object'?snapshot:{},tasks=Array.isArray(s.tasks)?s.tasks:[],urgent=tasks.filter(x=>x&&x.priority==='urgent').length,high=tasks.filter(x=>x&&x.priority==='high').length,total=Number.isFinite(Number(s.totalTasks))?Number(s.totalTasks):tasks.length,unlinked=Number(s.unlinkedPending||0)+Number(s.unlinkedSummons||0)+Number(s.followupReviews?.unlinked||0),appointments=Number(s.summonsNext24h||0)+Number(s.agendaToday||0),hour=new Date(Number.isFinite(Number(nowValue))?Number(nowValue):Date.now()).getHours(),first=tasks[0]||null;
+ const greeting=hour<12?'صباح الخير':hour<17?'طاب يومك':'مساء الخير';
+ const [year,month,day]=String(today||'').split('-').map(Number),date=new Date(year||2000,(month||1)-1,day||1,12),dateLabel=Number.isFinite(date.getTime())?new Intl.DateTimeFormat('ar-DZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(date):String(today||'');
+ const level=urgent?'urgent':(high||unlinked)?'attention':total?'upcoming':'clear';
+ const statusLabel=level==='urgent'?'توجد أولوية عاجلة':level==='attention'?'متابعات تحتاج انتباهك':level==='upcoming'?'لديك مهام قريبة':'الوضع هادئ';
+ const message=level==='urgent'?'لديك '+total.toLocaleString('ar-DZ')+' من عناصر المتابعة، بينها '+urgent.toLocaleString('ar-DZ')+' أولوية عاجلة. ابدأ بالإجراء المعروض أدناه.':level==='attention'?'توجد '+total.toLocaleString('ar-DZ')+' متابعات تحتاج انتباهك، منها '+high.toLocaleString('ar-DZ')+' ذات أولوية مرتفعة.'+(unlinked?' كما أن '+unlinked.toLocaleString('ar-DZ')+' سجلات تحتاج التحقق من ربط هويتها.':''):level==='upcoming'?'لديك '+total.toLocaleString('ar-DZ')+' مهام أو مواعيد قريبة. راجع ترتيبها قبل نهاية اليوم.':'لا توجد متابعات تستدعي إجراءً الآن وفق السجلات المتاحة. واصل يومك بثقة.';
+ return {greeting,dateLabel,level,statusLabel,message,total,urgent,high,unlinked,appointments,nextTitle:first?String(first.title||'متابعة تستدعي الانتباه'):'لا توجد مهمة تحتاج إجراءً الآن.',nextDetail:first?String(first.detail||''):'تظهر الأولويات هنا عند تسجيلها في السجلات الأصلية.'};
+}
+function renderHomeLeadershipPulse(snapshot,today,nowValue){
+ const model=buildHomeLeadershipPulseModel(snapshot,today,nowValue),put=(id,value)=>{const el=$('#'+id);if(el)el.textContent=String(value);};
+ const pulse=$('#homeLeadershipPulse'),status=$('#homePulseStatus'),next=$('#homePulseNext');
+ if(pulse)pulse.dataset.level=model.level;if(status){status.dataset.level=model.level;status.textContent=model.statusLabel;}
+ put('homePulseGreeting',model.greeting);put('homePulseDate',model.dateLabel);put('homePulseMessage',model.message);put('homePulseTaskCount',model.total.toLocaleString('ar-DZ'));put('homePulseUrgentCount',model.urgent.toLocaleString('ar-DZ'));put('homePulseAppointmentCount',model.appointments.toLocaleString('ar-DZ'));
+ if(next)next.innerHTML='<small>الأولوية التالية</small><strong>'+esc(model.nextTitle)+'</strong>'+(model.nextDetail?'<span>'+esc(model.nextDetail)+'</span>':'');
+ return model;
+}
+function openHomePulseTasks(){
+ const panel=$('#dailyTasksDetails');if(!panel)return;panel.open=true;panel.scrollIntoView?.({behavior:'smooth',block:'start'});
+}
+function renderSmartDashboard(today,snapshot){
  const s=snapshot||buildSmartDashboardSnapshot(db.attendance,db.violations,today,id=>student(id));
  $('#smartMonthAbsences').textContent=s.current.absences.toLocaleString('ar-DZ');$('#smartMonthLateness').textContent=s.current.lateness.toLocaleString('ar-DZ');$('#smartMonthViolations').textContent=s.current.violations.toLocaleString('ar-DZ');
  $('#smartMonthAbsenceTrend').textContent=smartDashboardTrend(s.current.absences,s.previous.absences);$('#smartMonthLatenessTrend').textContent=smartDashboardTrend(s.current.lateness,s.previous.lateness);$('#smartMonthViolationTrend').textContent=smartDashboardTrend(s.current.violations,s.previous.violations);
@@ -3342,6 +3408,10 @@ if(activePage==='home'){
  $('#todayAbs').textContent=overview.todayAbs;$('#todayLate').textContent=overview.todayLate;$('#todayViol').textContent=overview.todayViol;$('#todaySummons').textContent=overview.todaySummons;
  // The immutable-by-commit home snapshot avoids repeated full-history scans while navigating.
  renderSmartDashboard(overview.date,overview.monthly);
+ const leadership=getHomeLeadershipSnapshot(overview.date,Date.now());
+ renderHomeLeadershipPulse(leadership.daily,leadership.date,leadership.now);
+ renderDailyFollowupDashboard(leadership.date,leadership.now,leadership.daily);
+ renderAgendaHome(leadership.date);
  const recent=overview.recent;
  $('#recentCount').textContent=recent.length+' عملية';$('#recent').className=recent.length?'':'empty';$('#recent').innerHTML=recent.length?`<div class="tablewrap"><table><thead><tr><th>التاريخ</th><th>التلميذ</th><th>نوع العملية</th></tr></thead><tbody>${recent.map(item=>`<tr><td>${esc(item.date)}</td><td>${esc(item.t)}</td><td><span class="pill">${esc(item.desc)}</span></td></tr>`).join('')}</tbody></table></div>`:'لا توجد عمليات مسجلة بعد.';
  }
@@ -6195,6 +6265,20 @@ $('#guardianReceptionCancelEdit')?.addEventListener('click',()=>resetGuardianRec
 });
 
 render();refreshUndoPanel();
+$('#homePulseOpenTasks')?.addEventListener('click',openHomePulseTasks);
+
+// Refresh the leadership view once per minute while it is visible; never poll student data in the background.
+let homeLeadershipRefreshMinute=Math.floor(Date.now()/60000),homeLeadershipRefreshDate=dateISO();
+function refreshHomeLeadershipIfDue(force){
+ const activePage=document.querySelector('.page:not(.hidden)')?.id||'home';if(activePage!=='home')return;
+ const now=Date.now(),today=dateISO(),minute=Math.floor(now/60000);
+ if(!force&&today===homeLeadershipRefreshDate&&minute===homeLeadershipRefreshMinute)return;
+ if(today!==homeLeadershipRefreshDate){homeLeadershipRefreshDate=today;homeLeadershipRefreshMinute=minute;render();return;}
+ homeLeadershipRefreshMinute=minute;const leadership=getHomeLeadershipSnapshot(today,now);
+ renderHomeLeadershipPulse(leadership.daily,today,now);renderDailyFollowupDashboard(today,now,leadership.daily);renderAgendaHome(today);
+}
+window.setInterval(()=>refreshHomeLeadershipIfDue(false),60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshHomeLeadershipIfDue(true);});
 
 function refreshLicenseStatus(){
  const box=$('#licenseStatusText');if(!box)return;

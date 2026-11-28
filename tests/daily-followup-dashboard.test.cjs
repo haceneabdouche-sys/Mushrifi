@@ -119,9 +119,9 @@ for(const id of ['dailyTodayAbsences','dailyTodayLateness','dailyTodayUnjustifie
  assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,'daily dashboard element ID is unique: '+id);
 }
 assert.ok(html.includes('لوحة المتابعة اليومية الذكية'),'dedicated smart daily dashboard heading is visible');
-assert.ok(html.includes('function renderDailyFollowupDashboard(today,nowValue)'),'daily dashboard has a dedicated renderer');
+assert.ok(html.includes('function renderDailyFollowupDashboard(today,nowValue,snapshot)'),'daily dashboard has a dedicated renderer');
 assert.ok(!html.includes('renderDailyFollowupDashboard(today,Date.now());'),'daily analysis is no longer recomputed in the compact home view');
-assert.ok(html.includes('function renderDailyFollowupDashboard(today,nowValue)'),'the full daily dashboard logic remains available for its dedicated workflow');
+assert.ok(html.includes('function renderDailyFollowupDashboard(today,nowValue,snapshot)'),'the full daily dashboard logic remains available for its dedicated workflow');
 assert.ok(html.includes("list.querySelectorAll('[data-daily-page],[data-daily-student-id]')"),'all task and profile buttons are wired after rendering');
 assert.ok(html.includes("if(s.totalTasks>10)"),'task list explains when more than ten tasks are available');
 assert.ok(html.includes("replace(/\\s+/g,'').includes('استدعاء')"),'summons type matching tolerates spaces in Arabic labels');

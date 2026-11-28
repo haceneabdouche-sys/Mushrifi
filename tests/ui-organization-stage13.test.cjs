@@ -69,12 +69,12 @@ assert.ok(studentEditorScript.includes('if(editor)editor.open=false'), 'saving o
 assert.ok(studentEditorScript.includes('if(editor)editor.open=true'), 'editing an existing student opens the form before scrolling');
 
 // The home display is intentionally compact: one top microphone and month-to-date summary.
-// Daily task and appointment panels remain in the document but are hidden on Home only.
+// Stage 7 restores a compact pulse, collapsed task detail and seven-day agenda preview on Home.
 const monthlyPanelStart = html.indexOf('<section class="panel home-monthly-summary"');
 assert.ok(monthlyPanelStart > 0, 'the month-to-date summary is visible on Home');
 assert.ok(html.includes('id="smartDashboardHeading">الملخص الشهري'), 'the dashboard is explicitly monthly');
-assert.ok(html.includes('#home .daily-tasks-panel,#home .agenda-home-panel,#home .home-advanced-panel{display:none!important}'),
-  'upcoming agenda and dense daily tasks are hidden from Home');
+assert.ok(html.includes('#home .home-advanced-panel{display:none!important}')&&html.includes('<details class="panel daily-tasks-panel" id="dailyTasksDetails"')&&html.includes('<section class="panel agenda-home-panel"'),
+  'Home keeps detailed tasks collapsed and shows a compact upcoming agenda while secondary shortcuts remain hidden');
 const homeVoice = html.indexOf('<section id="voiceAssistant"');
 const homeKpis = html.indexOf('<div class="home-kpis grid">');
 assert.ok(homeVoice > 0 && homeKpis > homeVoice, 'the microphone launcher appears above the essential home indicators');

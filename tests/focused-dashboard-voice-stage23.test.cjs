@@ -18,7 +18,7 @@ assert.ok(!html.includes('id="quickVoiceAccess"'),'duplicate lower microphone ti
 assert.ok(html.includes('id="voiceStatus" class="muted voice-status hidden"'),'voice status is hidden until interaction');
 assert.ok(html.includes('id="voiceTranscript" class="voice-transcript panel hidden"'),'transcript starts hidden');
 assert.ok(html.includes('id="voiceConfirm" class="voice-confirm panel hidden"'),'suggested actions start hidden');
-assert.ok(html.includes('#home .daily-tasks-panel,#home .agenda-home-panel,#home .home-advanced-panel{display:none!important}'),'busy daily and upcoming panels are visually removed only from home');
+assert.ok(html.includes('#home .home-advanced-panel{display:none!important}')&&!html.includes('#home .daily-tasks-panel,#home .agenda-home-panel'),'only secondary shortcuts stay hidden; Stage 7 restores a collapsible task center and compact agenda preview');
 assert.ok(html.includes('<section id="agenda" class="page hidden">'),'the original agenda page remains in the app');
 
 const start=html.indexOf('function showVoiceSuggestedActions(st){');

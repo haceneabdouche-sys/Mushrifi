@@ -19,9 +19,9 @@ assert.ok(html.includes('const ATTENDANCE_LOG_PAGE_SIZE=40,VIOLATION_LOG_PAGE_SI
 assert.ok(!html.includes('mix-blend-mode:multiply}'), 'the full-screen signature background does not trigger blend-mode composition');
 assert.ok(html.includes('const student=id=>{\n ensureStudentIdentityIndexes();')&&html.includes('ensureStudentNameIndexes();const matches=studentByName.get(key);'), 'student ID lookup uses a lightweight index and unique-name aliases are prepared only when needed');
 assert.ok(html.includes('function refreshActiveStudentSelectors(activePage)'), 'student select options are cached and only replaced when their source changes');
-assert.ok(js.includes('renderSmartDashboard(overview.date,overview.monthly);')&&!js.includes('renderDailyFollowupDashboard(today,Date.now());'), 'cached monthly metrics render without recalculating hidden daily task analytics');
+assert.ok(js.includes('renderSmartDashboard(overview.date,overview.monthly);')&&js.includes('getHomeLeadershipSnapshot(overview.date,Date.now())')&&js.includes('renderDailyFollowupDashboard(leadership.date,leadership.now,leadership.daily)')&&!js.includes('renderDailyFollowupDashboard(today,Date.now());'), 'monthly and leadership views render from cached snapshots rather than rescanning all records on every rerender');
 assert.ok(js.includes('const overview=getHomeOverviewSnapshot(dateISO());'), 'the home view reuses its cached summary when navigating back to the dashboard');
-assert.ok(!js.includes('renderAgendaHome(today);'), 'upcoming agenda data is not built for the hidden home panel');
+assert.ok(js.includes('renderAgendaHome(leadership.date);')&&js.includes('homeAgendaSnapshotCache'), 'the compact seven-day agenda preview reuses a cached derived snapshot');
 assert.ok(js.includes('const keepRecent=')&&js.includes('if(position<6){recent.splice'), 'recent activity keeps a bounded six-item list instead of sorting every record');
 assert.ok(html.includes('header .credit-signature,header p.credit{filter:none!important;transform:none!important}'), 'phone header avoids expensive filters and transforms');
 assert.ok(html.includes('class="credit-signature"'), 'static signature image remains in the interface');

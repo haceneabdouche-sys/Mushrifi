@@ -17,7 +17,7 @@ const checks = [
   ['old free-floating rectangle sparkle animation is removed', /^(?![\s\S]*mushrifi-signature-only-star)(?![\s\S]*signature-light)/],
   ['home keeps the primary student and daily indicators in a compact KPI row', /class="home-kpis grid"[\s\S]*?id="sStudents"[\s\S]*?id="todayAbs"[\s\S]*?id="todayLate"[\s\S]*?id="todaySummons"/],
   ['home keeps all detailed metrics available in the expandable statistics panel', /class="[^"]*home-stat-details"[\s\S]*?id="sAbs"[\s\S]*?id="sLate"[\s\S]*?id="sViol"[\s\S]*?id="sDocs"[\s\S]*?id="sSummons"[\s\S]*?id="sAbsNotices"[\s\S]*?id="sRecords"[\s\S]*?id="todayViol"/],
-  ['large daily tasks and appointments are hidden only from the compact home display', /#home \.daily-tasks-panel,#home \.agenda-home-panel,#home \.home-advanced-panel\{display:none!important\}/],
+  ['the home keeps a compact collapsible task center and a visible seven-day agenda preview', /#home \.home-advanced-panel\{display:none!important\}(?=[\s\S]*?<details class="panel daily-tasks-panel" id="dailyTasksDetails")(?=[\s\S]*?<section class="panel agenda-home-panel")/],
   ['daily tasks identify summons in the next 24 hours and route to documents', /const summons=D\.filter[\s\S]*?t<=end[\s\S]*?page:'documents'/],
   ['daily tasks surface attendance entries awaiting justification and route to attendance', /pendingAll=A\.filter[\s\S]*?قيد التبرير[\s\S]*?page:'attendance'/],
   ['daily task navigation reuses existing page navigation without altering student records', /function openDailyDashboardTask[\s\S]*?go\('attendance'\)[\s\S]*?row\.scrollIntoView/],

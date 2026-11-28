@@ -109,13 +109,14 @@ vm.runInContext('homeOverviewCache=null', monthSandbox);
 vm.runInContext('getHomeOverviewSnapshot("2026-11-27")', monthSandbox);
 assert.ok(homeNameCalls > callsAfterFirstHome.names, 'a committed data change can force a fresh overview snapshot');
 
-// 4) The compact home does not calculate hidden daily/agenda views; recent activity is bounded.
+// 4) The compact home uses cached leadership/agenda snapshots; recent activity remains bounded.
 const renderStart = html.indexOf('function render(){');
 const renderEnd = html.indexOf('\nasync function compressPhoto', renderStart);
 assert.ok(renderStart >= 0 && renderEnd > renderStart, 'render function can be inspected independently');
 const render = html.slice(renderStart, renderEnd);
-assert.ok(!render.includes('renderDailyFollowupDashboard('), 'hidden daily task analysis is not recalculated during home render');
-assert.ok(!render.includes('renderAgendaHome('), 'hidden upcoming appointments are not queried during home render');
+assert.ok(render.includes('getHomeLeadershipSnapshot(overview.date,Date.now())') && render.includes('renderDailyFollowupDashboard(leadership.date,leadership.now,leadership.daily)'), 'daily task analysis is rendered from one cached leadership snapshot');
+assert.ok(render.includes('renderAgendaHome(leadership.date);'), 'upcoming agenda preview is rendered from its own cached seven-day snapshot');
+assert.ok(html.includes('function getHomeLeadershipSnapshot(today,nowValue)') && html.includes('function renderAgendaHome(today)'), 'leadership and agenda snapshots have explicit cache-aware builders');
 assert.ok(render.includes('const overview=getHomeOverviewSnapshot(dateISO());') && !render.includes('for(const record of db.attendance)'), 'Home reuses its cached overview instead of walking every attendance row on each navigation');
 assert.ok(html.includes("if(['students','attendance','documents','violations'].some(entity=>changedEntities.has(entity)))homeOverviewCache=null;"), 'saved data changes invalidate the cached Home overview');
 const homeHelpers = html.slice(homeStart, homeEnd);

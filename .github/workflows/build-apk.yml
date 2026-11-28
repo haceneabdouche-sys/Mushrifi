@@ -192,6 +192,8 @@ jobs:
         run: node tests/home-recent-lookup-stage5.test.cjs
       - name: Run Stage 6 long-record search cache correctness tests
         run: node tests/record-search-cache-stage6.test.cjs
+      - name: Run Stage 7 executive leadership command center and snapshot cache tests
+        run: node tests/home-leadership-center-stage7.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests
