@@ -70,8 +70,9 @@ const advanced=form.slice(advancedStart,advancedEnd);
 assert.ok(advanced.includes('studentFollowupStage')&&advanced.includes('studentFollowupOwner')&&advanced.includes('studentFollowupNextAction')&&advanced.includes('studentFollowupTransitionNote'),
  'all stage, owner, next-action and transition-reason controls remain in the advanced panel');
 assert.ok(!/\sopen(?:\s|>)/.test(advanced.slice(0,150)),'advanced case details are collapsed by default');
-assert.ok(form.slice(0,advancedStart).includes('studentFollowupDate')&&form.slice(0,advancedStart).includes('studentFollowupCategory')&&form.slice(0,advancedStart).includes('studentFollowupObservation')&&form.slice(0,advancedStart).includes('studentFollowupAction'),
- 'the ordinary follow-up form keeps date, category, observation and action in the first view');
+const basicMarkup=form.slice(0,advancedStart)+form.slice(advancedEnd+'</details>'.length);
+assert.ok(basicMarkup.includes('studentFollowupDate')&&basicMarkup.includes('studentFollowupCategory')&&basicMarkup.includes('studentFollowupObservation')&&basicMarkup.includes('studentFollowupAction'),
+ 'the ordinary follow-up form keeps date, category, observation and action outside the collapsed advanced panel');
 assert.ok(form.includes('studentFollowupNextDate')&&form.includes('studentFollowupResult'),'review date and outcome remain available');
 assert.ok(form.includes('type="hidden" id="studentFollowupStatus"')&&form.includes('studentFollowupStatusDisplay'),
  'the simple status summary is visible while canonical status remains wired to the same form payload');
