@@ -210,6 +210,8 @@ jobs:
         run: node tests/student-followup-integrity.test.cjs
       - name: Run CSV import identity safety regression tests
         run: node tests/csv-import-identity-safety.test.cjs
+      - name: Run Stage 11 safe student CSV import preview tests
+        run: node tests/csv-import-preview-stage11.test.cjs
       - name: Run easy navigation layout regression tests
         run: node tests/easy-navigation-layout.test.cjs
       - name: Run Arabic-aware student directory search regression tests
