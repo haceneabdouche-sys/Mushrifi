@@ -790,6 +790,16 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 .student-timeline-item .student-timeline-note{padding-top:5px;border-top:1px dashed var(--line);color:var(--muted)}
 .student-timeline-actions{display:flex;justify-content:flex-start;margin-top:7px}
 .student-timeline-more-wrap{text-align:center;margin-top:10px}
+.student-timeline-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:10px 0}
+.student-timeline-stats button{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:5px;padding:8px 9px;border:1px solid var(--line);border-radius:10px;background:#f7f9fb;color:var(--ink);text-align:right;font:inherit;cursor:pointer}
+.student-timeline-stats button[aria-pressed="true"]{border-color:#83a9bf;background:#eaf2f7;box-shadow:inset 0 0 0 1px rgba(40,107,145,.12)}
+.student-timeline-stats small{font-size:10px;color:var(--muted);line-height:1.4}.student-timeline-stats strong{font-size:17px;color:var(--navy);font-variant-numeric:tabular-nums}
+.student-timeline-controls{display:grid;grid-template-columns:minmax(180px,2fr) repeat(3,minmax(115px,1fr)) auto;align-items:end;gap:8px}
+.student-timeline-controls>div{min-width:0;display:grid;gap:4px}.student-timeline-controls label{font-size:11px;font-weight:800;color:var(--muted)}.student-timeline-controls input,.student-timeline-controls select{min-width:0;width:100%;height:39px;padding:7px 9px;font-size:12px}
+.student-timeline-controls>button{height:39px;white-space:nowrap}.student-timeline-range{margin:5px 0 9px;font-size:11px;min-height:18px}
+.student-timeline-more-wrap{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}.student-timeline-more-wrap button{min-width:125px}
+@media(max-width:680px){.student-timeline-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.student-timeline-stats button:first-child{grid-column:1/-1}.student-timeline-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.student-timeline-search{grid-column:1/-1}.student-timeline-controls>button{grid-column:1/-1;width:100%}}
+@media(max-width:360px){.student-timeline-controls{grid-template-columns:minmax(0,1fr)}.student-timeline-search,.student-timeline-controls>button{grid-column:auto}.student-timeline-stats button{padding:7px}}
 @media(max-width:560px){.student-timeline-item{padding:9px}.student-timeline-controls{align-items:stretch}.student-timeline-controls select{width:100%}.student-timeline-actions .btn{width:100%}}
 @media print{.student-timeline-controls,.student-timeline-actions,.student-timeline-more-wrap{display:none!important}}
 
@@ -4749,16 +4759,36 @@ function profileTimelineDateLabel(value){
  const parts=String(value).split('-').map(Number);
  return new Date(parts[0],parts[1]-1,parts[2],12).toLocaleDateString('ar-DZ',{year:'numeric',month:'short',day:'numeric'});
 }
-function profileTimelineView(events,filter,limit){
+function normalizeProfileTimelineSearchText(value){
+ return String(value??'').normalize('NFKC')
+  .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640\u200e\u200f]/g,'')
+  .replace(/[أإآٱ]/g,'ا').replace(/[ىي]/g,'ي').replace(/ة/g,'ه')
+  .replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+  .replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+  .replace(/\s+/g,' ').trim().toLocaleLowerCase('ar');
+}
+function profileTimelineMatchesSearch(event,query){
+ const needle=normalizeProfileTimelineSearchText(query);if(!needle)return true;
+ const haystack=normalizeProfileTimelineSearchText([event?.sourceLabel,event?.title,event?.detail,event?.appointment,event?.notes,event?.date].filter(Boolean).join(' '));
+ return haystack.includes(needle);
+}
+function profileTimelineView(events,filter,limit,offset,query,fromDate,toDate){
  const allowed=['all','attendance','violations','documents','followups'],selected=allowed.includes(filter)?filter:'all';
- const source=Array.isArray(events)?events:[],filtered=selected==='all'?source:source.filter(event=>event.source===selected);
- const cap=Math.max(1,Math.min(200,Math.floor(Number(limit)||30))),visible=filtered.slice(0,cap);
+ const source=Array.isArray(events)?events:[],from=profileTimelineValidDate(fromDate)?String(fromDate):'',to=profileTimelineValidDate(toDate)?String(toDate):'',invalidRange=!!(from&&to&&from>to),hasDateRange=!!(from||to),
+  filtered=invalidRange?[]:source.filter(event=>{
+   if(selected!=='all'&&event.source!==selected)return false;
+   if(!profileTimelineMatchesSearch(event,query))return false;
+   if(hasDateRange){const date=String(event?.date||'');if(!profileTimelineValidDate(date))return false;if(from&&date<from)return false;if(to&&date>to)return false;}
+   return true;
+  });
+ const cap=Math.max(1,Math.min(200,Math.floor(Number(limit)||30))),requestedOffset=Math.max(0,Math.floor(Number(offset)||0)),start=filtered.length?Math.min(requestedOffset,Math.floor((filtered.length-1)/cap)*cap):0,visible=filtered.slice(start,start+cap);
  const html=visible.map(event=>{
   const actionLabel=event.source==='attendance'?'فتح سجل الغياب أو التأخر':event.source==='documents'?'فتح الوثيقة':event.source==='followups'?'تعديل المتابعة التربوية':'عرض المخالفة';
   const action=event.recordId?'<button type="button" class="btn small" data-timeline-action="'+esc(event.source)+'" data-timeline-record-id="'+esc(event.recordId)+'">'+actionLabel+'</button>':'';
   return '<article class="student-timeline-item" data-timeline-kind="'+esc(event.source)+'"><div class="student-timeline-meta"><span class="student-timeline-badge">'+esc(event.sourceLabel)+'</span><time>'+esc(profileTimelineDateLabel(event.date))+'</time></div><h4>'+esc(event.title)+'</h4>'+(event.detail?'<p>'+esc(event.detail)+'</p>':'')+(event.appointment?'<p><b>'+(event.source==='followups'?'موعد المراجعة المقبلة:':'موعد الحضور:')+'</b> '+esc(event.appointment)+'</p>':'')+(event.notes?'<p class="student-timeline-note"><b>ملاحظة:</b> '+esc(event.notes)+'</p>':'')+(action?'<div class="student-timeline-actions">'+action+'</div>':'')+'</article>';
  }).join('');
- return {total:filtered.length,shown:visible.length,html:html||'<p class="empty">لا توجد أحداث في هذا التصنيف.</p>'};
+ const emptyMessage=invalidRange?'تاريخ البداية يجب ألا يتجاوز تاريخ النهاية.':'لا توجد أحداث تطابق خيارات البحث والتصفية.';
+ return {total:filtered.length,shown:visible.length,offset:start,start:filtered.length?start+1:0,end:start+visible.length,hasPrevious:start>0,hasNext:start+visible.length<filtered.length,invalidRange,html:html||'<p class="empty">'+emptyMessage+'</p>'};
 }
 
 
@@ -5018,7 +5048,7 @@ window.studentHistory=(id,focusFollowupId)=>{
    </form>
    <div id="studentFollowupList" class="student-followup-list" aria-live="polite">${followupView.html}</div>
   </section>
-  <section id="studentProfileTimeline" class="panel student-timeline-panel" aria-labelledby="studentTimelineHeading"><div class="student-timeline-heading"><h3 id="studentTimelineHeading">الخط الزمني الشامل للتلميذ</h3><span class="pill" id="studentTimelineCount">عدد الأحداث: 0</span></div><p class="muted">جميع سجلات هذا التلميذ مرتبة من الأحدث إلى الأقدم، مع روابط إلى السجل الأصلي. لا تُدمج الأحداث المتشابهة ولا تُنسب السجلات غير المؤكدة إلى هذا الملف.</p><div class="student-timeline-controls no-print"><label for="studentTimelineFilter">تصفية الأحداث</label><select id="studentTimelineFilter"><option value="all">كل الأحداث</option><option value="attendance">الغياب والتأخر والحضور</option><option value="violations">المخالفات</option><option value="documents">الوثائق والاستدعاءات</option><option value="followups">المتابعات التربوية</option></select></div><div id="studentTimelineList" class="student-timeline-list" aria-live="polite"></div><div class="student-timeline-more-wrap no-print"><button type="button" id="studentTimelineMore" class="btn small" hidden>عرض المزيد</button></div></section>
+  <section id="studentProfileTimeline" class="panel student-timeline-panel" aria-labelledby="studentTimelineHeading"><div class="student-timeline-heading"><div><h3 id="studentTimelineHeading">الخط الزمني الشامل للتلميذ</h3><p class="muted">تاريخ موحد للأحداث المرتبطة بالملف، مع الوصول إلى السجل الأصلي دون نسخ البيانات أو دمج الوقائع المتشابهة.</p></div><span class="pill" id="studentTimelineCount">عدد الأحداث: 0</span></div><div class="student-timeline-stats no-print" id="studentTimelineStats" aria-label="ملخص أنواع الأحداث"><button type="button" data-timeline-stat-filter="all" aria-pressed="true"><small>كل الأحداث</small><strong id="studentTimelineStatAll">0</strong></button><button type="button" data-timeline-stat-filter="attendance" aria-pressed="false"><small>الحضور والغياب</small><strong id="studentTimelineStatAttendance">0</strong></button><button type="button" data-timeline-stat-filter="violations" aria-pressed="false"><small>المخالفات</small><strong id="studentTimelineStatViolations">0</strong></button><button type="button" data-timeline-stat-filter="documents" aria-pressed="false"><small>الوثائق</small><strong id="studentTimelineStatDocuments">0</strong></button><button type="button" data-timeline-stat-filter="followups" aria-pressed="false"><small>المتابعات</small><strong id="studentTimelineStatFollowups">0</strong></button></div><div class="student-timeline-controls no-print"><div class="student-timeline-search"><label for="studentTimelineSearch">بحث داخل الملف الزمني</label><input id="studentTimelineSearch" type="search" maxlength="120" autocomplete="off" placeholder="ابحث في العنوان أو الملاحظات أو الإجراء…"></div><div><label for="studentTimelineFilter">نوع الحدث</label><select id="studentTimelineFilter"><option value="all">كل الأحداث</option><option value="attendance">الغياب والتأخر والحضور</option><option value="violations">المخالفات</option><option value="documents">الوثائق والاستدعاءات</option><option value="followups">المتابعات التربوية</option></select></div><div><label for="studentTimelineFrom">من تاريخ</label><input id="studentTimelineFrom" type="date"></div><div><label for="studentTimelineTo">إلى تاريخ</label><input id="studentTimelineTo" type="date"></div><button type="button" class="btn small" id="studentTimelineClear">مسح التصفية</button></div><p class="student-timeline-range muted" id="studentTimelineRange" role="status" aria-live="polite">—</p><div id="studentTimelineList" class="student-timeline-list" aria-live="polite"></div><div class="student-timeline-more-wrap no-print"><button type="button" id="studentTimelinePrevious" class="btn small" hidden>الأحداث السابقة</button><button type="button" id="studentTimelineMore" class="btn small" hidden>الأحداث التالية</button></div></section>
   <details id="studentProfileSummary" class="panel attendance-log student-profile-detail"><summary><strong>الحصيلة الإجمالية</strong><span class="pill">ملخص تفصيلي</span><span class="muted">الأعداد والمدد وحالات التبرير</span></summary><div class="grid"><div class="stat"><small>مجموع الغيابات</small><strong>${abs.length}</strong></div><div class="stat"><small>غيابات مبررة</small><strong>${justified(abs)}</strong></div><div class="stat"><small>غيابات غير مبررة</small><strong>${unjustified(abs)}</strong></div><div class="stat"><small>غيابات قيد التبرير</small><strong>${pending(abs)}</strong></div><div class="stat"><small>مجموع التأخرات</small><strong>${late.length}</strong></div><div class="stat"><small>تأخرات مبررة</small><strong>${justified(late)}</strong></div><div class="stat"><small>تأخرات غير مبررة</small><strong>${unjustified(late)}</strong></div><div class="stat"><small>تأخرات قيد التبرير</small><strong>${pending(late)}</strong></div><div class="stat"><small>مجموع ساعات الغياب المعروفة</small><strong>${absHours}</strong><small>مدد غير مسجلة: ${unknownAbsenceHours}</small></div><div class="stat"><small>مجموع دقائق التأخر المعروفة</small><strong>${lateMinutes}</strong><small>مدد غير مسجلة: ${unknownLatenessMinutes}</small><div class="stat"><small>إجمالي الإشعارات والوثائق</small><strong>${d.length}</strong></div><div class="stat"><small>إشعارات الغياب</small><strong>${absenceNotices.length}</strong></div><div class="stat"><small>الاستدعاءات</small><strong>${summons.length}</strong></div><div class="stat"><small>التنبيهات</small><strong>${alerts.length}</strong></div><div class="stat"><small>المخالفات</small><strong>${v.length}</strong></div></div></details>
   <details id="studentProfileAbsences" class="panel attendance-log student-profile-detail"><summary><strong>تفصيل الغيابات (${abs.length})</strong><span class="pill">${abs.length.toLocaleString('ar-DZ')} سجل</span><span class="muted">المدة والتبرير والملاحظات</span></summary>${statusSummary(abs)}${attendanceList(abs,false)}</details>
   <details id="studentProfileLateness" class="panel attendance-log student-profile-detail"><summary><strong>تفصيل التأخرات (${late.length})</strong><span class="pill">${late.length.toLocaleString('ar-DZ')} سجل</span><span class="muted">المدة بالدقائق وحالة التبرير</span></summary>${statusSummary(late)}${attendanceList(late,true)}</details>
@@ -5037,23 +5067,29 @@ window.studentHistory=(id,focusFollowupId)=>{
    if(renderers[key])mount.innerHTML=renderers[key]();
   };
 
-  const timelineFilter=$('#studentTimelineFilter'),timelineList=$('#studentTimelineList'),timelineMore=$('#studentTimelineMore');
-  let timelineMode='all',timelineLimit=30;
+  const timelineFilter=$('#studentTimelineFilter'),timelineSearch=$('#studentTimelineSearch'),timelineFrom=$('#studentTimelineFrom'),timelineTo=$('#studentTimelineTo'),timelineList=$('#studentTimelineList'),timelineNext=$('#studentTimelineMore'),timelinePrevious=$('#studentTimelinePrevious'),timelineStats=$('#studentTimelineStats'),timelineRange=$('#studentTimelineRange');
+  let timelineMode='all',timelineOffset=0;const timelinePageSize=30;
   const refreshTimeline=()=>{
-   const view=profileTimelineView(timeline,timelineMode,timelineLimit);
-   timelineList.innerHTML=view.html;
-   $('#studentTimelineCount').textContent='عدد الأحداث: '+view.total.toLocaleString('ar-DZ')+' · المعروض: '+view.shown.toLocaleString('ar-DZ');
-   timelineMore.hidden=view.shown>=view.total;
+   const query=timelineSearch.value,from=timelineFrom.value,to=timelineTo.value;
+   const view=profileTimelineView(timeline,timelineMode,timelinePageSize,timelineOffset,query,from,to);
+   timelineOffset=view.offset;timelineList.innerHTML=view.html;
+   $('#studentTimelineCount').textContent='عدد النتائج: '+view.total.toLocaleString('ar-DZ');
+   timelineRange.textContent=view.invalidRange?'تحقق من التاريخين: تاريخ البداية لا يمكن أن يأتي بعد تاريخ النهاية.':view.total?'عرض '+view.start.toLocaleString('ar-DZ')+'–'+view.end.toLocaleString('ar-DZ')+' من '+view.total.toLocaleString('ar-DZ')+' حدث':'لا توجد نتائج وفق خيارات التصفية الحالية.';
+   timelinePrevious.hidden=!view.hasPrevious;timelineNext.hidden=!view.hasNext;
+   timelinePrevious.disabled=!view.hasPrevious;timelineNext.disabled=!view.hasNext;
+   const counts={all:timeline.length,attendance:0,violations:0,documents:0,followups:0};timeline.forEach(event=>{if(Object.prototype.hasOwnProperty.call(counts,event.source))counts[event.source]++;});
+   const statIds={all:'studentTimelineStatAll',attendance:'studentTimelineStatAttendance',violations:'studentTimelineStatViolations',documents:'studentTimelineStatDocuments',followups:'studentTimelineStatFollowups'};
+   Object.keys(statIds).forEach(key=>{const el=$('#'+statIds[key]);if(el)el.textContent=counts[key].toLocaleString('ar-DZ');});
+   timelineStats.querySelectorAll('[data-timeline-stat-filter]').forEach(button=>{const active=button.dataset.timelineStatFilter===timelineMode;button.setAttribute('aria-pressed',active?'true':'false');});
   };
-  timelineFilter.addEventListener('change',()=>{
-   timelineMode=timelineFilter.value;
-   timelineLimit=30;
-   refreshTimeline();
-  });
-  timelineMore.addEventListener('click',()=>{
-   timelineLimit=Math.min(200,timelineLimit+30);
-   refreshTimeline();
-  });
+  const resetTimelinePage=()=>{timelineOffset=0;refreshTimeline();};
+  timelineFilter.addEventListener('change',()=>{timelineMode=timelineFilter.value;resetTimelinePage();});
+  timelineSearch.addEventListener('input',resetTimelinePage);
+  timelineFrom.addEventListener('change',resetTimelinePage);timelineTo.addEventListener('change',resetTimelinePage);
+  $('#studentTimelineClear').addEventListener('click',()=>{timelineMode='all';timelineFilter.value='all';timelineSearch.value='';timelineFrom.value='';timelineTo.value='';resetTimelinePage();});
+  timelineStats.addEventListener('click',event=>{const button=event.target.closest('[data-timeline-stat-filter]');if(!button)return;timelineMode=String(button.dataset.timelineStatFilter||'all');timelineFilter.value=timelineMode;resetTimelinePage();});
+  timelinePrevious.addEventListener('click',()=>{if(timelineOffset<=0)return;timelineOffset=Math.max(0,timelineOffset-timelinePageSize);refreshTimeline();});
+  timelineNext.addEventListener('click',()=>{timelineOffset+=timelinePageSize;refreshTimeline();});
   timelineList.addEventListener('click',event=>{
    const button=event.target.closest('[data-timeline-action]');
    if(!button)return;
