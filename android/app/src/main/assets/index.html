@@ -947,6 +947,16 @@ header .glint-core{fill:#fff;filter:url(#mushrifi-glint-glow)}
 .absence-workflow-quick-check input{width:auto;margin:0!important}
 .absence-workflow-quick-step .actions{margin-top:3px}
 @media(max-width:520px){.absence-workflow-stats-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.absence-workflow-stats-grid .stat{padding:9px 6px}.absence-workflow-stats-grid .stat small{font-size:10px}.absence-workflow-quick-fields{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 7px}}
+
+.csv-import-preview{margin-top:12px;padding:12px;border:1px solid #d6e2e9;border-radius:12px;background:linear-gradient(145deg,#fff,#f7fafc)}
+.csv-import-preview h3{margin:0 0 8px;color:var(--navy);font-size:15px}
+.csv-import-preview .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:10px 0}
+.csv-import-preview .stat{padding:9px;min-width:0;box-shadow:none;background:#fff}
+.csv-import-preview .stat strong{font-size:21px}
+.csv-import-preview .csv-import-sections{margin:8px 0;padding:9px 11px;border-radius:9px;background:#f1f6f9;font-size:12px;line-height:1.9}
+.csv-import-preview .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.csv-import-preview .actions .btn{flex:1 1 140px}
+@media(max-width:560px){.csv-import-preview .grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <style>
 
@@ -1819,7 +1829,7 @@ footer{max-width:760px;margin:14px auto 0;padding:12px 8px 18px;color:var(--mute
 <div class="panel"><h2>النسخ الاحتياطي</h2><p class="muted">يمكنك قراءة النسخة ومعاينة محتوياتها أولاً. لن تتغير بيانات الهاتف عند اختيار الملف أو قراءته.</p><p class="notice"><b>تنبيه مهم لحماية بياناتك:</b> تُحفظ بيانات التلاميذ وسجلات المتابعة محلياً ومشفّرة على هذا الهاتف، وصلاحية الترخيص ليست نسخة احتياطية. قبل حذف التطبيق أو الانتقال إلى هاتف آخر، صدّر نسخة احتياطية واحفظها في مكان خارجي آمن. بعد إعادة التثبيت اختر «قراءة نسخة احتياطية» لاسترجاعها، ولا تحذف النسخة القديمة إلا بعد التأكد من نجاح الاستعادة.</p><p class="notice"><b>خصوصية بيانات التلاميذ:</b> قد تتضمن النسخة الاحتياطية عنوان الولي وعلامات الخصوصية. ملف النسخة بصيغة JSON غير مشفّر بكلمة مرور؛ احفظه في مكان خاص وآمن، ولا ترسله إلى غير المخوّلين.</p><div id="backupHealthStatus" class="notice" role="status" aria-live="polite">حالة النسخ الاحتياطي: لم يُسجّل بعد تصدير نسخة مؤكدة. أنشئ نسخة واحفظها خارج الهاتف.</div><div id="databaseIntegrityStatus" class="notice" role="status" aria-live="polite" data-health-status="not-checked">سلامة قاعدة بيانات الهاتف: لم يُجرَ الفحص بعد.</div><button class="btn" id="inspectDatabaseHealth" type="button">فحص سلامة قاعدة بيانات الهاتف</button><small class="muted">الفحص تشخيصي للقراءة فقط؛ لا يصلح البيانات ولا يحذفها ولا يستبدلها.</small><button class="btn primary" id="exportData">تصدير نسخة احتياطية</button> <button class="btn" id="importBackupNative" type="button">قراءة نسخة احتياطية</button><input id="importData" type="file" accept=".json,application/json,.txt,text/plain" hidden><div id="backupPreview" class="panel hidden" aria-live="polite"></div></div>
 <div class="panel" id="undoLastDeletePanel"><h2>التراجع عن آخر حذف أو استعادة</h2><p class="muted" id="undoLastDeleteStatus">لا توجد عملية حذف محفوظة للتراجع عنها حالياً.</p><button class="btn" id="undoLastDelete" type="button">التراجع عن آخر عملية</button><p class="muted">تُحفظ نقطة التراجع مشفّرة على الهاتف، وتبقى متاحة إلى أن تحفظ تعديلاً جديداً. عندها تُلغى تلقائياً حتى لا تُستبدل بيانات أحدث.</p></div>
 <div class="panel"><h2>حذف قائمة التلاميذ</h2><p class="muted">يحذف جميع ملفات التلاميذ من القائمة فقط. لا يحذف سجلات الغياب أو التأخر أو المخالفات أو الوثائق. تُنزّل نسخة احتياطية كاملة قبل التنفيذ.</p><button class="btn danger" id="clearStudents" type="button">حذف قائمة التلاميذ كاملة</button><p id="clearStudentsStatus" class="muted">لم يتم حذف القائمة.</p></div>
-<div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label></div>
+<div class="panel"><h2>استيراد قائمة التلاميذ من ملف التفويج CSV</h2><p class="muted">يعتمد على أعمدة ورقة «القائمة الكاملة» في ملف التفويج: الفضاء، رقم المقعد، رقم التعريف، اللقب، الاسم، السنة، الشعبة، القسم. تُستعمل بيانات الفضاء ورقم المقعد للتعرّف على مصدر القائمة ولا تُسجّل كبيانات متابعة. يُنشأ القسم داخل التطبيق بصيغة السنة / الشعبة / رقم القسم حتى لا تختلط الأقسام المتشابهة أرقامها. يقبل الفاصلة أو الفاصلة المنقوطة أو الجدولة.</p><label class="btn">اختيار ملف CSV<input id="csvImport" type="file" accept=".csv,text/csv,*/*" hidden></label><div id="csvImportPreview" class="csv-import-preview hidden" aria-live="polite"></div><p id="csvImportStatus" class="muted">لن تتغير البيانات عند اختيار الملف؛ ستظهر معاينة قبل الاعتماد.</p></div>
 </section>
 </div>
 </div><footer class="app-footer">
@@ -6003,11 +6013,71 @@ $('#clearStudents').onclick=()=>{
   alert(status.textContent+'\nاحتفظ بالنسخة الاحتياطية لاسترجاع القائمة عند الحاجة.');
 };
 function makeStudentImportId(){try{if(window.crypto&&typeof window.crypto.randomUUID==='function')return window.crypto.randomUUID();}catch(_){}return 'student_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,12);}
+let pendingStudentCsvImport=null;
+function clearStudentCsvImportPreview(message){
+ pendingStudentCsvImport=null;
+ const preview=$('#csvImportPreview');
+ if(preview){preview.classList.add('hidden');preview.innerHTML='';}
+ const status=$('#csvImportStatus');
+ if(status&&message)status.textContent=message;
+}
+function renderStudentCsvImportPreview(plan){
+ const c=plan.counts,preview=$('#csvImportPreview');
+ if(!preview)return;
+ const metrics=[
+  ['سجلات الملف',c.totalRows],
+  ['بطاقات جديدة',c.added],
+  ['بطاقات محدّثة',c.updated],
+  ['سجلات متجاوزة',c.skipped],
+  ['تكرار داخل الملف',c.duplicates],
+  ['تطابق ملتبس',c.conflicts],
+  ['بيانات ناقصة',c.invalid]
+ ];
+ const metricHtml=metrics.map(item=>'<div class="stat"><small>'+esc(item[0])+'</small><strong>'+Number(item[1]||0).toLocaleString('ar-DZ')+'</strong></div>').join('');
+ const sections=Object.entries(plan.sections||{}).sort((a,b)=>a[0].localeCompare(b[0],'ar',{numeric:true}));
+ const sectionHtml=sections.length?sections.map(item=>'<div>'+esc(item[0])+': <b>'+Number(item[1]||0).toLocaleString('ar-DZ')+'</b></div>').join(''):'لا توجد أقسام قابلة للتصنيف في السجلات السليمة.';
+ preview.innerHTML='<h3>معاينة استيراد التلاميذ</h3>'+
+  '<p class="muted">الملف: '+esc(plan.fileName||'ملف CSV')+'. هذه معاينة فقط؛ لم يتم تعديل بيانات الهاتف.</p>'+
+  '<div class="grid">'+metricHtml+'</div>'+
+  '<p><b>عدد التلاميذ قبل الاستيراد:</b> '+Number(c.currentStudents||0).toLocaleString('ar-DZ')+
+  ' &nbsp; <b>بعد الاعتماد:</b> '+Number(c.resultingStudents||0).toLocaleString('ar-DZ')+'</p>'+
+  '<div class="csv-import-sections"><b>توزيع سجلات الملف حسب الأقسام</b>'+sectionHtml+'</div>'+
+  '<p class="notice">لن تُحذف أي بطاقة أو سجل متابعة. قبل الاعتماد سيحفظ التطبيق نقطة تراجع داخل الهاتف، ولن تُحفظ التغييرات إذا تعذر حفظ نقطة التراجع أو تعذر حفظ قاعدة البيانات.</p>'+
+  '<div class="actions"><button class="btn primary" id="applyStudentCsvImport" type="button" '+(licenseReadOnly?'disabled':'')+'>اعتماد الاستيراد</button>'+
+  '<button class="btn" id="cancelStudentCsvImport" type="button">إلغاء المعاينة</button></div>';
+ preview.classList.remove('hidden');
+ const status=$('#csvImportStatus');
+ if(status)status.textContent='راجع الأعداد وتوزيع الأقسام. لم تتغير أي بيانات بعد.';
+ $('#applyStudentCsvImport').onclick=applyStudentCsvImport;
+ $('#cancelStudentCsvImport').onclick=()=>clearStudentCsvImportPreview('تم إلغاء المعاينة؛ لم تتغير البيانات.');
+}
+function applyStudentCsvImport(){
+ const pending=pendingStudentCsvImport;
+ if(!pending)return;
+ if(licenseReadOnly){alert('وضع القراءة فقط: لم يتم اعتماد الاستيراد.');return;}
+ if(!saveUndoSnapshot('قبل استيراد قائمة التلاميذ'))return;
+ const previousDb=db;
+ db=pending.database;
+ if(!save()){
+  db=previousDb;
+  preserveUndoOnNextSave=false;
+  clearStoredRecoverySnapshot();refreshUndoPanel();
+  render();
+  const status=$('#csvImportStatus');
+  if(status)status.textContent='تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات إلى حالتها السابقة ولم يتم اعتماد الملف.';
+  clearStudentCsvImportPreview('تعذر الحفظ؛ بقيت البيانات كما كانت. يمكنك إعادة المحاولة بعد فحص التخزين.');
+  return;
+ }
+ const summary=pending.counts;
+ clearStudentCsvImportPreview('اكتمل الاستيراد وحُفظت نقطة التراجع داخل الهاتف.');
+ alert('تم اعتماد استيراد قائمة التلاميذ بعد المعاينة.\\nالبطاقات الجديدة: '+summary.added+'\\nالبطاقات المحدّثة: '+summary.updated+'\\nالسجلات المتجاوزة أو الناقصة: '+summary.skipped+'\\nحالات التطابق الملتبس: '+summary.conflicts+'\\nيمكنك استخدام «التراجع» لاستعادة الحالة السابقة.');
+}
 $('#csvImport').onchange=async e=>{
   const input=e.target,file=input.files?.[0];if(!file)return;
+  let originalDb=null;
   try{
-    // لا نعتمد على اسم الملف أو MIME الذي يرسله مزود الملفات في Android؛ بعض الهواتف تعرض CSV باسم مشفر أو بنوع عام. نتحقق من محتوى الملف ورؤوس أعمدته أدناه.
-    // Android WebView قد لا يدعم File.text()؛ استخدم FileReader كمسار متوافق.
+    if(pendingStudentCsvImport)clearStudentCsvImportPreview('تم استبدال المعاينة السابقة بملف جديد.');
+    // لا نعتمد على اسم الملف أو MIME الذي يرسله مزود الملفات في Android؛ نتحقق من المحتوى ورؤوس الأعمدة.
     const readCsvFile=()=>new Promise((resolve,reject)=>{
       const reader=new FileReader();
       reader.onload=()=>resolve(String(reader.result||''));
@@ -6015,9 +6085,7 @@ $('#csvImport').onchange=async e=>{
       reader.onabort=()=>reject(new Error('تم إلغاء قراءة الملف.'));
       reader.readAsText(file,'UTF-8');
     });
-    let raw='';
-    // استخدم FileReader مباشرة لضمان التوافق مع Android WebView.
-    try{raw=await readCsvFile();}catch(err){throw err;}
+    let raw=await readCsvFile();
     if(!raw.trim())throw new Error('الملف فارغ أو تعذرت قراءة محتواه.');
     raw=raw.replace(/^\uFEFF/,'').replace(/\u0000/g,'');
     if(!raw.trim())throw new Error('الملف فارغ.');
@@ -6048,9 +6116,8 @@ $('#csvImport').onchange=async e=>{
     const required=['identityNumber','last','first','class'];
     const missing=required.filter(k=>idx[k]<0);
     if(missing.length)throw new Error('الأعمدة الإلزامية غير موجودة: '+missing.map(k=>({identityNumber:'رقم التعريف',last:'اللقب',first:'الاسم',class:'القسم'}[k])).join('، ')+'.');
-    const originalDb=JSON.parse(JSON.stringify(db));
-    // المطابقة: رقم التعريف أولاً، ثم الاسم واللقب والقسم حتى للبطاقات القديمة
-    // التي لا تحمل رقم تعريف أو تحمل رقماً قديماً. لا نغيّر المعرّف الداخلي للبطاقة.
+    originalDb=JSON.parse(JSON.stringify(db));
+    // المطابقة: رقم التعريف أولاً، ثم الاسم واللقب والقسم حتى للبطاقات القديمة.
     const normalizeKey=v=>String(v??'').normalize('NFKC')
       .replace(/[\u0640\u064B-\u065F\u0670]/g,'')
       .replace(/[\u200B-\u200D\uFEFF]/g,'')
@@ -6074,23 +6141,25 @@ $('#csvImport').onchange=async e=>{
       const key=normalizeId(st.identityNumber);
       if(key){if(!existingById.has(key))existingById.set(key,[]);existingById.get(key).push(st);}
     }
-    const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0;
+    const incoming=new Set();let added=0,updated=0,skipped=0,conflicts=0,duplicates=0,invalid=0;
+    const sourceSections={};
     const fields=Object.keys(idx);
     for(const cells of rows.slice(1)){
       const value=k=>idx[k]<0?'':String(cells[idx[k]]??'').trim();
       const data={};for(const key of fields)data[key]=value(key);
       data.enrollmentNumber=data.enrollmentNumber||'';
       data.identityNumber=String(data.identityNumber||'').trim();
-      // ملف التفويج يفصل السنة والشعبة ورقم القسم؛ احتفظ برقم القسم الأصلي
-      // وركّب رمزاً كاملاً يمنع الخلط بين (1) في شعب أو سنوات مختلفة.
+      // ملف التفويج يفصل السنة والشعبة ورقم القسم؛ احتفظ برقم القسم الأصلي.
       data.sectionNumber=String(data.class||'').trim();
       if(data.schoolYear&&data.branch&&data.sectionNumber){
         data.class=data.sectionNumber;
         ensureAcademicCombination(data.schoolYear,data.branch,data.sectionNumber);
       }
-      if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;continue;}
+      if(!data.identityNumber||!data.last||!data.first||!data.class){skipped++;invalid++;continue;}
+      const sectionLabel=[data.schoolYear,data.branch,data.sectionNumber].filter(Boolean).join(' — ')||('القسم '+data.class);
+      sourceSections[sectionLabel]=(sourceSections[sectionLabel]||0)+1;
       const incomingId=normalizeId(data.identityNumber);
-      if(incoming.has(incomingId)){skipped++;continue;}incoming.add(incomingId);
+      if(incoming.has(incomingId)){skipped++;duplicates++;continue;}incoming.add(incomingId);
       const idMatches=existingById.get(incomingId)||[];
       if(idMatches.length>1){skipped++;conflicts++;continue;}
       let target=idMatches[0]||null;
@@ -6140,14 +6209,21 @@ $('#csvImport').onchange=async e=>{
         added++;
       }
     }
-    if(!save()){db=originalDb;render();throw new Error('تعذر حفظ الاستيراد؛ أُعيدت قاعدة البيانات كاملة إلى حالتها السابقة، بما فيها سجلات المتابعة.');}
-    alert('اكتمل استيراد ملف التلاميذ.\nالبطاقات الجديدة: '+added+'\nالبطاقات المحدّثة حسب رقم التعريف: '+updated+'\nالسجلات المتجاوزة أو الناقصة: '+skipped+(conflicts?'\nحالات تطابق ملتبسة تحتاج إلى مراجعة: '+conflicts:'')+'\nلم تُحذف أي بطاقة أو سجل متابعة.');
-  }catch(err){alert('تعذر استيراد الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');}
-  finally{input.value='';}
-};
-
-
-let pendingGuardianAddressImport=null;
+    const plannedDb=JSON.parse(JSON.stringify(db));
+    db=originalDb;
+    const summary={
+      totalRows:rows.length-1,added,updated,skipped,conflicts,duplicates,invalid,
+      currentStudents:originalDb.students.length,
+      resultingStudents:plannedDb.students.length
+    };
+    pendingStudentCsvImport={database:plannedDb,counts:summary,sections:sourceSections,fileName:String(file.name||'ملف CSV')};
+    renderStudentCsvImportPreview(pendingStudentCsvImport);
+  }catch(err){
+    if(originalDb){db=originalDb;try{render();}catch(_){}}
+    clearStudentCsvImportPreview('تعذر إعداد المعاينة؛ لم يتم اعتماد الملف.');
+    alert('تعذر قراءة أو تحليل الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');
+  }finally{input.value='';}
+};let pendingGuardianAddressImport=null;
 function refreshGuardianAddressImportControls(){
  const apply=$('#applyGuardianAddressImport');
  if(apply)apply.disabled=!!licenseReadOnly||!pendingGuardianAddressImport||!pendingGuardianAddressImport.updates.length;
