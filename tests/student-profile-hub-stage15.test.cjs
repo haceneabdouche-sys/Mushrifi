@@ -44,8 +44,8 @@ for(const id of navPages){
   assert.doesNotMatch(profile.match(re)[0],/\sopen(?:\s|>)/,'historical panel starts collapsed: '+id);
  }
 }
-assert.equal((profile.match(/<details\b/g)||[]).length,5,'the five long historical panels are collapsed by default');
-assert.equal((profile.match(/<\/details>/g)||[]).length,5,'every historical panel closes correctly');
+assert.equal((profile.match(/<details\b/g)||[]).length,6,'the five long historical panels and optional follow-up workflow details are collapsed by default');
+assert.equal((profile.match(/<\/details>/g)||[]).length,6,'every historical and follow-up details panel closes correctly');
 
 const navHandlerStart=html.indexOf("const profileNav=$('#studentProfileNav');");
 const navHandlerEnd=html.indexOf("const followupForm=$('#studentFollowupForm')",navHandlerStart);
