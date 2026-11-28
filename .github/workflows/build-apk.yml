@@ -198,6 +198,8 @@ jobs:
         run: node tests/student-timeline-stage8.test.cjs
       - name: Run Stage 9 educational follow-up lifecycle and transition-history tests
         run: node tests/student-followup-workflow-stage9.test.cjs
+      - name: Run Stage 10 simplified interface and progressive disclosure tests
+        run: node tests/simplified-interface-stage10.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests

@@ -68,11 +68,11 @@ const studentEditorScript = html.slice(studentEditorScriptStart, studentEditorSc
 assert.ok(studentEditorScript.includes('if(editor)editor.open=false'), 'saving or cancelling closes the student editor');
 assert.ok(studentEditorScript.includes('if(editor)editor.open=true'), 'editing an existing student opens the form before scrolling');
 
-// The home display is intentionally compact: one top microphone and month-to-date summary.
-// Stage 7 restores a compact pulse, collapsed task detail and seven-day agenda preview on Home.
+// The home keeps monthly data available behind a progressive disclosure, not in the primary work area.
 const monthlyPanelStart = html.indexOf('<section class="panel home-monthly-summary"');
-assert.ok(monthlyPanelStart > 0, 'the month-to-date summary is visible on Home');
-assert.ok(html.includes('id="smartDashboardHeading">الملخص الشهري'), 'the dashboard is explicitly monthly');
+const monthlyDisclosureStart = html.indexOf('<details class="home-monthly-disclosure" id="homeMonthlyDetails">');
+assert.ok(monthlyPanelStart > monthlyDisclosureStart && monthlyDisclosureStart > 0, 'the monthly summary remains available inside its collapsed disclosure');
+assert.ok(html.includes('id="smartDashboardHeading">الملخص الشهري') && html.includes('id="smartMonthPeriod"'), 'the monthly summary title and period remain available in its summary row');
 assert.ok(html.includes('#home .home-advanced-panel{display:none!important}')&&html.includes('<details class="panel daily-tasks-panel" id="dailyTasksDetails"')&&html.includes('<section class="panel agenda-home-panel"'),
   'Home keeps detailed tasks collapsed and shows a compact upcoming agenda while secondary shortcuts remain hidden');
 const homeVoice = html.indexOf('<section id="voiceAssistant"');

@@ -79,7 +79,11 @@ assert.ok(!hostile.html.includes('<img src=x')&&!hostile.html.includes('<script>
 for(const id of ['studentFollowupStage','studentFollowupOwner','studentFollowupNextAction','studentFollowupTransitionNote','studentFollowupResult']){
  assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,'case workflow control exists once: '+id);
 }
-assert.match(html,/followupForm\.elements\.workflowStage\.addEventListener\('change',\(\)=>\{followupForm\.elements\.status\.value=profileFollowupStatusForStage/);
+assert.match(html,/followupForm\.elements\.workflowStage\.addEventListener\('change',\(\)=>syncStudentFollowupFormStatus\(followupForm\)\)/);
+assert.match(html,/function syncStudentFollowupFormStatus\(form\)/);
+assert.ok(html.includes('id="studentFollowupAdvanced"')&&html.includes('<summary><strong>تفاصيل إضافية لمسار الحالة</strong>'));
+assert.ok(html.includes('id="studentFollowupStatusDisplay"')&&html.includes('type="hidden" id="studentFollowupStatus"'),
+ 'simple follow-up status stays visible while the canonical workflow stage remains available in advanced details');
 assert.match(html,/buildStudentFollowupWorkflowHistory\(current,currentStage,checked\.value\.workflowStage,checked\.transitionNote/);
 assert.match(html,/buildStudentFollowupWorkflowHistory\(null,'',checked\.value\.workflowStage/);
 assert.match(html,/transitionNote:'ملاحظة انتقال الحالة',workflowHistory:'سجل تفاصيل انتقالات المتابعة'/);
