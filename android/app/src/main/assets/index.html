@@ -2224,39 +2224,69 @@ return String(value??'').normalize('NFKC').toLocaleLowerCase('ar')
 
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 let studentIndexSource=null,studentIndexLength=-1,studentById=new Map(),studentByName=new Map(),recordNameByStudent=new Map();
+let studentIdentityIndexReady=false,studentNameIndexReady=false,recordNameIndexReady=false,studentDirectoryIndexReady=false;
 let directorySearchCache=new WeakMap(),studentDirectorySorted=[],studentSelectOptionsCache=new Map(),studentSelectOptionsRevision=0;
 let studentDirectoryPage=0;
 const STUDENT_DIRECTORY_COLLATOR=new Intl.Collator('ar',{numeric:true});
 const STUDENT_DIRECTORY_PAGE_SIZE=30;
-function rebuildStudentIndexes(){
+function prepareStudentIndexSource(force){
  const source=Array.isArray(db.students)?db.students:[];
- studentById=new Map();studentByName=new Map();recordNameByStudent=new Map();directorySearchCache=new WeakMap();
+ if(!force&&studentIndexSource===db.students&&studentIndexLength===source.length)return source;
+ studentIndexSource=db.students;studentIndexLength=source.length;
+ studentById=new Map();studentByName=new Map();recordNameByStudent=new Map();
+ directorySearchCache=new WeakMap();studentDirectorySorted=[];
+ studentIdentityIndexReady=false;studentNameIndexReady=false;recordNameIndexReady=false;studentDirectoryIndexReady=false;
+ studentSelectOptionsCache.clear();studentSelectOptionsRevision++;studentDirectoryPage=0;
+ return source;
+}
+function ensureStudentIdentityIndexes(){
+ const source=prepareStudentIndexSource(false);if(studentIdentityIndexReady)return;
+ source.forEach(item=>{if(!item||typeof item!=='object')return;const id=normalizeStudentKey(item.id);if(id)studentById.set(id,item);});
+ studentIdentityIndexReady=true;
+}
+function ensureStudentNameIndexes(){
+ const source=prepareStudentIndexSource(false);ensureStudentIdentityIndexes();if(studentNameIndexReady)return;
  const addAlias=(value,item)=>{const key=normalizeStudentKey(value);if(!key)return;const list=studentByName.get(key)||[];if(!list.includes(item))list.push(item);studentByName.set(key,list);};
  source.forEach(item=>{
   if(!item||typeof item!=='object')return;
-  const id=normalizeStudentKey(item.id);if(id)studentById.set(id,item);
   addAlias((item.last+' '+item.first).trim(),item);addAlias((item.first+' '+item.last).trim(),item);addAlias(item.name,item);addAlias(item.fullName,item);
-  const searchable=normalizeDirectorySearch([item.first,item.last,item.class,sectionLabel(item.class),item.attribute,item.status,item.birthDate,item.guardian,item.phone,item.identityNumber,item.schoolYear,item.branch].join(' '));
-  directorySearchCache.set(item,searchable);
  });
- rebuildRecordNameIndex();
+ studentNameIndexReady=true;
+}
+function ensureStudentDirectoryIndexes(){
+ const source=prepareStudentIndexSource(false);ensureStudentIdentityIndexes();if(studentDirectoryIndexReady)return;
+ const nextSearchCache=new WeakMap();
+ source.forEach(item=>{
+  if(!item||typeof item!=='object')return;
+  const searchable=normalizeDirectorySearch([item.first,item.last,item.class,sectionLabel(item.class),item.attribute,item.status,item.birthDate,item.guardian,item.phone,item.identityNumber,item.schoolYear,item.branch].join(' '));
+  nextSearchCache.set(item,searchable);
+ });
  studentDirectorySorted=source.slice().sort((a,b)=>STUDENT_DIRECTORY_COLLATOR.compare(String(a.class||''),String(b.class||''))||STUDENT_DIRECTORY_COLLATOR.compare(String(a.last||''),String(b.last||''))||STUDENT_DIRECTORY_COLLATOR.compare(String(a.first||''),String(b.first||'')));
- studentIndexSource=db.students;studentIndexLength=source.length;studentSelectOptionsCache.clear();studentSelectOptionsRevision++;
- studentDirectoryPage=0;
+ directorySearchCache=nextSearchCache;studentDirectoryIndexReady=true;
+}
+function rebuildStudentIndexes(){
+ // Invalidate derived views after a committed edit, but rebuild only the
+ // lightweight ID index now. Aliases and directory sorting wait for demand.
+ prepareStudentIndexSource(true);ensureStudentIdentityIndexes();
 }
 function rebuildRecordNameIndex(){
- recordNameByStudent=new Map();
+ prepareStudentIndexSource(false);recordNameByStudent=new Map();
  for(const collection of ['attendance','documents','violations']){
   (Array.isArray(db[collection])?db[collection]:[]).forEach(record=>{const key=normalizeStudentKey(record?.student);if(key&&record?.studentName&&!recordNameByStudent.has(key))recordNameByStudent.set(key,String(record.studentName));});
  }
+ recordNameIndexReady=true;
 }
-function ensureStudentIndexes(){if(studentIndexSource!==db.students||studentIndexLength!==(Array.isArray(db.students)?db.students.length:0))rebuildStudentIndexes();}
-const student=id=>{ensureStudentIndexes();const key=normalizeStudentKey(id);if(!key)return null;const exact=studentById.get(key);if(exact)return exact;const matches=studentByName.get(key);return matches&&matches.length===1?matches[0]:null;};
-const name=id=>{const matched=student(id);if(matched)return (matched.last+' '+matched.first).trim()||matched.name||matched.fullName||'—';ensureStudentIndexes();return recordNameByStudent.get(normalizeStudentKey(id))||'تلميذ محذوف';};
-function studentSearchText(item){let value=directorySearchCache.get(item);if(value===undefined){value=normalizeDirectorySearch([item.first,item.last,item.class,sectionLabel(item.class),item.attribute,item.status,item.birthDate,item.guardian,item.phone,item.identityNumber,item.schoolYear,item.branch].join(' '));directorySearchCache.set(item,value);}return value;}
+function ensureRecordNameIndex(){prepareStudentIndexSource(false);if(!recordNameIndexReady)rebuildRecordNameIndex();}
+const student=id=>{
+ ensureStudentIdentityIndexes();const key=normalizeStudentKey(id);if(!key)return null;
+ const exact=studentById.get(key);if(exact)return exact;
+ ensureStudentNameIndexes();const matches=studentByName.get(key);return matches&&matches.length===1?matches[0]:null;
+};
+const name=id=>{const matched=student(id);if(matched)return (matched.last+' '+matched.first).trim()||matched.name||matched.fullName||'—';ensureRecordNameIndex();return recordNameByStudent.get(normalizeStudentKey(id))||'تلميذ محذوف';};
+function studentSearchText(item){ensureStudentDirectoryIndexes();let value=directorySearchCache.get(item);if(value===undefined){value=normalizeDirectorySearch([item.first,item.last,item.class,sectionLabel(item.class),item.attribute,item.status,item.birthDate,item.guardian,item.phone,item.identityNumber,item.schoolYear,item.branch].join(' '));directorySearchCache.set(item,value);}return value;}
 function refreshActiveStudentSelectors(activePage){
  if(!['attendance','documents','violations','reports'].includes(activePage))return;
- ensureStudentIndexes();
+ ensureStudentDirectoryIndexes();
  $$('.studentSelect').filter(sel=>sel.closest('.page')?.id===activePage).forEach(sel=>{
   const old=sel.value;
   const q=sel.name==='student'&&sel.form?.id==='attForm'?normalizeDirectorySearch($('#attStudentSearch')?.value||''):(sel.id==='reportStudent'?normalizeDirectorySearch($('#reportStudentSearch')?.value||''):'');
@@ -2418,7 +2448,7 @@ function renderSupervisionLogs(){
 }
 
 function renderStudentDirectory(){
- ensureStudentIndexes();
+ ensureStudentDirectoryIndexes();
  const q=normalizeDirectorySearch($('#studentSearch')?.value||'');
  const matches=q?studentDirectorySorted.filter(item=>studentSearchText(item).includes(q)):studentDirectorySorted;
  const pageCount=Math.max(1,Math.ceil(matches.length/STUDENT_DIRECTORY_PAGE_SIZE));
@@ -6025,7 +6055,7 @@ const GUARDIAN_RECEPTION_STATUSES=['تم التوجيه','يحتاج متابع�
 const GUARDIAN_RECEPTION_PAGE_SIZE=20;
 function refreshGuardianReceptionStudentOptions(){
  const select=$('#guardianReceptionStudent');if(!select)return;
- ensureStudentIndexes();
+ ensureStudentDirectoryIndexes();
  const key=String(studentSelectOptionsRevision)+':'+db.students.length;
  if(select.dataset.optionsKey===key)return;
  const old=select.value;

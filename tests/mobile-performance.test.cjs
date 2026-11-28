@@ -17,7 +17,7 @@ assert.ok(html.includes('backdrop-filter:none;'), 'fixed mobile navigation avoid
 assert.ok(html.includes('const STUDENT_DIRECTORY_PAGE_SIZE=30;'), 'large student directories are paginated instead of adding every row to the DOM');
 assert.ok(html.includes('const ATTENDANCE_LOG_PAGE_SIZE=40,VIOLATION_LOG_PAGE_SIZE=18,DOCUMENT_LOG_PAGE_SIZE=15;'), 'large record histories are paginated to avoid thousands of DOM nodes');
 assert.ok(!html.includes('mix-blend-mode:multiply}'), 'the full-screen signature background does not trigger blend-mode composition');
-assert.ok(html.includes('const student=id=>{ensureStudentIndexes();'), 'student ID and unique-name lookups use prebuilt indexes');
+assert.ok(html.includes('const student=id=>{\n ensureStudentIdentityIndexes();')&&html.includes('ensureStudentNameIndexes();const matches=studentByName.get(key);'), 'student ID lookup uses a lightweight index and unique-name aliases are prepared only when needed');
 assert.ok(html.includes('function refreshActiveStudentSelectors(activePage)'), 'student select options are cached and only replaced when their source changes');
 assert.ok(js.includes('renderSmartDashboard(overview.date,overview.monthly);')&&!js.includes('renderDailyFollowupDashboard(today,Date.now());'), 'cached monthly metrics render without recalculating hidden daily task analytics');
 assert.ok(js.includes('const overview=getHomeOverviewSnapshot(dateISO());'), 'the home view reuses its cached summary when navigating back to the dashboard');

@@ -186,6 +186,8 @@ jobs:
         run: node tests/audit-snapshot-index-stage2.test.cjs
       - name: Run Stage 3 bounded bulk audit allocation and parity tests
         run: node tests/audit-bulk-summary-stage3.test.cjs
+      - name: Run Stage 4 lazy student directory index and identity safety tests
+        run: node tests/student-directory-lazy-index-stage4.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests
