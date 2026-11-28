@@ -184,6 +184,8 @@ jobs:
         run: node tests/audit-student-lookup-performance.test.cjs
       - name: Run Stage 2 preindexed audit snapshot performance and parity tests
         run: node tests/audit-snapshot-index-stage2.test.cjs
+      - name: Run Stage 3 bounded bulk audit allocation and parity tests
+        run: node tests/audit-bulk-summary-stage3.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests

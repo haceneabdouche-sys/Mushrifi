@@ -1962,17 +1962,25 @@ function buildAuditEvents(beforeSnapshot,afterDatabase,at,idFactory,options){
   const oldMap=beforeIndex instanceof Map?beforeIndex:new Map(),newMap=afterIndex instanceof Map?afterIndex:new Map();
   if(!(beforeIndex instanceof Map))oldList.forEach((record,index)=>oldMap.set(auditRecordIdentity(record,index),record));
   if(!(afterIndex instanceof Map))newList.forEach((record,index)=>newMap.set(auditRecordIdentity(record,index),record));
-  const operations=[];
+  const operations=[],totals={added:0,updated:0,deleted:0};
+  let operationCount=0,retainOperationDetails=true;
+  const collectOperation=(action,beforeRecord,afterRecord,diff)=>{
+   operationCount++;
+   if(action==='add')totals.added++;else if(action==='delete')totals.deleted++;else totals.updated++;
+   // Keep detail only while this can still become an individual audit history.
+   // Once the 13th change is found, the UI will show a single bulk summary.
+   if(!retainOperationDetails)return;
+   if(operationCount<=12){operations.push({action,before:beforeRecord,after:afterRecord,diff});return;}
+   retainOperationDetails=false;operations.length=0;
+  };
   oldMap.forEach((oldRecord,key)=>{
-   if(!newMap.has(key)){operations.push({action:'delete',before:oldRecord,after:null});return;}
+   if(!newMap.has(key)){collectOperation('delete',oldRecord,null,null);return;}
    const newRecord=newMap.get(key),diff=auditFieldDiff(collection,oldRecord,newRecord);
-   if(diff.changes.length||diff.restrictedFields.length)operations.push({action:'update',before:oldRecord,after:newRecord,diff});
+   if(diff.changes.length||diff.restrictedFields.length)collectOperation('update',oldRecord,newRecord,diff);
   });
-  newMap.forEach((newRecord,key)=>{if(!oldMap.has(key))operations.push({action:'add',before:null,after:newRecord});});
-  if(!operations.length)continue;
-  if(operations.length>12){
-   const totals={added:0,updated:0,deleted:0};
-   operations.forEach(op=>{if(op.action==='add')totals.added++;else if(op.action==='delete')totals.deleted++;else totals.updated++;});
+  newMap.forEach((newRecord,key)=>{if(!oldMap.has(key))collectOperation('add',null,newRecord,null);});
+  if(!operationCount)continue;
+  if(operationCount>12){
    const title=AUDIT_ENTITY_LABELS[collection]||'سجل';
    const parts=[];
    if(totals.added)parts.push('إضافة '+totals.added);
