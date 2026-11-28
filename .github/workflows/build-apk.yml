@@ -190,6 +190,8 @@ jobs:
         run: node tests/student-directory-lazy-index-stage4.test.cjs
       - name: Run Stage 5 bounded Home recent activity name-resolution tests
         run: node tests/home-recent-lookup-stage5.test.cjs
+      - name: Run Stage 6 long-record search cache correctness tests
+        run: node tests/record-search-cache-stage6.test.cjs
       - name: Run student analytics aggregation and data safety regression tests
         run: node tests/student-analytics.test.cjs
       - name: Run comprehensive student PDF report regression tests

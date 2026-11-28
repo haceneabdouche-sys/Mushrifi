@@ -2223,6 +2223,18 @@ return String(value??'').normalize('NFKC').toLocaleLowerCase('ar')
 }
 
 const normalizeStudentKey=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
+// Search-only cache: each record is weakly held and refreshed when searchable values change.
+const recordSearchTextCache=new WeakMap();
+function cachedRecordSearchText(record,values){
+ if(!record||typeof record!=='object')return normalizeDirectorySearch(values.join(' '));
+ const signature=JSON.stringify(values.map(value=>value==null?'':String(value)));
+ const cached=recordSearchTextCache.get(record);
+ if(cached&&cached.signature===signature)return cached.text;
+ const text=normalizeDirectorySearch(values.join(' '));
+ recordSearchTextCache.set(record,{signature,text});
+ return text;
+}
+
 let studentIndexSource=null,studentIndexLength=-1,studentById=new Map(),studentByName=new Map(),recordNameByStudent=new Map();
 let studentIdentityIndexReady=false,studentNameIndexReady=false,recordNameIndexReady=false,studentDirectoryIndexReady=false;
 let directorySearchCache=new WeakMap(),studentDirectorySorted=[],studentSelectOptionsCache=new Map(),studentSelectOptionsRevision=0;
@@ -2426,7 +2438,7 @@ function supervisionLogFilteredRecords(){
  const df=$('#supervisionLogDateFilter')?.value||'',tf=$('#supervisionLogTypeFilter')?.value||'';
  return source.filter(item=>{
   if(df&&String(item.date||'')!==df)return false;if(tf&&String(item.type||'')!==tf)return false;
-  return !query||normalizeDirectorySearch([item.type,item.date,item.period,item.location,item.section,item.notes,item.actionTaken].join(' ')).includes(query);
+  return !query||cachedRecordSearchText(item,[item.type,item.date,item.period,item.location,item.section,item.notes,item.actionTaken]).includes(query);
  });
 }
 function renderSupervisionLogs(){
@@ -3163,7 +3175,7 @@ function renderAuditLog(){
   const searchableChanges=Array.isArray(entry.changes)?entry.changes.filter(change=>change&&typeof change==='object'&&!Array.isArray(change)).flatMap(change=>[change.label,change.key,change.before,change.after]):[];
   const safeRestricted=Array.isArray(entry.restrictedFields)?entry.restrictedFields.filter(value=>typeof value==='string'):[];
   const hay=[entry.summary,entry.entityLabel,entry.actor,entry.source,...searchableChanges,...safeRestricted].join(' ');
-  return !query||normalizeDirectorySearch(hay).includes(query);
+  return !query||cachedRecordSearchText(entry,[hay]).includes(query);
  });
  $('#auditLogCount').textContent=(filtered.length>120?'عرض أحدث 120 من '+filtered.length.toLocaleString('ar-DZ')+' نتيجة':'عرض '+filtered.length.toLocaleString('ar-DZ')+' نتيجة')+' · إجمالي السجل '+stored.length.toLocaleString('ar-DZ');
  const list=$('#auditLogEntries');
@@ -6089,7 +6101,7 @@ function guardianReceptionFilteredRecords(){
  return source.filter(item=>{
   if(date&&String(item.date||'')!==date)return false;
   if(purpose&&String(item.purpose||'')!==purpose)return false;
-  return !query||normalizeDirectorySearch([item.date,item.time,item.visitorType,item.purpose,item.status,item.nextDate,item.actionTaken,guardianReceptionStudentLabel(item.student)].join(' ')).includes(query);
+  return !query||cachedRecordSearchText(item,[item.date,item.time,item.visitorType,item.purpose,item.status,item.nextDate,item.actionTaken,guardianReceptionStudentLabel(item.student)]).includes(query);
  });
 }
 function renderGuardianReceptions(){
