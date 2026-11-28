@@ -89,6 +89,8 @@ assert.ok(html.includes('const PROFILE_FOLLOWUP_STAGES=')&&html.includes('const 
  'the existing controlled state machine constants are preserved');
 assert.ok(html.includes('id="licenseAdvisory"')&&html.includes('id="settings"'),
  'licensing and app settings are not removed');
-assert.ok(html.includes('home-quick-actions .home-quick-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}')&&html.includes('@media(max-width:520px){.home-quick-actions .home-quick-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}'),
- 'quick actions adapt from four desktop columns to two mobile columns');
+assert.match(html,/\.home-quick-actions \.home-quick-tiles\{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/,
+ 'quick actions use four columns on wide screens');
+assert.match(html,/@media\(max-width:520px\)\{\.home-quick-actions \.home-quick-tiles\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/,
+ 'quick actions collapse to two columns on mobile screens');
 console.log('PASS: simplified Home, progressive disclosure, five stable routes, all secondary tools, and unchanged data/lifecycle/recovery/license foundations.');
