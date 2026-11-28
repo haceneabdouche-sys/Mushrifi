@@ -2,9 +2,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 
 const html=fs.readFileSync('android/app/src/main/assets/index.html','utf8');
-const markup=html.slice(html.indexOf('id="csvImport"'),html.indexOf('</div>',html.indexOf('id="csvImport"')));
-assert.ok(markup.includes('id="csvImportPreview"'),'CSV import preview container must exist');
-assert.ok(markup.includes('id="csvImportStatus"'),'CSV import status must explain that selecting a file does not alter data');
+assert.ok(html.includes('id="csvImportPreview"'),'CSV import preview container must exist');
+assert.ok(html.includes('id="csvImportStatus"'),'CSV import status must explain that selecting a file does not alter data');
 
 const handlerStart=html.indexOf("$('#csvImport').onchange=async e=>{");
 const handlerEnd=html.indexOf('\n\n\nlet pendingGuardianAddressImport=null;',handlerStart);

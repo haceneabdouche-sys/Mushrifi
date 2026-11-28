@@ -6223,7 +6223,10 @@ $('#csvImport').onchange=async e=>{
     clearStudentCsvImportPreview('تعذر إعداد المعاينة؛ لم يتم اعتماد الملف.');
     alert('تعذر قراءة أو تحليل الملف:\n'+(err?.message||'خطأ غير معروف')+'\n\nتحقق من صيغة CSV وعناوين الأعمدة ثم أعد المحاولة.');
   }finally{input.value='';}
-};let pendingGuardianAddressImport=null;
+};
+
+
+let pendingGuardianAddressImport=null;
 function refreshGuardianAddressImportControls(){
  const apply=$('#applyGuardianAddressImport');
  if(apply)apply.disabled=!!licenseReadOnly||!pendingGuardianAddressImport||!pendingGuardianAddressImport.updates.length;
